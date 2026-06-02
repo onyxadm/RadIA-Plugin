@@ -19,20 +19,20 @@ Esta é a checklist de desenvolvimento para a implementação do plugin **RadIA*
 ---
 
 ## Fase 2: Integração com as APIs de IA (Providers)
-- [/] **Provedor Base**
-  - [/] Criar `RadIA.Provider.Base.pas` com as funções comuns de requisições HTTP REST usando o componente nativo `System.Net.HttpClient.THTTPClient`
-- [ ] **Implementação das APIs**
-  - [ ] Criar `RadIA.Provider.Gemini.pas` integrando com a API do Google Gemini (geração de conteúdo)
-  - [ ] Criar `RadIA.Provider.OpenAI.pas` integrando com a API do ChatGPT (chat completion)
-  - [ ] Criar `RadIA.Provider.Claude.pas` integrando com a API do Anthropic Claude (messages API)
-- [ ] **Orquestrador de IA**
-  - [ ] Criar `RadIA.Core.Service.pas` contendo o orquestrador `TRadIAService` que seleciona a IA ativa e executa as chamadas em threads assíncronas (`System.Threading.TTask`), implementando isolamento rigoroso de exceções globais para estabilidade da IDE
+- [x] **Provedor Base**
+  - [x] Criar `RadIA.Provider.Base.pas` com as funções comuns de requisições HTTP REST usando o componente nativo `System.Net.HttpClient.THTTPClient`
+- [x] **Implementação das APIs**
+  - [x] Criar `RadIA.Provider.Gemini.pas` integrando com a API do Google Gemini (geração de conteúdo)
+  - [x] Criar `RadIA.Provider.OpenAI.pas` integrando com a API do ChatGPT (chat completion)
+  - [x] Criar `RadIA.Provider.Claude.pas` integrando com a API do Anthropic Claude (messages API)
+- [x] **Orquestrador de IA**
+  - [x] Criar `RadIA.Core.Service.pas` contendo o orquestrador `TRadIAService` que seleciona a IA ativa e executa as chamadas em threads assíncronas (`System.Threading.TTask`), implementando isolamento rigoroso de exceções globais para estabilidade da IDE
 
 ---
 
 ## Fase 3: Integração com a IDE Delphi (Open Tools API)
-- [ ] **Utilitários da IDE**
-  - [ ] Criar `RadIA.OTA.Helper.pas` com métodos auxiliares para ler o texto selecionado, obter o buffer do editor de código ativo e substituir blocos de texto
+- [/] **Utilitários da IDE**
+  - [/] Criar `RadIA.OTA.Helper.pas` com métodos auxiliares para ler o texto selecionado, obter o buffer do editor de código ativo e substituir blocos de texto
 - [ ] **Extração de Contexto do Código**
   - [ ] Criar `RadIA.OTA.ContextParser.pas` com o analisador de contexto capaz de extrair a cláusula `interface` da Unit ativa e os atributos da classe onde está o cursor do desenvolvedor
 - [ ] **Hook de Erros de Build**
