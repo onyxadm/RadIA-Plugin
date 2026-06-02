@@ -5,22 +5,22 @@ Esta é a checklist de desenvolvimento para a implementação do plugin **RadIA*
 ---
 
 ## Fase 1: Estrutura do Projeto & Configurações
-- [ ] **Configuração da Solução Delphi**
-  - [ ] Criar a árvore de pastas física sob `d:\Projetos\PluginDelphiIA\` (`Source/Core`, `Source/Providers`, `Source/Integration`, `Source/UI`, `Source/UI/Web`, `Tests/Source`)
-  - [ ] Criar o arquivo de grupo de projetos `RadIA.groupproj`
-  - [ ] Criar o projeto de pacote `RadIA.dpk` e o descritor de projeto `RadIA.dproj` pré-configurado para Delphi 10.4+ (BDS 21.0+)
-- [ ] **Interfaces e Tipos do Core**
-  - [ ] Criar `RadIA.Core.Types.pas` contendo enums dos provedores, modelos suportados e tipos de dados comuns (DTOs de mensagens)
-  - [ ] Criar `RadIA.Core.Interfaces.pas` com a declaração dos contratos das interfaces de serviço (`IIAProvider`, `IAIConfig`, `IChatMessage`)
-- [ ] **Gerenciador de Configurações**
-  - [ ] Criar `RadIA.Core.Config.pas` implementando o salvamento no Registro do Windows (`HKEY_CURRENT_USER\Software\RadIA`)
-  - [ ] Implementar criptografia de API keys usando a DPAPI do Windows (`CryptProtectData` e `CryptUnprotectData` via Unit `Winapi.Crypt`)
+- [x] **Configuração da Solução Delphi**
+  - [x] Criar a árvore de pastas física sob `d:\Projetos\PluginDelphiIA\` (`Source/Core`, `Source/Providers`, `Source/Integration`, `Source/UI`, `Source/UI/Web`, `Tests/Source`)
+  - [x] Criar o arquivo de grupo de projetos `RadIA.groupproj`
+  - [x] Criar o projeto de pacote `RadIA.dpk` e o descritor de projeto `RadIA.dproj` pré-configurado para Delphi 10.4+ (BDS 21.0+)
+- [x] **Interfaces e Tipos do Core**
+  - [x] Criar `RadIA.Core.Types.pas` contendo enums dos provedores, modelos suportados e tipos de dados comuns (DTOs de mensagens)
+  - [x] Criar `RadIA.Core.Interfaces.pas` com a declaração dos contratos das interfaces de serviço (`IIAProvider`, `IAIConfig`, `IChatMessage`)
+- [x] **Gerenciador de Configurações**
+  - [x] Criar `RadIA.Core.Config.pas` implementando o salvamento no Registro do Windows (`HKEY_CURRENT_USER\Software\RadIA`)
+  - [x] Implementar criptografia de API keys usando a DPAPI do Windows (`CryptProtectData` e `CryptUnprotectData` via Unit `Winapi.Crypt`)
 
 ---
 
 ## Fase 2: Integração com as APIs de IA (Providers)
-- [ ] **Provedor Base**
-  - [ ] Criar `RadIA.Provider.Base.pas` com as funções comuns de requisições HTTP REST usando o componente nativo `System.Net.HttpClient.THTTPClient`
+- [/] **Provedor Base**
+  - [/] Criar `RadIA.Provider.Base.pas` com as funções comuns de requisições HTTP REST usando o componente nativo `System.Net.HttpClient.THTTPClient`
 - [ ] **Implementação das APIs**
   - [ ] Criar `RadIA.Provider.Gemini.pas` integrando com a API do Google Gemini (geração de conteúdo)
   - [ ] Criar `RadIA.Provider.OpenAI.pas` integrando com a API do ChatGPT (chat completion)

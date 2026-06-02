@@ -1,0 +1,54 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{4CD32FF0-4A8E-47BC-B23B-CFB3E25EA842}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <Projects Include="RadIA.dproj">
+      <Dependencies/>
+    </Projects>
+    <Projects Include="Tests\RadIATests.dproj">
+      <Dependencies/>
+    </Projects>
+  </ItemGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Default.Personality</Borland.Personality>
+    <Borland.ProjectType/>
+    <BorlandProject>
+      <BorlandProject>
+        <PersonalityInfo>
+          <Option Name="Personality">Default.Personality</Option>
+          <Option Name="ProjectType"/>
+          <Option Name="Version">1.0</Option>
+          <Option Name="GUID">{4CD32FF0-4A8E-47BC-B23B-CFB3E25EA842}</Option>
+        </PersonalityInfo>
+      </BorlandProject>
+    </BorlandProject>
+  </ProjectExtensions>
+  <Target Name="RadIA">
+    <MSBuild Projects="RadIA.dproj"/>
+  </Target>
+  <Target Name="RadIA:Clean">
+    <MSBuild Projects="RadIA.dproj" Targets="Clean"/>
+  </Target>
+  <Target Name="RadIA:Make">
+    <MSBuild Projects="RadIA.dproj" Targets="Make"/>
+  </Target>
+  <Target Name="RadIATests">
+    <MSBuild Projects="Tests\RadIATests.dproj"/>
+  </Target>
+  <Target Name="RadIATests:Clean">
+    <MSBuild Projects="Tests\RadIATests.dproj" Targets="Clean"/>
+  </Target>
+  <Target Name="RadIATests:Make">
+    <MSBuild Projects="Tests\RadIATests.dproj" Targets="Make"/>
+  </Target>
+  <Target Name="Build">
+    <CallTarget Targets="RadIA;RadIATests"/>
+  </Target>
+  <Target Name="Clean">
+    <CallTarget Targets="RadIA:Clean;RadIATests:Clean"/>
+  </Target>
+  <Target Name="Make">
+    <CallTarget Targets="RadIA:Make;RadIATests:Make"/>
+  </Target>
+</Project>
