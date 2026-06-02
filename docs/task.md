@@ -66,3 +66,13 @@ Esta é a checklist de desenvolvimento para a implementação do plugin **RadIA*
   - [ ] Criar `RadIA.Tests.Providers.pas` com testes de parser de JSON, formatação de payloads e simulação de erro de HTTP
 - [ ] **Validação Final da IDE**
   - [ ] Compilar, instalar o pacote e testar a usabilidade de docking, atalhos rápidos e o fluxo completo de "Otimizar Código" com a tela de Diff
+
+---
+
+## Critérios de Aceitação para Entrega
+- [ ] **Compilação Sem Erros (Zero Errors/Warnings)**
+  - [ ] Compilar com sucesso o pacote principal (`RadIA.dpk`) pelo compilador do Delphi no terminal (MSBuild / DCC32 / DCC64) ou na IDE.
+  - [ ] Compilar com sucesso o projeto de testes unitários (`RadIATests.dproj`).
+- [ ] **Suíte de Testes Unitários Aprovada**
+  - [ ] Executar a suíte de testes do DUnitX (`RadIATests.exe`) e garantir que 100% dos testes unitários passem sem falhas.
+
