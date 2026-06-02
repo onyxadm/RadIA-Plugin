@@ -31,15 +31,15 @@ Esta é a checklist de desenvolvimento para a implementação do plugin **RadIA*
 ---
 
 ## Fase 3: Integração com a IDE Delphi (Open Tools API)
-- [/] **Utilitários da IDE**
-  - [/] Criar `RadIA.OTA.Helper.pas` com métodos auxiliares para ler o texto selecionado, obter o buffer do editor de código ativo e substituir blocos de texto
-- [ ] **Extração de Contexto do Código**
-  - [ ] Criar `RadIA.OTA.ContextParser.pas` com o analisador de contexto capaz de extrair a cláusula `interface` da Unit ativa e os atributos da classe onde está o cursor do desenvolvedor
-- [ ] **Hook de Erros de Build**
-  - [ ] Criar `RadIA.OTA.MessageViewHook.pas` que monitora a Messages View da IDE e extrai dados do erro compilado ao disparar a ação do menu de contexto
-- [ ] **Menus e Registro do Plugin**
-  - [ ] Criar `RadIA.OTA.EditorHook.pas` para gerenciar atalhos de teclado e customizações de menus
-  - [ ] Criar `RadIA.OTA.Register.pas` para registrar o Wizard na IDE e criar as opções do menu no menu `Tools` e no menu de contexto do botão direito do editor de código
+- [x] **Utilitários da IDE**
+  - [x] Criar `RadIA.OTA.Helper.pas` com métodos auxiliares para ler o texto selecionado, obter o buffer do editor de código ativo e substituir blocos de texto
+- [x] **Extração de Contexto do Código**
+  - [x] Criar `RadIA.OTA.ContextParser.pas` com o analisador de contexto capaz de extrair a cláusula `interface` da Unit ativa e os atributos da classe onde está o cursor do desenvolvedor
+- [x] **Hook de Erros de Build**
+  - [x] Criar `RadIA.OTA.MessageViewHook.pas` que monitora a Messages View da IDE e extrai dados do erro compilado ao disparar a ação do menu de contexto
+- [x] **Menus e Registro do Plugin**
+  - [x] Criar `RadIA.OTA.EditorHook.pas` para gerenciar atalhos de teclado e customizações de menus
+  - [x] Criar `RadIA.OTA.Register.pas` para registrar o Wizard na IDE e criar as opções do menu no menu `Tools` e no menu de contexto do botão direito do editor de código
 
 ---
 
