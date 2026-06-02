@@ -1,0 +1,34 @@
+__history
+__local
+__recovery
+*.db
+*.dcu
+*.dll
+*.drc
+*.exe
+*.local
+*.log
+*.map
+Output
+Win32
+Win64
+test-results.json
+/Tests/Testing/test-results.xml
+test-results.html
+
+# Generated Documentation Artifacts
+Docs/API/xml/
+
+# Node.js dependencies
+node_modules/
+*.rsm
+*.otares
+*.identcache
+*.dsk
+*.tvsconfig
+*.~*
+*.a
+/Sources/*.bpi
+*.dsv
+test-results.xml
+/Sources/*.dext
