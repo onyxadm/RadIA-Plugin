@@ -1,6 +1,7 @@
 param(
     [switch]$Install,
-    [switch]$Release
+    [switch]$Release,
+    [switch]$IDE64
 )
 $ErrorActionPreference = "Stop"
 
@@ -45,13 +46,16 @@ switch ($compilerVersion) {
 
 Write-Host "Versão do Delphi correspondente (DelphiVer): $delphiVer" -ForegroundColor Green
 
-# 3. Definir plataforma e compilador do pacote de acordo com a arquitetura da IDE
-# A partir do Delphi 11 Alexandria (compilador >= 35.0), a IDE bds.exe é de 64 bits, exigindo BPLs de 64 bits.
+# 3. Definir plataforma e compilador do pacote
 $platform = "Win32"
 $compiler = "dcc32"
-if ($compilerVersion -ge 35.0) {
+
+if ($IDE64) {
     $platform = "Win64"
     $compiler = "dcc64"
+    Write-Host "Configurando compilação para IDE de 64 bits (Win64)..." -ForegroundColor Yellow
+} else {
+    Write-Host "Configurando compilação para IDE de 32 bits (Win32)..." -ForegroundColor Yellow
 }
 
 $configName = "Debug"
@@ -128,11 +132,18 @@ if ($Install) {
     $publicBplDir = "$publicStudioDir\Bpl"
     $publicDcpDir = "$publicStudioDir\Dcp"
 
-    Write-Host "Criando pastas públicas se não existirem..." -ForegroundColor Yellow
-    New-Item -ItemType Directory -Force -Path $publicBplDir, $publicDcpDir | Out-Null
+    $targetBplDir = $publicBplDir
+    $targetDcpDir = $publicDcpDir
+    if ($IDE64) {
+        $targetBplDir = "$publicBplDir\Win64"
+        $targetDcpDir = "$publicDcpDir\Win64"
+    }
 
-    $targetBpl = "$publicBplDir\RadIA.bpl"
-    $targetDcp = "$publicDcpDir\RadIA.dcp"
+    Write-Host "Criando pastas públicas se não existirem..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Force -Path $targetBplDir, $targetDcpDir | Out-Null
+
+    $targetBpl = "$targetBplDir\RadIA.bpl"
+    $targetDcp = "$targetDcpDir\RadIA.dcp"
 
     Write-Host "Copiando binários e recursos para as pastas da IDE..." -ForegroundColor Yellow
     Copy-Item -Path ".\Output\$delphiVer\bpl\$platform\RadIA.bpl" -Destination $targetBpl -Force
@@ -145,6 +156,9 @@ if ($Install) {
 
     Write-Host "Registrando pacote no Registro do Windows..." -ForegroundColor Yellow
     $regPath = "HKCU:\Software\Embarcadero\BDS\$delphiVer\Known Packages"
+    if ($IDE64) {
+        $regPath = "HKCU:\Software\Embarcadero\BDS\${delphiVer}_x64\Known Packages"
+    }
     
     # Garante que a chave existe no registro antes de gravar
     if (-not (Test-Path $regPath)) {
