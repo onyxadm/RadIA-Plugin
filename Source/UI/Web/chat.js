@@ -14,6 +14,10 @@ marked.setOptions({
   }
 });
 
+// -- Code block registry — stores code by ID to avoid newline/escaping issues in onclick attrs --
+const _codeRegistry = {};
+let _codeRegistryCounter = 0;
+
 // -- Renderer customizado com copy + apply buttons --
 const renderer = new marked.Renderer();
 renderer.code = function(codeOrToken, lang) {
@@ -31,12 +35,9 @@ renderer.code = function(codeOrToken, lang) {
     language = lang || 'pascal';
   }
 
-  const escapedCode = code
-    .replace(/\\/g, '\\\\')
-    .replace(/`/g, '\\`')
-    .replace(/\$/g, '\\$')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  const id = 'cb_' + (++_codeRegistryCounter);
+  _codeRegistry[id] = code; // Store original code with proper newlines
+
   const isPascal = ['pascal', 'delphi', 'objectpascal'].includes(language.toLowerCase());
   const highlighted = Prism.languages[language]
     ? Prism.highlight(code, Prism.languages[language], language)
@@ -47,8 +48,8 @@ renderer.code = function(codeOrToken, lang) {
       <div class="code-header">
         <span>${language.toUpperCase()}</span>
         <div class="code-header-actions">
-          <button class="copy-btn" onclick="copyCode(this, \`${escapedCode}\`)">Copy</button>
-          ${isPascal ? `<button class="apply-btn" onclick="applyCode(\`${escapedCode}\`)">Apply to Editor</button>` : ''}
+          <button class="copy-btn" onclick="copyCode(this, '${id}')">Copy</button>
+          ${isPascal ? `<button class="apply-btn" onclick="applyCode('${id}')">Apply to Editor</button>` : ''}
         </div>
       </div>
       <pre><code class="language-${language}">${highlighted}</code></pre>
@@ -138,7 +139,8 @@ function setTheme(themeName) {
 // ============================================================
 //  copyCode / applyCode
 // ============================================================
-function copyCode(btn, code) {
+function copyCode(btn, id) {
+  const code = _codeRegistry[id] || '';
   navigator.clipboard.writeText(code).then(() => {
     const orig = btn.innerText;
     btn.innerText = 'Copied!';
@@ -146,7 +148,8 @@ function copyCode(btn, code) {
   });
 }
 
-function applyCode(code) {
+function applyCode(id) {
+  const code = _codeRegistry[id] || '';
   if (window.chrome && window.chrome.webview) {
     window.chrome.webview.postMessage(JSON.stringify({
       action: 'apply_code',
