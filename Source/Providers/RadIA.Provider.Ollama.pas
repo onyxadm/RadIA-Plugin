@@ -4,14 +4,14 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Net.HttpClient, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Provider.Base;
+  RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAOllamaProvider = class(TRadIAProviderBase)
   private
     function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
-    function ParseResponseBody(const AResponseJson: string): string;
+    function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
@@ -81,12 +81,14 @@ begin
   end;
 end;
 
-function TRadIAOllamaProvider.ParseResponseBody(const AResponseJson: string): string;
+function TRadIAOllamaProvider.ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
 var
   LJsonObj: TJSONObject;
   LMsgObj: TJSONObject;
 begin
   Result := '';
+  AUsage := TTokenUsage.Empty;
+  
   LJsonObj := TJSONObject.ParseJSONValue(AResponseJson) as TJSONObject;
   if Assigned(LJsonObj) then
   begin
@@ -102,6 +104,11 @@ begin
         if LJsonObj.GetValue('error') <> nil then
           raise Exception.Create(LJsonObj.GetValue('error').ToString);
       end;
+
+      { Extract token usage }
+      AUsage.PromptTokens     := LJsonObj.GetValue<Integer>('prompt_eval_count', 0);
+      AUsage.CompletionTokens := LJsonObj.GetValue<Integer>('eval_count', 0);
+      AUsage.TotalTokens      := AUsage.PromptTokens + AUsage.CompletionTokens;
     finally
       LJsonObj.Free;
     end;
@@ -121,7 +128,7 @@ begin
   except
     on E: Exception do
     begin
-      ACallback('', 'Error building request JSON: ' + E.Message, False);
+      ACallback('', 'Error building request JSON: ' + E.Message, False, TTokenUsage.Empty);
       Exit;
     end;
   end;
@@ -129,15 +136,16 @@ begin
   LTaskProc := procedure
                var
                  LResponseText: string;
+                 LUsage: TTokenUsage;
                  LQueueProc: TThreadProcedure;
                begin
                  try
                    LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
-                   LResponseText := ParseResponseBody(LResponseText);
+                   LResponseText := ParseResponseBody(LResponseText, LUsage);
                    
                    LQueueProc := procedure
                                  begin
-                                   ACallback(LResponseText, '', False);
+                                   ACallback(LResponseText, '', False, LUsage);
                                  end;
                    TThread.Queue(nil, LQueueProc);
                  except
@@ -145,7 +153,7 @@ begin
                    begin
                      LQueueProc := procedure
                                    begin
-                                     ACallback('', E.Message, False);
+                                     ACallback('', E.Message, False, TTokenUsage.Empty);
                                    end;
                      TThread.Queue(nil, LQueueProc);
                    end;
@@ -188,8 +196,8 @@ begin
                            begin
                              if LVal is TJSONObject then
                              begin
-                               LModelObj := LVal as TJSONObject;
-                               LModelsList.Add(LModelObj.GetValue('name').Value);
+                                LModelObj := LVal as TJSONObject;
+                                LModelsList.Add(LModelObj.GetValue('name').Value);
                              end;
                            end;
                          end;

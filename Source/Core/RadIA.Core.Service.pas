@@ -3,7 +3,7 @@ unit RadIA.Core.Service;
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Cache;
+  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Cache, RadIA.Core.TokenUsage;
 
 type
   { Simple concrete class implementing IChatMessage }
@@ -186,7 +186,7 @@ begin
     { Query Cache }
     if FCacheManager.Get(LHash, LCachedResponse) then
     begin
-      ACallback(LCachedResponse, '', True);
+      ACallback(LCachedResponse, '', True, TTokenUsage.Empty);
       Exit;
     end;
 
@@ -203,18 +203,18 @@ begin
 
     { Perform the actual async prompt request }
     LProvider.SendPromptAsync(APrompt, LHistory,
-      procedure(const AResponse: string; const AError: string; AFromCache: Boolean)
+      procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
       begin
         if AError.IsEmpty then
         begin
           FCacheManager.Put(LHash, AResponse);
         end;
-        ACallback(AResponse, AError, False);
+        ACallback(AResponse, AError, False, AUsage);
       end);
   except
     on E: Exception do
     begin
-      ACallback('', 'Failed to initialize AI Provider: ' + E.Message, False);
+      ACallback('', 'Failed to initialize AI Provider: ' + E.Message, False, TTokenUsage.Empty);
     end;
   end;
 end;

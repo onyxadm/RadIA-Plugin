@@ -4,7 +4,7 @@ interface
 
 uses
   DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude;
+  RadIA.Core.TokenUsage, RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude;
 
 type
   [TestFixture]
@@ -17,7 +17,7 @@ type
     
     function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
       const AHistory: TArray<IChatMessage>): string;
-    function InvokeParseResponseBody(AProvider: TObject; const AJson: string): string;
+    function InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
   public
     [Setup]
     procedure Setup;
@@ -92,23 +92,31 @@ begin
     Result := '';
 end;
 
-function TTestRadIAProviders.InvokeParseResponseBody(AProvider: TObject; const AJson: string): string;
+function TTestRadIAProviders.InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
 var
   LContext: TRttiContext;
   LType: TRttiInstanceType;
   LMethod: TRttiMethod;
   LResult: TValue;
+  LParams: TArray<TValue>;
 begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
   LMethod := LType.GetMethod('ParseResponseBody');
   if Assigned(LMethod) then
   begin
-    LResult := LMethod.Invoke(AProvider, [AJson]);
+    SetLength(LParams, 2);
+    LParams[0] := AJson;
+    LParams[1] := TValue.From<TTokenUsage>(TTokenUsage.Empty);
+    LResult := LMethod.Invoke(AProvider, LParams);
+    AUsage := LParams[1].AsType<TTokenUsage>;
     Result := LResult.AsString;
   end
   else
+  begin
+    AUsage := TTokenUsage.Empty;
     Result := '';
+  end;
 end;
 
 procedure TTestRadIAProviders.TestGeminiPayloadGeneration;
@@ -137,12 +145,17 @@ end;
 procedure TTestRadIAProviders.TestGeminiResponseParsing;
 const
   GEMINI_MOCK_RESPONSE = 
-    '{"candidates": [{"content": {"parts": [{"text": "Hello! I am Gemini AI."}]}}]}';
+    '{"candidates": [{"content": {"parts": [{"text": "Hello! I am Gemini AI."}]}}], ' +
+    '"usageMetadata": {"promptTokenCount": 10, "candidatesTokenCount": 15, "totalTokenCount": 25}}';
 var
   LText: string;
+  LUsage: TTokenUsage;
 begin
-  LText := InvokeParseResponseBody(FGeminiProv, GEMINI_MOCK_RESPONSE);
+  LText := InvokeParseResponseBody(FGeminiProv, GEMINI_MOCK_RESPONSE, LUsage);
   Assert.AreEqual('Hello! I am Gemini AI.', LText);
+  Assert.AreEqual(10, LUsage.PromptTokens);
+  Assert.AreEqual(15, LUsage.CompletionTokens);
+  Assert.AreEqual(25, LUsage.TotalTokens);
 end;
 
 procedure TTestRadIAProviders.TestOpenAIPayloadGeneration;
@@ -170,12 +183,17 @@ end;
 procedure TTestRadIAProviders.TestOpenAIResponseParsing;
 const
   OPENAI_MOCK_RESPONSE = 
-    '{"choices": [{"message": {"role": "assistant", "content": "Hello! I am OpenAI ChatGPT."}}]}';
+    '{"choices": [{"message": {"role": "assistant", "content": "Hello! I am OpenAI ChatGPT."}}], ' +
+    '"usage": {"prompt_tokens": 12, "completion_tokens": 18, "total_tokens": 30}}';
 var
   LText: string;
+  LUsage: TTokenUsage;
 begin
-  LText := InvokeParseResponseBody(FOpenAIProv, OPENAI_MOCK_RESPONSE);
+  LText := InvokeParseResponseBody(FOpenAIProv, OPENAI_MOCK_RESPONSE, LUsage);
   Assert.AreEqual('Hello! I am OpenAI ChatGPT.', LText);
+  Assert.AreEqual(12, LUsage.PromptTokens);
+  Assert.AreEqual(18, LUsage.CompletionTokens);
+  Assert.AreEqual(30, LUsage.TotalTokens);
 end;
 
 procedure TTestRadIAProviders.TestClaudePayloadGeneration;
@@ -203,12 +221,17 @@ end;
 procedure TTestRadIAProviders.TestClaudeResponseParsing;
 const
   CLAUDE_MOCK_RESPONSE = 
-    '{"content": [{"type": "text", "text": "Hello! I am Anthropic Claude."}]}';
+    '{"content": [{"type": "text", "text": "Hello! I am Anthropic Claude."}], ' +
+    '"usage": {"input_tokens": 14, "output_tokens": 21}}';
 var
   LText: string;
+  LUsage: TTokenUsage;
 begin
-  LText := InvokeParseResponseBody(FClaudeProv, CLAUDE_MOCK_RESPONSE);
+  LText := InvokeParseResponseBody(FClaudeProv, CLAUDE_MOCK_RESPONSE, LUsage);
   Assert.AreEqual('Hello! I am Anthropic Claude.', LText);
+  Assert.AreEqual(14, LUsage.PromptTokens);
+  Assert.AreEqual(21, LUsage.CompletionTokens);
+  Assert.AreEqual(35, LUsage.TotalTokens);
 end;
 
 

@@ -4,14 +4,14 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Provider.Base;
+  RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAOpenAIProvider = class(TRadIAProviderBase)
   private
     function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
-    function ParseResponseBody(const AResponseJson: string): string;
+    function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
@@ -80,41 +80,50 @@ begin
   end;
 end;
 
-function TRadIAOpenAIProvider.ParseResponseBody(const AResponseJson: string): string;
+function TRadIAOpenAIProvider.ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
 var
   LJsonObj: TJSONObject;
   LChoices: TJSONArray;
   LChoice: TJSONObject;
   LMessage: TJSONObject;
+  LUsageNode: TJSONObject;
 begin
   Result := '';
+  AUsage := TTokenUsage.Empty;
+
   LJsonObj := TJSONObject.ParseJSONValue(AResponseJson) as TJSONObject;
-  if Assigned(LJsonObj) then
-  begin
-    try
-      LChoices := LJsonObj.GetValue('choices') as TJSONArray;
-      if Assigned(LChoices) and (LChoices.Count > 0) then
-      begin
-        LChoice := LChoices.Items[0] as TJSONObject;
-        LMessage := LChoice.GetValue('message') as TJSONObject;
-        if Assigned(LMessage) then
-        begin
-          Result := LMessage.GetValue('content').Value;
-        end;
-      end;
-      
-      if Result.IsEmpty then
-      begin
-        if LJsonObj.GetValue('error') <> nil then
-          raise Exception.Create(LJsonObj.GetValue('error').ToString);
-      end;
-    finally
-      LJsonObj.Free;
+  if not Assigned(LJsonObj) then
+    Exit;
+
+  try
+    { Extract text from choices[0].message.content }
+    LChoices := LJsonObj.GetValue('choices') as TJSONArray;
+    if Assigned(LChoices) and (LChoices.Count > 0) then
+    begin
+      LChoice := LChoices.Items[0] as TJSONObject;
+      LMessage := LChoice.GetValue('message') as TJSONObject;
+      if Assigned(LMessage) then
+        Result := LMessage.GetValue('content').Value;
     end;
+
+    { Check for API error }
+    if Result.IsEmpty and Assigned(LJsonObj.GetValue('error')) then
+      raise Exception.Create(LJsonObj.GetValue('error').ToString);
+
+    { Extract token usage }
+    LUsageNode := LJsonObj.GetValue('usage') as TJSONObject;
+    if Assigned(LUsageNode) then
+    begin
+      AUsage.PromptTokens     := LUsageNode.GetValue<Integer>('prompt_tokens', 0);
+      AUsage.CompletionTokens := LUsageNode.GetValue<Integer>('completion_tokens', 0);
+      AUsage.TotalTokens      := LUsageNode.GetValue<Integer>('total_tokens', 0);
+    end;
+  finally
+    LJsonObj.Free;
   end;
 end;
 
-procedure TRadIAOpenAIProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+procedure TRadIAOpenAIProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
   const ACallback: TCompletionCallback);
 var
   LUrl, LApiKey, LRequestBody: string;
@@ -124,7 +133,7 @@ begin
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
-    ACallback('', 'API Key is missing for OpenAI. Please check settings.', False);
+    ACallback('', 'API Key is missing for OpenAI. Please check settings.', False, TTokenUsage.Empty);
     Exit;
   end;
 
@@ -133,7 +142,7 @@ begin
     LUrl := FConfig.GetOpenAICustomBaseUrl.TrimRight(['/']) + '/chat/completions'
   else
     LUrl := 'https://api.openai.com/v1/chat/completions';
-  
+
   SetLength(LHeaders, 1);
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
 
@@ -142,36 +151,40 @@ begin
   except
     on E: Exception do
     begin
-      ACallback('', 'Error building request JSON: ' + E.Message, False);
+      ACallback('', 'Error building request JSON: ' + E.Message, False, TTokenUsage.Empty);
       Exit;
     end;
   end;
 
-  LTaskProc := procedure
-               var
-                 LResponseText: string;
-                 LQueueProc: TThreadProcedure;
-               begin
-                 try
-                   LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
-                   LResponseText := ParseResponseBody(LResponseText);
-                   
-                   LQueueProc := procedure
-                                 begin
-                                   ACallback(LResponseText, '', False);
-                                 end;
-                   TThread.Queue(nil, LQueueProc);
-                 except
-                   on E: Exception do
-                   begin
-                     LQueueProc := procedure
-                                   begin
-                                     ACallback('', E.Message, False);
-                                   end;
-                     TThread.Queue(nil, LQueueProc);
-                   end;
-                 end;
-               end;
+  LTaskProc :=
+    procedure
+    var
+      LResponseText: string;
+      LUsage: TTokenUsage;
+      LQueueProc: TThreadProcedure;
+    begin
+      try
+        LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
+        LResponseText := ParseResponseBody(LResponseText, LUsage);
+
+        LQueueProc :=
+          procedure
+          begin
+            ACallback(LResponseText, '', False, LUsage);
+          end;
+        TThread.Queue(nil, LQueueProc);
+      except
+        on E: Exception do
+        begin
+          LQueueProc :=
+            procedure
+            begin
+              ACallback('', E.Message, False, TTokenUsage.Empty);
+            end;
+          TThread.Queue(nil, LQueueProc);
+        end;
+      end;
+    end;
 
   TTask.Run(LTaskProc);
 end;

@@ -164,3 +164,26 @@ body.light-theme .copy-btn, body.light-theme .apply-btn {
   color: white;
   border-color: #28a745;
 }
+
+/* Status Bar for Token Usage */
+#status-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background-color: #252526;
+  color: #858585;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-top: 1px solid #3c3c3c;
+  font-family: Consolas, Monaco, monospace;
+}
+
+body.light-theme #status-bar {
+  background-color: #f3f3f3;
+  border-top-color: #cccccc;
+  color: #666666;
+}
+
+#status-bar.hidden {
+  display: none;
+}

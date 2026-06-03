@@ -77,6 +77,18 @@ function applyCode(code) {
   }
 }
 
+const statusBar = document.getElementById('status-bar');
+const statusText = document.getElementById('status-text');
+
+function updateTokens(text) {
+  if (text) {
+    statusText.innerText = text;
+    statusBar.classList.remove('hidden');
+  } else {
+    statusBar.classList.add('hidden');
+  }
+}
+
 // Listen for messages from Delphi (WebView2)
 if (window.chrome && window.chrome.webview) {
   window.chrome.webview.addEventListener('message', event => {
@@ -87,6 +99,8 @@ if (window.chrome && window.chrome.webview) {
       clearChat();
     } else if (data.action === 'set_theme') {
       setTheme(data.theme);
+    } else if (data.action === 'update_tokens') {
+      updateTokens(data.text);
     }
   });
 }

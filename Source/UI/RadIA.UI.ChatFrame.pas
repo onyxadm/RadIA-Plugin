@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Core.Service, RadIA.Core.PromptHistory;
+  RadIA.Core.Service, RadIA.Core.PromptHistory, RadIA.Core.TokenUsage;
 
 type
   TFrameAIChat = class(TFrame)
@@ -36,6 +36,8 @@ type
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
     FPromptHistoryManager: TPromptHistoryManager;
+    FAccumulatedUsage: TTokenUsage;
+    FAccumulatedCost: TTokenCost;
     
     procedure InitializeWebView;
     procedure CopyWebFiles;
@@ -60,7 +62,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame;
+  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, RadIA.Core.Pricing;
 
 constructor TFrameAIChat.Create(AOwner: TComponent);
 begin
@@ -71,6 +73,8 @@ begin
   FConfig := TRadIAConfig.Create;
   FAIService := TRadIAService.Create(FConfig);
   FPromptHistoryManager := TPromptHistoryManager.Create;
+  FAccumulatedUsage := TTokenUsage.Empty;
+  FAccumulatedCost := TTokenCost.Zero;
   
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   CopyWebFiles;
@@ -192,7 +196,10 @@ var
   LHistoryFile: string;
 begin
   FHistory := [];
+  FAccumulatedUsage := TTokenUsage.Empty;
+  FAccumulatedCost := TTokenCost.Zero;
   PostToWebView('clear_chat', '', '');
+  PostToWebView('update_tokens', '', '');
   
   { Clear physical file }
   LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
@@ -325,10 +332,12 @@ begin
   LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText);
   
   FAIService.SendPrompt(APromptText, FHistory,
-    procedure(const AResponse: string; const AError: string; AFromCache: Boolean)
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
     var
       LAssistantMsg: IChatMessage;
       LDisplayResponse: string;
+      LCost: TTokenCost;
+      LStats: string;
     begin
       btnSend.Enabled := True;
       if not AError.IsEmpty then
@@ -342,6 +351,20 @@ begin
         LDisplayResponse := LDisplayResponse + sLineBreak + sLineBreak + '*[resposta obtida de cache local]*';
 
       PostToWebView('add_message', 'assistant', LDisplayResponse);
+      
+      { Accumulate and update token usage stats }
+      if not AUsage.IsEmpty then
+      begin
+        FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + AUsage.PromptTokens;
+        FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + AUsage.CompletionTokens;
+        FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + AUsage.TotalTokens;
+        
+        LCost := TPricingManager.Calculate(AUsage, FConfig.GetActiveProvider, FConfig.GetActiveModel(FConfig.GetActiveProvider));
+        FAccumulatedCost.EstimatedCostUSD := FAccumulatedCost.EstimatedCostUSD + LCost.EstimatedCostUSD;
+        
+        LStats := TPricingManager.FormatTokenStats(FAccumulatedUsage, FAccumulatedCost);
+        PostToWebView('update_tokens', '', LStats);
+      end;
       
       { Save history }
       FHistory := FHistory + [LUserMsg];

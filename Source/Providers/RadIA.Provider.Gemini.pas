@@ -4,14 +4,14 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Net.HttpClient, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Provider.Base;
+  RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAGeminiProvider = class(TRadIAProviderBase)
   private
     function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
-    function ParseResponseBody(const AResponseJson: string): string;
+    function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
@@ -126,7 +126,7 @@ begin
   end;
 end;
 
-function TRadIAGeminiProvider.ParseResponseBody(const AResponseJson: string): string;
+function TRadIAGeminiProvider.ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
 var
   LJsonObj: TJSONObject;
   LCandidates: TJSONArray;
@@ -134,41 +134,51 @@ var
   LContent: TJSONObject;
   LParts: TJSONArray;
   LPart: TJSONObject;
+  LUsageNode: TJSONObject;
 begin
   Result := '';
+  AUsage := TTokenUsage.Empty;
+
   LJsonObj := TJSONObject.ParseJSONValue(AResponseJson) as TJSONObject;
-  if Assigned(LJsonObj) then
-  begin
-    try
-      LCandidates := LJsonObj.GetValue('candidates') as TJSONArray;
-      if Assigned(LCandidates) and (LCandidates.Count > 0) then
+  if not Assigned(LJsonObj) then
+    Exit;
+
+  try
+    { Extract text from candidates[0].content.parts[0].text }
+    LCandidates := LJsonObj.GetValue('candidates') as TJSONArray;
+    if Assigned(LCandidates) and (LCandidates.Count > 0) then
+    begin
+      LCandidate := LCandidates.Items[0] as TJSONObject;
+      LContent := LCandidate.GetValue('content') as TJSONObject;
+      if Assigned(LContent) then
       begin
-        LCandidate := LCandidates.Items[0] as TJSONObject;
-        LContent := LCandidate.GetValue('content') as TJSONObject;
-        if Assigned(LContent) then
+        LParts := LContent.GetValue('parts') as TJSONArray;
+        if Assigned(LParts) and (LParts.Count > 0) then
         begin
-          LParts := LContent.GetValue('parts') as TJSONArray;
-          if Assigned(LParts) and (LParts.Count > 0) then
-          begin
-            LPart := LParts.Items[0] as TJSONObject;
-            Result := LPart.GetValue('text').Value;
-          end;
+          LPart := LParts.Items[0] as TJSONObject;
+          Result := LPart.GetValue('text').Value;
         end;
       end;
-      
-      if Result.IsEmpty then
-      begin
-        // Check if there was an API error in the response
-        if LJsonObj.GetValue('error') <> nil then
-          raise Exception.Create(LJsonObj.GetValue('error').ToString);
-      end;
-    finally
-      LJsonObj.Free;
     end;
+
+    { Check for API error in response }
+    if Result.IsEmpty and Assigned(LJsonObj.GetValue('error')) then
+      raise Exception.Create(LJsonObj.GetValue('error').ToString);
+
+    { Extract token usage from usageMetadata }
+    LUsageNode := LJsonObj.GetValue('usageMetadata') as TJSONObject;
+    if Assigned(LUsageNode) then
+    begin
+      AUsage.PromptTokens     := LUsageNode.GetValue<Integer>('promptTokenCount', 0);
+      AUsage.CompletionTokens := LUsageNode.GetValue<Integer>('candidatesTokenCount', 0);
+      AUsage.TotalTokens      := LUsageNode.GetValue<Integer>('totalTokenCount', 0);
+    end;
+  finally
+    LJsonObj.Free;
   end;
 end;
 
-procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
   const ACallback: TCompletionCallback);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
@@ -176,14 +186,14 @@ var
 begin
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
-  
+
   if LApiKey.IsEmpty then
   begin
-    ACallback('', 'API Key is missing for Google Gemini. Please check settings.', False);
+    ACallback('', 'API Key is missing for Google Gemini. Please check settings.', False, TTokenUsage.Empty);
     Exit;
   end;
 
-  LUrl := Format('https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s', 
+  LUrl := Format('https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
     [LModel, LApiKey]);
 
   try
@@ -191,36 +201,40 @@ begin
   except
     on E: Exception do
     begin
-      ACallback('', 'Error building request JSON: ' + E.Message, False);
+      ACallback('', 'Error building request JSON: ' + E.Message, False, TTokenUsage.Empty);
       Exit;
     end;
   end;
 
-  LTaskProc := procedure
-               var
-                 LResponseText: string;
-                 LQueueProc: TThreadProcedure;
-               begin
-                 try
-                   LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
-                   LResponseText := ParseResponseBody(LResponseText);
-                   
-                   LQueueProc := procedure
-                                 begin
-                                   ACallback(LResponseText, '', False);
-                                 end;
-                   TThread.Queue(nil, LQueueProc);
-                 except
-                   on E: Exception do
-                   begin
-                     LQueueProc := procedure
-                                   begin
-                                     ACallback('', E.Message, False);
-                                   end;
-                     TThread.Queue(nil, LQueueProc);
-                   end;
-                 end;
-               end;
+  LTaskProc :=
+    procedure
+    var
+      LResponseText: string;
+      LUsage: TTokenUsage;
+      LQueueProc: TThreadProcedure;
+    begin
+      try
+        LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
+        LResponseText := ParseResponseBody(LResponseText, LUsage);
+
+        LQueueProc :=
+          procedure
+          begin
+            ACallback(LResponseText, '', False, LUsage);
+          end;
+        TThread.Queue(nil, LQueueProc);
+      except
+        on E: Exception do
+        begin
+          LQueueProc :=
+            procedure
+            begin
+              ACallback('', E.Message, False, TTokenUsage.Empty);
+            end;
+          TThread.Queue(nil, LQueueProc);
+        end;
+      end;
+    end;
 
   TTask.Run(LTaskProc);
 end;

@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service;
+  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage;
 
 type
   { Form to compare code changes side-by-side before applying them to the editor }
@@ -127,7 +127,7 @@ begin
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
   FAIService.SendPrompt(LPrompt, [],
-    procedure(const AResponse: string; const AError: string; AFromCache: Boolean)
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
     var
       LCleanedResponse: string;
     begin

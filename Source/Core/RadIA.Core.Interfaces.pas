@@ -3,11 +3,19 @@ unit RadIA.Core.Interfaces;
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Types;
+  System.SysUtils, System.Classes, RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 type
-  { Callback type for asynchronous AI responses }
-  TCompletionCallback = reference to procedure(const AResponse: string; const AError: string; AFromCache: Boolean);
+  { Callback type for asynchronous AI responses.
+    AResponse   : Text returned by the AI (empty on error)
+    AError      : Error description (empty on success)
+    AFromCache  : True when the response was served from local cache
+    AUsage      : Token counters (may be empty for providers that do not report usage) }
+  TCompletionCallback = reference to procedure(
+    const AResponse: string;
+    const AError: string;
+    AFromCache: Boolean;
+    const AUsage: TTokenUsage);
 
   { Interface representing a message in the chat history }
   IChatMessage = interface

@@ -4,7 +4,7 @@ interface
 
 uses
   DUnitX.TestFramework, System.Rtti, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Types, 
-  RadIA.Core.Service, RadIA.Provider.Ollama;
+  RadIA.Core.TokenUsage, RadIA.Core.Service, RadIA.Provider.Ollama;
 
 type
   [TestFixture]
@@ -109,13 +109,25 @@ procedure TTestRadIAOllama.TestResponseBodyParsing;
 var
   LResponseJson: string;
   LParsedText: string;
+  LArgs: TArray<TValue>;
+  LUsage: TTokenUsage;
 begin
   LResponseJson := 
     '{"model":"llama3:latest","created_at":"2026-06-02T21:00:00Z",' +
-    '"message":{"role":"assistant","content":"This is the AI response content"},"done":true}';
+    '"message":{"role":"assistant","content":"This is the AI response content"},' +
+    '"prompt_eval_count":15,"eval_count":25,"done":true}';
     
-  LParsedText := CallPrivateMethod('ParseResponseBody', [LResponseJson]).AsString;
+  SetLength(LArgs, 2);
+  LArgs[0] := LResponseJson;
+  LArgs[1] := TValue.From<TTokenUsage>(TTokenUsage.Empty);
+  
+  LParsedText := CallPrivateMethod('ParseResponseBody', LArgs).AsString;
+  LUsage := LArgs[1].AsType<TTokenUsage>;
+  
   Assert.AreEqual('This is the AI response content', LParsedText);
+  Assert.AreEqual(15, LUsage.PromptTokens);
+  Assert.AreEqual(25, LUsage.CompletionTokens);
+  Assert.AreEqual(40, LUsage.TotalTokens);
 end;
 
 initialization
