@@ -3,16 +3,18 @@ unit RadIA.OTA.Register;
 interface
 
 uses
-  System.SysUtils, System.Classes, ToolsAPI;
+  System.SysUtils, System.Classes, ToolsAPI, Vcl.ExtCtrls;
 
 type
   { Wizard implementing IOTAWizard to register RadIA into Delphi IDE }
   TRadIAWizard = class(TInterfacedObject, IOTAWizard)
   private
     FEditorHook: TObject;
+    FTimer: TTimer;
     procedure RegisterMenus;
     procedure UnregisterMenus;
     procedure OnRequestDiff(const AOriginalCode: string);
+    procedure OnTimerEvent(Sender: TObject);
   public
     constructor Create;
     destructor Destroy; override;
@@ -168,12 +170,23 @@ begin
   inherited Create;
   FEditorHook := TRadIAEditorHook.Create(nil);
   RegisterMenus;
+  
+  FTimer := TTimer.Create(nil);
+  FTimer.Interval := 1000;
+  FTimer.OnTimer := OnTimerEvent;
+  FTimer.Enabled := True;
+  
   TRadIAMediator.Instance.RegisterDiffHandler(OnRequestDiff);
 end;
 
 destructor TRadIAWizard.Destroy;
 begin
   TRadIAMediator.Instance.UnregisterDiffHandler;
+  if Assigned(FTimer) then
+  begin
+    FTimer.Enabled := False;
+    FTimer.Free;
+  end;
   UnregisterMenus;
   FEditorHook.Free;
   inherited Destroy;
@@ -315,6 +328,75 @@ begin
   else
   begin
     LogDebug('Error: INTAServices NOT supported');
+  end;
+end;
+
+procedure TRadIAWizard.OnTimerEvent(Sender: TObject);
+var
+  LNTAServices: INTAServices;
+  LToolsMenu: TMenuItem;
+  LPopupMenu: TComponent;
+  LToolsPopulated: Boolean;
+  LContextPopulated: Boolean;
+  I: Integer;
+  LHook: TRadIAEditorHook;
+begin
+  LToolsPopulated := False;
+  LContextPopulated := False;
+  LHook := TRadIAEditorHook(FEditorHook);
+
+  if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
+  begin
+    // 1. Verificar e popular o menu Tools
+    LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
+    if Assigned(LToolsMenu) then
+    begin
+      for I := 0 to LToolsMenu.Count - 1 do
+      begin
+        if (LToolsMenu.Items[I].Action = LHook.ShowChatAction) or 
+           (LToolsMenu.Items[I].Action = LHook.FixErrorAction) then
+        begin
+          LToolsPopulated := True;
+          Break;
+        end;
+      end;
+
+      if not LToolsPopulated then
+      begin
+        LogDebug('Tools menu not populated or reset. Populating now...');
+        LHook.PopulateToolsMenu(LToolsMenu);
+        LToolsPopulated := True;
+        LogDebug('Tools menu populated successfully');
+      end;
+    end;
+
+    // 2. Verificar e popular o menu de contexto do editor
+    LPopupMenu := Application.FindComponent('EditorContextMenu');
+    if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
+    begin
+      for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
+      begin
+        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, '🤖 RadIA') then
+        begin
+          LContextPopulated := True;
+          Break;
+        end;
+      end;
+
+      if not LContextPopulated then
+      begin
+        LogDebug('Editor context menu found. Populating now...');
+        LHook.PopulateContextMenu(TPopupMenu(LPopupMenu));
+        LContextPopulated := True;
+        LogDebug('Editor context menu populated successfully');
+      end;
+    end;
+  end;
+
+  if LToolsPopulated and LContextPopulated then
+  begin
+    LogDebug('All menus populated. Disabling timer.');
+    FTimer.Enabled := False;
   end;
 end;
 
