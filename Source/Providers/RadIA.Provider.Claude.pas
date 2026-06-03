@@ -10,15 +10,18 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAClaudeProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback); override;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TStreamChunkCallback); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
+    procedure ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
   end;
 
 implementation
@@ -44,7 +47,7 @@ begin
   Result := 'Anthropic Claude';
 end;
 
-function TRadIAClaudeProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+function TRadIAClaudeProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
@@ -56,6 +59,8 @@ begin
   try
     LRootObj.AddPair('model', GetActiveModel);
     LRootObj.AddPair('max_tokens', TJSONNumber.Create(4096));
+    if AStream then
+      LRootObj.AddPair('stream', TJSONBool.Create(True));
     
     LMessagesArr := TJSONArray.Create;
     LRootObj.AddPair('messages', LMessagesArr);
@@ -195,6 +200,132 @@ begin
                    end;
                  end;
                end;
+
+  TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAClaudeProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
+var
+  LLine: string;
+  LJsonLine: string;
+  LJson: TJSONObject;
+  LTypeStr: string;
+  LDeltaObj: TJSONObject;
+  LText: string;
+  LQueueProc: TThreadProcedure;
+begin
+  while ABuffer.Contains(#10) do
+  begin
+    LLine := ABuffer.Substring(0, ABuffer.IndexOf(#10));
+    ABuffer := ABuffer.Substring(ABuffer.IndexOf(#10) + 1);
+
+    LLine := Trim(LLine);
+    if LLine.StartsWith('data:') then
+    begin
+      LJsonLine := Trim(LLine.Substring(5));
+      if LJsonLine.IsEmpty then
+        Continue;
+
+      try
+        LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
+        if Assigned(LJson) then
+        begin
+          try
+            LTypeStr := LJson.GetValue<string>('type', '');
+            if LTypeStr = 'content_block_delta' then
+            begin
+              LDeltaObj := LJson.GetValue('delta') as TJSONObject;
+              if Assigned(LDeltaObj) and Assigned(LDeltaObj.GetValue('text')) then
+              begin
+                LText := LDeltaObj.GetValue('text').Value;
+                LQueueProc := procedure
+                              begin
+                                ACallback(LText, False, '');
+                              end;
+                TThread.Queue(nil, LQueueProc);
+              end;
+            end
+            else if LTypeStr = 'message_stop' then
+            begin
+              LQueueProc := procedure
+                            begin
+                              ACallback('', True, '');
+                            end;
+              TThread.Queue(nil, LQueueProc);
+              Exit;
+            end;
+          finally
+            LJson.Free;
+          end;
+        end;
+      except
+        { Ignore parse errors }
+      end;
+    end;
+  end;
+end;
+
+procedure TRadIAClaudeProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const ACallback: TStreamChunkCallback);
+var
+  LUrl, LApiKey, LRequestBody: string;
+  LHeaders: TNetHeaders;
+  LTaskProc: TProc;
+begin
+  LApiKey := GetApiKey;
+  if LApiKey.IsEmpty then
+  begin
+    ACallback('', True, 'API Key is missing for Anthropic Claude. Please check settings.');
+    Exit;
+  end;
+
+  LUrl := 'https://api.anthropic.com/v1/messages';
+  
+  SetLength(LHeaders, 2);
+  LHeaders[0] := TNetHeader.Create('x-api-key', LApiKey);
+  LHeaders[1] := TNetHeader.Create('anthropic-version', '2023-06-01');
+
+  try
+    LRequestBody := BuildRequestBody(APrompt, AHistory, True);
+  except
+    on E: Exception do
+    begin
+      ACallback('', True, 'Error building request JSON: ' + E.Message);
+      Exit;
+    end;
+  end;
+
+  LTaskProc :=
+    procedure
+    var
+      LBufferText: string;
+      LQueueProc: TThreadProcedure;
+    begin
+      LBufferText := '';
+      try
+        DoPostRequestStream(LUrl, LHeaders, LRequestBody,
+          procedure(ABytes: TBytes)
+          begin
+            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
+            ProcessStreamBuffer(LBufferText, ACallback);
+          end);
+
+        LQueueProc := procedure
+                      begin
+                        ACallback('', True, '');
+                      end;
+        TThread.Queue(nil, LQueueProc);
+      except
+        on E: Exception do
+        begin
+          LQueueProc := procedure
+                        begin
+                          ACallback('', True, E.Message);
+                        end;
+          TThread.Queue(nil, LQueueProc);
+        end;
+      end;
+    end;
 
   TTask.Run(LTaskProc);
 end;

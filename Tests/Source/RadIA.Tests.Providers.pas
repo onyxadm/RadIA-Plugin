@@ -85,7 +85,10 @@ begin
   LMethod := LType.GetMethod('BuildRequestBody');
   if Assigned(LMethod) then
   begin
-    LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory)]);
+    if Length(LMethod.GetParameters) = 3 then
+      LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), False])
+    else
+      LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory)]);
     Result := LResult.AsString;
   end
   else

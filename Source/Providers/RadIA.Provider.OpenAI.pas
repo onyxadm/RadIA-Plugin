@@ -10,13 +10,16 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAOpenAIProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
+    procedure ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback); override;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TStreamChunkCallback); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -45,7 +48,7 @@ begin
   Result := 'OpenAI ChatGPT';
 end;
 
-function TRadIAOpenAIProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+function TRadIAOpenAIProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
@@ -55,6 +58,8 @@ begin
   LRootObj := TJSONObject.Create;
   try
     LRootObj.AddPair('model', GetActiveModel);
+    if AStream then
+      LRootObj.AddPair('stream', TJSONBool.Create(True));
     
     LMessagesArr := TJSONArray.Create;
     LRootObj.AddPair('messages', LMessagesArr);
@@ -286,6 +291,128 @@ begin
                    LModelsList.Free;
                  end;
                end;
+
+  TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAOpenAIProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
+var
+  LLine: string;
+  LJsonLine: string;
+  LJson: TJSONObject;
+  LChoices: TJSONArray;
+  LChoice: TJSONObject;
+  LDelta: TJSONObject;
+  LContent: string;
+  LQueueProc: TThreadProcedure;
+begin
+  while ABuffer.Contains(#10) do
+  begin
+    LLine := ABuffer.Substring(0, ABuffer.IndexOf(#10));
+    ABuffer := ABuffer.Substring(ABuffer.IndexOf(#10) + 1);
+    
+    LLine := Trim(LLine);
+    if LLine.StartsWith('data:') then
+    begin
+      LJsonLine := Trim(LLine.Substring(5));
+      if LJsonLine = '[DONE]' then
+      begin
+        LQueueProc := procedure
+                      begin
+                        ACallback('', True, '');
+                      end;
+        TThread.Queue(nil, LQueueProc);
+        Exit;
+      end;
+      
+      try
+        LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
+        if Assigned(LJson) then
+        begin
+          try
+            LChoices := LJson.GetValue('choices') as TJSONArray;
+            if Assigned(LChoices) and (LChoices.Count > 0) then
+            begin
+              LChoice := LChoices.Items[0] as TJSONObject;
+              LDelta := LChoice.GetValue('delta') as TJSONObject;
+              if Assigned(LDelta) and Assigned(LDelta.GetValue('content')) then
+              begin
+                LContent := LDelta.GetValue('content').Value;
+                LQueueProc := procedure
+                              begin
+                                ACallback(LContent, False, '');
+                              end;
+                TThread.Queue(nil, LQueueProc);
+              end;
+            end;
+          finally
+            LJson.Free;
+          end;
+        end;
+      except
+        { Ignore JSON parse errors }
+      end;
+    end;
+  end;
+end;
+
+procedure TRadIAOpenAIProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const ACallback: TStreamChunkCallback);
+var
+  LUrl, LApiKey, LRequestBody: string;
+  LHeaders: TNetHeaders;
+  LTaskProc: TProc;
+begin
+  LApiKey := GetApiKey;
+  if LApiKey.IsEmpty then
+  begin
+    ACallback('', True, 'API Key is missing for OpenAI. Please check settings.');
+    Exit;
+  end;
+
+  if not FConfig.GetOpenAICustomBaseUrl.IsEmpty then
+    LUrl := FConfig.GetOpenAICustomBaseUrl.TrimRight(['/']) + '/chat/completions'
+  else
+    LUrl := 'https://api.openai.com/v1/chat/completions';
+
+  SetLength(LHeaders, 1);
+  LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
+
+  try
+    LRequestBody := BuildRequestBody(APrompt, AHistory, True);
+  except
+    on E: Exception do
+    begin
+      ACallback('', True, 'Error building request JSON: ' + E.Message);
+      Exit;
+    end;
+  end;
+
+  LTaskProc :=
+    procedure
+    var
+      LBufferText: string;
+      LQueueProc: TThreadProcedure;
+    begin
+      LBufferText := '';
+      try
+        DoPostRequestStream(LUrl, LHeaders, LRequestBody,
+          procedure(ABytes: TBytes)
+          begin
+            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
+            ProcessStreamBuffer(LBufferText, ACallback);
+          end);
+      except
+        on E: Exception do
+        begin
+          LQueueProc := procedure
+                        begin
+                          ACallback('', True, E.Message);
+                        end;
+          TThread.Queue(nil, LQueueProc);
+        end;
+      end;
+    end;
 
   TTask.Run(LTaskProc);
 end;

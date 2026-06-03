@@ -89,11 +89,55 @@ function updateTokens(text) {
   }
 }
 
+let currentAssistantMessageDiv = null;
+let currentAssistantText = '';
+let typingIndicator = null;
+
+function showTypingIndicator() {
+  if (typingIndicator) return;
+  typingIndicator = document.createElement('div');
+  typingIndicator.classList.add('typing-indicator');
+  typingIndicator.innerHTML = `
+    <div class="typing-dot"></div>
+    <div class="typing-dot"></div>
+    <div class="typing-dot"></div>
+  `;
+  chatContainer.appendChild(typingIndicator);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function hideTypingIndicator() {
+  if (typingIndicator) {
+    typingIndicator.remove();
+    typingIndicator = null;
+  }
+}
+
+function appendMessage(text, isDone) {
+  hideTypingIndicator();
+
+  if (!currentAssistantMessageDiv) {
+    currentAssistantMessageDiv = document.createElement('div');
+    currentAssistantMessageDiv.classList.add('message', 'assistant');
+    chatContainer.appendChild(currentAssistantMessageDiv);
+  }
+
+  currentAssistantText += text;
+  currentAssistantMessageDiv.innerHTML = marked.parse(currentAssistantText);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+
+  if (isDone) {
+    currentAssistantMessageDiv = null;
+    currentAssistantText = '';
+  }
+}
+
 // Listen for messages from Delphi (WebView2)
 if (window.chrome && window.chrome.webview) {
   window.chrome.webview.addEventListener('message', event => {
     const data = event.data;
     if (data.action === 'add_message') {
+      hideTypingIndicator();
       addMessage(data.role, data.text);
     } else if (data.action === 'clear_chat') {
       clearChat();
@@ -101,6 +145,10 @@ if (window.chrome && window.chrome.webview) {
       setTheme(data.theme);
     } else if (data.action === 'update_tokens') {
       updateTokens(data.text);
+    } else if (data.action === 'show_typing') {
+      showTypingIndicator();
+    } else if (data.action === 'append_message') {
+      appendMessage(data.text, data.isDone);
     }
   });
 }

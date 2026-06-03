@@ -187,3 +187,40 @@ body.light-theme #status-bar {
 #status-bar.hidden {
   display: none;
 }
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  align-self: flex-start;
+  background-color: #252526;
+  border-radius: 6px;
+  border: 1px solid #3c3c3c;
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+body.light-theme .typing-indicator {
+  background-color: #ffffff;
+  border-color: #cccccc;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #858585;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+body.light-theme .typing-dot {
+  background-color: #555555;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
+}

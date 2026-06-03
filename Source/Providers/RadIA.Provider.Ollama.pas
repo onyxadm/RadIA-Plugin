@@ -10,16 +10,19 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAOllamaProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback); override;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TStreamChunkCallback); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
+    procedure ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
   end;
 
 implementation
@@ -45,7 +48,7 @@ begin
   Result := 'Ollama Local/Network';
 end;
 
-function TRadIAOllamaProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+function TRadIAOllamaProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
@@ -55,7 +58,7 @@ begin
   LRootObj := TJSONObject.Create;
   try
     LRootObj.AddPair('model', GetActiveModel);
-    LRootObj.AddPair('stream', TJSONBool.Create(False));
+    LRootObj.AddPair('stream', TJSONBool.Create(AStream));
     
     LMessagesArr := TJSONArray.Create;
     LRootObj.AddPair('messages', LMessagesArr);
@@ -233,6 +236,119 @@ begin
                    LModelsList.Free;
                  end;
                end;
+
+  TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAOllamaProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
+var
+  LLine: string;
+  LJson: TJSONObject;
+  LMsgObj: TJSONObject;
+  LContent: string;
+  LDone: Boolean;
+  LQueueProc: TThreadProcedure;
+begin
+  while ABuffer.Contains(#10) do
+  begin
+    LLine := ABuffer.Substring(0, ABuffer.IndexOf(#10));
+    ABuffer := ABuffer.Substring(ABuffer.IndexOf(#10) + 1);
+
+    LLine := Trim(LLine);
+    if LLine.IsEmpty then
+      Continue;
+
+    try
+      LJson := TJSONObject.ParseJSONValue(LLine) as TJSONObject;
+      if Assigned(LJson) then
+      begin
+        try
+          LContent := '';
+          LMsgObj := LJson.GetValue('message') as TJSONObject;
+          if Assigned(LMsgObj) and (LMsgObj.GetValue('content') <> nil) then
+          begin
+            LContent := LMsgObj.GetValue('content').Value;
+          end;
+
+          LDone := LJson.GetValue<Boolean>('done', False);
+
+          if not LContent.IsEmpty then
+          begin
+            LQueueProc := procedure
+                          begin
+                            ACallback(LContent, False, '');
+                          end;
+            TThread.Queue(nil, LQueueProc);
+          end;
+
+          if LDone then
+          begin
+            LQueueProc := procedure
+                          begin
+                            ACallback('', True, '');
+                          end;
+            TThread.Queue(nil, LQueueProc);
+            Exit;
+          end;
+        finally
+          LJson.Free;
+        end;
+      end;
+    except
+      { Ignore parse errors }
+    end;
+  end;
+end;
+
+procedure TRadIAOllamaProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const ACallback: TStreamChunkCallback);
+var
+  LUrl, LRequestBody: string;
+  LTaskProc: TProc;
+begin
+  LUrl := FConfig.OllamaBaseUrl + '/api/chat';
+
+  try
+    LRequestBody := BuildRequestBody(APrompt, AHistory, True);
+  except
+    on E: Exception do
+    begin
+      ACallback('', True, 'Error building request JSON: ' + E.Message);
+      Exit;
+    end;
+  end;
+
+  LTaskProc :=
+    procedure
+    var
+      LBufferText: string;
+      LQueueProc: TThreadProcedure;
+    begin
+      LBufferText := '';
+      try
+        DoPostRequestStream(LUrl, nil, LRequestBody,
+          procedure(ABytes: TBytes)
+          begin
+            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
+            ProcessStreamBuffer(LBufferText, ACallback);
+          end);
+
+        LQueueProc := procedure
+                      begin
+                        ACallback('', True, '');
+                      end;
+        TThread.Queue(nil, LQueueProc);
+      except
+        on E: Exception do
+        begin
+          LQueueProc := procedure
+                        begin
+                          ACallback('', True, E.Message);
+                        end;
+          TThread.Queue(nil, LQueueProc);
+        end;
+      end;
+    end;
 
   TTask.Run(LTaskProc);
 end;

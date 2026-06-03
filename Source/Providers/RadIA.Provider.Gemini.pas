@@ -17,9 +17,12 @@ type
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback); override;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TStreamChunkCallback); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
+    procedure ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
   end;
 
 implementation
@@ -346,6 +349,163 @@ begin
                    LModelsList.Free;
                  end;
                end;
+
+  TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAGeminiProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
+var
+  LOpenBrackets: Integer;
+  I: Integer;
+  LInString: Boolean;
+  LChar: Char;
+  LCandidateStr: string;
+  LJson: TJSONObject;
+  LCandidates: TJSONArray;
+  LCandidate: TJSONObject;
+  LContent: TJSONObject;
+  LParts: TJSONArray;
+  LPart: TJSONObject;
+  LText: string;
+  LQueueProc: TThreadProcedure;
+begin
+  while True do
+  begin
+    ABuffer := ABuffer.TrimLeft(['[', ',', #13, #10, ' ']);
+    if ABuffer.IsEmpty or not ABuffer.StartsWith('{') then
+      Break;
+
+    LOpenBrackets := 0;
+    LInString := False;
+    I := 0;
+    while I < ABuffer.Length do
+    begin
+      LChar := ABuffer.Chars[I];
+      if LChar = '"' then
+      begin
+        if (I = 0) or (ABuffer.Chars[I - 1] <> '\') then
+          LInString := not LInString;
+      end
+      else if not LInString then
+      begin
+        if LChar = '{' then
+          Inc(LOpenBrackets)
+        else if LChar = '}' then
+        begin
+          Dec(LOpenBrackets);
+          if LOpenBrackets = 0 then
+          begin
+            LCandidateStr := ABuffer.Substring(0, I + 1);
+            ABuffer := ABuffer.Substring(I + 1);
+
+            try
+              LJson := TJSONObject.ParseJSONValue(LCandidateStr) as TJSONObject;
+              if Assigned(LJson) then
+              begin
+                try
+                  LText := '';
+                  LCandidates := LJson.GetValue('candidates') as TJSONArray;
+                  if Assigned(LCandidates) and (LCandidates.Count > 0) then
+                  begin
+                    LCandidate := LCandidates.Items[0] as TJSONObject;
+                    LContent := LCandidate.GetValue('content') as TJSONObject;
+                    if Assigned(LContent) then
+                    begin
+                      LParts := LContent.GetValue('parts') as TJSONArray;
+                      if Assigned(LParts) and (LParts.Count > 0) then
+                      begin
+                        LPart := LParts.Items[0] as TJSONObject;
+                        LText := LPart.GetValue('text').Value;
+                      end;
+                    end;
+                  end;
+
+                  if not LText.IsEmpty then
+                  begin
+                    LQueueProc := procedure
+                                  begin
+                                    ACallback(LText, False, '');
+                                  end;
+                    TThread.Queue(nil, LQueueProc);
+                  end;
+                finally
+                  LJson.Free;
+                end;
+              end;
+            except
+              // Ignora erro de parse
+            end;
+            Break;
+          end;
+        end;
+      end;
+      Inc(I);
+    end;
+
+    if I >= ABuffer.Length then
+      Break;
+  end;
+end;
+
+procedure TRadIAGeminiProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const ACallback: TStreamChunkCallback);
+var
+  LUrl, LApiKey, LModel, LRequestBody: string;
+  LTaskProc: TProc;
+begin
+  LApiKey := GetApiKey;
+  LModel := GetActiveModel;
+
+  if LApiKey.IsEmpty then
+  begin
+    ACallback('', True, 'API Key is missing for Google Gemini. Please check settings.');
+    Exit;
+  end;
+
+  LUrl := Format('https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent?key=%s',
+    [LModel, LApiKey]);
+
+  try
+    LRequestBody := BuildRequestBody(APrompt, AHistory);
+  except
+    on E: Exception do
+    begin
+      ACallback('', True, 'Error building request JSON: ' + E.Message);
+      Exit;
+    end;
+  end;
+
+  LTaskProc :=
+    procedure
+    var
+      LBufferText: string;
+      LQueueProc: TThreadProcedure;
+    begin
+      LBufferText := '';
+      try
+        DoPostRequestStream(LUrl, nil, LRequestBody,
+          procedure(ABytes: TBytes)
+          begin
+            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
+            ProcessStreamBuffer(LBufferText, ACallback);
+          end);
+
+        LQueueProc := procedure
+                      begin
+                        ACallback('', True, '');
+                      end;
+        TThread.Queue(nil, LQueueProc);
+      except
+        on E: Exception do
+        begin
+          LQueueProc := procedure
+                        begin
+                          ACallback('', True, E.Message);
+                        end;
+          TThread.Queue(nil, LQueueProc);
+        end;
+      end;
+    end;
 
   TTask.Run(LTaskProc);
 end;

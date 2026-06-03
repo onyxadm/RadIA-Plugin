@@ -39,6 +39,7 @@ graph TD
     Ollama --> Base
 
     Base -->|HTTP REST async TTask| HTTPClient[System.Net.HttpClient]
+    Base -->|Interceptação de Chunk HTTP| StreamingStream[TStreamingTargetStream]
 
     ChatFrame -->|Histórico JSON| HistoryFile["%APPDATA%\RadIA\history.json"]
     Cache -->|Cache JSON LRU| CacheFile["%APPDATA%\RadIA\cache.json"]
@@ -54,26 +55,16 @@ graph TD
 | Unit | Responsabilidade |
 |---|---|
 | `RadIA.Core.Types.pas` | Enum `TAIProviderType` (Gemini, OpenAI, Claude, Ollama), `TAIMessageRole`, constantes de modelos, funções de conversão string/enum |
-| `RadIA.Core.Interfaces.pas` | Contratos `IIAProvider`, `IAIConfig`, `IChatMessage`, tipo `TCompletionCallback` |
-| `RadIA.Core.Config.pas` | `TRadIAConfig`: leitura/escrita no Registro do Windows (`HKEY_CURRENT_USER\Software\RadIA`), criptografia de API Keys via DPAPI (`CryptProtectData`/`CryptUnprotectData`) |
-| `RadIA.Core.Service.pas` | `TRadIAService`: orquestrador que cria o provedor ativo, injeta system prompt, consulta cache antes de enviar, salva no cache após resposta. `TRadIAChatMessage` concreto de `IChatMessage` |
-| `RadIA.Core.Cache.pas` | `TRadIACacheManager`: cache LRU em JSON (`cache.json`), limite de 500 entradas, expiração de 24h, hash SHA-1 por `provider+model+systemprompt+prompt+history` |
-
-#### Configurações persistidas no Registro
-
-| Chave do Registro | Tipo | Descrição |
-|---|---|---|
-| `ActiveProvider` | Integer | Enum `TAIProviderType` do provedor ativo |
-| `Gemini_ApiKey` | String | API Key do Gemini (Base64 criptografado com DPAPI) |
-| `OpenAI_ApiKey` | String | API Key da OpenAI (Base64 criptografado com DPAPI) |
-| `Claude_ApiKey` | String | API Key do Claude (Base64 criptografado com DPAPI) |
-| `Ollama_ApiKey` | String | Não utilizado (Ollama não requer key) |
-| `Gemini_ActiveModel` | String | Modelo ativo do Gemini (ex: `gemini-1.5-flash`) |
-| `OpenAI_ActiveModel` | String | Modelo ativo da OpenAI (ex: `gpt-4o-mini`) |
-| `Claude_ActiveModel` | String | Modelo ativo do Claude (ex: `claude-3-haiku-20240307`) |
-| `Ollama_ActiveModel` | String | Modelo ativo do Ollama (ex: `llama3:latest`) |
-| `SystemPrompt` | String | Instrução de sistema customizada (plain text) |
-| `OllamaBaseUrl` | String | URL base do servidor Ollama (padrão: `http://localhost:11434`) |
+| `RadIA.Core.Interfaces.pas` | Contratos `IIAProvider`, `IAIConfig`, `IChatMessage`, tipo `TCompletionCallback` e `TStreamChunkCallback` |
+| `RadIA.Core.Config.pas` | `TRadIAConfig`: leitura/escrita no Registro do Windows (`HKCU\Software\RadIA`), chaves API via Windows DPAPI, `MaxHistoryMessages`, `OpenAICustomBaseUrl` |
+| `RadIA.Core.Service.pas` | `TRadIAService`: orquestrador central de requisições (`SendPrompt` e `SendPromptStream`), cria o provedor ativo, injeta system prompt e contexto de projeto `.radia`, aplica trimming do histórico |
+| `RadIA.Core.Cache.pas` | `TRadIACacheManager`: cache LRU em JSON (`cache.json`), limite de 500 entradas, expiração de 24h, hash SHA-1 |
+| `RadIA.Core.PromptHistory.pas` | `TPromptHistoryManager`: histórico de consultas recentes (FIFO limite 50) persistido em JSON para navegação ↑/↓ no chat |
+| `RadIA.Core.TokenUsage.pas` | Record `TTokenUsage` (PromptTokens, CompletionTokens) e `TTokenCost` (EstimatedCostUSD) |
+| `RadIA.Core.Pricing.pas` | `TPricingManager`: estimativa de custo de tokens e formatação conforme locale invariant (USD) |
+| `RadIA.Core.ConversationExporter.pas` | `TConversationExporter`: gerador de arquivos formatados nos formatos Markdown e HTML autossuficiente |
+| `RadIA.Core.PromptTemplates.pas` | `TPromptTemplateManager`: gerencia e carrega templates de prompts e slash commands em `%APPDATA%\RadIA\templates.json` |
+| `RadIA.Core.ProjectContext.pas` | `TProjectContextLoader`: lê o arquivo `.radia` da pasta do projeto e funde system prompts |
 
 ---
 
@@ -81,18 +72,13 @@ graph TD
 
 Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
 
-| Unit | Endpoint | Autenticação |
+| Unit | Endpoint | Streaming SSE |
 |---|---|---|
-| `RadIA.Provider.Base.pas` | — | Classe base: `DoPostRequest`, `DoGetRequest` via `THTTPClient`. `FetchAvailableModelsAsync` padrão (usa `TThread.Queue`). |
-| `RadIA.Provider.Gemini.pas` | `POST /v1beta/models/{model}:generateContent` | Header `x-goog-api-key` |
-| `RadIA.Provider.OpenAI.pas` | `POST /v1/chat/completions` | Header `Authorization: Bearer {key}` |
-| `RadIA.Provider.Claude.pas` | `POST /v1/messages` | Header `x-api-key` + `anthropic-version: 2023-06-01` |
-| `RadIA.Provider.Ollama.pas` | `POST /api/chat` (stream=false) / `GET /api/tags` | Sem autenticação |
-
-#### Ollama — Comportamentos específicos
-- **Descoberta de modelos:** `GET <OllamaBaseUrl>/api/tags` → extrai campo `name` de cada objeto em `models[]`. Fallback estático: `llama3:latest`, `codellama:latest`, `mistral:latest`, `phi3:latest`.
-- **Envio:** `POST <OllamaBaseUrl>/api/chat` com payload `{ model, stream: false, messages: [...history, currentPrompt] }`.
-- **Resposta:** extrai `message.content` do JSON retornado.
+| `RadIA.Provider.Base.pas` | — | Classe base: suporta `TStreamingTargetStream` para interceptar a gravação de buffers em tempo real na chamada `THTTPClient.Post` |
+| `RadIA.Provider.Gemini.pas` | `generateContent` / `streamGenerateContent` | Sim, via parsing incremental de JSON com controle de chaves balanceadas |
+| `RadIA.Provider.OpenAI.pas` | `/v1/chat/completions` | Sim, via parsing de Server-Sent Events (data: `choices[0].delta`) |
+| `RadIA.Provider.Claude.pas` | `/v1/messages` | Sim, via parsing de SSE (data: `content_block_delta` e `message_stop`) |
+| `RadIA.Provider.Ollama.pas` | `/api/chat` | Sim, via parsing de objetos JSON delimitados por quebra de linha |
 
 ---
 
@@ -101,7 +87,7 @@ Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
 | Unit | Responsabilidade |
 |---|---|
 | `RadIA.OTA.Register.pas` | Registra o Wizard/package na IDE, cria ações no menu `Tools` e no menu de contexto do editor |
-| `RadIA.OTA.Helper.pas` | `ReplaceActiveEditorText`: lê seleção e substitui texto no buffer do editor ativo via `IOTAEditBlock` |
+| `RadIA.OTA.Helper.pas` | `ReplaceActiveEditorText`: lê seleção e substitui texto no editor ativo. `GetActiveProjectFolder` obtém a pasta do projeto |
 | `RadIA.OTA.ContextParser.pas` | Extrai a cláusula `interface` da unit ativa e os atributos da classe onde está o cursor |
 | `RadIA.OTA.EditorHook.pas` | Gerencia atalhos de teclado e customizações dos menus de contexto do editor |
 | `RadIA.OTA.MessageViewHook.pas` | Monitora a Messages View da IDE e extrai dados do erro compilado para acionar análise pela IA |
@@ -114,128 +100,23 @@ Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
 #### `RadIA.UI.ChatFrame` — Frame Principal do Chat
 
 **Componentes VCL:**
-- `cbProvider`: seleciona o provedor ativo; ao mudar, salva no config e recarrega modelos.
-- `cbModel`: modelos disponíveis carregados via `FetchAvailableModelsAsync`.
-- `btnSettings`: abre a janela de configurações (modal 340×585).
-- `btnClear`: limpa `FHistory`, envia `clear_chat` para WebView e apaga `history.json`.
-- `memPrompt + btnSend`: entrada de texto, envio para IA.
-- `EdgeBrowser`: renderiza o chat via `TEdgeBrowser` usando `chat.html` local.
+- `cbProvider` / `cbModel`: seleciona provedor e modelo de IA ativos.
+- `btnSettings`: abre janela de configurações.
+- `btnClear`: limpa histórico ativo.
+- `btnExport`: exporta chat para Markdown/HTML.
+- `btnTemplates`: popup de templates dinâmicos.
+- `memPrompt + btnSend`: entrada e envio de mensagens.
+- `EdgeBrowser`: Vcl EdgeBrowser carregando arquivo `chat.html` local.
 
-**Comunicação Delphi ↔ WebView2:**
-- **Delphi → Web:** `PostWebMessageAsJson` com JSON `{ action, role, text }`.
-  - `action: 'add_message'` — exibe mensagem no chat.
-  - `action: 'clear_chat'` — limpa toda a conversa na tela.
-  - `action: 'set_theme'` — aplica tema `dark` ou `light`.
-- **Web → Delphi:** `EdgeBrowserWebMessageReceived` com JSON `{ action: 'apply_code', code }` → chama `TRadIAOTAHelper.ReplaceActiveEditorText`.
-
-**Histórico Persistente:**
-- `LoadChatHistory`: ao inicializar o WebView, lê `%APPDATA%\RadIA\history.json`, recria `FHistory: TArray<IChatMessage>` e renderiza na WebView.
-- `SaveChatHistory`: após cada par user/assistant, serializa `FHistory` para JSON e grava no arquivo.
-- Mensagens `mrSystem` são excluídas do arquivo de histórico.
-
-#### `RadIA.UI.ConfigFrame` — Tela de Configurações
-
-Campos presentes (DFM, 320×525):
-- `edtGeminiKey`: API Key do Gemini (campo senha `*`).
-- `edtOpenAIKey`: API Key da OpenAI (campo senha `*`).
-- `edtClaudeKey`: API Key do Anthropic Claude (campo senha `*`).
-- `edtOllamaUrl`: URL base do servidor Ollama (texto livre, padrão `http://localhost:11434`).
-- `memSystemPrompt`: instrução de sistema customizada (TMemo).
-- `btnSave` / `btnCancel`.
-
-#### `RadIA.UI.DiffForm` — Visualizador de Diff
-
-Tela modal com visualização lado a lado (Original vs. Sugerido) usando `diff2html` via WebView2, com botão **[Aplicar Alteração]** que chama `TRadIAOTAHelper.ReplaceActiveEditorText`.
-
-#### `Source/UI/Web/` — Arquivos da Interface Web
-
-| Arquivo | Função |
-|---|---|
-| `chat.html` | Estrutura HTML do chat. Recebe mensagens via `window.chrome.webview.addEventListener('message', ...)`. |
-| `chat.css` | Estilos modernos com suporte a temas Dark/Light. |
-| `chat.js` | Lógica JS: Marked.js (Markdown), Prism.js (syntax highlighting Pascal), botão "Apply Code". |
-| `diff.html` | Interface do Smart Diff com `diff2html`. |
-
-Os arquivos web são copiados de `Source/UI/Web/` para `%APPDATA%\RadIA\Web\` no início de cada sessão da IDE via `CopyWebFiles`.
-
----
-
-### 5. Cache de Respostas (`TRadIACacheManager`)
-
-- **Algoritmo:** LRU (Least Recently Used), limite padrão de **500 entradas**.
-- **Expiração:** Entradas com mais de **24 horas** são descartadas automaticamente no próximo acesso.
-- **Hash:** SHA-1 sobre a concatenação de `provider || model || systemPrompt || prompt || historyJSON`.
-- **Persistência:** JSON em `%APPDATA%\RadIA\cache.json`, campos `hash`, `response`, `timestamp`, `last_accessed` (formato ISO 8601).
-- **Fluxo no `SendPrompt`:**
-  1. Gera hash.
-  2. Consulta cache → se acerto, retorna com `AFromCache = True`.
-  3. Se erro, chama `SendPromptAsync` no provedor.
-  4. Sucesso → salva no cache. Callback com `AFromCache = False`.
-
----
-
-## Estrutura de Diretórios Real
-
-```
-PluginDelphiIA/
-│
-├── README.md
-├── RadIA.groupproj
-├── RadIA.dpk
-├── RadIA.dproj
-│
-├── Source/
-│   ├── Core/
-│   │   ├── RadIA.Core.Types.pas
-│   │   ├── RadIA.Core.Interfaces.pas
-│   │   ├── RadIA.Core.Config.pas
-│   │   ├── RadIA.Core.Cache.pas
-│   │   └── RadIA.Core.Service.pas
-│   │
-│   ├── Providers/
-│   │   ├── RadIA.Provider.Base.pas
-│   │   ├── RadIA.Provider.Gemini.pas
-│   │   ├── RadIA.Provider.OpenAI.pas
-│   │   ├── RadIA.Provider.Claude.pas
-│   │   └── RadIA.Provider.Ollama.pas
-│   │
-│   ├── Integration/
-│   │   ├── RadIA.OTA.Register.pas
-│   │   ├── RadIA.OTA.Helper.pas
-│   │   ├── RadIA.OTA.ContextParser.pas
-│   │   ├── RadIA.OTA.EditorHook.pas
-│   │   ├── RadIA.OTA.MessageViewHook.pas
-│   │   └── RadIA.OTA.DockableForm.pas
-│   │
-│   └── UI/
-│       ├── RadIA.UI.ChatFrame.pas / .dfm
-│       ├── RadIA.UI.ConfigFrame.pas / .dfm
-│       ├── RadIA.UI.DiffForm.pas / .dfm
-│       ├── RadIA.UI.Resources.pas
-│       └── Web/
-│           ├── chat.html
-│           ├── chat.css
-│           ├── chat.js
-│           └── diff.html
-│
-└── Tests/
-    ├── RadIATests.dpr
-    └── Source/
-        ├── RadIA.Tests.Config.pas
-        ├── RadIA.Tests.Providers.pas
-        ├── RadIA.Tests.Cache.pas
-        └── RadIA.Tests.Ollama.pas
-```
-
----
-
-## Arquivos de Dados em Runtime
-
-| Arquivo | Caminho | Conteúdo |
-|---|---|---|
-| Histórico de Chat | `%APPDATA%\RadIA\history.json` | Array JSON de `{ role, content }` (sem mensagens system) |
-| Cache de Respostas | `%APPDATA%\RadIA\cache.json` | Array JSON de `{ hash, response, timestamp, last_accessed }` |
-| Arquivos Web | `%APPDATA%\RadIA\Web\` | `chat.html`, `chat.css`, `chat.js`, `diff.html` |
+**Integração Delphi ↔ WebView2:**
+- Delphi → Web: `PostWebMessageAsJson` com JSON `{ action, role, text, isDone }`.
+  - `action: 'add_message'` — adiciona mensagem completa.
+  - `action: 'clear_chat'` — limpa chat.
+  - `action: 'set_theme'` — altera tema.
+  - `action: 'update_tokens'` — atualiza contador de tokens e custo.
+  - `action: 'show_typing'` — exibe indicador de digitação.
+  - `action: 'append_message'` — concatena chunk de texto ao último balão.
+- Web → Delphi: `EdgeBrowserWebMessageReceived` com JSON `{ action: 'apply_code', code }`.
 
 ---
 
@@ -243,21 +124,23 @@ PluginDelphiIA/
 
 | Suite | Testes | O que cobre |
 |---|---|---|
-| `TTestRadIAConfig` | 5 | Persistência de provider, API key (DPAPI encrypt/decrypt), model, system prompt, **OllamaBaseUrl** |
-| `TTestRadIAProviders` | 8 | Parse de JSON Gemini/OpenAI/Claude, formatação de payloads, tratamento de erro HTTP |
-| `TTestRadIACacheManager` | 2 | Put/Get, expiração LRU |
-| `TTestRadIAOllama` | 2 | `BuildRequestBody` (RTTI), `ParseResponseBody` (RTTI) |
-| **Total** | **17** | **17/17 passando** |
+| `TTestRadIAConfig` | 10 | Leitura, escrita e criptografia DPAPI das chaves e parâmetros como `MaxHistoryMessages` |
+| `TTestRadIAProviders` | 11 | Parsers de payloads, tratamentos HTTP e RTTI helpers de decodificação |
+| `TTestRadIACacheManager` | 2 | Cache LRU e expiração temporal |
+| `TTestRadIAOllama` | 2 | Geração e parsing do Ollama |
+| `TTestRadIAService` | 10 | Trimming automático de mensagens sob o limite, priorizando mensagens de sistema e as mais recentes |
+| `TTestPromptHistory` | 13 | FIFO de histórico de comandos e persistência |
+| `TTestTokenUsage` | 6 | Parsers de token usage dos responses das APIs e regras de cálculo do pricing manager |
+| `TTestConversationExporter` | 4 | Geração e layout estruturado de markdown/HTML |
+| `TTestPromptTemplates` | 4 | Resolução de placeholders e templates embutidos |
+| `TTestProjectContext` | 4 | Leitura e mescla do arquivo `.radia` |
+| `TTestRadIAStreaming` | 8 | Validação incremental dos buffers de streaming SSE e delimitações (OpenAI, Claude, Gemini, Ollama) |
+| **Total** | **84** | **84/84 passando de forma limpa** |
 
 ---
 
 ## Decisões de Design
 
-| Decisão | Justificativa |
-|---|---|
-| DPAPI para API Keys | Criptografia nativa do Windows, sem dependência extra, vinculada ao usuário logado |
-| Registro do Windows para config | Persiste entre versões do Delphi instaladas na mesma máquina |
-| JSON para cache e histórico | Legível, sem dependência de banco de dados, trivial de debugar/editar manualmente |
-| `TTask.Run` + `TThread.Queue` | Chamadas de rede em background sem bloquear a thread da IDE; callback retorna na thread principal |
-| LRU com SHA-1 | SHA-1 é suficientemente único para hashing de prompts, rápido e disponível nativamente no Delphi |
-| `stream: false` no Ollama | Simplicidade: aguarda resposta completa, sem complexidade de parsing de stream SSE |
+- **ProcessStreamBuffer isolado:** Cada provedor extrai o algoritmo de tokenização e parser de stream incremental em um método dedicado, facilitando testes unitários via RTTI.
+- **Aproximação de Tokens no Stream:** Na exibição dinâmica de chunks SSE, a contagem de tokens é estimada usando o multiplicador padrão (1 token ≈ 4 caracteres) no callback de conclusão.
+- **Locale Invariant para USD:** Formatações de custo estimam o delimitador decimal para ponto `.` para assegurar a moeda em USD independentemente da configuração regional do SO Windows do usuário.

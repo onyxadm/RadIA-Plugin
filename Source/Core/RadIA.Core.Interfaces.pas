@@ -17,6 +17,12 @@ type
     AFromCache: Boolean;
     const AUsage: TTokenUsage);
 
+  { Callback type for incremental streaming of AI responses }
+  TStreamChunkCallback = reference to procedure(
+    const AChunk: string;
+    const AIsDone: Boolean;
+    const AError: string);
+
   { Interface representing a message in the chat history }
   IChatMessage = interface
     ['{69A8A5DC-0F88-46E1-AD7A-8A46101EA97D}']
@@ -32,6 +38,8 @@ type
     ['{A2833F49-9A0B-432D-8B8D-20DFF15FF25D}']
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback);
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TStreamChunkCallback);
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
     function GetAvailableModels: TArray<string>;
     function GetName: string;

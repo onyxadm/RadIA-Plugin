@@ -1,0 +1,294 @@
+unit RadIA.Tests.Streaming;
+
+interface
+
+uses
+  DUnitX.TestFramework, System.SysUtils, System.Classes, System.JSON, System.RTTI,
+  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage,
+  RadIA.Provider.Base, RadIA.Provider.OpenAI, RadIA.Provider.Gemini,
+  RadIA.Provider.Claude, RadIA.Provider.Ollama, RadIA.Core.Config;
+
+type
+  [TestFixture]
+  TTestRadIAStreaming = class
+  private
+    FConfig: IAIConfig;
+    FOpenAI: TRadIAOpenAIProvider;
+    FGemini: TRadIAGeminiProvider;
+    FClaude: TRadIAClaudeProvider;
+    FOllama: TRadIAOllamaProvider;
+
+    procedure InvokeProcessStreamBuffer(AProvider: TObject; var ABuffer: string; const ACallback: TStreamChunkCallback);
+  public
+    [Setup]
+    procedure Setup;
+    [TearDown]
+    procedure TearDown;
+
+    [Test]
+    procedure TestOpenAI_SingleChunk;
+    [Test]
+    procedure TestOpenAI_MultipleChunks;
+    [Test]
+    procedure TestOpenAI_DoneEvent;
+    [Test]
+    procedure TestClaude_SingleChunk;
+    [Test]
+    procedure TestClaude_StopEvent;
+    [Test]
+    procedure TestGemini_IncrementalObjects;
+    [Test]
+    procedure TestOllama_SingleChunk;
+    [Test]
+    procedure TestOllama_DoneEvent;
+  end;
+
+implementation
+
+{ TTestRadIAStreaming }
+
+procedure TTestRadIAStreaming.Setup;
+begin
+  FConfig := TRadIAConfig.Create;
+  FOpenAI := TRadIAOpenAIProvider.Create(FConfig);
+  FGemini := TRadIAGeminiProvider.Create(FConfig);
+  FClaude := TRadIAClaudeProvider.Create(FConfig);
+  FOllama := TRadIAOllamaProvider.Create(FConfig);
+end;
+
+procedure TTestRadIAStreaming.TearDown;
+begin
+  FOpenAI.Free;
+  FGemini.Free;
+  FClaude.Free;
+  FOllama.Free;
+  FConfig := nil;
+end;
+
+procedure TTestRadIAStreaming.InvokeProcessStreamBuffer(AProvider: TObject; var ABuffer: string;
+  const ACallback: TStreamChunkCallback);
+var
+  LContext: TRttiContext;
+  LType: TRttiInstanceType;
+  LMethod: TRttiMethod;
+  LParams: TArray<TValue>;
+begin
+  LContext := TRttiContext.Create;
+  LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
+  LMethod := LType.GetMethod('ProcessStreamBuffer');
+  if Assigned(LMethod) then
+  begin
+    SetLength(LParams, 2);
+    LParams[0] := ABuffer;
+    LParams[1] := TValue.From<TStreamChunkCallback>(ACallback);
+    LMethod.Invoke(AProvider, LParams);
+    
+    // Update the var parameter value back
+    ABuffer := LParams[0].AsString;
+  end
+  else
+    raise Exception.Create('ProcessStreamBuffer method not found via RTTI');
+end;
+
+procedure TTestRadIAStreaming.TestOpenAI_SingleChunk;
+var
+  LBuffer: string;
+  LReceivedText: string;
+  LCallbackCount: Integer;
+begin
+  LBuffer := 'data: {"choices":[{"delta":{"content":"Hello"}}]}' + #10;
+  LReceivedText := '';
+  LCallbackCount := 0;
+
+  InvokeProcessStreamBuffer(FOpenAI, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LReceivedText := LReceivedText + AChunk;
+      Assert.IsFalse(AIsDone);
+      Assert.IsEmpty(AError);
+    end);
+
+  Assert.AreEqual(1, LCallbackCount);
+  Assert.AreEqual('Hello', LReceivedText);
+  Assert.IsEmpty(LBuffer); // Buffer should be fully consumed
+end;
+
+procedure TTestRadIAStreaming.TestOpenAI_MultipleChunks;
+var
+  LBuffer: string;
+  LReceivedText: string;
+  LCallbackCount: Integer;
+begin
+  // First chunk has a complete line, second chunk has a partial line
+  LBuffer := 'data: {"choices":[{"delta":{"content":"Hello"}}]}' + #10 + 'data: {"choices":[{"delta":{"content';
+  LReceivedText := '';
+  LCallbackCount := 0;
+
+  InvokeProcessStreamBuffer(FOpenAI, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LReceivedText := LReceivedText + AChunk;
+    end);
+
+  Assert.AreEqual(1, LCallbackCount);
+  Assert.AreEqual('Hello', LReceivedText);
+  // The partial line should still be in the buffer
+  Assert.AreEqual('data: {"choices":[{"delta":{"content', LBuffer);
+
+  // Now we complete the second line
+  LBuffer := LBuffer + '":" world!"}}]}' + #10;
+  InvokeProcessStreamBuffer(FOpenAI, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LReceivedText := LReceivedText + AChunk;
+    end);
+
+  Assert.AreEqual(2, LCallbackCount);
+  Assert.AreEqual('Hello world!', LReceivedText);
+  Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAStreaming.TestOpenAI_DoneEvent;
+var
+  LBuffer: string;
+  LIsDone: Boolean;
+  LCallbackCount: Integer;
+begin
+  LBuffer := 'data: [DONE]' + #10;
+  LIsDone := False;
+  LCallbackCount := 0;
+
+  InvokeProcessStreamBuffer(FOpenAI, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LIsDone := AIsDone;
+    end);
+
+  Assert.AreEqual(1, LCallbackCount);
+  Assert.IsTrue(LIsDone);
+  Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAStreaming.TestClaude_SingleChunk;
+var
+  LBuffer: string;
+  LReceivedText: string;
+  LCallbackCount: Integer;
+begin
+  LBuffer := 'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Claude text"}}' + #10;
+  LReceivedText := '';
+  LCallbackCount := 0;
+
+  InvokeProcessStreamBuffer(FClaude, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LReceivedText := LReceivedText + AChunk;
+      Assert.IsFalse(AIsDone);
+    end);
+
+  Assert.AreEqual(1, LCallbackCount);
+  Assert.AreEqual('Claude text', LReceivedText);
+  Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAStreaming.TestClaude_StopEvent;
+var
+  LBuffer: string;
+  LIsDone: Boolean;
+  LCallbackCount: Integer;
+begin
+  LBuffer := 'data: {"type":"message_stop"}' + #10;
+  LIsDone := False;
+  LCallbackCount := 0;
+
+  InvokeProcessStreamBuffer(FClaude, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LIsDone := AIsDone;
+    end);
+
+  Assert.AreEqual(1, LCallbackCount);
+  Assert.IsTrue(LIsDone);
+  Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAStreaming.TestGemini_IncrementalObjects;
+var
+  LBuffer: string;
+  LReceivedText: string;
+  LCallbackCount: Integer;
+begin
+  // Gemini stream is in progressive array brackets like: [\r\n{...}\r\n,\r\n{...}\r\n]
+  LBuffer := '[' + #13#10 + '{"candidates": [{"content": {"parts": [{"text": "Gemini "}]}}]}' + #13#10 + ',' + #13#10 + '{"candidates": [{"content": {"parts": [{"text": "says hi"}]}}]}';
+  LReceivedText := '';
+  LCallbackCount := 0;
+
+  InvokeProcessStreamBuffer(FGemini, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LReceivedText := LReceivedText + AChunk;
+    end);
+
+  // It should parse the first and second objects even without the closing array bracket
+  // Note: the second object was complete, so it is parsed as well!
+  Assert.AreEqual(2, LCallbackCount);
+  Assert.AreEqual('Gemini says hi', LReceivedText);
+  Assert.IsEmpty(LBuffer.TrimLeft(['[', ',', #13, #10, ' ']));
+end;
+
+procedure TTestRadIAStreaming.TestOllama_SingleChunk;
+var
+  LBuffer: string;
+  LReceivedText: string;
+  LCallbackCount: Integer;
+begin
+  LBuffer := '{"model":"llama3","message":{"role":"assistant","content":"Ollama chunk"},"done":false}' + #10;
+  LReceivedText := '';
+  LCallbackCount := 0;
+
+  InvokeProcessStreamBuffer(FOllama, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LReceivedText := LReceivedText + AChunk;
+      Assert.IsFalse(AIsDone);
+    end);
+
+  Assert.AreEqual(1, LCallbackCount);
+  Assert.AreEqual('Ollama chunk', LReceivedText);
+  Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAStreaming.TestOllama_DoneEvent;
+var
+  LBuffer: string;
+  LIsDone: Boolean;
+  LCallbackCount: Integer;
+begin
+  LBuffer := '{"model":"llama3","message":{"role":"assistant","content":""},"done":true}' + #10;
+  LIsDone := False;
+  LCallbackCount := 0;
+
+  InvokeProcessStreamBuffer(FOllama, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LIsDone := AIsDone;
+    end);
+
+  Assert.AreEqual(1, LCallbackCount);
+  Assert.IsTrue(LIsDone);
+  Assert.IsEmpty(LBuffer);
+end;
+
+initialization
+  TDUnitX.RegisterTestFixture(TTestRadIAStreaming);
+
+end.

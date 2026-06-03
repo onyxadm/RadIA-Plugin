@@ -52,7 +52,8 @@ type
     procedure LoadConfig;
     procedure UpdateModelsCombo;
     procedure SendPromptToAI(const APromptText: string);
-    procedure PostToWebView(const AAction, ARole, AText: string);
+    procedure PostToWebView(const AAction, ARole, AText: string); overload;
+    procedure PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean); overload;
     procedure OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
     procedure LoadChatHistory;
     procedure SaveChatHistory;
@@ -290,6 +291,11 @@ begin
 end;
 
 procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string);
+begin
+  PostToWebView(AAction, ARole, AText, False);
+end;
+
+procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean);
 var
   LJson: TJSONObject;
 begin
@@ -303,6 +309,7 @@ begin
       LJson.AddPair('role', ARole);
     if not AText.IsEmpty then
       LJson.AddPair('text', AText);
+    LJson.AddPair('isDone', TJSONBool.Create(AIsDone));
       
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
@@ -444,51 +451,64 @@ end;
 procedure TFrameAIChat.SendPromptToAI(const APromptText: string);
 var
   LUserMsg: IChatMessage;
+  LFullResponse: string;
 begin
   btnSend.Enabled := False;
   
   LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText);
+  LFullResponse := '';
   
-  FAIService.SendPrompt(APromptText, FHistory,
-    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+  PostToWebView('show_typing', '', '');
+  
+  FAIService.SendPromptStream(APromptText, FHistory,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
     var
       LAssistantMsg: IChatMessage;
-      LDisplayResponse: string;
       LCost: TTokenCost;
       LStats: string;
+      LUsage: TTokenUsage;
     begin
-      btnSend.Enabled := True;
       if not AError.IsEmpty then
       begin
+        btnSend.Enabled := True;
         PostToWebView('add_message', 'assistant', '**Error:** ' + AError);
         Exit;
       end;
       
-      LDisplayResponse := AResponse;
-      if AFromCache then
-        LDisplayResponse := LDisplayResponse + sLineBreak + sLineBreak + '*[resposta obtida de cache local]*';
-
-      PostToWebView('add_message', 'assistant', LDisplayResponse);
-      
-      { Accumulate and update token usage stats }
-      if not AUsage.IsEmpty then
+      if not AIsDone then
       begin
-        FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + AUsage.PromptTokens;
-        FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + AUsage.CompletionTokens;
-        FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + AUsage.TotalTokens;
+        LFullResponse := LFullResponse + AChunk;
+        PostToWebView('append_message', 'assistant', AChunk, False);
+      end
+      else
+      begin
+        btnSend.Enabled := True;
+        PostToWebView('append_message', 'assistant', '', True);
         
-        LCost := TPricingManager.Calculate(AUsage, FConfig.GetActiveProvider, FConfig.GetActiveModel(FConfig.GetActiveProvider));
-        FAccumulatedCost.EstimatedCostUSD := FAccumulatedCost.EstimatedCostUSD + LCost.EstimatedCostUSD;
+        { Save history }
+        FHistory := FHistory + [LUserMsg];
+        LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse);
+        FHistory := FHistory + [LAssistantMsg];
+        SaveChatHistory;
         
-        LStats := TPricingManager.FormatTokenStats(FAccumulatedUsage, FAccumulatedCost);
-        PostToWebView('update_tokens', '', LStats);
+        { Estimate and update token usage stats }
+        LUsage.PromptTokens := Length(APromptText) div 4;
+        LUsage.CompletionTokens := Length(LFullResponse) div 4;
+        LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
+        
+        if LUsage.TotalTokens > 0 then
+        begin
+          FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
+          FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
+          FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
+          
+          LCost := TPricingManager.Calculate(LUsage, FConfig.GetActiveProvider, FConfig.GetActiveModel(FConfig.GetActiveProvider));
+          FAccumulatedCost.EstimatedCostUSD := FAccumulatedCost.EstimatedCostUSD + LCost.EstimatedCostUSD;
+          
+          LStats := TPricingManager.FormatTokenStats(FAccumulatedUsage, FAccumulatedCost);
+          PostToWebView('update_tokens', '', LStats);
+        end;
       end;
-      
-      { Save history }
-      FHistory := FHistory + [LUserMsg];
-      LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, AResponse);
-      FHistory := FHistory + [LAssistantMsg];
-      SaveChatHistory;
     end);
 end;
 

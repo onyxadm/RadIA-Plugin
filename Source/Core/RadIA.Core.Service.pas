@@ -35,6 +35,8 @@ type
     function TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
     procedure SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback);
+    procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+      const ACallback: TStreamChunkCallback);
       
     class function CreateMessage(const ARole: TAIMessageRole; const AContent: string): IChatMessage;
   end;
@@ -230,6 +232,58 @@ begin
     on E: Exception do
     begin
       ACallback('', 'Failed to initialize AI Provider: ' + E.Message, False, TTokenUsage.Empty);
+    end;
+  end;
+end;
+
+procedure TRadIAService.SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const ACallback: TStreamChunkCallback);
+var
+  LProvider: IIAProvider;
+  LSystemPrompt: string;
+  LHistory: TArray<IChatMessage>;
+  LTrimmedHistory: TArray<IChatMessage>;
+  I: Integer;
+  LProjectFolder: string;
+  LProjectContext: string;
+begin
+  try
+    LProvider := CreateActiveProvider;
+    LSystemPrompt := FConfig.SystemPrompt;
+
+    { Load project context (.radia) if active }
+    LProjectFolder := TRadIAOTAHelper.GetActiveProjectFolder;
+    if not LProjectFolder.IsEmpty then
+    begin
+      if TProjectContextLoader.LoadContext(LProjectFolder, LProjectContext) and not LProjectContext.IsEmpty then
+      begin
+        if LSystemPrompt.IsEmpty then
+          LSystemPrompt := LProjectContext
+        else
+          LSystemPrompt := LProjectContext + sLineBreak + sLineBreak + LSystemPrompt;
+      end;
+    end;
+
+    { Apply trimming before processing }
+    LTrimmedHistory := TrimHistory(AHistory);
+
+    { Inject System Prompt if configured }
+    if not LSystemPrompt.IsEmpty then
+    begin
+      SetLength(LHistory, Length(LTrimmedHistory) + 1);
+      LHistory[0] := TRadIAChatMessage.Create(mrSystem, LSystemPrompt);
+      for I := 0 to High(LTrimmedHistory) do
+        LHistory[I + 1] := LTrimmedHistory[I];
+    end
+    else
+      LHistory := LTrimmedHistory;
+
+    { Perform the stream request }
+    LProvider.SendPromptStreamAsync(APrompt, LHistory, ACallback);
+  except
+    on E: Exception do
+    begin
+      ACallback('', True, 'Failed to initialize AI Provider: ' + E.Message);
     end;
   end;
 end;

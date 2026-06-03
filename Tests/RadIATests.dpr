@@ -36,7 +36,8 @@ uses
   RadIA.Tests.TokenUsage in 'Source\RadIA.Tests.TokenUsage.pas',
   RadIA.Tests.Exporter in 'Source\RadIA.Tests.Exporter.pas',
   RadIA.Tests.Templates in 'Source\RadIA.Tests.Templates.pas',
-  RadIA.Tests.ProjectContext in 'Source\RadIA.Tests.ProjectContext.pas';
+  RadIA.Tests.ProjectContext in 'Source\RadIA.Tests.ProjectContext.pas',
+  RadIA.Tests.Streaming in 'Source\RadIA.Tests.Streaming.pas';
 
 var
   Runner: ITestRunner;
