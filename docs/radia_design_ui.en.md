@@ -113,7 +113,7 @@ VCL Frame (`TFrameAIConfig`, 320×525 px) opened in modal from the **Settings** 
 **Fields:**
 - **API Key (Gemini/OpenAI/Claude):** Masked with `*`. Stored encrypted via DPAPI in the Windows Registry.
 - **Ollama Server URL:** Base URL of the Ollama server (local or network). Default: `http://localhost:11434`. Does not require an API Key.
-- **Custom System Instructions:** System instruction persisted in `HKEY_CURRENT_USER\Software\RadIA\SystemPrompt`. Automatically injected as the first `mrSystem` message in every interaction.
+- **Custom System Instructions:** System instruction persisted in `HKEY_CURRENT_USER\Software\Embarcadero\BDS\<versao>\RadIA\SystemPrompt`. Automatically injected as the first `mrSystem` message in every interaction.
 
 > **Note:** To configure Ollama over network, define `OLLAMA_HOST=0.0.0.0` on the server and use the IP/hostname here (e.g., `http://192.168.1.100:11434`). See detailed instructions in `README.md`.
 

@@ -124,6 +124,18 @@ if (Test-Path $testsExe) {
 
 # 9. Instalação automatizada (se a flag -Install for fornecida)
 if ($Install) {
+    if (Get-Process bds -ErrorAction SilentlyContinue) {
+        Write-Host ""
+        Write-Host "=========================================================================" -ForegroundColor Red
+        Write-Host "ERRO: A IDE do Delphi (bds.exe) está aberta no momento." -ForegroundColor Red
+        Write-Host "Por favor, salve seu trabalho e feche todas as instâncias da IDE" -ForegroundColor Red
+        Write-Host "antes de executar a instalação do plugin RadIA para evitar arquivos travados" -ForegroundColor Red
+        Write-Host "ou problemas de carregamento na memória." -ForegroundColor Red
+        Write-Host "=========================================================================" -ForegroundColor Red
+        Write-Host ""
+        throw "A IDE do Delphi está aberta."
+    }
+
     Write-Host "=============================================" -ForegroundColor Cyan
     Write-Host "         Instalando Plugin no Delphi         " -ForegroundColor Cyan
     Write-Host "=============================================" -ForegroundColor Cyan

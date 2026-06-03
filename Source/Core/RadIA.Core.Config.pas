@@ -8,6 +8,7 @@ uses
 type
   TRadIAConfig = class(TInterfacedObject, IAIConfig)
   private
+    class var FBaseRegistryPath: string;
     FRegistryPath: string;
     FApiKeys: array[TAIProviderType] of string;
     FActiveProvider: TAIProviderType;
@@ -23,6 +24,7 @@ type
     function ReadRegInt(const AReg: TObject; const AKey: string; const ADefault: Integer): Integer;
   public
     constructor Create;
+    class procedure SetBaseRegistryPath(const APath: string);
 
     { IAIConfig implementation }
     function GetApiKey(const AProvider: TAIProviderType): string;
@@ -69,9 +71,15 @@ function CryptUnprotectData(pDataIn: PDataBlob; ppszDataDescr: Pointer;
 { TRadIAConfig }
 
 constructor TRadIAConfig.Create;
+var
+  LSettings: TFormatSettings;
 begin
   inherited Create;
-  FRegistryPath := 'Software\RadIA';
+  LSettings := TFormatSettings.Create('en-US');
+  if FBaseRegistryPath.IsEmpty then
+    FRegistryPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA', [CompilerVersion], LSettings)
+  else
+    FRegistryPath := FBaseRegistryPath;
   FActiveProvider := ptGemini;
   FApiKeys[ptGemini] := '';
   FApiKeys[ptOpenAI] := '';
@@ -90,6 +98,11 @@ begin
   FMaxHistoryMessages := 20;
   FOpenAICustomBaseUrl := '';
   Load;
+end;
+
+class procedure TRadIAConfig.SetBaseRegistryPath(const APath: string);
+begin
+  FBaseRegistryPath := APath;
 end;
 
 function TRadIAConfig.GetActiveModel(const AProvider: TAIProviderType): string;
@@ -152,10 +165,51 @@ var
   LProvider: TAIProviderType;
   LProvStr: string;
   LMaxHist: Integer;
+  LMigratedPath: string;
+  LParentPath: string;
+  LOldPath: string;
 begin
   LReg := TRegistry.Create;
   try
     LReg.RootKey := HKEY_CURRENT_USER;
+    
+    { Se a nova chave não existe, tenta fazer a migração das chaves legadas }
+    if not LReg.KeyExists(FRegistryPath) then
+    begin
+      LMigratedPath := '';
+      
+      { 1. Se o caminho possui contra-barra, tenta migrar caminhos relativos à IDE }
+      if Pos('\', FRegistryPath) > 0 then
+      begin
+        LParentPath := Copy(FRegistryPath, 1, LastDelimiter('\', FRegistryPath));
+        if LReg.KeyExists(LParentPath + 'AIPlugin') then
+          LMigratedPath := LParentPath + 'AIPlugin'
+        else if LReg.KeyExists(LParentPath + 'RadIA') then
+          LMigratedPath := LParentPath + 'RadIA';
+      end;
+      
+      { 2. Fallbacks globais }
+      if LMigratedPath.IsEmpty then
+      begin
+        if LReg.KeyExists('Software\RadIA') then
+          LMigratedPath := 'Software\RadIA'
+        else if LReg.KeyExists('Software\RadAI') then
+          LMigratedPath := 'Software\RadAI';
+      end;
+
+      if not LMigratedPath.IsEmpty and (LMigratedPath <> FRegistryPath) then
+      begin
+        LOldPath := FRegistryPath;
+        FRegistryPath := LMigratedPath;
+        try
+          Load;
+        finally
+          FRegistryPath := LOldPath;
+        end;
+        Save;
+      end;
+    end;
+
     if LReg.OpenKeyReadOnly(FRegistryPath) then
     begin
       FActiveProvider    := TAIProviderType(ReadRegInt(LReg, 'ActiveProvider', Integer(ptGemini)));

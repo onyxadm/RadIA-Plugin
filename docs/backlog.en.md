@@ -102,6 +102,13 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
 ### 5. Local Token Budget and Quota Control
 *   **Goal**: Allow the developer to set a monthly local token consumption limit to avoid surprise billing on their API keys.
 *   **Details**:
-    *   Add a setting field for token limit (e.g., monthly quota of 1,000,000 tokens).
-    *   Store and accumulate consumption persistently local.
-    *   Display consumption percentage in the sidebar chat status bar and alert/block calls upon reaching 100% of the defined quota.
+	*   Add a setting field for token limit (e.g., monthly quota of 1,000,000 tokens).
+	*   Store and accumulate consumption persistently local.
+	*   Display consumption percentage in the sidebar chat status bar and alert/block calls upon reaching 100% of the defined quota.
+
+### 6. Advanced Settings per AI Provider
+*   **Goal**: Allow the developer to configure values such as Temperature, Max Tokens, TopK, TopP, and Request Timeouts individually per provider in the settings screen.
+*   **Details**:
+    *   Expand the settings screen (within the tabbed `TPageControl`) to include specific additional controls per provider tab (e.g., trackbar or numeric edit for Temperature, numeric edit for Max Tokens, and timeouts).
+    *   Add corresponding fields in the `TRadIAConfig` class and save these properties in the Windows Registry under `Software\Embarcadero\BDS\<versao>\RadIA`.
+    *   Pass these generation parameters in the HTTP REST request payloads of each corresponding provider.

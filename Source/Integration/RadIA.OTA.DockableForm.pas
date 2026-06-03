@@ -73,6 +73,10 @@ begin
   AutoSave := True;
   SaveStateNecessary := True;
   
+  FChatFrame := TFrameAIChat.Create(Self);
+  FChatFrame.Parent := Self;
+  FChatFrame.Align := alClient;
+  
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
@@ -80,10 +84,6 @@ begin
       LThemingServices.ApplyTheme(Self);
     end;
   end;
-  
-  FChatFrame := TFrameAIChat.Create(Self);
-  FChatFrame.Parent := Self;
-  FChatFrame.Align := alClient;
   
   ApplyIDETheme;
 end;

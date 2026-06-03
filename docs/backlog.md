@@ -105,3 +105,10 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Adicionar campo nas configurações de limite de tokens (ex: cota mensal de 1.000.000 de tokens).
     *   Armazenar e acumular o consumo de forma persistente localmente.
     *   Exibir percentual de consumo na barra de status do chat lateral e alertar/bloquear chamadas ao atingir 100% da cota definida.
+
+### 6. Configurações Avançadas por Provedor de IA
+*   **Objetivo**: Permitir que o desenvolvedor parametrize valores como Temperatura, Max Tokens, TopK, TopP e Timeouts de requisição individualmente por provedor na tela de configurações.
+*   **Detalhamento**:
+    *   Expandir a tela de configurações (abrangendo o `TPageControl` por abas) para incluir controles adicionais específicos por aba de provedor (ex: trackbar ou edit numérico para Temperatura, edit numérico para Max Tokens, e timeouts).
+    *   Adicionar campos correspondentes na classe `TRadIAConfig` e salvar as propriedades no Registro do Windows sob `Software\Embarcadero\BDS\<versao>\RadIA`.
+    *   Repassar esses parâmetros de geração nos payloads das requisições HTTP REST de cada provedor correspondente.

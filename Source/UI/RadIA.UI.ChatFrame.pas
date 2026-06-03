@@ -169,6 +169,7 @@ end;
 
 procedure TFrameAIChat.InitializeWebView;
 begin
+  EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
   EdgeBrowser.Navigate('file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/'));
 end;
 
@@ -312,6 +313,11 @@ begin
     LForm.Height := 440;
     LForm.BorderStyle := bsDialog;
     
+    LConfigFrame := TFrameAIConfig.Create(LForm);
+    LConfigFrame.Parent := LForm;
+    LConfigFrame.Align := alClient;
+    LConfigFrame.LoadConfig;
+    
     if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
     begin
       if LThemingServices.IDEThemingEnabled then
@@ -319,11 +325,6 @@ begin
         LThemingServices.ApplyTheme(LForm);
       end;
     end;
-    
-    LConfigFrame := TFrameAIConfig.Create(LForm);
-    LConfigFrame.Parent := LForm;
-    LConfigFrame.Align := alClient;
-    LConfigFrame.LoadConfig;
     
     LForm.ShowModal;
     

@@ -53,7 +53,7 @@ graph TD
 
     ChatFrame -->|Histórico JSON| HistoryFile["%APPDATA%\RadIA\history.json"]
     Cache -->|Cache JSON LRU| CacheFile["%APPDATA%\RadIA\cache.json"]
-    Config -->|DPAPI criptografado| Registry["HKCU\Software\RadIA"]
+    Config -->|DPAPI criptografado| Registry["HKCU\Software\Embarcadero\BDS\<versao>\RadIA"]
 ```
 
 ---
@@ -66,7 +66,7 @@ graph TD
 |---|---|
 | `RadIA.Core.Types.pas` | Enum `TAIProviderType` (Gemini, OpenAI, Claude, Ollama), `TAIMessageRole`, constantes de modelos, funções de conversão string/enum |
 | `RadIA.Core.Interfaces.pas` | Contratos `IIAProvider`, `IAIConfig`, `IChatMessage`, tipo `TCompletionCallback` e `TStreamChunkCallback` |
-| `RadIA.Core.Config.pas` | `TRadIAConfig`: leitura/escrita no Registro do Windows (`HKCU\Software\RadIA`), chaves API via Windows DPAPI, `MaxHistoryMessages`, `OpenAICustomBaseUrl` |
+| `RadIA.Core.Config.pas` | `TRadIAConfig`: leitura/escrita no Registro do Windows (`HKCU\Software\Embarcadero\BDS\<versao>\RadIA`), chaves API via Windows DPAPI, `MaxHistoryMessages`, `OpenAICustomBaseUrl` |
 | `RadIA.Core.Service.pas` | `TRadIAService`: orquestrador central de requisições (`SendPrompt` e `SendPromptStream`), cria o provedor ativo, injeta system prompt e contexto de projeto `.radia`, aplica trimming do histórico |
 | `RadIA.Core.Cache.pas` | `TRadIACacheManager`: cache LRU em JSON (`cache.json`), limite de 500 entradas, expiração de 24h, hash SHA-1 |
 | `RadIA.Core.PromptHistory.pas` | `TPromptHistoryManager`: histórico de consultas recentes (FIFO limite 50) persistido em JSON para navegação ↑/↓ no chat |

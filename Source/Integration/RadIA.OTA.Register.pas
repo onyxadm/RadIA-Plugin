@@ -37,7 +37,8 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator;
+  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
+  RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config;
 
 var
   GWizardIndex: Integer = -1;
@@ -135,12 +136,18 @@ procedure Register;
 var
   LOTAInstance: IOTAWizard;
   LWizardServices: IOTAWizardServices;
+  LOTAServices: IOTAServices;
 begin
   LogDebug('Register called');
   if not Assigned(BorlandIDEServices) then
   begin
     LogDebug('Error: BorlandIDEServices is nil');
     Exit;
+  end;
+
+  if Supports(BorlandIDEServices, IOTAServices, LOTAServices) then
+  begin
+    TRadIAConfig.SetBaseRegistryPath(LOTAServices.GetBaseRegistryKey + '\RadIA');
   end;
 
   if Supports(BorlandIDEServices, IOTAWizardServices, LWizardServices) then
@@ -210,7 +217,7 @@ end;
 
 function TRadIAWizard.GetIDString: string;
 begin
-  Result := 'RadIA.DelphiAIPlugin.Wizard';
+  Result := 'RadIA.Wizard.Main';
 end;
 
 function TRadIAWizard.GetName: string;

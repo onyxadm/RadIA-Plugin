@@ -46,6 +46,8 @@ uses
   System.IOUtils, System.JSON, ToolsAPI;
 
 procedure TFormAIDiff.FormCreate(Sender: TObject);
+var
+  LThemingServices: IOTAIDEThemingServices;
 begin
   FBrowserInitialized := False;
   FLifecycleGuard := TLifecycleGuard.Create;
@@ -53,6 +55,15 @@ begin
   FAIService := TRadIAService.Create(FConfig);
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LThemingServices.ApplyTheme(Self);
+    end;
+  end;
+  
+  EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
   EdgeBrowser.Navigate('file:///' + TPath.Combine(FWebFilesDir, 'diff.html').Replace('\', '/'));
 end;
 

@@ -61,6 +61,8 @@ const
 var
   LReg: TRegistry;
   LStoredValue: string;
+  LSettings: TFormatSettings;
+  LRegPath: string;
 begin
   FConfig.SetApiKey(ptGemini, TEST_KEY);
   FConfig.Save;
@@ -68,14 +70,16 @@ begin
   FConfig.Load;
   Assert.AreEqual(TEST_KEY, FConfig.GetApiKey(ptGemini));
   
+  LSettings := TFormatSettings.Create('en-US');
+  LRegPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA', [CompilerVersion], LSettings);
   LReg := TRegistry.Create;
   try
     LReg.RootKey := HKEY_CURRENT_USER;
-    if LReg.OpenKeyReadOnly('Software\RadIA') then
+    if LReg.OpenKeyReadOnly(LRegPath) then
     begin
-      if LReg.ValueExists('ApiKey_Gemini') then
+      if LReg.ValueExists('Gemini_ApiKey') then
       begin
-        LStoredValue := LReg.ReadString('ApiKey_Gemini');
+        LStoredValue := LReg.ReadString('Gemini_ApiKey');
         Assert.AreNotEqual(TEST_KEY, LStoredValue, 'API Key should be encrypted in the registry!');
       end;
     end;
