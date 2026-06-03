@@ -4,7 +4,21 @@ Este documento registra as tarefas e ideias de evolução futura do plugin RadIA
 
 ---
 
-## 1. Automatização de DevOps (CI/CD Pipeline)
+## ✅ Itens Concluídos
+
+### 3. Integração com Modelos Locais (Ollama) + Histórico Persistente
+> **Entregue nos commits `fd483b6` e `0dfcf10`**
+
+*   ✅ **Provedor Ollama:** Suporte completo para rodar modelos open-source (Llama 3, Phi-3, Mistral, CodeLlama etc.) via API local do Ollama, tanto na mesma máquina (`localhost`) quanto em servidores na rede local, sem dependência de APIs pagas.
+*   ✅ **Descoberta Dinâmica de Modelos:** O plugin consulta automaticamente `/api/tags` para listar os modelos instalados no servidor Ollama, com fallback para lista de modelos conhecidos.
+*   ✅ **Configuração de URL:** Campo dedicado nas configurações do plugin para definir o endereço do servidor Ollama (padrão: `http://localhost:11434`).
+*   ✅ **Histórico de Conversas Persistente:** O histórico do chat é salvo automaticamente em `%APPDATA%\RadIA\history.json` (formato JSON), restaurado integralmente ao reabrir a IDE. O botão **Clear** apaga o arquivo físico.
+
+---
+
+## 🔲 Pendentes
+
+### 1. Automatização de DevOps (CI/CD Pipeline)
 *   **Objetivo**: Compilar e empacotar o plugin automaticamente a cada nova versão, evitando processos manuais de geração de binários.
 *   **Detalhamento**:
     *   Criar um workflow do GitHub Actions rodando em agentes Windows (`windows-latest`).
@@ -15,7 +29,7 @@ Este documento registra as tarefas e ideias de evolução futura do plugin RadIA
 
 ---
 
-## 2. Instalador Automatizado (Inno Setup)
+### 2. Instalador Automatizado (Inno Setup)
 *   **Objetivo**: Fornecer uma experiência de instalação fluida ("One-Click Install") para desenvolvedores que desejam apenas utilizar o plugin, sem a necessidade de compilar o código fonte.
 *   **Detalhamento**:
     *   Criar um script Inno Setup (`installer.iss`) para empacotar o plugin.
@@ -23,9 +37,3 @@ Este documento registra as tarefas e ideias de evolução futura do plugin RadIA
     *   Copiar a BPL apropriada do diretório de output para o diretório de destino do usuário.
     *   Registrar a BPL no Delphi adicionando uma nova entrada do tipo String no Registro sob a chave `Software\Embarcadero\BDS\<versao>\Known Packages` com o caminho completo da BPL instalada.
     *   Copiar automaticamente a DLL do WebView2 (`WebView2Loader.dll`) e os recursos web (`chat.html`, `chat.css`, etc.) para o local apropriado (pasta `%APPDATA%\RadIA\Web`).
-
----
-
-## 3. Sugestões Adicionais de Backlog
-*   **Integração com Modelos Locais (Ollama)**: Suporte para rodar modelos open-source instalados localmente na máquina do desenvolvedor (como Llama 3, Phi-3, Mistral) através da API local do Ollama, eliminando dependência de chaves de API pagas e conexão com a internet.
-*   **Histórico de Conversas Persistente**: Armazenar o histórico de chats do desenvolvedor localmente em um arquivo ou banco SQLite para que as conversas não sejam perdidas ao fechar e abrir a IDE.
