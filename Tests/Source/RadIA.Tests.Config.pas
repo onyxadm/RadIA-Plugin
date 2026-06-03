@@ -21,6 +21,8 @@ type
     [Test]
     procedure TestApiKeyEncryptionAndDecryption;
     [Test]
+    procedure TestSpecificUserKeyEncryptionAndDecryption;
+    [Test]
     procedure TestActiveModelPersistence;
     [Test]
     procedure TestSystemPromptPersistence;
@@ -86,6 +88,17 @@ begin
   finally
     LReg.Free;
   end;
+end;
+
+procedure TTestRadIAConfig.TestSpecificUserKeyEncryptionAndDecryption;
+const
+  TEST_KEY = 'AQ.A_TEST_KEY_THAT_HAS_EXACTLY_53_CHARS_LONG_FOR_TESTS';
+begin
+  FConfig.SetApiKey(ptGemini, TEST_KEY);
+  FConfig.Save;
+  
+  FConfig.Load;
+  Assert.AreEqual(TEST_KEY, FConfig.GetApiKey(ptGemini));
 end;
 
 procedure TTestRadIAConfig.TestActiveModelPersistence;

@@ -28,7 +28,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections;
+  System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding;
 
 { TRadIAGeminiProvider }
 
@@ -198,7 +198,7 @@ begin
   end;
 
   LUrl := Format('https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
-    [LModel, LApiKey]);
+    [LModel, TNetEncoding.URL.Encode(LApiKey)]);
 
   try
     LRequestBody := BuildRequestBody(APrompt, AHistory);
@@ -257,7 +257,7 @@ begin
     Exit;
   end;
 
-  LUrl := Format('https://generativelanguage.googleapis.com/v1beta/models?key=%s', [LApiKey]);
+  LUrl := Format('https://generativelanguage.googleapis.com/v1beta/models?key=%s', [TNetEncoding.URL.Encode(LApiKey)]);
 
   LTaskProc := procedure
                var
@@ -465,7 +465,7 @@ begin
   end;
 
   LUrl := Format('https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent?key=%s',
-    [LModel, LApiKey]);
+    [LModel, TNetEncoding.URL.Encode(LApiKey)]);
 
   try
     LRequestBody := BuildRequestBody(APrompt, AHistory);
