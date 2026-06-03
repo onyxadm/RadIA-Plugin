@@ -9,6 +9,18 @@
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(ProductVersion)'=='21.0'">
+        <DelphiVer>Delphi10.4</DelphiVer>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(ProductVersion)'=='22.0'">
+        <DelphiVer>Delphi11</DelphiVer>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(ProductVersion)'=='23.0'">
+        <DelphiVer>Delphi12</DelphiVer>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(DelphiVer)'==''">
+        <DelphiVer>Delphi$(ProductVersion)</DelphiVer>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
         <Base>true</Base>
     </PropertyGroup>
@@ -40,10 +52,10 @@
         <DCC_CBuilderOutput>All</DCC_CBuilderOutput>
         <GenPackage>true</GenPackage>
         <GenDll>true</GenDll>
-        <DCC_DcuOutput>.\Output\dcu\$(Platform)\$(Config)</DCC_DcuOutput>
-        <DCC_ExeOutput>.\Output\bin\$(Platform)\$(Config)</DCC_ExeOutput>
-        <DCC_BplOutput>.\Output\bpl</DCC_BplOutput>
-        <DCC_DcpOutput>.\Output\dcp</DCC_DcpOutput>
+        <DCC_DcuOutput>.\Output\$(DelphiVer)\dcu\$(Platform)\$(Config)</DCC_DcuOutput>
+        <DCC_ExeOutput>.\Output\$(DelphiVer)\bin\$(Platform)\$(Config)</DCC_ExeOutput>
+        <DCC_BplOutput>.\Output\$(DelphiVer)\bpl</DCC_BplOutput>
+        <DCC_DcpOutput>.\Output\$(DelphiVer)\dcp</DCC_DcpOutput>
         <DCC_E>false</DCC_E>
         <DCC_N>false</DCC_N>
         <DCC_S>false</DCC_S>
