@@ -490,10 +490,22 @@ begin
 end;
 
 procedure TFrameAIChat.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+var
+  LSettings: ICoreWebView2Settings;
 begin
   if Succeeded(AResult) then
   begin
     FBrowserInitialized := True;
+    
+    if Assigned(EdgeBrowser.DefaultInterface) then
+    begin
+      if Succeeded(EdgeBrowser.DefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
+      begin
+        LSettings.Set_AreDevToolsEnabled(1);
+        LSettings.Set_AreDefaultContextMenusEnabled(1);
+      end;
+    end;
+    
     ApplyIDETheme;
     LoadChatHistory;
   end;
@@ -673,6 +685,11 @@ begin
       else
       begin
         btnSend.Enabled := True;
+        if not AChunk.IsEmpty then
+        begin
+          LFullResponse := LFullResponse + AChunk;
+          PostToWebView('append_message', 'assistant', AChunk, False);
+        end;
         PostToWebView('append_message', 'assistant', '', True);
         
         { Save history }

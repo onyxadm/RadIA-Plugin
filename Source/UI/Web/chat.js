@@ -16,8 +16,21 @@ marked.setOptions({
 
 // -- Renderer customizado com copy + apply buttons --
 const renderer = new marked.Renderer();
-renderer.code = function(code, lang) {
-  const language = lang || 'pascal';
+renderer.code = function(codeOrToken, lang) {
+  let code = '';
+  let language = '';
+
+  if (typeof codeOrToken === 'string') {
+    code = codeOrToken;
+    language = lang || 'pascal';
+  } else if (codeOrToken && typeof codeOrToken === 'object') {
+    code = codeOrToken.text || '';
+    language = codeOrToken.lang || lang || 'pascal';
+  } else {
+    code = String(codeOrToken || '');
+    language = lang || 'pascal';
+  }
+
   const escapedCode = code
     .replace(/\\/g, '\\\\')
     .replace(/`/g, '\\`')
@@ -52,7 +65,7 @@ const chatContainer = document.getElementById('chat-container');
 // ============================================================
 const SENDER_INFO = {
   user:      { name: 'You',      icon: '👤', avatarClass: 'user-avatar', headerClass: 'user-header' },
-  assistant: { name: 'Codex AI', icon: '✦',  avatarClass: 'ai-avatar',   headerClass: 'ai-header'   },
+  assistant: { name: 'RadIA',    icon: '✦',  avatarClass: 'ai-avatar',   headerClass: 'ai-header'   },
   system:    { name: 'System',   icon: '⚙',   avatarClass: 'ai-avatar',   headerClass: 'ai-header'   }
 };
 
@@ -60,6 +73,9 @@ const SENDER_INFO = {
 //  addMessage — gera HTML com avatar + cabeçalho + conteúdo
 // ============================================================
 function addMessage(role, text) {
+  if (text === undefined || text === null) {
+    text = '';
+  }
   const info = SENDER_INFO[role] || SENDER_INFO.assistant;
 
   const wrapper = document.createElement('div');
@@ -204,7 +220,16 @@ let currentAssistantText    = '';
 function appendMessage(text, isDone) {
   hideTypingIndicator();
 
+  if (text === undefined || text === null) {
+    text = '';
+  }
+
   if (!currentAssistantWrapper) {
+    // Se terminou e não tem texto, não cria a bolha
+    if (isDone && text === '') {
+      return;
+    }
+
     const info = SENDER_INFO.assistant;
 
     currentAssistantWrapper = document.createElement('div');

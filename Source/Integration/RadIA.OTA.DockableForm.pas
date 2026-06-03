@@ -74,7 +74,7 @@ begin
   SaveStateNecessary := True;
   
   { Default dimensions for the first run or when floating }
-  Width := 340;
+  Width := 990;
   Height := 650;
   Position := poScreenCenter;
   

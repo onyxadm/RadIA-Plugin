@@ -23,6 +23,8 @@ type
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
     procedure btnPrevConflictClick(Sender: TObject);
     procedure btnNextConflictClick(Sender: TObject);
+  protected
+    procedure CreateWnd; override;
   private
     FConfig: IAIConfig;
     FAIService: TRadIAService;
@@ -49,7 +51,29 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, ToolsAPI;
+  System.IOUtils, System.JSON, ToolsAPI, RadIA.UI.Resources;
+
+procedure TFormAIDiff.CreateWnd;
+var
+  LThemingServices: IOTAIDEThemingServices;
+  LActiveTheme: string;
+begin
+  inherited CreateWnd;
+  
+  LActiveTheme := 'light';
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LActiveTheme := LThemingServices.ActiveTheme;
+    end;
+  end;
+  
+  if SameText(LActiveTheme, 'dark') then
+  begin
+    TUIHelper.ApplyDarkTitleBar(Self, True);
+  end;
+end;
 
 procedure TFormAIDiff.FormCreate(Sender: TObject);
 var

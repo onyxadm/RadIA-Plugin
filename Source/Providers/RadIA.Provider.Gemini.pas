@@ -404,6 +404,23 @@ begin
               if Assigned(LJson) then
               begin
                 try
+                  if Assigned(LJson.GetValue('error')) then
+                  begin
+                    LText := '';
+                    if LJson.GetValue('error') is TJSONObject then
+                      LText := TJSONObject(LJson.GetValue('error')).GetValue<string>('message', '');
+                    
+                    if LText.IsEmpty then
+                      LText := LJson.GetValue('error').ToString;
+
+                    TThread.Queue(nil,
+                      procedure
+                      begin
+                        ACallback('', True, LText);
+                      end);
+                    Exit;
+                  end;
+
                   LText := '';
                   LCandidates := LJson.GetValue('candidates') as TJSONArray;
                   if Assigned(LCandidates) and (LCandidates.Count > 0) then

@@ -1,22 +1,20 @@
 object FrameAIChat: TFrameAIChat
   Left = 0
   Top = 0
-  Width = 997
-  Height = 649
+  Width = 990
+  Height = 650
   TabOrder = 0
   object pnlToolbar: TPanel
     Left = 0
     Top = 0
-    Width = 997
+    Width = 990
     Height = 44
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitTop = -3
-    ExplicitWidth = 873
     object btnTemplates: TSpeedButton
       AlignWithMargins = True
-      Left = 848
+      Left = 841
       Top = 3
       Width = 32
       Height = 38
@@ -39,7 +37,7 @@ object FrameAIChat: TFrameAIChat
     end
     object btnExport: TSpeedButton
       AlignWithMargins = True
-      Left = 886
+      Left = 879
       Top = 3
       Width = 32
       Height = 38
@@ -62,7 +60,7 @@ object FrameAIChat: TFrameAIChat
     end
     object btnClear: TSpeedButton
       AlignWithMargins = True
-      Left = 924
+      Left = 917
       Top = 3
       Width = 32
       Height = 38
@@ -85,7 +83,7 @@ object FrameAIChat: TFrameAIChat
     end
     object btnSettings: TSpeedButton
       AlignWithMargins = True
-      Left = 962
+      Left = 955
       Top = 3
       Width = 32
       Height = 38
@@ -109,7 +107,7 @@ object FrameAIChat: TFrameAIChat
     object cbProvider: TComboBox
       Left = 6
       Top = 10
-      Width = 135
+      Width = 105
       Height = 21
       Style = csDropDownList
       Font.Charset = DEFAULT_CHARSET
@@ -122,9 +120,9 @@ object FrameAIChat: TFrameAIChat
       OnChange = cbProviderChange
     end
     object cbModel: TComboBox
-      Left = 147
+      Left = 117
       Top = 10
-      Width = 164
+      Width = 289
       Height = 21
       Style = csDropDownList
       Font.Charset = DEFAULT_CHARSET
@@ -140,19 +138,16 @@ object FrameAIChat: TFrameAIChat
   object pnlInput: TPanel
     AlignWithMargins = True
     Left = 3
-    Top = 544
-    Width = 991
+    Top = 545
+    Width = 984
     Height = 102
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
-    ExplicitLeft = 0
-    ExplicitTop = 498
-    ExplicitWidth = 320
     object lblContext: TLabel
       Left = 0
       Top = 0
-      Width = 991
+      Width = 984
       Height = 13
       Align = alTop
       Caption = '  Ready'
@@ -166,7 +161,7 @@ object FrameAIChat: TFrameAIChat
     end
     object btnSend: TSpeedButton
       AlignWithMargins = True
-      Left = 940
+      Left = 933
       Top = 16
       Width = 48
       Height = 83
@@ -187,7 +182,7 @@ object FrameAIChat: TFrameAIChat
       AlignWithMargins = True
       Left = 3
       Top = 16
-      Width = 931
+      Width = 924
       Height = 83
       Align = alClient
       BorderStyle = bsNone
@@ -199,36 +194,28 @@ object FrameAIChat: TFrameAIChat
       ParentFont = False
       ScrollBars = ssVertical
       TabOrder = 0
-      ExplicitTop = 19
-      ExplicitWidth = 813
     end
   end
   object pnlBrowser: TPanel
     Left = 0
     Top = 44
-    Width = 997
-    Height = 497
+    Width = 990
+    Height = 498
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 2
-    ExplicitWidth = 320
-    ExplicitHeight = 454
     object EdgeBrowser: TEdgeBrowser
       AlignWithMargins = True
       Left = 3
       Top = 3
-      Width = 991
-      Height = 491
+      Width = 984
+      Height = 492
       Align = alClient
       TabOrder = 0
       AllowSingleSignOnUsingOSPrimaryAccount = False
       TargetCompatibleBrowserVersion = '137.0.3296.44'
       UserDataFolder = '%LOCALAPPDATA%\bds.exe.WebView2'
       OnCreateWebViewCompleted = EdgeBrowserCreateWebViewCompleted
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 320
-      ExplicitHeight = 454
     end
   end
   object SaveDialog: TSaveDialog

@@ -37,6 +37,8 @@ type
     btnCancel: TButton;
     procedure btnSaveClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
+  protected
+    procedure CreateWnd; override;
   private
     FConfig: IAIConfig;
     FOnClose: TNotifyEvent;
@@ -53,10 +55,32 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON;
+  System.IOUtils, System.JSON, RadIA.UI.Resources;
 
 type
   TTabSheetColorHack = class(TTabSheet);
+
+procedure TFormAIConfig.CreateWnd;
+var
+  LThemingServices: IOTAIDEThemingServices;
+  LActiveTheme: string;
+begin
+  inherited CreateWnd;
+  
+  LActiveTheme := 'light';
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LActiveTheme := LThemingServices.ActiveTheme;
+    end;
+  end;
+  
+  if SameText(LActiveTheme, 'dark') then
+  begin
+    TUIHelper.ApplyDarkTitleBar(Self, True);
+  end;
+end;
 
 constructor TFormAIConfig.Create(AOwner: TComponent);
 var
