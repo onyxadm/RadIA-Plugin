@@ -42,7 +42,7 @@ A interface utiliza uma arquitetura híbrida:
 3.  Clique com o botão direito em `RadIA.bpl` no Project Manager e selecione **Build**.
 4.  Clique novamente com o botão direito em `RadIA.bpl` e selecione **Install**.
 5.  A janela de confirmação de instalação da IDE será exibida, e o painel do **RadIA** aparecerá acoplado na lateral da IDE.
-6.  Acesse o menu **Tools ➔ RadIA Settings** ou clique no ícone de engrenagem no chat para inserir suas API keys e começar.
+6.  Acesse o menu **Tools ➔ RadIA Chat Panel** para exibir o chat, e clique no botão **Settings** no topo do painel para configurar suas chaves de API e começar.
 
 ### 6. Estrutura do Repositório
 ```
@@ -117,7 +117,7 @@ The user interface uses a hybrid architecture:
 3.  Right-click on `RadIA.bpl` in the Project Manager and click **Build**.
 4.  Right-click on `RadIA.bpl` again and click **Install**.
 5.  A confirmation dialog will appear, and the **RadIA** panel will dock on the right side of your IDE.
-6.  Go to **Tools ➔ RadIA Settings** or click the gear icon in the chat to insert your API keys.
+6.  Go to **Tools ➔ RadIA Chat Panel** to display the chat, and click the **Settings** button at the top of the panel to configure your API keys.
 
 ### 6. Repository Structure
 ```
