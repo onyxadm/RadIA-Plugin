@@ -356,7 +356,6 @@ var
   LJson: TJSONObject;
   LAction: string;
   LCode: string;
-  LQueueProc: TThreadProcedure;
 begin
   LJson := TJSONObject.ParseJSONValue(AMessage) as TJSONObject;
   if Assigned(LJson) then
@@ -366,11 +365,11 @@ begin
       if LAction = 'apply_code' then
       begin
         LCode := LJson.GetValue('code').Value;
-        LQueueProc := procedure
-                      begin
-                        TRadIAOTAHelper.ReplaceActiveEditorText(LCode);
-                      end;
-        TThread.Queue(nil, LQueueProc);
+        TThread.Queue(nil,
+          procedure
+          begin
+            TRadIAOTAHelper.ReplaceActiveEditorText(LCode);
+          end);
       end;
     finally
       LJson.Free;

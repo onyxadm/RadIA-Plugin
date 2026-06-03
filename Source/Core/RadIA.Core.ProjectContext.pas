@@ -36,6 +36,10 @@ var
   LStream: TFileStream;
   LBytes: TBytes;
   LReadLen: Integer;
+  LIdx: Integer;
+  LCountBack: Integer;
+  LCharLen: Integer;
+  LStartByte: Byte;
 begin
   Result := False;
   AContextPrompt := '';
@@ -87,6 +91,39 @@ begin
                     begin
                       SetLength(LBytes, 51200);
                       LReadLen := LStream.Read(LBytes[0], 51200);
+                      
+                      { UTF-8 Truncation Safety Check }
+                      if LReadLen > 0 then
+                      begin
+                        LIdx := LReadLen - 1;
+                        LCountBack := 0;
+                        while (LIdx >= 0) and ((LBytes[LIdx] and $C0) = $80) do
+                        begin
+                          Dec(LIdx);
+                          Inc(LCountBack);
+                        end;
+                        
+                        if LIdx >= 0 then
+                        begin
+                          LStartByte := LBytes[LIdx];
+                          LCharLen := 1;
+                          if (LStartByte and $80) <> 0 then
+                          begin
+                            if (LStartByte and $F8) = $F0 then
+                              LCharLen := 4
+                            else if (LStartByte and $F0) = $E0 then
+                              LCharLen := 3
+                            else if (LStartByte and $E0) = $C0 then
+                              LCharLen := 2;
+                              
+                            if LCountBack < (LCharLen - 1) then
+                            begin
+                              LReadLen := LIdx;
+                            end;
+                          end;
+                        end;
+                      end;
+                      
                       SetLength(LBytes, LReadLen);
                       LFileContent := TEncoding.UTF8.GetString(LBytes);
                       

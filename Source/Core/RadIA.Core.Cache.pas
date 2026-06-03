@@ -23,6 +23,7 @@ type
   private
     FFilePath: string;
     FEntries: TObjectList<TRadIACacheEntry>;
+    FDictionary: TDictionary<string, TRadIACacheEntry>;
     FLimit: Integer;
     FCriticalSection: TCriticalSection;
     FIsDirty: Boolean;
@@ -56,6 +57,7 @@ begin
   FCriticalSection := TCriticalSection.Create;
   FIsDirty := False;
   FEntries := TObjectList<TRadIACacheEntry>.Create(True);
+  FDictionary := TDictionary<string, TRadIACacheEntry>.Create;
   
   if AFilePath.IsEmpty then
     FFilePath := TPath.Combine(TPath.GetHomePath, 'RadIA\cache.json')
@@ -76,6 +78,7 @@ begin
     end;
   end;
   FEntries.Free;
+  FDictionary.Free;
   FCriticalSection.Free;
   inherited Destroy;
 end;
@@ -84,6 +87,7 @@ procedure TRadIACacheManager.Clear;
 begin
   FCriticalSection.Enter;
   try
+    FDictionary.Clear;
     FEntries.Clear;
     if TFile.Exists(FFilePath) then
     begin
@@ -117,25 +121,22 @@ begin
   AResponse := '';
   FCriticalSection.Enter;
   try
-    for LEntry in FEntries do
+    if FDictionary.TryGetValue(AHash, LEntry) then
     begin
-      if LEntry.Hash = AHash then
+      { Check expiration (24 hours) }
+      if HoursBetween(Now, LEntry.Timestamp) >= 24 then
       begin
-        { Check expiration (24 hours) }
-        if HoursBetween(Now, LEntry.Timestamp) >= 24 then
-        begin
-          { Expired entry, remove it }
-          FEntries.Remove(LEntry);
-          FIsDirty := True;
-          Exit;
-        end;
-        
-        LEntry.LastAccessed := Now;
-        AResponse := LEntry.Response;
+        { Expired entry, remove it }
+        FDictionary.Remove(AHash);
+        FEntries.Remove(LEntry);
         FIsDirty := True;
-        Result := True;
         Exit;
       end;
+      
+      LEntry.LastAccessed := Now;
+      AResponse := LEntry.Response;
+      FIsDirty := True;
+      Result := True;
     end;
   finally
     FCriticalSection.Leave;
@@ -151,6 +152,7 @@ var
   LEntry: TRadIACacheEntry;
 begin
   FEntries.Clear;
+  FDictionary.Clear;
   
   { Ensure directory exists }
   ForceDirectories(TPath.GetDirectoryName(FFilePath));
@@ -189,6 +191,7 @@ begin
             end;
             
             FEntries.Add(LEntry);
+            FDictionary.Add(LEntry.Hash, LEntry);
           end;
         end;
       finally
@@ -197,6 +200,7 @@ begin
     end;
   except
     FEntries.Clear;
+    FDictionary.Clear;
   end;
 end;
 
@@ -210,17 +214,14 @@ begin
   FCriticalSection.Enter;
   try
     { If already exists, update response and refresh timestamp }
-    for LEntry in FEntries do
+    if FDictionary.TryGetValue(AHash, LEntry) then
     begin
-      if LEntry.Hash = AHash then
-      begin
-        LEntry.Response := AResponse;
-        LEntry.Timestamp := Now;
-        LEntry.LastAccessed := Now;
-        FIsDirty := True;
-        SaveCache;
-        Exit;
-      end;
+      LEntry.Response := AResponse;
+      LEntry.Timestamp := Now;
+      LEntry.LastAccessed := Now;
+      FIsDirty := True;
+      SaveCache;
+      Exit;
     end;
 
     { If limit reached, discard LRU (Least Recently Used) }
@@ -236,6 +237,7 @@ begin
           LMinIndex := I;
         end;
       end;
+      FDictionary.Remove(FEntries[LMinIndex].Hash);
       FEntries.Delete(LMinIndex);
     end;
 
@@ -246,6 +248,7 @@ begin
     LEntry.Timestamp := Now;
     LEntry.LastAccessed := Now;
     FEntries.Add(LEntry);
+    FDictionary.Add(AHash, LEntry);
     FIsDirty := True;
     SaveCache;
   finally
