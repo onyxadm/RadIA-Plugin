@@ -200,6 +200,43 @@ begin
   end;
 end;
 
+function FindToolsMenu(const AMainMenu: TMainMenu): TMenuItem;
+var
+  I: Integer;
+  LCaption: string;
+begin
+  Result := nil;
+  if not Assigned(AMainMenu) then
+    Exit;
+
+  // 1. Busca pelo nome do componente (independe de tradução)
+  for I := 0 to AMainMenu.Items.Count - 1 do
+  begin
+    if SameText(AMainMenu.Items[I].Name, 'ToolsMenu') or 
+       SameText(AMainMenu.Items[I].Name, 'Tools') then
+    begin
+      Result := AMainMenu.Items[I];
+      Exit;
+    end;
+  end;
+
+  // 2. Fallbacks de Caption usando buscas exatas limpas de atalhos (&)
+  for I := 0 to AMainMenu.Items.Count - 1 do
+  begin
+    LCaption := StringReplace(AMainMenu.Items[I].Caption, '&', '', [rfReplaceAll]);
+    if SameText(LCaption, 'Tools') or 
+       SameText(LCaption, 'Ferramentas') or 
+       SameText(LCaption, 'ToolsMenu') then
+    begin
+      Result := AMainMenu.Items[I];
+      Exit;
+    end;
+  end;
+
+  // 3. Fallback clássico da Open Tools API
+  Result := AMainMenu.Items.Find('Tools');
+end;
+
 procedure TRadIAWizard.RegisterMenus;
 var
   LNTAServices: INTAServices;
@@ -209,7 +246,7 @@ begin
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
   begin
     { Register tools actions }
-    LToolsMenu := LNTAServices.MainMenu.Items.Find('Tools');
+    LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
     if Assigned(LToolsMenu) then
     begin
       TRadIAEditorHook(FEditorHook).PopulateToolsMenu(LToolsMenu);
@@ -238,7 +275,7 @@ begin
   LHook := TRadIAEditorHook(FEditorHook);
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
   begin
-    LToolsMenu := LNTAServices.MainMenu.Items.Find('Tools');
+    LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
     if Assigned(LToolsMenu) then
     begin
       for I := LToolsMenu.Count - 1 downto 0 do
