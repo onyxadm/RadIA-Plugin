@@ -8,61 +8,109 @@ object FrameAIChat: TFrameAIChat
     Left = 0
     Top = 0
     Width = 320
-    Height = 35
+    Height = 44
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
     object cbProvider: TComboBox
-      Left = 5
-      Top = 6
-      Width = 65
+      Left = 6
+      Top = 10
+      Width = 70
       Height = 22
       Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Segoe UI'
+      Font.Style = []
+      ParentFont = False
       TabOrder = 0
       OnChange = cbProviderChange
     end
     object cbModel: TComboBox
-      Left = 75
-      Top = 6
-      Width = 80
+      Left = 80
+      Top = 10
+      Width = 90
       Height = 22
       Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Segoe UI'
+      Font.Style = []
+      ParentFont = False
       TabOrder = 1
       OnChange = cbModelChange
     end
     object btnTemplates: TButton
-      Left = 160
-      Top = 5
-      Width = 30
-      Height = 24
-      Caption = 'Tpl'
+      Left = 178
+      Top = 9
+      Width = 28
+      Height = 26
+      Caption = #9145
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = []
+      Hint = 'Templates de Prompt'
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
       TabOrder = 2
       OnClick = btnTemplatesClick
     end
     object btnExport: TButton
-      Left = 195
-      Top = 5
-      Width = 40
-      Height = 24
-      Caption = 'Export'
+      Left = 210
+      Top = 9
+      Width = 28
+      Height = 26
+      Caption = #128172
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = []
+      Hint = 'Exportar Conversa'
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
       TabOrder = 3
       OnClick = btnExportClick
     end
     object btnClear: TButton
-      Left = 238
-      Top = 5
-      Width = 38
-      Height = 24
-      Caption = 'Clear'
+      Left = 242
+      Top = 9
+      Width = 28
+      Height = 26
+      Caption = #128465
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = []
+      Hint = 'Limpar Hist'#243'rico'
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
       TabOrder = 4
       OnClick = btnClearClick
     end
     object btnSettings: TButton
-      Left = 278
-      Top = 5
-      Width = 38
-      Height = 24
-      Caption = 'Setup'
+      Left = 274
+      Top = 9
+      Width = 40
+      Height = 26
+      Caption = #9881' AI'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = []
+      Hint = 'Configura'#231#245'es'
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
       TabOrder = 5
       OnClick = btnSettingsClick
     end
@@ -75,9 +123,9 @@ object FrameAIChat: TFrameAIChat
   end
   object pnlInput: TPanel
     Left = 0
-    Top = 500
+    Top = 498
     Width = 320
-    Height = 100
+    Height = 102
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
@@ -85,7 +133,7 @@ object FrameAIChat: TFrameAIChat
       Left = 0
       Top = 0
       Width = 320
-      Height = 13
+      Height = 16
       Align = alTop
       Caption = '  Ready'
       Font.Charset = DEFAULT_CHARSET
@@ -98,29 +146,41 @@ object FrameAIChat: TFrameAIChat
     end
     object memPrompt: TMemo
       Left = 0
-      Top = 13
-      Width = 260
-      Height = 87
+      Top = 16
+      Width = 272
+      Height = 86
       Align = alClient
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Segoe UI'
+      Font.Style = []
+      ParentFont = False
       ScrollBars = ssVertical
       TabOrder = 0
     end
     object btnSend: TButton
-      Left = 260
-      Top = 13
-      Width = 60
-      Height = 87
+      Left = 272
+      Top = 16
+      Width = 48
+      Height = 86
       Align = alRight
-      Caption = 'Send'
+      Caption = #10148
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -18
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = []
+      ParentFont = False
       TabOrder = 1
       OnClick = btnSendClick
     end
   end
   object pnlBrowser: TPanel
     Left = 0
-    Top = 35
+    Top = 44
     Width = 320
-    Height = 465
+    Height = 454
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 2
@@ -128,7 +188,7 @@ object FrameAIChat: TFrameAIChat
       Left = 0
       Top = 0
       Width = 320
-      Height = 465
+      Height = 454
       Align = alClient
       TabOrder = 0
       OnCreateWebViewCompleted = EdgeBrowserCreateWebViewCompleted

@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.ComCtrls, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config;
+  Vcl.ComCtrls, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, ToolsAPI;
 
 type
   TFrameAIConfig = class(TFrame)
@@ -52,9 +52,17 @@ implementation
 {$R *.dfm}
 
 constructor TFrameAIConfig.Create(AOwner: TComponent);
+var
+  LThemingServices: IOTAIDEThemingServices;
 begin
   inherited Create(AOwner);
   FConfig := TRadIAConfig.Create;
+
+  { Apply IDE theme so this frame matches the current Delphi skin }
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+    if LThemingServices.IDEThemingEnabled then
+      LThemingServices.ApplyTheme(Self);
+
   LoadConfig;
 end;
 

@@ -11,6 +11,9 @@ type
   { Form to compare code changes side-by-side before applying them to the editor }
   TFormAIDiff = class(TForm)
     pnlFooter: TPanel;
+    lblSeparator: TLabel;
+    btnPrevConflict: TButton;
+    btnNextConflict: TButton;
     btnApply: TButton;
     btnCancel: TButton;
     pnlBrowser: TPanel;
@@ -18,6 +21,8 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    procedure btnPrevConflictClick(Sender: TObject);
+    procedure btnNextConflictClick(Sender: TObject);
   private
     FConfig: IAIConfig;
     FAIService: TRadIAService;
@@ -194,13 +199,45 @@ begin
         FSuggestedCode := LCleanedResponse.Trim;
       end;
       
-      TThread.Queue(nil, 
+      TThread.Queue(nil,
         procedure
         begin
           if LGuard.IsAlive then
             RenderDiffInBrowser;
         end);
     end);
+end;
+
+procedure TFormAIDiff.btnPrevConflictClick(Sender: TObject);
+var
+  LJson: TJSONObject;
+begin
+  if not FBrowserInitialized then Exit;
+  LJson := TJSONObject.Create;
+  try
+    LJson.AddPair('action', 'navigate');
+    LJson.AddPair('direction', 'prev');
+    if Assigned(EdgeBrowser.DefaultInterface) then
+      EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+  finally
+    LJson.Free;
+  end;
+end;
+
+procedure TFormAIDiff.btnNextConflictClick(Sender: TObject);
+var
+  LJson: TJSONObject;
+begin
+  if not FBrowserInitialized then Exit;
+  LJson := TJSONObject.Create;
+  try
+    LJson.AddPair('action', 'navigate');
+    LJson.AddPair('direction', 'next');
+    if Assigned(EdgeBrowser.DefaultInterface) then
+      EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+  finally
+    LJson.Free;
+  end;
 end;
 
 end.
