@@ -73,15 +73,32 @@ end;
 procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
 var
   LForm: TCustomForm;
+  LOllamaUrl: string;
+  LOpenAIUrl: string;
 begin
+  LOllamaUrl := Trim(edtOllamaUrl.Text);
+  LOpenAIUrl := Trim(edtOpenAICustomUrl.Text);
+
+  if not LOllamaUrl.IsEmpty and not (LOllamaUrl.StartsWith('http://', True) or LOllamaUrl.StartsWith('https://', True)) then
+  begin
+    ShowMessage('A URL do Ollama deve iniciar com http:// ou https://');
+    Exit;
+  end;
+
+  if not LOpenAIUrl.IsEmpty and not (LOpenAIUrl.StartsWith('http://', True) or LOpenAIUrl.StartsWith('https://', True)) then
+  begin
+    ShowMessage('A Custom Base URL da OpenAI deve iniciar com http:// ou https://');
+    Exit;
+  end;
+
   FConfig.SetApiKey(ptGemini, Trim(edtGeminiKey.Text));
   FConfig.SetApiKey(ptOpenAI, Trim(edtOpenAIKey.Text));
-  FConfig.OpenAICustomBaseUrl := Trim(edtOpenAICustomUrl.Text);
+  FConfig.OpenAICustomBaseUrl := LOpenAIUrl;
   FConfig.SetApiKey(ptClaude, Trim(edtClaudeKey.Text));
   FConfig.SetApiKey(ptDeepSeek, Trim(edtDeepSeekKey.Text));
   FConfig.SetApiKey(ptGroq, Trim(edtGroqKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
-  FConfig.OllamaBaseUrl := Trim(edtOllamaUrl.Text);
+  FConfig.OllamaBaseUrl := LOllamaUrl;
   FConfig.Save;
 
   ShowMessage('Settings saved successfully.');

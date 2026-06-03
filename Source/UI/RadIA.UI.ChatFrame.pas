@@ -130,7 +130,13 @@ begin
   LModuleDir := ExtractFilePath(GetModuleName(HInstance));
   LSourceDir := TPath.Combine(LModuleDir, 'Web');
   
-  { 2. Fallback to the hardcoded development path if module-relative path doesn't exist }
+  { 2. Try dynamic search going up 3 folder levels (development environment with manual install) }
+  if not TDirectory.Exists(LSourceDir) then
+  begin
+    LSourceDir := TPath.GetFullPath(TPath.Combine(LModuleDir, '..\..\..\Source\UI\Web'));
+  end;
+  
+  { 3. Fallback to the hardcoded development path if dynamic path doesn't exist }
   if not TDirectory.Exists(LSourceDir) then
   begin
     LSourceDir := 'D:\Projetos\PluginDelphiIA\Source\UI\Web';

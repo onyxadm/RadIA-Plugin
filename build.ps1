@@ -20,20 +20,26 @@ if ($dccOut -match "version (\d+\.\d+)") {
     Write-Error "Compilador dcc32 não encontrado no PATH ou versão inválida."
 }
 
-# 2. Mapear versão do compilador para a versão do Delphi (DelphiVer)
+# 2. Validar compatibilidade e mapear versão do compilador para a versão do Delphi (DelphiVer)
+if ($compilerVersion -lt 34.0) {
+    Write-Host ""
+    Write-Host "=========================================================================" -ForegroundColor Red
+    Write-Host "ERRO: A versão do compilador Delphi detectada ($compilerVersion) não é suportada." -ForegroundColor Red
+    Write-Host "O RadIA exige obrigatoriamente o Delphi 10.4 Sydney ou superior (DCC32 >= 34.0)" -ForegroundColor Red
+    Write-Host "devido ao uso de recursos nativos da API de WebView2 (TEdgeBrowser)." -ForegroundColor Red
+    Write-Host "=========================================================================" -ForegroundColor Red
+    Write-Host ""
+    throw "Versão do Delphi não suportada."
+}
+
 $delphiVer = ""
 switch ($compilerVersion) {
     37.0 { $delphiVer = "23.0" } # Delphi 12 Athens
     36.0 { $delphiVer = "22.0" } # Delphi 11 Alexandria (Updates)
     35.0 { $delphiVer = "22.0" } # Delphi 11 Alexandria
     34.0 { $delphiVer = "21.0" } # Delphi 10.4 Sydney
-    33.0 { $delphiVer = "20.0" } # Delphi 10.3 Rio
-    32.0 { $delphiVer = "19.0" } # Delphi 10.2 Tokyo
-    31.0 { $delphiVer = "18.0" } # Delphi 10.1 Berlin
-    30.0 { $delphiVer = "17.0" } # Delphi 10 Seattle
-    29.0 { $delphiVer = "16.0" } # Delphi XE8
     default {
-        # Cálculo aproximado para outras versões
+        # Cálculo aproximado para outras versões mais recentes
         $calc = $compilerVersion - 14.0
         $delphiVer = "{0:N1}" -f $calc
     }
@@ -56,7 +62,10 @@ New-Item -ItemType Directory -Force -Path $dcuPath, $binPath, $bplPath, $dcpPath
 Write-Host "Limpando diretórios de código-fonte de compilações antigas..." -ForegroundColor Yellow
 Get-ChildItem -Path . -Recurse -Include *.dcu, *.exe, *.bpl, *.dcp, *.identcache, *.local | Where-Object { $_.FullName -notmatch "Output" } | Remove-Item -Force
 
-# 6. Compilar Pacote Principal (RadIA.dpk)
+# 6. Compilar Recursos e Pacote Principal (RadIA.dpk)
+Write-Host "Compilando recursos RadIA.rc..." -ForegroundColor Yellow
+& brcc32 RadIA.rc
+
 Write-Host "Compilando RadIA.dpk..." -ForegroundColor Yellow
 & dcc32 -Q -LUdesignide -LUvclie "-NU$dcuPath" "-LE$bplPath" "-LN$dcpPath" RadIA.dpk
 

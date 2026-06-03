@@ -92,15 +92,25 @@
         </DelphiCompile>
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="vcl.dcp"/>
+        <DCCReference Include="vclie.dcp"/>
         <DCCReference Include="designide.dcp"/>
         <DCCReference Include="Source\Core\RadIA.Core.Types.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Interfaces.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Config.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.Cache.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Service.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.PromptHistory.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.TokenUsage.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.ConversationExporter.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.PromptTemplates.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.ProjectContext.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Base.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Gemini.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.OpenAI.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Claude.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.Ollama.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.DeepSeek.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.Groq.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Register.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Helper.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.EditorHook.pas"/>
