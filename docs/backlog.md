@@ -69,33 +69,24 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
 
 ## 🔲 Pendentes
 
-### 1. Instalador Automatizado (Inno Setup)
-*   **Objetivo**: Fornecer uma experiência de instalação fluida ("One-Click Install") para desenvolvedores que desejam apenas utilizar o plugin, sem a necessidade de compilar o código fonte.
-*   **Detalhamento**:
-    *   Criar um script Inno Setup (`installer.iss`) para empacotar o plugin.
-    *   O instalador deve escanear o Registro do Windows para detectar as versões instaladas do Delphi (ex: `Software\Embarcadero\BDS\23.0`).
-    *   Copiar a BPL apropriada do diretório de output para o diretório de destino do usuário.
-    *   Registrar a BPL no Delphi adicionando uma nova entrada do tipo String no Registro sob a chave `Software\Embarcadero\BDS\<versao>\Known Packages` com o caminho completo da BPL instalada.
-    *   Copiar automaticamente a DLL do WebView2 (`WebView2Loader.dll`) e os recursos web (`chat.html`, `chat.css`, etc.) para o local apropriado (pasta `%APPDATA%\RadIA\Web`).
-
-### 2. Múltiplas Sessões de Chat (Item #5)
+### 1. Múltiplas Sessões de Chat (Item #5)
 *   **Objetivo**: Permitir que o desenvolvedor organize conversas por projeto, feature ou tarefa, sem perder o contexto de sessões anteriores.
 *   **Detalhamento**:
     *   Armazenar sessões em `%APPDATA%\RadIA\sessions\<id>.json`, cada uma com nome, data e array de mensagens.
     *   Adicionar painel lateral (ou dropdown) para listar, criar, renomear e excluir sessões.
     *   Botão "Nova Sessão" salva a corrente e abre uma vazia.
 
-### 3. Provedores Nativos: DeepSeek e Groq (Item #9)
+### 2. Provedores Nativos: DeepSeek e Groq (Item #9)
 *   **Objetivo**: Adicionar provedores dedicados com suas particularidades de autenticação e endpoints para melhor UX e maior precisão de configuração.
 *   **Detalhamento**:
     *   `RadIA.Provider.DeepSeek.pas`: endpoint `https://api.deepseek.com/v1/chat/completions`, header `Authorization: Bearer`.
     *   `RadIA.Provider.Groq.pas`: endpoint `https://api.groq.com/openai/v1/chat/completions`, header `Authorization: Bearer`.
 
-### 4. Painel de Gerenciamento do Cache (Item #13)
+### 3. Painel de Gerenciamento do Cache (Item #13)
 *   **Objetivo**: Dar visibilidade e controle sobre o cache de respostas sem precisar editar o arquivo JSON manualmente.
 
-### 5. Revisão Automática de Código no Save (Item #15)
+### 4. Revisão Automática de Código no Save (Item #15)
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção.
 
-### 6. Histórico de Refatorações Aplicadas (Item #16)
+### 5. Histórico de Refatorações Aplicadas (Item #16)
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão [Aplicar Alteração] foi acionado, permitindo revisão e desfazimento manual.
