@@ -35,10 +35,79 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, Vcl.Controls, Vcl.Forms, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator;
+  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator;
 
 var
   GWizardIndex: Integer = -1;
+  GAboutBoxIndex: Integer = -1;
+  LAboutServices: IOTAAboutBoxServices;
+
+procedure RegisterSplashAndAbout;
+var
+  LBitmap: TBitmap;
+begin
+  LBitmap := TBitmap.Create;
+  try
+    LBitmap.PixelFormat := pf24bit;
+    LBitmap.Width := 24;
+    LBitmap.Height := 24;
+    
+    // Fundo azul escuro (#0F172A -> BGR $002A170F)
+    LBitmap.Canvas.Brush.Color := $002A170F;
+    LBitmap.Canvas.FillRect(Rect(0, 0, 24, 24));
+    
+    // Cabeça do robô cinza claro (#D1D5DB -> BGR $00DBD5D1)
+    LBitmap.Canvas.Pen.Color := $00DBD5D1;
+    LBitmap.Canvas.Brush.Color := $00DBD5D1;
+    LBitmap.Canvas.RoundRect(4, 6, 20, 18, 4, 4);
+    
+    // Antena
+    LBitmap.Canvas.Pen.Color := $00DBD5D1;
+    LBitmap.Canvas.MoveTo(12, 6);
+    LBitmap.Canvas.LineTo(12, 3);
+    LBitmap.Canvas.Brush.Color := $00CC7A00; // Azul RadIA (#007ACC -> BGR $00CC7A00)
+    LBitmap.Canvas.Ellipse(10, 1, 14, 5);
+    
+    // Olhos azuis brilhantes (#3B82F6 -> BGR $00F6823B)
+    LBitmap.Canvas.Brush.Color := $00F6823B;
+    LBitmap.Canvas.Pen.Color := $00F6823B;
+    LBitmap.Canvas.Ellipse(7, 10, 10, 13);
+    LBitmap.Canvas.Ellipse(14, 10, 17, 13);
+    
+    // Boca
+    LBitmap.Canvas.Pen.Color := $009CA3AF;
+    LBitmap.Canvas.MoveTo(9, 15);
+    LBitmap.Canvas.LineTo(15, 15);
+
+    { 1. Registrar na Splash Screen se disponível }
+    if Assigned(SplashScreenServices) then
+    begin
+      SplashScreenServices.AddPluginBitmap(
+        'RadIA AI Assistant',
+        LBitmap.Handle,
+        False,
+        'Open Source (BYOK)'
+      );
+    end;
+
+    { 2. Registrar no About Box se disponível }
+    if Supports(BorlandIDEServices, IOTAAboutBoxServices, LAboutServices) then
+    begin
+      GAboutBoxIndex := LAboutServices.AddPluginInfo(
+        'RadIA AI Assistant',
+        'RadIA - AI Assistant for Delphi IDE' + sLineBreak +
+        'Provides sidebar chat, code refactoring, context parsing, and smart diff.' + sLineBreak +
+        'Copyright (c) 2026 RadIA Open Source Project',
+        LBitmap.Handle,
+        False,
+        'Apache 2.0 License',
+        'v0.0.1'
+      );
+    end;
+  finally
+    LBitmap.Free;
+  end;
+end;
 
 procedure Register;
 var
@@ -50,6 +119,7 @@ begin
     LOTAInstance := TRadIAWizard.Create;
     GWizardIndex := LWizardServices.AddWizard(LOTAInstance);
   end;
+  RegisterSplashAndAbout;
 end;
 
 { TRadIAWizard }
@@ -203,6 +273,14 @@ finalization
   begin
     // Unload the wizard if the BPL is uninstalled
     (BorlandIDEServices as IOTAWizardServices).RemoveWizard(GWizardIndex);
+  end;
+
+  if (GAboutBoxIndex <> -1) and Assigned(BorlandIDEServices) then
+  begin
+    if Supports(BorlandIDEServices, IOTAAboutBoxServices, LAboutServices) then
+    begin
+      LAboutServices.RemovePluginInfo(GAboutBoxIndex);
+    end;
   end;
 
 end.
