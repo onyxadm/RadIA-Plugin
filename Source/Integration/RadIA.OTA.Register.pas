@@ -38,7 +38,7 @@ implementation
 
 uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
-  RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config;
+  RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm;
 
 var
   GWizardIndex: Integer = -1;
@@ -175,6 +175,7 @@ constructor TRadIAWizard.Create;
 begin
   LogDebug('TRadIAWizard.Create called');
   inherited Create;
+  
   FEditorHook := TRadIAEditorHook.Create(nil);
   RegisterMenus;
   

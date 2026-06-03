@@ -79,7 +79,17 @@ begin
 end;
 
 procedure TFormAIDiff.FormShow(Sender: TObject);
+var
+  LThemingServices: IOTAIDEThemingServices;
 begin
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LThemingServices.ApplyTheme(Self);
+    end;
+  end;
+
   if not FBrowserInitialized then
   begin
     EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');

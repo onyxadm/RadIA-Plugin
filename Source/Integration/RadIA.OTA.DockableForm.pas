@@ -95,8 +95,20 @@ begin
 end;
 
 procedure TFormRadIADockable.DoShow;
+var
+  LThemingServices: IOTAIDEThemingServices;
 begin
   inherited DoShow;
+  
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LThemingServices.ApplyTheme(Self);
+      LThemingServices.ApplyTheme(FChatFrame);
+    end;
+  end;
+  
   ApplyIDETheme;
 end;
 
