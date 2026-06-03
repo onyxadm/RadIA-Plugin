@@ -8,7 +8,7 @@ uses
   Vcl.ComCtrls, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, ToolsAPI;
 
 type
-  TFrameAIConfig = class(TFrame)
+  TFormAIConfig = class(TForm)
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
     tsOpenAI: TTabSheet;
@@ -58,7 +58,7 @@ uses
 type
   TTabSheetColorHack = class(TTabSheet);
 
-constructor TFrameAIConfig.Create(AOwner: TComponent);
+constructor TFormAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
@@ -67,7 +67,7 @@ begin
   FConfig := TRadIAConfig.Create;
 
   LActiveTheme := 'light';
-  { Apply IDE theme so this frame matches the current Delphi skin }
+  { Apply IDE theme so this form matches the current Delphi skin }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
@@ -77,11 +77,14 @@ begin
     end;
   end;
 
-  UpdateVCLColors(LActiveTheme);
+  if not (Assigned(LThemingServices) and LThemingServices.IDEThemingEnabled) then
+  begin
+    UpdateVCLColors(LActiveTheme);
+  end;
   LoadConfig;
 end;
 
-procedure TFrameAIConfig.UpdateVCLColors(const AThemeName: string);
+procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
@@ -148,7 +151,7 @@ begin
   lblOllamaUrl.Font.Color := LTextColor;
 end;
 
-procedure TFrameAIConfig.LoadConfig;
+procedure TFormAIConfig.LoadConfig;
 begin
   edtGeminiKey.Text := FConfig.GetApiKey(ptGemini);
   edtOpenAIKey.Text := FConfig.GetApiKey(ptOpenAI);
@@ -160,7 +163,7 @@ begin
   edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
 end;
 
-procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
+procedure TFormAIConfig.btnSaveClick(Sender: TObject);
 var
   LForm: TCustomForm;
   LOllamaUrl: string;
@@ -198,7 +201,7 @@ begin
     LForm.ModalResult := mrOk;
 end;
 
-procedure TFrameAIConfig.btnCancelClick(Sender: TObject);
+procedure TFormAIConfig.btnCancelClick(Sender: TObject);
 var
   LForm: TCustomForm;
 begin

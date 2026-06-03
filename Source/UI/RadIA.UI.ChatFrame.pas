@@ -325,29 +325,18 @@ end;
 
 procedure TFrameAIChat.btnSettingsClick(Sender: TObject);
 var
-  LForm: TForm;
-  LConfigFrame: TFrameAIConfig;
+  LForm: TFormAIConfig;
   LThemingServices: IOTAIDEThemingServices;
 begin
-  LForm := TForm.Create(nil);
+  LForm := TFormAIConfig.Create(nil);
   try
-    LForm.Caption := 'RadIA Configuration';
-    LForm.Position := poOwnerFormCenter;
-    LForm.Width := 640;
-    LForm.Height := 560;
-    LForm.BorderStyle := bsDialog;
-    
-    LConfigFrame := TFrameAIConfig.Create(LForm);
-    LConfigFrame.Parent := LForm;
-    LConfigFrame.Align := alClient;
-    LConfigFrame.LoadConfig;
+    LForm.LoadConfig;
     
     if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
     begin
       if LThemingServices.IDEThemingEnabled then
       begin
         LThemingServices.ApplyTheme(LForm);
-        LThemingServices.ApplyTheme(LConfigFrame);
       end;
     end;
     

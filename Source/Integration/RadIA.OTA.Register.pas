@@ -38,7 +38,7 @@ implementation
 
 uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
-  RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm;
+  RadIA.UI.ConfigFrame, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm;
 
 var
   GWizardIndex: Integer = -1;
@@ -172,9 +172,18 @@ end;
 { TRadIAWizard }
 
 constructor TRadIAWizard.Create;
+var
+  LThemingServices: IOTAIDEThemingServices;
 begin
   LogDebug('TRadIAWizard.Create called');
   inherited Create;
+  
+  { Register custom forms in IDE Theming Services }
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    LThemingServices.RegisterFormClass(TFormAIDiff);
+    LThemingServices.RegisterFormClass(TFormAIConfig);
+  end;
   
   FEditorHook := TRadIAEditorHook.Create(nil);
   RegisterMenus;

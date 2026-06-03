@@ -1,9 +1,19 @@
-object FrameAIConfig: TFrameAIConfig
+object FormAIConfig: TFormAIConfig
   Left = 0
   Top = 0
-  Width = 649
-  Height = 483
-  TabOrder = 0
+  BorderStyle = bsDialog
+  Caption = 'RadIA Configuration'
+  ClientHeight = 483
+  ClientWidth = 649
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poOwnerFormCenter
+  PixelsPerInch = 96
   object pgcSettings: TPageControl
     AlignWithMargins = True
     Left = 3
@@ -28,7 +38,6 @@ object FrameAIConfig: TFrameAIConfig
         Top = 43
         Width = 360
         Height = 23
-        PasswordChar = '*'
         TabOrder = 0
       end
     end
@@ -53,7 +62,6 @@ object FrameAIConfig: TFrameAIConfig
         Top = 43
         Width = 360
         Height = 23
-        PasswordChar = '*'
         TabOrder = 0
       end
       object edtOpenAICustomUrl: TEdit
@@ -83,7 +91,6 @@ object FrameAIConfig: TFrameAIConfig
         Top = 43
         Width = 360
         Height = 23
-        PasswordChar = '*'
         TabOrder = 0
       end
     end
@@ -101,7 +108,6 @@ object FrameAIConfig: TFrameAIConfig
         Top = 43
         Width = 360
         Height = 23
-        PasswordChar = '*'
         TabOrder = 0
       end
     end
@@ -119,7 +125,6 @@ object FrameAIConfig: TFrameAIConfig
         Top = 43
         Width = 360
         Height = 23
-        PasswordChar = '*'
         TabOrder = 0
       end
     end
