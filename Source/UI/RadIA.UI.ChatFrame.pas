@@ -41,6 +41,8 @@ type
     procedure SendPromptToAI(const APromptText: string);
     procedure PostToWebView(const AAction, ARole, AText: string);
     procedure OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
+    procedure LoadChatHistory;
+    procedure SaveChatHistory;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -177,9 +179,22 @@ begin
 end;
 
 procedure TFrameAIChat.btnClearClick(Sender: TObject);
+var
+  LHistoryFile: string;
 begin
   FHistory := [];
   PostToWebView('clear_chat', '', '');
+  
+  { Clear physical file }
+  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
+  if TFile.Exists(LHistoryFile) then
+  begin
+    try
+      TFile.Delete(LHistoryFile);
+    except
+      // Ignore delete errors
+    end;
+  end;
 end;
 
 procedure TFrameAIChat.btnSettingsClick(Sender: TObject);
@@ -192,7 +207,7 @@ begin
     LForm.Caption := 'RadIA Configuration';
     LForm.Position := poOwnerFormCenter;
     LForm.Width := 340;
-    LForm.Height := 490;
+    LForm.Height := 585;
     LForm.BorderStyle := bsDialog;
     
     LConfigFrame := TFrameAIConfig.Create(LForm);
@@ -244,6 +259,7 @@ begin
     FBrowserInitialized := True;
     // Set default dark theme to match IDE
     SetTheme('dark');
+    LoadChatHistory;
   end;
 end;
 
@@ -318,6 +334,7 @@ begin
       FHistory := FHistory + [LUserMsg];
       LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, AResponse);
       FHistory := FHistory + [LAssistantMsg];
+      SaveChatHistory;
     end);
 end;
 
@@ -325,6 +342,86 @@ procedure TFrameAIChat.OnGlobalPromptRequest(const APrompt: string; const AOpenC
 begin
   PostToWebView('add_message', 'user', APrompt);
   SendPromptToAI(APrompt);
+end;
+
+procedure TFrameAIChat.LoadChatHistory;
+var
+  LHistoryFile: string;
+  LContent: string;
+  LJsonArr: TJSONArray;
+  LVal: TJSONValue;
+  LMsgObj: TJSONObject;
+  LMsg: IChatMessage;
+  LRoleStr, LContentStr: string;
+  LRole: TAIMessageRole;
+begin
+  FHistory := [];
+  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
+  if not TFile.Exists(LHistoryFile) then
+    Exit;
+
+  try
+    LContent := TFile.ReadAllText(LHistoryFile, TEncoding.UTF8);
+    if LContent.IsEmpty then
+      Exit;
+
+    LJsonArr := TJSONObject.ParseJSONValue(LContent) as TJSONArray;
+    if Assigned(LJsonArr) then
+    begin
+      try
+        for LVal in LJsonArr do
+        begin
+          if LVal is TJSONObject then
+          begin
+            LMsgObj := LVal as TJSONObject;
+            LRoleStr := LMsgObj.GetValue('role').Value;
+            LContentStr := LMsgObj.GetValue('content').Value;
+            
+            LRole := StringToMessageRole(LRoleStr);
+            LMsg := TRadIAService.CreateMessage(LRole, LContentStr);
+            
+            FHistory := FHistory + [LMsg];
+            
+            { Render message in WebView }
+            PostToWebView('add_message', LRoleStr, LContentStr);
+          end;
+        end;
+      finally
+        LJsonArr.Free;
+      end;
+    end;
+  except
+    FHistory := [];
+  end;
+end;
+
+procedure TFrameAIChat.SaveChatHistory;
+var
+  LHistoryFile: string;
+  LJsonArr: TJSONArray;
+  LMsgObj: TJSONObject;
+  LMsg: IChatMessage;
+begin
+  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
+  ForceDirectories(TPath.GetDirectoryName(LHistoryFile));
+
+  LJsonArr := TJSONArray.Create;
+  try
+    for LMsg in FHistory do
+    begin
+      if LMsg.Role = mrSystem then
+        Continue;
+
+      LMsgObj := TJSONObject.Create;
+      LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
+      LMsgObj.AddPair('content', LMsg.Content);
+      LJsonArr.AddElement(LMsgObj);
+    end;
+    
+    TFile.WriteAllText(LHistoryFile, LJsonArr.ToJSON, TEncoding.UTF8);
+  finally
+    LJsonArr.Free;
+  end;
 end;
 
 end.

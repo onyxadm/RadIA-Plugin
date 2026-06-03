@@ -24,6 +24,8 @@ type
     procedure TestActiveModelPersistence;
     [Test]
     procedure TestSystemPromptPersistence;
+    [Test]
+    procedure TestOllamaBaseUrlPersistence;
   end;
 
 implementation
@@ -102,6 +104,17 @@ begin
   
   FConfig.Load;
   Assert.AreEqual(TEST_PROMPT, FConfig.SystemPrompt);
+end;
+
+procedure TTestRadIAConfig.TestOllamaBaseUrlPersistence;
+const
+  TEST_URL = 'http://192.168.1.50:11434';
+begin
+  FConfig.OllamaBaseUrl := TEST_URL;
+  FConfig.Save;
+  
+  FConfig.Load;
+  Assert.AreEqual(TEST_URL, FConfig.OllamaBaseUrl);
 end;
 
 initialization

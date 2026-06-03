@@ -13,6 +13,7 @@ type
     FActiveProvider: TAIProviderType;
     FActiveModels: array[TAIProviderType] of string;
     FSystemPrompt: string;
+    FOllamaBaseUrl: string;
     
     function ProtectString(const AValue: string): string;
     function UnprotectString(const AValue: string): string;
@@ -28,6 +29,8 @@ type
     procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
     function GetSystemPrompt: string;
     procedure SetSystemPrompt(const AValue: string);
+    function GetOllamaBaseUrl: string;
+    procedure SetOllamaBaseUrl(const AValue: string);
     procedure Save;
     procedure Load;
   end;
@@ -65,10 +68,13 @@ begin
   FApiKeys[ptGemini] := '';
   FApiKeys[ptOpenAI] := '';
   FApiKeys[ptClaude] := '';
+  FApiKeys[ptOllama] := '';
   FActiveModels[ptGemini] := MODEL_GEMINI_15_FLASH;
   FActiveModels[ptOpenAI] := MODEL_OPENAI_GPT4O_MINI;
   FActiveModels[ptClaude] := MODEL_CLAUDE_3_HAIKU;
+  FActiveModels[ptOllama] := 'llama3:latest';
   FSystemPrompt := '';
+  FOllamaBaseUrl := 'http://localhost:11434';
   Load;
 end;
 
@@ -117,6 +123,15 @@ begin
           FSystemPrompt := '';
       except
         FSystemPrompt := '';
+      end;
+
+      try
+        if LReg.ValueExists('OllamaBaseUrl') then
+          FOllamaBaseUrl := LReg.ReadString('OllamaBaseUrl')
+        else
+          FOllamaBaseUrl := 'http://localhost:11434';
+      except
+        FOllamaBaseUrl := 'http://localhost:11434';
       end;
 
       for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
@@ -185,6 +200,7 @@ begin
     begin
       LReg.WriteInteger('ActiveProvider', Integer(FActiveProvider));
       LReg.WriteString('SystemPrompt', FSystemPrompt);
+      LReg.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
 
       for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
       begin
@@ -217,6 +233,16 @@ end;
 procedure TRadIAConfig.SetSystemPrompt(const AValue: string);
 begin
   FSystemPrompt := AValue;
+end;
+
+function TRadIAConfig.GetOllamaBaseUrl: string;
+begin
+  Result := FOllamaBaseUrl;
+end;
+
+procedure TRadIAConfig.SetOllamaBaseUrl(const AValue: string);
+begin
+  FOllamaBaseUrl := AValue;
 end;
 
 function TRadIAConfig.UnprotectString(const AValue: string): string;

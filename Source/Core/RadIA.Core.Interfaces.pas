@@ -41,9 +41,12 @@ type
     procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
     function GetSystemPrompt: string;
     procedure SetSystemPrompt(const AValue: string);
+    function GetOllamaBaseUrl: string;
+    procedure SetOllamaBaseUrl(const AValue: string);
     procedure Save;
     procedure Load;
     property SystemPrompt: string read GetSystemPrompt write SetSystemPrompt;
+    property OllamaBaseUrl: string read GetOllamaBaseUrl write SetOllamaBaseUrl;
   end;
 
 implementation

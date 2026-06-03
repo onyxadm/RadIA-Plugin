@@ -2,13 +2,13 @@ object FrameAIConfig: TFrameAIConfig
   Left = 0
   Top = 0
   Width = 320
-  Height = 450
+  Height = 525
   TabOrder = 0
   object pnlMain: TPanel
     Left = 0
     Top = 0
     Width = 320
-    Height = 405
+    Height = 480
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
@@ -81,13 +81,35 @@ object FrameAIConfig: TFrameAIConfig
         TabOrder = 0
       end
     end
-    object grpSystemPrompt: TGroupBox
+    object grpOllama: TGroupBox
       Left = 10
       Top = 265
       Width = 300
+      Height = 75
+      Caption = ' Ollama Local/Network Settings '
+      TabOrder = 3
+      object lblOllamaUrl: TLabel
+        Left = 10
+        Top = 22
+        Width = 59
+        Height = 13
+        Caption = 'Server URL:'
+      end
+      object edtOllamaUrl: TEdit
+        Left = 10
+        Top = 41
+        Width = 280
+        Height = 21
+        TabOrder = 0
+      end
+    end
+    object grpSystemPrompt: TGroupBox
+      Left = 10
+      Top = 350
+      Width = 300
       Height = 130
       Caption = ' Custom System Instructions '
-      TabOrder = 3
+      TabOrder = 4
       object memSystemPrompt: TMemo
         Left = 10
         Top = 22
@@ -100,7 +122,7 @@ object FrameAIConfig: TFrameAIConfig
   end
   object pnlFooter: TPanel
     Left = 0
-    Top = 405
+    Top = 480
     Width = 320
     Height = 45
     Align = alBottom

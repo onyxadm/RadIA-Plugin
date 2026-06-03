@@ -12,7 +12,8 @@
 
 ### 2. Funcionalidades
 *   **Chat Lateral Acoplável (Dockable):** Painel integrado à IDE com visual nativo do Delphi, trazendo uma janela de chat em HTML5/JS moderno (WebView2) com suporte a Markdown e realce de sintaxe Pascal.
-*   **Suporte a Múltiplas IAs:** Modelo de uso de chaves próprias (BYOK) com suporte nativo ao **Google Gemini**, **OpenAI ChatGPT** e **Anthropic Claude**.
+*   **Suporte a Múltiplas IAs:** Modelo de uso de chaves próprias (BYOK) com suporte nativo ao **Google Gemini**, **OpenAI ChatGPT**, **Anthropic Claude** e modelos locais/rede via **Ollama** (ex: Llama 3, Phi-3, Mistral, CodeLlama).
+*   **Histórico de Chat Persistente:** O histórico de conversas é salvo automaticamente localmente em formato JSON, restaurando o contexto ao fechar e abrir a IDE.
 *   **Ações de Contexto no Editor:** Clique com o botão direito em qualquer trecho de código selecionado para:
     *   *Explicar Código Selecionado:* Analisar didaticamente a lógica.
     *   *Otimizar/Refatorar:* Melhorar a performance e aplicar princípios SOLID/Clean Code.
@@ -34,12 +35,12 @@ A interface utiliza uma arquitetura híbrida:
 *   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria ou 12 Athens (ou superior).
 *   **OS:** Windows 10 / 11 (64-bit).
 *   **Web Engine:** *Microsoft Edge WebView2 Runtime* instalado no sistema Windows (pré-instalado em versões modernas do Windows). **Importante:** A DLL `WebView2Loader.dll` correspondente à arquitetura da IDE (32-bit para Delphi 10.4, 64-bit para Delphi 11 e 12) deve estar presente na pasta `bin` da instalação do Delphi (ex: `C:\Program Files (x86)\Embarcadero\Studio\<versao>\bin`) ou no PATH do sistema.
-*   **API Keys:** Chaves de desenvolvedor ativas obtidas em seus respectivos consoles: [Google AI Studio](https://aistudio.google.com/) (Gemini), [OpenAI Platform](https://platform.openai.com/) (ChatGPT) e [Anthropic Console](https://console.anthropic.com/) (Claude).
+*   **API Keys:** Chaves de desenvolvedor ativas obtidas em seus respectivos consoles: [Google AI Studio](https://aistudio.google.com/) (Gemini), [OpenAI Platform](https://platform.openai.com/) (ChatGPT) e [Anthropic Console](https://console.anthropic.com/) (Claude). Para uso local/rede com o **Ollama**, certifique-se de que a instância do servidor Ollama está ativa no endereço configurado (ex: `http://localhost:11434`).
 
 ### 5. Instalação
 
 > [!IMPORTANT]
-> **Modelo Bring Your Own Key (BYOK):** O RadIA exige chaves de API válidas e ativas para funcionar. Se você não configurar pelo menos uma API Key (Gemini, OpenAI ou Claude) nas configurações do plugin, as funções de chat e as ações de contexto do editor não poderão ser utilizadas e retornarão erros de credenciais.
+> **Modelo Bring Your Own Key (BYOK) & IA Local:** O RadIA exige chaves de API válidas e ativas para funcionar com nuvem (Gemini, OpenAI ou Claude) ou uma instância configurada do **Ollama** rodando na máquina ou na rede. Se você não configurar pelo menos uma API Key ou a URL do Ollama nas configurações do plugin, as funções de chat e ações de contexto não poderão ser utilizadas.
 
 1.  Clone este repositório em sua máquina.
 2.  Abra o grupo de projetos `RadIA.groupproj` no Delphi.
@@ -91,7 +92,8 @@ Este projeto adota rigidamente:
 
 ### 2. Features
 *   **Dockable Sidebar Chat:** A native-looking, dockable panel integrated into the Delphi IDE featuring a high-fidelity web-rendered chat window (Edge/WebView2) with full Markdown rendering and Delphi syntax highlighting.
-*   **Multi-Provider AI Support:** Bring Your Own Key (BYOK) support for **Google Gemini**, **OpenAI ChatGPT**, and **Anthropic Claude**.
+*   **Multi-Provider AI Support:** Bring Your Own Key (BYOK) support for **Google Gemini**, **OpenAI ChatGPT**, **Anthropic Claude**, and local/network models via **Ollama** (e.g., Llama 3, Phi-3, Mistral, CodeLlama).
+*   **Persistent Chat History:** Chat conversations are automatically saved locally in JSON format, restoring previous context whenever the IDE is closed and reopened.
 *   **Context-Aware Editor Actions:** Right-click on any code selection to:
     *   *Explain Selected Code:* Analyze and explain the logic.
     *   *Optimize/Refactor:* Improve performance and apply clean code practices.
@@ -113,12 +115,12 @@ The user interface uses a hybrid architecture:
 *   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria, or 12 Athens (or newer).
 *   **OS:** Windows 10 / 11 (64-bit).
 *   **Web Engine:** *Microsoft Edge WebView2 Runtime* installed on the Windows system (pre-installed on modern Windows versions). **Important:** The `WebView2Loader.dll` matching the IDE's architecture (32-bit for Delphi 10.4, 64-bit for Delphi 11 and 12) must be present in Delphi's `bin` installation directory (e.g., `C:\Program Files (x86)\Embarcadero\Studio\<version>\bin`) or in the Windows system PATH.
-*   **API Keys:** Active developer keys obtained from their respective consoles: [Google AI Studio](https://aistudio.google.com/) (Gemini), [OpenAI Platform](https://platform.openai.com/) (ChatGPT), and [Anthropic Console](https://console.anthropic.com/) (Claude).
+*   **API Keys:** Active developer keys obtained from their respective consoles: [Google AI Studio](https://aistudio.google.com/) (Gemini), [OpenAI Platform](https://platform.openai.com/) (ChatGPT), and [Anthropic Console](https://console.anthropic.com/) (Claude). For local/network use with **Ollama**, ensure the Ollama server instance is active at the configured address (e.g., `http://localhost:11434`).
 
 ### 5. Installation
 
 > [!IMPORTANT]
-> **Bring Your Own Key (BYOK) Model:** RadIA requires active and valid API keys to function. If you do not configure at least one API Key (Gemini, OpenAI, or Claude) in the settings, the chat panel and context menu editor actions will not be usable and will return credential errors.
+> **Bring Your Own Key (BYOK) & Local AI Model:** RadIA requires active and valid API keys to function with cloud models (Gemini, OpenAI, Claude) or a configured **Ollama** instance running on your machine or local network. If you do not configure at least one API Key or the Ollama URL in the settings, chat and context menu actions will return errors.
 
 1.  Clone this repository to your computer.
 2.  Open the project group `RadIA.groupproj` in Delphi.

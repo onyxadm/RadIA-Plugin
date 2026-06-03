@@ -4,7 +4,7 @@ interface
 
 type
   { Enum representing the supported AI Providers }
-  TAIProviderType = (ptGemini, ptOpenAI, ptClaude);
+  TAIProviderType = (ptGemini, ptOpenAI, ptClaude, ptOllama);
 
   { Enum representing the message role in chat conversations }
   TAIMessageRole = (mrUser, mrAssistant, mrSystem);
@@ -47,6 +47,7 @@ begin
     ptGemini: Result := 'Gemini';
     ptOpenAI: Result := 'OpenAI';
     ptClaude: Result := 'Claude';
+    ptOllama: Result := 'Ollama';
   else
     Result := '';
   end;
@@ -60,6 +61,8 @@ begin
     Result := ptOpenAI
   else if SameText(AString, 'Claude') then
     Result := ptClaude
+  else if SameText(AString, 'Ollama') then
+    Result := ptOllama
   else
     raise EConvertError.CreateFmt('Invalid provider string: %s', [AString]);
 end;

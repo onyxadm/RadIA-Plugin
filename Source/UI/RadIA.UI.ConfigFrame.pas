@@ -19,6 +19,9 @@ type
     grpClaude: TGroupBox;
     lblClaudeKey: TLabel;
     edtClaudeKey: TEdit;
+    grpOllama: TGroupBox;
+    lblOllamaUrl: TLabel;
+    edtOllamaUrl: TEdit;
     grpSystemPrompt: TGroupBox;
     memSystemPrompt: TMemo;
     pnlFooter: TPanel;
@@ -53,6 +56,7 @@ begin
   edtOpenAIKey.Text := FConfig.GetApiKey(ptOpenAI);
   edtClaudeKey.Text := FConfig.GetApiKey(ptClaude);
   memSystemPrompt.Text := FConfig.SystemPrompt;
+  edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
 end;
 
 procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
@@ -63,6 +67,7 @@ begin
   FConfig.SetApiKey(ptOpenAI, Trim(edtOpenAIKey.Text));
   FConfig.SetApiKey(ptClaude, Trim(edtClaudeKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
+  FConfig.OllamaBaseUrl := Trim(edtOllamaUrl.Text);
   FConfig.Save;
   
   ShowMessage('Settings saved successfully.');

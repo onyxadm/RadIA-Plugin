@@ -42,7 +42,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON,
-  RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude;
+  RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama;
 
 { TRadIAChatMessage }
 
@@ -92,6 +92,7 @@ begin
     ptGemini: Result := TRadIAGeminiProvider.Create(FConfig);
     ptOpenAI: Result := TRadIAOpenAIProvider.Create(FConfig);
     ptClaude: Result := TRadIAClaudeProvider.Create(FConfig);
+    ptOllama: Result := TRadIAOllamaProvider.Create(FConfig);
   else
     raise Exception.Create('Invalid active provider type selected.');
   end;
