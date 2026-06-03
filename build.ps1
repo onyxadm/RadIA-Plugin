@@ -1,10 +1,12 @@
-param(
+﻿param(
     [switch]$Install,
     [switch]$Uninstall,
     [switch]$Release,
     [switch]$IDE64
 )
 $ErrorActionPreference = "Stop"
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host "         Iniciando Build do RadIA            " -ForegroundColor Cyan
