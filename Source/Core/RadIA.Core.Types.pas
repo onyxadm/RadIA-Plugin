@@ -4,7 +4,7 @@ interface
 
 type
   { Enum representing the supported AI Providers }
-  TAIProviderType = (ptGemini, ptOpenAI, ptClaude, ptOllama);
+  TAIProviderType = (ptGemini, ptOpenAI, ptClaude, ptOllama, ptDeepSeek, ptGroq);
 
   { Enum representing the message role in chat conversations }
   TAIMessageRole = (mrUser, mrAssistant, mrSystem);
@@ -21,6 +21,15 @@ const
   { Standard models for Anthropic Claude }
   MODEL_CLAUDE_35_SONNET = 'claude-3-5-sonnet-20240620';
   MODEL_CLAUDE_3_HAIKU   = 'claude-3-haiku-20240307';
+
+  { Standard models for DeepSeek }
+  MODEL_DEEPSEEK_CHAT      = 'deepseek-chat';
+  MODEL_DEEPSEEK_REASONING = 'deepseek-reasoning';
+
+  { Standard models for Groq }
+  MODEL_GROQ_LLAMA33       = 'llama-3.3-70b-versatile';
+  MODEL_GROQ_MIXTRAL       = 'mixtral-8x7b-32768';
+  MODEL_GROQ_GEMMA2        = 'gemma2-9b-it';
 
 function ProviderTypeToString(const AProvider: TAIProviderType): string;
 function StringToProviderType(const AString: string): TAIProviderType;
@@ -48,6 +57,8 @@ begin
     ptOpenAI: Result := 'OpenAI';
     ptClaude: Result := 'Claude';
     ptOllama: Result := 'Ollama';
+    ptDeepSeek: Result := 'DeepSeek';
+    ptGroq: Result := 'Groq';
   else
     Result := '';
   end;
@@ -63,6 +74,10 @@ begin
     Result := ptClaude
   else if SameText(AString, 'Ollama') then
     Result := ptOllama
+  else if SameText(AString, 'DeepSeek') then
+    Result := ptDeepSeek
+  else if SameText(AString, 'Groq') then
+    Result := ptGroq
   else
     raise EConvertError.CreateFmt('Invalid provider string: %s', [AString]);
 end;

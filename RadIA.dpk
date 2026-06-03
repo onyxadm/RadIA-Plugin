@@ -52,6 +52,8 @@ contains
   RadIA.Provider.OpenAI in 'Source\Providers\RadIA.Provider.OpenAI.pas',
   RadIA.Provider.Claude in 'Source\Providers\RadIA.Provider.Claude.pas',
   RadIA.Provider.Ollama in 'Source\Providers\RadIA.Provider.Ollama.pas',
+  RadIA.Provider.DeepSeek in 'Source\Providers\RadIA.Provider.DeepSeek.pas',
+  RadIA.Provider.Groq in 'Source\Providers\RadIA.Provider.Groq.pas',
   RadIA.OTA.Register in 'Source\Integration\RadIA.OTA.Register.pas',
   RadIA.OTA.Helper in 'Source\Integration\RadIA.OTA.Helper.pas',
   RadIA.OTA.EditorHook in 'Source\Integration\RadIA.OTA.EditorHook.pas',

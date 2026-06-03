@@ -272,7 +272,7 @@ begin
     LForm.Caption := 'RadIA Configuration';
     LForm.Position := poOwnerFormCenter;
     LForm.Width := 340;
-    LForm.Height := 585;
+    LForm.Height := 650;
     LForm.BorderStyle := bsDialog;
     
     LConfigFrame := TFrameAIConfig.Create(LForm);

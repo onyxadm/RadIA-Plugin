@@ -25,6 +25,8 @@ uses
   RadIA.Provider.OpenAI in '..\Source\Providers\RadIA.Provider.OpenAI.pas',
   RadIA.Provider.Claude in '..\Source\Providers\RadIA.Provider.Claude.pas',
   RadIA.Provider.Ollama in '..\Source\Providers\RadIA.Provider.Ollama.pas',
+  RadIA.Provider.DeepSeek in '..\Source\Providers\RadIA.Provider.DeepSeek.pas',
+  RadIA.Provider.Groq in '..\Source\Providers\RadIA.Provider.Groq.pas',
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',
@@ -37,7 +39,8 @@ uses
   RadIA.Tests.Exporter in 'Source\RadIA.Tests.Exporter.pas',
   RadIA.Tests.Templates in 'Source\RadIA.Tests.Templates.pas',
   RadIA.Tests.ProjectContext in 'Source\RadIA.Tests.ProjectContext.pas',
-  RadIA.Tests.Streaming in 'Source\RadIA.Tests.Streaming.pas';
+  RadIA.Tests.Streaming in 'Source\RadIA.Tests.Streaming.pas',
+  RadIA.Tests.ProvidersEx in 'Source\RadIA.Tests.ProvidersEx.pas';
 
 var
   Runner: ITestRunner;

@@ -45,7 +45,8 @@ implementation
 
 uses
   System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.Core.ProjectContext,
-  RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama;
+  RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama,
+  RadIA.Provider.DeepSeek, RadIA.Provider.Groq;
 
 { TRadIAChatMessage }
 
@@ -136,6 +137,8 @@ begin
     ptOpenAI: Result := TRadIAOpenAIProvider.Create(FConfig);
     ptClaude: Result := TRadIAClaudeProvider.Create(FConfig);
     ptOllama: Result := TRadIAOllamaProvider.Create(FConfig);
+    ptDeepSeek: Result := TRadIADeepSeekProvider.Create(FConfig);
+    ptGroq: Result := TRadIAGroqProvider.Create(FConfig);
   else
     raise Exception.Create('Invalid active provider type selected.');
   end;

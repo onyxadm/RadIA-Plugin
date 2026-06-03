@@ -32,11 +32,15 @@ graph TD
     ProviderFactory -->|ptOpenAI| OpenAI[TRadIAOpenAIProvider]
     ProviderFactory -->|ptClaude| Claude[TRadIAClaudeProvider]
     ProviderFactory -->|ptOllama| Ollama[TRadIAOllamaProvider]
+    ProviderFactory -->|ptDeepSeek| DeepSeek[TRadIADeepSeekProvider]
+    ProviderFactory -->|ptGroq| Groq[TRadIAGroqProvider]
 
     Gemini --> Base[TRadIAProviderBase]
     OpenAI --> Base
     Claude --> Base
     Ollama --> Base
+    DeepSeek --> Base
+    Groq --> Base
 
     Base -->|HTTP REST async TTask| HTTPClient[System.Net.HttpClient]
     Base -->|Interceptação de Chunk HTTP| StreamingStream[TStreamingTargetStream]
@@ -79,6 +83,8 @@ Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
 | `RadIA.Provider.OpenAI.pas` | `/v1/chat/completions` | Sim, via parsing de Server-Sent Events (data: `choices[0].delta`) |
 | `RadIA.Provider.Claude.pas` | `/v1/messages` | Sim, via parsing de SSE (data: `content_block_delta` e `message_stop`) |
 | `RadIA.Provider.Ollama.pas` | `/api/chat` | Sim, via parsing de objetos JSON delimitados por quebra de linha |
+| `RadIA.Provider.DeepSeek.pas` | `/chat/completions` | Sim, via parsing de SSE (data: `choices[0].delta` e `[DONE]`) |
+| `RadIA.Provider.Groq.pas` | `/openai/v1/chat/completions` | Sim, via parsing de SSE (data: `choices[0].delta` e `[DONE]`) |
 
 ---
 
@@ -135,7 +141,8 @@ Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
 | `TTestPromptTemplates` | 4 | Resolução de placeholders e templates embutidos |
 | `TTestProjectContext` | 4 | Leitura e mescla do arquivo `.radia` |
 | `TTestRadIAStreaming` | 8 | Validação incremental dos buffers de streaming SSE e delimitações (OpenAI, Claude, Gemini, Ollama) |
-| **Total** | **84** | **84/84 passando de forma limpa** |
+| `TTestRadIAProvidersEx` | 4 | Payloads, response parsing e streams do DeepSeek e Groq |
+| **Total** | **73** | **73/73 passando de forma limpa** |
 
 ---
 

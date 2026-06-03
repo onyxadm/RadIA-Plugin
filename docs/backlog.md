@@ -65,6 +65,14 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
 ### 9. Integração com Modelos Locais (Ollama) + Histórico Persistente - Item #3
 *   **Descrição**: Suporte nativo para modelos locais sem chaves pagas e restauração completa de histórico do chat.
 
+### 10. Provedores Nativos: DeepSeek e Groq - Item #9
+*   **Descrição**: Adicionado suporte nativo direto aos provedores DeepSeek e Groq com streaming SSE e autodescoberta dinâmica de modelos.
+*   **Detalhes**:
+    *   Criada unit `RadIA.Provider.DeepSeek.pas` para conexão com a API DeepSeek.
+    *   Criada unit `RadIA.Provider.Groq.pas` para conexão com a API da Groq.
+    *   Configurações estendidas para chaves de API com armazenamento seguro e DPAPI.
+    *   Novos testes unitários em `RadIA.Tests.ProvidersEx.pas` cobrindo payload, parsing de response e fluxo SSE de streaming.
+
 ---
 
 ## 🔲 Pendentes
@@ -76,17 +84,11 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Adicionar painel lateral (ou dropdown) para listar, criar, renomear e excluir sessões.
     *   Botão "Nova Sessão" salva a corrente e abre uma vazia.
 
-### 2. Provedores Nativos: DeepSeek e Groq (Item #9)
-*   **Objetivo**: Adicionar provedores dedicados com suas particularidades de autenticação e endpoints para melhor UX e maior precisão de configuração.
-*   **Detalhamento**:
-    *   `RadIA.Provider.DeepSeek.pas`: endpoint `https://api.deepseek.com/v1/chat/completions`, header `Authorization: Bearer`.
-    *   `RadIA.Provider.Groq.pas`: endpoint `https://api.groq.com/openai/v1/chat/completions`, header `Authorization: Bearer`.
-
-### 3. Painel de Gerenciamento do Cache (Item #13)
+### 2. Painel de Gerenciamento do Cache (Item #13)
 *   **Objetivo**: Dar visibilidade e controle sobre o cache de respostas sem precisar editar o arquivo JSON manualmente.
 
-### 4. Revisão Automática de Código no Save (Item #15)
+### 3. Revisão Automática de Código no Save (Item #15)
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção.
 
-### 5. Histórico de Refatorações Aplicadas (Item #16)
+### 4. Histórico de Refatorações Aplicadas (Item #16)
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão [Aplicar Alteração] foi acionado, permitindo revisão e desfazimento manual.

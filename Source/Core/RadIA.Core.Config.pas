@@ -75,10 +75,14 @@ begin
   FApiKeys[ptOpenAI] := '';
   FApiKeys[ptClaude] := '';
   FApiKeys[ptOllama] := '';
+  FApiKeys[ptDeepSeek] := '';
+  FApiKeys[ptGroq] := '';
   FActiveModels[ptGemini] := MODEL_GEMINI_15_FLASH;
   FActiveModels[ptOpenAI] := MODEL_OPENAI_GPT4O_MINI;
   FActiveModels[ptClaude] := MODEL_CLAUDE_3_HAIKU;
   FActiveModels[ptOllama] := 'llama3:latest';
+  FActiveModels[ptDeepSeek] := MODEL_DEEPSEEK_CHAT;
+  FActiveModels[ptGroq] := MODEL_GROQ_LLAMA33;
   FSystemPrompt := '';
   FOllamaBaseUrl := 'http://localhost:11434';
   FMaxHistoryMessages := 20;

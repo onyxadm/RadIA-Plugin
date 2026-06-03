@@ -4,13 +4,12 @@ object FrameAIConfig: TFrameAIConfig
   Width = 320
   Height = 620
   TabOrder = 0
-  object pnlMain: TPanel
+  object pnlMain: TScrollBox
     Left = 0
     Top = 0
     Width = 320
     Height = 575
     Align = alClient
-    BevelOuter = bvNone
     TabOrder = 0
     object grpGemini: TGroupBox
       Left = 10
@@ -120,13 +119,59 @@ object FrameAIConfig: TFrameAIConfig
         TabOrder = 0
       end
     end
-    object grpSystemPrompt: TGroupBox
+    object grpDeepSeek: TGroupBox
       Left = 10
       Top = 405
       Width = 300
+      Height = 75
+      Caption = ' DeepSeek Settings '
+      TabOrder = 4
+      object lblDeepSeekKey: TLabel
+        Left = 10
+        Top = 22
+        Width = 42
+        Height = 13
+        Caption = 'API Key:'
+      end
+      object edtDeepSeekKey: TEdit
+        Left = 10
+        Top = 41
+        Width = 280
+        Height = 21
+        PasswordChar = '*'
+        TabOrder = 0
+      end
+    end
+    object grpGroq: TGroupBox
+      Left = 10
+      Top = 490
+      Width = 300
+      Height = 75
+      Caption = ' Groq Settings '
+      TabOrder = 5
+      object lblGroqKey: TLabel
+        Left = 10
+        Top = 22
+        Width = 42
+        Height = 13
+        Caption = 'API Key:'
+      end
+      object edtGroqKey: TEdit
+        Left = 10
+        Top = 41
+        Width = 280
+        Height = 21
+        PasswordChar = '*'
+        TabOrder = 0
+      end
+    end
+    object grpSystemPrompt: TGroupBox
+      Left = 10
+      Top = 575
+      Width = 300
       Height = 130
       Caption = ' Custom System Instructions '
-      TabOrder = 4
+      TabOrder = 6
       object memSystemPrompt: TMemo
         Left = 10
         Top = 22

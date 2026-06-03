@@ -9,7 +9,7 @@ uses
 
 type
   TFrameAIConfig = class(TFrame)
-    pnlMain: TPanel;
+    pnlMain: TScrollBox;
     grpGemini: TGroupBox;
     lblGeminiKey: TLabel;
     edtGeminiKey: TEdit;
@@ -24,6 +24,12 @@ type
     grpOllama: TGroupBox;
     lblOllamaUrl: TLabel;
     edtOllamaUrl: TEdit;
+    grpDeepSeek: TGroupBox;
+    lblDeepSeekKey: TLabel;
+    edtDeepSeekKey: TEdit;
+    grpGroq: TGroupBox;
+    lblGroqKey: TLabel;
+    edtGroqKey: TEdit;
     grpSystemPrompt: TGroupBox;
     memSystemPrompt: TMemo;
     pnlFooter: TPanel;
@@ -58,6 +64,8 @@ begin
   edtOpenAIKey.Text := FConfig.GetApiKey(ptOpenAI);
   edtOpenAICustomUrl.Text := FConfig.OpenAICustomBaseUrl;
   edtClaudeKey.Text := FConfig.GetApiKey(ptClaude);
+  edtDeepSeekKey.Text := FConfig.GetApiKey(ptDeepSeek);
+  edtGroqKey.Text := FConfig.GetApiKey(ptGroq);
   memSystemPrompt.Text := FConfig.SystemPrompt;
   edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
 end;
@@ -70,6 +78,8 @@ begin
   FConfig.SetApiKey(ptOpenAI, Trim(edtOpenAIKey.Text));
   FConfig.OpenAICustomBaseUrl := Trim(edtOpenAICustomUrl.Text);
   FConfig.SetApiKey(ptClaude, Trim(edtClaudeKey.Text));
+  FConfig.SetApiKey(ptDeepSeek, Trim(edtDeepSeekKey.Text));
+  FConfig.SetApiKey(ptGroq, Trim(edtGroqKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := Trim(edtOllamaUrl.Text);
   FConfig.Save;
