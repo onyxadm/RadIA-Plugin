@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ChatFrame;
+unit RadIA.UI.ChatFrame;
 
 interface
 
@@ -64,6 +64,7 @@ type
     procedure LoadTemplatesMenu;
     procedure OnTemplateMenuClick(Sender: TObject);
     procedure ApplyIDETheme;
+    procedure UpdateVCLColors(const AThemeName: string);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -113,6 +114,17 @@ begin
   
   LoadConfig;
   LoadPromptHistory;
+
+  { Detect current IDE theme and apply colors to VCL controls }
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+      UpdateVCLColors(LThemingServices.ActiveTheme)
+    else
+      UpdateVCLColors('light');
+  end
+  else
+    UpdateVCLColors('light');
 
   memPrompt.OnKeyDown := Self.memPromptKeyDown;
   TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
@@ -381,6 +393,8 @@ procedure TFrameAIChat.SetTheme(const AThemeName: string);
 var
   LJson: TJSONObject;
 begin
+  UpdateVCLColors(AThemeName);
+
   if not FBrowserInitialized then
     Exit;
     
@@ -394,6 +408,51 @@ begin
   finally
     LJson.Free;
   end;
+end;
+
+procedure TFrameAIChat.UpdateVCLColors(const AThemeName: string);
+var
+  LIsDark: Boolean;
+  LBgColor, LTextColor, LInputBgColor: TColor;
+begin
+  LIsDark := SameText(AThemeName, 'dark');
+  
+  if LIsDark then
+  begin
+    LBgColor := $00252526;      // Cinza escuro da IDE do Delphi
+    LTextColor := $00D4D4D4;    // Texto cinza claro
+    LInputBgColor := $001E1E1E; // Fundo dos edits/memos
+  end
+  else
+  begin
+    LBgColor := clBtnFace;
+    LTextColor := clWindowText;
+    LInputBgColor := clWindow;
+  end;
+
+  Self.Color := LBgColor;
+  pnlToolbar.Color := LBgColor;
+  pnlToolbar.ParentBackground := False;
+  pnlInput.Color := LBgColor;
+  pnlInput.ParentBackground := False;
+  pnlBrowser.Color := LBgColor;
+  pnlBrowser.ParentBackground := False;
+
+  // Labels
+  lblContext.Font.Color := if LIsDark then $009CA3AF else clGrayText;
+
+  // ComboBoxes
+  cbProvider.Color := LInputBgColor;
+  cbProvider.Font.Color := LTextColor;
+  cbModel.Color := LInputBgColor;
+  cbModel.Font.Color := LTextColor;
+
+  // Input Memo
+  memPrompt.Color := LInputBgColor;
+  memPrompt.Font.Color := LTextColor;
+
+  // Botão Send
+  btnSend.Font.Color := LTextColor;
 end;
 
 procedure TFrameAIChat.ApplyIDETheme;

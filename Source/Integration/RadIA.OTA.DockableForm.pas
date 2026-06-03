@@ -73,6 +73,11 @@ begin
   AutoSave := True;
   SaveStateNecessary := True;
   
+  { Default dimensions for the first run or when floating }
+  Width := 340;
+  Height := 650;
+  Position := poScreenCenter;
+  
   FChatFrame := TFrameAIChat.Create(Self);
   FChatFrame.Parent := Self;
   FChatFrame.Align := alClient;

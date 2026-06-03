@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ConfigFrame;
+unit RadIA.UI.ConfigFrame;
 
 interface
 
@@ -40,6 +40,7 @@ type
   private
     FConfig: IAIConfig;
     FOnClose: TNotifyEvent;
+    procedure UpdateVCLColors(const AThemeName: string);
   public
     constructor Create(AOwner: TComponent); override;
     procedure LoadConfig;
@@ -54,16 +55,83 @@ implementation
 constructor TFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
+  LActiveTheme: string;
 begin
   inherited Create(AOwner);
   FConfig := TRadIAConfig.Create;
 
+  LActiveTheme := 'light';
   { Apply IDE theme so this frame matches the current Delphi skin }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
     if LThemingServices.IDEThemingEnabled then
+    begin
       LThemingServices.ApplyTheme(Self);
+      LActiveTheme := LThemingServices.ActiveTheme;
+    end;
+  end;
 
+  UpdateVCLColors(LActiveTheme);
   LoadConfig;
+end;
+
+procedure TFrameAIConfig.UpdateVCLColors(const AThemeName: string);
+var
+  LIsDark: Boolean;
+  LBgColor, LTextColor, LInputBgColor: TColor;
+begin
+  LIsDark := SameText(AThemeName, 'dark');
+  
+  if LIsDark then
+  begin
+    LBgColor := $00252526;
+    LTextColor := $00D4D4D4;
+    LInputBgColor := $001E1E1E;
+  end
+  else
+  begin
+    LBgColor := clBtnFace;
+    LTextColor := clWindowText;
+    LInputBgColor := clWindow;
+  end;
+
+  Self.Color := LBgColor;
+  pnlFooter.Color := LBgColor;
+  pnlFooter.ParentBackground := False;
+
+  // Memo do System Prompt
+  memSystemPrompt.Color := LInputBgColor;
+  memSystemPrompt.Font.Color := LTextColor;
+
+  // Inputs
+  edtGeminiKey.Color := LInputBgColor;
+  edtGeminiKey.Font.Color := LTextColor;
+  
+  edtOpenAIKey.Color := LInputBgColor;
+  edtOpenAIKey.Font.Color := LTextColor;
+  edtOpenAICustomUrl.Color := LInputBgColor;
+  edtOpenAICustomUrl.Font.Color := LTextColor;
+  
+  edtClaudeKey.Color := LInputBgColor;
+  edtClaudeKey.Font.Color := LTextColor;
+  
+  edtDeepSeekKey.Color := LInputBgColor;
+  edtDeepSeekKey.Font.Color := LTextColor;
+  
+  edtGroqKey.Color := LInputBgColor;
+  edtGroqKey.Font.Color := LTextColor;
+  
+  edtOllamaUrl.Color := LInputBgColor;
+  edtOllamaUrl.Font.Color := LTextColor;
+
+  // Labels
+  lblGeminiKey.Font.Color := LTextColor;
+  lblOpenAIKey.Font.Color := LTextColor;
+  lblOpenAICustomUrl.Font.Color := LTextColor;
+  lblClaudeKey.Font.Color := LTextColor;
+  lblDeepSeekKey.Font.Color := LTextColor;
+  lblGroqKey.Font.Color := LTextColor;
+  lblOllamaUrl.Font.Color := LTextColor;
 end;
 
 procedure TFrameAIConfig.LoadConfig;
