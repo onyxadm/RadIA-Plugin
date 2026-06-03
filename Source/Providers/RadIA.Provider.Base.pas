@@ -156,30 +156,26 @@ end;
 
 procedure TRadIAProviderBase.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
   const ACallback: TStreamChunkCallback);
-var
-  LQueueProc: TThreadProcedure;
 begin
   { Default fallback simulating streaming }
   SendPromptAsync(APrompt, AHistory,
     procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
     begin
-      LQueueProc := procedure
-                    begin
-                      ACallback(AResponse, True, AError);
-                    end;
-      TThread.Queue(nil, LQueueProc);
+      TThread.Queue(nil,
+        procedure
+        begin
+          ACallback(AResponse, True, AError);
+        end);
     end);
 end;
 
 procedure TRadIAProviderBase.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
-var
-  LQueueProc: TThreadProcedure;
 begin
-  LQueueProc := procedure
-                begin
-                  ACallback(GetAvailableModels, '');
-                end;
-  TThread.Queue(nil, LQueueProc);
+  TThread.Queue(nil,
+    procedure
+    begin
+      ACallback(GetAvailableModels, '');
+    end);
 end;
 
 { TStreamingTargetStream }

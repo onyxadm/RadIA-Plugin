@@ -35,7 +35,7 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, Vcl.Controls, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.OTA.Helper, RadIA.Core.Types;
+  Vcl.Menus, Vcl.Controls, Vcl.Forms, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.OTA.Helper, RadIA.Core.Types;
 
 var
   GWizardIndex: Integer = -1;
@@ -134,6 +134,7 @@ procedure TRadIAWizard.RegisterMenus;
 var
   LNTAServices: INTAServices;
   LToolsMenu: TMenuItem;
+  LPopupMenu: TComponent;
 begin
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
   begin
@@ -143,6 +144,13 @@ begin
     begin
       TRadIAEditorHook(FEditorHook).PopulateToolsMenu(LToolsMenu);
     end;
+    
+    { Register editor context menu }
+    LPopupMenu := Application.FindComponent('EditorContextMenu');
+    if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
+    begin
+      TRadIAEditorHook(FEditorHook).PopulateContextMenu(TPopupMenu(LPopupMenu));
+    end;
   end;
 end;
 
@@ -150,6 +158,7 @@ procedure TRadIAWizard.UnregisterMenus;
 var
   LNTAServices: INTAServices;
   LToolsMenu: TMenuItem;
+  LPopupMenu: TComponent;
   I: Integer;
   LHook: TRadIAEditorHook;
 begin
@@ -168,6 +177,19 @@ begin
            (LToolsMenu.Items[I].Action = LHook.FixErrorAction) then
         begin
           LToolsMenu.Items[I].Free;
+        end;
+      end;
+    end;
+    
+    { Unregister editor context menu }
+    LPopupMenu := Application.FindComponent('EditorContextMenu');
+    if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
+    begin
+      for I := TPopupMenu(LPopupMenu).Items.Count - 1 downto 0 do
+      begin
+        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, '🤖 RadIA') then
+        begin
+          TPopupMenu(LPopupMenu).Items[I].Free;
         end;
       end;
     end;
