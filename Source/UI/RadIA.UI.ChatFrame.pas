@@ -6,7 +6,8 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Core.Service, RadIA.Core.PromptHistory, RadIA.Core.TokenUsage;
+  RadIA.Core.Service, RadIA.Core.PromptHistory, RadIA.Core.TokenUsage, Vcl.Menus,
+  RadIA.Core.PromptTemplates;
 
 type
   TFrameAIChat = class(TFrame)
@@ -16,6 +17,7 @@ type
     btnSettings: TButton;
     btnClear: TButton;
     btnExport: TButton;
+    btnTemplates: TButton;
     SaveDialog: TSaveDialog;
     pnlInput: TPanel;
     memPrompt: TMemo;
@@ -27,6 +29,7 @@ type
     procedure cbProviderChange(Sender: TObject);
     procedure cbModelChange(Sender: TObject);
     procedure btnClearClick(Sender: TObject);
+    procedure btnTemplatesClick(Sender: TObject);
     procedure btnExportClick(Sender: TObject);
     procedure btnSettingsClick(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
@@ -41,6 +44,8 @@ type
     FPromptHistoryManager: TPromptHistoryManager;
     FAccumulatedUsage: TTokenUsage;
     FAccumulatedCost: TTokenCost;
+    FTemplateManager: TPromptTemplateManager;
+    FPopupMenuTemplates: TPopupMenu;
     
     procedure InitializeWebView;
     procedure CopyWebFiles;
@@ -53,6 +58,8 @@ type
     procedure SaveChatHistory;
     procedure LoadPromptHistory;
     procedure SavePromptHistory;
+    procedure LoadTemplatesMenu;
+    procedure OnTemplateMenuClick(Sender: TObject);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -65,7 +72,8 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, RadIA.Core.Pricing, RadIA.Core.ConversationExporter;
+  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, RadIA.Core.Pricing, 
+  RadIA.Core.ConversationExporter;
 
 constructor TFrameAIChat.Create(AOwner: TComponent);
 begin
@@ -78,6 +86,10 @@ begin
   FPromptHistoryManager := TPromptHistoryManager.Create;
   FAccumulatedUsage := TTokenUsage.Empty;
   FAccumulatedCost := TTokenCost.Zero;
+  FTemplateManager := TPromptTemplateManager.Create;
+  FTemplateManager.Load;
+  FPopupMenuTemplates := TPopupMenu.Create(Self);
+  LoadTemplatesMenu;
   
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   CopyWebFiles;
@@ -94,6 +106,7 @@ destructor TFrameAIChat.Destroy;
 begin
   GlobalOnRequestPrompt := nil;
   FPromptHistoryManager.Free;
+  FTemplateManager.Free;
   FAIService.Free;
   inherited Destroy;
 end;
@@ -344,18 +357,88 @@ end;
 procedure TFrameAIChat.btnSendClick(Sender: TObject);
 var
   LText: string;
+  LActiveCode: string;
+  LTemplateName: string;
+  LResolved: string;
 begin
   LText := Trim(memPrompt.Text);
   if LText.IsEmpty then
     Exit;
 
+  { Check for Slash Command /template }
+  if LText.StartsWith('/template', True) then
+  begin
+    LTemplateName := Trim(LText.Substring(10));
+    if LTemplateName.IsEmpty then
+    begin
+      ShowMessage('Por favor, informe o nome do template. Exemplo: /template Revisar Clean Code Delphi');
+      Exit;
+    end;
+    
+    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
+      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
+
+    LResolved := FTemplateManager.ResolveTemplate(LTemplateName, LActiveCode);
+    if LResolved.IsEmpty then
+    begin
+      ShowMessage(Format('Template "%s" não encontrado.', [LTemplateName]));
+      Exit;
+    end;
+    
+    LText := LResolved;
+  end;
+
   { Save to prompt history before clearing the input }
-  FPromptHistoryManager.Add(LText);
+  FPromptHistoryManager.Add(memPrompt.Text);
   SavePromptHistory;
 
   memPrompt.Text := '';
   PostToWebView('add_message', 'user', LText);
   SendPromptToAI(LText);
+end;
+
+procedure TFrameAIChat.btnTemplatesClick(Sender: TObject);
+var
+  LPoint: TPoint;
+begin
+  LPoint := btnTemplates.Parent.ClientToScreen(Point(btnTemplates.Left, btnTemplates.Top + btnTemplates.Height));
+  FPopupMenuTemplates.Popup(LPoint.X, LPoint.Y);
+end;
+
+procedure TFrameAIChat.LoadTemplatesMenu;
+var
+  LTemplate: TPromptTemplate;
+  LMenuItem: TMenuItem;
+begin
+  FPopupMenuTemplates.Items.Clear;
+  for LTemplate in FTemplateManager.GetTemplates do
+  begin
+    LMenuItem := TMenuItem.Create(FPopupMenuTemplates);
+    LMenuItem.Caption := LTemplate.Name;
+    LMenuItem.Hint := LTemplate.Description;
+    LMenuItem.OnClick := OnTemplateMenuClick;
+    FPopupMenuTemplates.Items.Add(LMenuItem);
+  end;
+end;
+
+procedure TFrameAIChat.OnTemplateMenuClick(Sender: TObject);
+var
+  LMenuItem: TMenuItem;
+  LActiveCode: string;
+  LResolved: string;
+begin
+  if not (Sender is TMenuItem) then
+    Exit;
+    
+  LMenuItem := TMenuItem(Sender);
+  
+  if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
+    TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
+
+  LResolved := FTemplateManager.ResolveTemplate(LMenuItem.Caption, LActiveCode);
+  
+  memPrompt.Text := LResolved;
+  memPrompt.SetFocus;
 end;
 
 procedure TFrameAIChat.SendPromptToAI(const APromptText: string);

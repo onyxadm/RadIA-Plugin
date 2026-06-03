@@ -15,20 +15,29 @@ object FrameAIChat: TFrameAIChat
     object cbProvider: TComboBox
       Left = 5
       Top = 6
-      Width = 80
+      Width = 65
       Height = 22
       Style = csDropDownList
       TabOrder = 0
       OnChange = cbProviderChange
     end
     object cbModel: TComboBox
-      Left = 90
+      Left = 75
       Top = 6
-      Width = 100
+      Width = 80
       Height = 22
       Style = csDropDownList
       TabOrder = 1
       OnChange = cbModelChange
+    end
+    object btnTemplates: TButton
+      Left = 160
+      Top = 5
+      Width = 30
+      Height = 24
+      Caption = 'Tpl'
+      TabOrder = 2
+      OnClick = btnTemplatesClick
     end
     object btnExport: TButton
       Left = 195
@@ -36,7 +45,7 @@ object FrameAIChat: TFrameAIChat
       Width = 40
       Height = 24
       Caption = 'Export'
-      TabOrder = 2
+      TabOrder = 3
       OnClick = btnExportClick
     end
     object btnClear: TButton
@@ -45,7 +54,7 @@ object FrameAIChat: TFrameAIChat
       Width = 38
       Height = 24
       Caption = 'Clear'
-      TabOrder = 3
+      TabOrder = 4
       OnClick = btnClearClick
     end
     object btnSettings: TButton
@@ -54,7 +63,7 @@ object FrameAIChat: TFrameAIChat
       Width = 38
       Height = 24
       Caption = 'Setup'
-      TabOrder = 4
+      TabOrder = 5
       OnClick = btnSettingsClick
     end
   end
