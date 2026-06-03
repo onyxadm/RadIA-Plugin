@@ -549,15 +549,30 @@ end;
 {$IF CompilerVersion >= 35.0}
 procedure TFrameAIChat.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
 var
+  LStr: PWideChar;
   LJsonStr: PWideChar;
 begin
   if Assigned(Args.ArgsInterface) then
   begin
-    Args.ArgsInterface.Get_WebMessageAsJson(LJsonStr);
-    try
-      ProcessWebMessage(string(LJsonStr));
-    finally
-      CoTaskMemFree(LJsonStr);
+    // JS sends postMessage(JSON.stringify({...})), so the message is a string type.
+    // TryGetWebMessageAsString returns the original string payload directly.
+    // Fallback to Get_webMessageAsJson if TryGetWebMessageAsString fails.
+    if Succeeded(Args.ArgsInterface.TryGetWebMessageAsString(LStr)) then
+    begin
+      try
+        ProcessWebMessage(string(LStr));
+      finally
+        CoTaskMemFree(LStr);
+      end;
+    end
+    else
+    begin
+      Args.ArgsInterface.Get_webMessageAsJson(LJsonStr);
+      try
+        ProcessWebMessage(string(LJsonStr));
+      finally
+        CoTaskMemFree(LJsonStr);
+      end;
     end;
   end;
 end;
