@@ -156,7 +156,7 @@ Exemplo de comandos:
    ```
 5. Para desinstalar o plugin da IDE de forma limpa:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\\build.ps1 -Uninstall
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Uninstall
    ```
 6. O script detectará automaticamente a versão ativa do compilador, criará os diretórios de saída isolados por versão (ex: `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), executará a limpeza de arquivos DCU temporários das pastas de fontes, compilará o pacote principal, compilará os testes unitários e rodará automaticamente a suite de validação de testes.
 7. Se o parâmetro `-Install` foi informado, o script também copiará os arquivos de saída (`RadIA.bpl` e `RadIA.dcp`) para as pastas oficiais do Delphi (`C:\Users\Public\Documents\Embarcadero\Studio\<versao>\Bpl` e `Dcp`) e registrará o plugin na chave de Registro `Known Packages` do Delphi da respectiva versão detectada.
