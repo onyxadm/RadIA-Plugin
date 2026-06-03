@@ -1,3 +1,9 @@
+<div align="right">
+
+[🇧🇷 Português](implementation_plan.md) | [🇺🇸 English](implementation_plan.en.md)
+
+</div>
+
 # Plano de Implementação: RadIA - Assistente de IA para Delphi IDE
 
 Este documento descreve a arquitetura técnica e os componentes implementados no plugin **RadIA** para o Embarcadero Delphi. Reflete o estado atual da implementação real do código.
@@ -141,7 +147,7 @@ Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
 | `TTestProjectContext` | 4 | Leitura e mescla do arquivo `.radia` |
 | `TTestRadIAStreaming` | 8 | Validação incremental dos buffers de streaming SSE e delimitações (OpenAI, Claude, Gemini, Ollama) |
 | `TTestRadIAProvidersEx` | 4 | Payloads, response parsing e streams do DeepSeek e Groq |
-| **Total** | **73** | **73/73 passando de forma limpa** |
+| **Total** | **70** | **70/70 passando de forma limpa** |
 
 ---
 

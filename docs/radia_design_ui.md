@@ -1,3 +1,9 @@
+<div align="right">
+
+[🇧🇷 Português](radia_design_ui.md) | [🇺🇸 English](radia_design_ui.en.md)
+
+</div>
+
 # Design de Interface e Menus: RadIA
 
 Este documento descreve o design de interface do usuário (UI), comportamento visual e integração de menus do **RadIA** dentro do ambiente da IDE do Delphi (RAD Studio). Reflete o estado atual da implementação.

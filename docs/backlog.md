@@ -1,3 +1,9 @@
+<div align="right">
+
+[🇧🇷 Português](backlog.md) | [🇺🇸 English](backlog.en.md)
+
+</div>
+
 # Backlog de Evolução Futura do RadIA
 
 Este documento registra as tarefas e ideias de evolução do plugin RadIA, detalhando o status de cada recurso.
