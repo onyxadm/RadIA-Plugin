@@ -5,11 +5,18 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config;
+  Vcl.ComCtrls, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config;
 
 type
   TFrameAIConfig = class(TFrame)
-    pnlMain: TScrollBox;
+    pgcSettings: TPageControl;
+    tsGemini: TTabSheet;
+    tsOpenAI: TTabSheet;
+    tsClaude: TTabSheet;
+    tsDeepSeek: TTabSheet;
+    tsGroq: TTabSheet;
+    tsOllama: TTabSheet;
+    tsSystemPrompt: TTabSheet;
     grpGemini: TGroupBox;
     lblGeminiKey: TLabel;
     edtGeminiKey: TEdit;

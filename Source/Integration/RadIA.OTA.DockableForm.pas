@@ -63,6 +63,8 @@ end;
 { TFormRadIADockable }
 
 constructor TFormRadIADockable.Create(AOwner: TComponent);
+var
+  LThemingServices: IOTAIDEThemingServices;
 begin
   inherited Create(AOwner);
   Caption := 'RadIA Chat';
@@ -70,6 +72,14 @@ begin
   DeskSection := 'FormRadIADockable';
   AutoSave := True;
   SaveStateNecessary := True;
+  
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LThemingServices.ApplyTheme(Self);
+    end;
+  end;
   
   FChatFrame := TFrameAIChat.Create(Self);
   FChatFrame.Parent := Self;

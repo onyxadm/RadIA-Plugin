@@ -145,6 +145,29 @@ if ($Install) {
     $targetBpl = "$targetBplDir\RadIA.bpl"
     $targetDcp = "$targetDcpDir\RadIA.dcp"
 
+    # 9.1 Garantir existência de WebView2Loader.dll na pasta da IDE
+    $ideBinDir = "C:\Program Files (x86)\Embarcadero\Studio\$delphiVer\bin"
+    $ideBin64Dir = "C:\Program Files (x86)\Embarcadero\Studio\$delphiVer\bin64"
+    $dllName = "WebView2Loader.dll"
+
+    if (-not (Test-Path "$ideBinDir\$dllName")) {
+        Write-Host "WebView2Loader.dll (32-bit) não encontrada em $ideBinDir." -ForegroundColor Yellow
+        $mormotDll = "D:\Delphi\mORMot2\ex\ThirdPartyDemos\tbo\05-WebMustache\$dllName"
+        if (Test-Path $mormotDll) {
+            Write-Host "Solicitando privilégios para copiar WebView2Loader.dll (32-bit) para a pasta bin da IDE..." -ForegroundColor Yellow
+            Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$mormotDll' -Destination '$ideBinDir\$dllName' -Force" -Wait
+        }
+    }
+
+    if (-not (Test-Path "$ideBin64Dir\$dllName")) {
+        Write-Host "WebView2Loader.dll (64-bit) não encontrada em $ideBin64Dir." -ForegroundColor Yellow
+        $officeDll = "C:\Program Files\Microsoft Office\root\Office16\$dllName"
+        if (Test-Path $officeDll) {
+            Write-Host "Solicitando privilégios para copiar WebView2Loader.dll (64-bit) para a pasta bin64 da IDE..." -ForegroundColor Yellow
+            Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$officeDll' -Destination '$ideBin64Dir\$dllName' -Force" -Wait
+        }
+    }
+
     Write-Host "Copiando binários e recursos para as pastas da IDE..." -ForegroundColor Yellow
     Copy-Item -Path ".\Output\$delphiVer\bpl\$platform\RadIA.bpl" -Destination $targetBpl -Force
     Copy-Item -Path ".\Output\$delphiVer\dcp\$platform\RadIA.dcp" -Destination $targetDcp -Force

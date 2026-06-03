@@ -80,10 +80,20 @@ uses
 
 
 constructor TFrameAIChat.Create(AOwner: TComponent);
+var
+  LThemingServices: IOTAIDEThemingServices;
 begin
   inherited Create(AOwner);
   FBrowserInitialized := False;
   FHistory := [];
+  
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LThemingServices.ApplyTheme(Self);
+    end;
+  end;
   
   FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.Create;
@@ -292,14 +302,23 @@ procedure TFrameAIChat.btnSettingsClick(Sender: TObject);
 var
   LForm: TForm;
   LConfigFrame: TFrameAIConfig;
+  LThemingServices: IOTAIDEThemingServices;
 begin
   LForm := TForm.Create(nil);
   try
     LForm.Caption := 'RadIA Configuration';
     LForm.Position := poOwnerFormCenter;
-    LForm.Width := 340;
-    LForm.Height := 650;
+    LForm.Width := 420;
+    LForm.Height := 440;
     LForm.BorderStyle := bsDialog;
+    
+    if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+    begin
+      if LThemingServices.IDEThemingEnabled then
+      begin
+        LThemingServices.ApplyTheme(LForm);
+      end;
+    end;
     
     LConfigFrame := TFrameAIConfig.Create(LForm);
     LConfigFrame.Parent := LForm;
