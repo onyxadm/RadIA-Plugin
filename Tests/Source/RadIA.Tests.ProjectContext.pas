@@ -26,6 +26,8 @@ type
     procedure TestContextLoader_MergesWithSystemPrompt;
     [Test]
     procedure TestContextLoader_FileNotFound_NoError;
+    [Test]
+    procedure TestContextLoader_TruncatesLargeFile;
   end;
 
 implementation
@@ -130,6 +132,38 @@ begin
   
   Assert.IsFalse(LSuccess, 'Should return False if .radia file does not exist');
   Assert.IsEmpty(LContextPrompt, 'Prompt should be empty');
+end;
+
+procedure TTestRadIAProjectContext.TestContextLoader_TruncatesLargeFile;
+var
+  LContextPrompt: string;
+  LSuccess: Boolean;
+  LLargeContent: string;
+  I: Integer;
+const
+  RADIA_JSON = 
+    '{' +
+    '  "system_prompt": "Projeto A.",' +
+    '  "context_files": [' +
+    '    "large_file.txt"' +
+    '  ]' +
+    '}';
+begin
+  LLargeContent := '';
+  for I := 1 to 6100 do
+    LLargeContent := LLargeContent + '1234567890'; // 61000 characters (~61KB)
+
+  CreateFile('.radia', RADIA_JSON);
+  CreateFile('large_file.txt', LLargeContent);
+  
+  LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
+  
+  Assert.IsTrue(LSuccess);
+  Assert.IsTrue(LContextPrompt.Contains('Projeto A.'));
+  Assert.IsTrue(LContextPrompt.Contains('[Arquivo: large_file.txt]'));
+  Assert.IsTrue(LContextPrompt.Contains('[Aviso: Conteúdo do arquivo "large_file.txt" foi truncado pois excede o limite de 50KB]'));
+  // Ensure it was truncated at 51200 bytes
+  Assert.IsTrue(LContextPrompt.Length < 60000, 'Context prompt should be significantly shorter than full large file');
 end;
 
 initialization

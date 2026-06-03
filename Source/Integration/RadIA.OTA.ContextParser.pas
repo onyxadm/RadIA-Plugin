@@ -15,25 +15,40 @@ type
 
 implementation
 
+uses
+  System.StrUtils;
+
 { TRadIAContextParser }
 
 class function TRadIAContextParser.GetInterfaceSection(const ASourceCode: string): string;
 var
+  LInterfacePtr, LImplementationPtr: PChar;
   LInterfacePos, LImplementationPos: Integer;
+  LBuf: PChar;
+  LBufLen: Integer;
 begin
   Result := '';
-  
-  LInterfacePos := Pos('interface', LowerCase(ASourceCode));
-  if LInterfacePos = 0 then
+  if ASourceCode.IsEmpty then
     Exit;
-    
-  LImplementationPos := Pos('implementation', LowerCase(ASourceCode));
-  if LImplementationPos = 0 then
-    LImplementationPos := Length(ASourceCode) + 1;
-    
+
+  LBuf := PChar(ASourceCode);
+  LBufLen := ASourceCode.Length;
+
+  LInterfacePtr := SearchBuf(LBuf, LBufLen, 0, 0, 'interface', [soDown]);
+  if LInterfacePtr = nil then
+    Exit;
+
+  LInterfacePos := LInterfacePtr - LBuf;
+
+  LImplementationPtr := SearchBuf(LBuf, LBufLen, LInterfacePos, 0, 'implementation', [soDown]);
+  if LImplementationPtr = nil then
+    LImplementationPos := LBufLen
+  else
+    LImplementationPos := LImplementationPtr - LBuf;
+
   if LImplementationPos > LInterfacePos then
   begin
-    Result := Copy(ASourceCode, LInterfacePos, LImplementationPos - LInterfacePos);
+    Result := ASourceCode.Substring(LInterfacePos, LImplementationPos - LInterfacePos);
   end;
 end;
 
@@ -44,6 +59,7 @@ var
   LCurLineText: string;
   LClassName: string;
   LClassStartLine, LClassEndLine: Integer;
+  LSb: TStringBuilder;
 begin
   Result := '';
   if ASourceCode.IsEmpty then
@@ -61,8 +77,8 @@ begin
     
     for I := ALine - 1 downto 0 do
     begin
-      LCurLineText := LLines[I].Trim.ToLower;
-      if (Pos('class', LCurLineText) > 0) and (Pos('=', LCurLineText) > 0) then
+      LCurLineText := LLines[I];
+      if ContainsText(LCurLineText, 'class') and ContainsText(LCurLineText, '=') then
       begin
         // Extract class name
         LClassName := LLines[I].Split(['='])[0].Trim;
@@ -71,7 +87,7 @@ begin
       end;
       
       { Stop searching backwards if we reach unit boundaries }
-      if (LCurLineText = 'interface') or (LCurLineText = 'implementation') then
+      if SameText(LCurLineText.Trim, 'interface') or SameText(LCurLineText.Trim, 'implementation') then
         Break;
     end;
     
@@ -82,16 +98,16 @@ begin
     LClassEndLine := -1;
     for I := LClassStartLine + 1 to LLines.Count - 1 do
     begin
-      LCurLineText := LLines[I].Trim.ToLower;
+      LCurLineText := LLines[I].Trim;
       
       { Delphi classes in interface end with an "end;" }
-      if (LCurLineText = 'end;') or (LCurLineText = 'end') then
+      if SameText(LCurLineText, 'end;') or SameText(LCurLineText, 'end') then
       begin
         LClassEndLine := I;
         Break;
       end;
       
-      if (LCurLineText = 'implementation') or (Pos('type', LCurLineText) > 0) then
+      if SameText(LCurLineText, 'implementation') or ContainsText(LCurLineText, 'type') then
       begin
         LClassEndLine := I - 1;
         Break;
@@ -101,10 +117,16 @@ begin
     if LClassEndLine = -1 then
       LClassEndLine := LLines.Count - 1;
       
-    { Assemble the class text scope }
-    for I := LClassStartLine to LClassEndLine do
-    begin
-      Result := Result + LLines[I] + sLineBreak;
+    { Assemble the class text scope using StringBuilder }
+    LSb := TStringBuilder.Create;
+    try
+      for I := LClassStartLine to LClassEndLine do
+      begin
+        LSb.AppendLine(LLines[I]);
+      end;
+      Result := LSb.ToString;
+    finally
+      LSb.Free;
     end;
   finally
     LLines.Free;

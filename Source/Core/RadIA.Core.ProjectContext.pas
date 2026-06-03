@@ -33,6 +33,9 @@ var
   LFileAbsPath: string;
   LFileContent: string;
   LSb: TStringBuilder;
+  LStream: TFileStream;
+  LBytes: TBytes;
+  LReadLen: Integer;
 begin
   Result := False;
   AContextPrompt := '';
@@ -78,10 +81,30 @@ begin
               if TFile.Exists(LFileAbsPath) then
               begin
                 try
-                  LFileContent := TFile.ReadAllText(LFileAbsPath, TEncoding.UTF8);
-                  LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
-                  LSb.AppendLine(LFileContent.Trim);
-                  LSb.AppendLine;
+                  LStream := TFileStream.Create(LFileAbsPath, fmOpenRead or fmShareDenyNone);
+                  try
+                    if LStream.Size > 51200 then
+                    begin
+                      SetLength(LBytes, 51200);
+                      LReadLen := LStream.Read(LBytes[0], 51200);
+                      SetLength(LBytes, LReadLen);
+                      LFileContent := TEncoding.UTF8.GetString(LBytes);
+                      
+                      LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
+                      LSb.AppendLine(LFileContent.Trim);
+                      LSb.AppendLine(Format('[Aviso: Conteúdo do arquivo "%s" foi truncado pois excede o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
+                      LSb.AppendLine;
+                    end
+                    else
+                    begin
+                      LFileContent := TFile.ReadAllText(LFileAbsPath, TEncoding.UTF8);
+                      LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
+                      LSb.AppendLine(LFileContent.Trim);
+                      LSb.AppendLine;
+                    end;
+                  finally
+                    LStream.Free;
+                  end;
                 except
                   { Ignore read error for specific file and continue }
                 end;
