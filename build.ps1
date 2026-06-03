@@ -1,6 +1,6 @@
-# Script de Build Automatizado do RadIA para Windows PowerShell
 param(
-    [switch]$Install
+    [switch]$Install,
+    [switch]$Release
 )
 $ErrorActionPreference = "Stop"
 
@@ -48,9 +48,14 @@ switch ($compilerVersion) {
 Write-Host "Versão do Delphi correspondente (DelphiVer): $delphiVer" -ForegroundColor Green
 
 # 3. Definir caminhos de Output
+$configName = "Debug"
+if ($Release) {
+    $configName = "Release"
+}
+
 $outputRoot = ".\Output\$delphiVer"
-$dcuPath = "$outputRoot\dcu\Win32\Debug"
-$binPath = "$outputRoot\bin\Win32\Debug"
+$dcuPath = "$outputRoot\dcu\Win32\$configName"
+$binPath = "$outputRoot\bin\Win32\$configName"
 $bplPath = "$outputRoot\bpl"
 $dcpPath = "$outputRoot\dcp"
 
@@ -66,25 +71,38 @@ Get-ChildItem -Path . -Recurse -Include *.dcu, *.exe, *.bpl, *.dcp, *.identcache
 Write-Host "Compilando recursos RadIA.rc..." -ForegroundColor Yellow
 & brcc32 RadIA.rc
 
-Write-Host "Compilando RadIA.dpk..." -ForegroundColor Yellow
-& dcc32 -Q -LUdesignide -LUvclie "-NU$dcuPath" "-LE$bplPath" "-LN$dcpPath" RadIA.dpk
+Write-Host "Compilando RadIA.dpk em modo $configName..." -ForegroundColor Yellow
+$dccParams = @("-Q", "-LUdesignide", "-LUvclie", "-NU$dcuPath", "-LE$bplPath", "-LN$dcpPath")
+if ($Release) {
+    $dccParams += @('-$D-', '-$L-', '-O+', '-DRELEASE')
+} else {
+    $dccParams += @('-$D+', '-$L+', '-O-', '-DDEBUG')
+}
+& dcc32 $dccParams RadIA.dpk
 
 # 7. Compilar Suite de Testes (Tests/RadIATests.dpr)
-Write-Host "Compilando suite de testes RadIATests.dpr..." -ForegroundColor Yellow
+Write-Host "Compilando suite de testes RadIATests.dpr em modo $configName..." -ForegroundColor Yellow
 Push-Location Tests
 try {
     # DCU e Bin caminhos relativos de dentro da pasta Tests
-    $testsDcuPath = "..\Output\$delphiVer\dcu\Win32\Debug"
-    $testsBinPath = "..\Output\$delphiVer\bin\Win32\Debug"
+    $testsDcuPath = "..\Output\$delphiVer\dcu\Win32\$configName"
+    $testsBinPath = "..\Output\$delphiVer\bin\Win32\$configName"
     New-Item -ItemType Directory -Force -Path $testsDcuPath, $testsBinPath | Out-Null
-    & dcc32 -Q -LUdesignide -LUvclie "-NU$testsDcuPath" "-E$testsBinPath" RadIATests.dpr
+    
+    $dccParamsTests = @("-Q", "-LUdesignide", "-LUvclie", "-NU$testsDcuPath", "-E$testsBinPath")
+    if ($Release) {
+        $dccParamsTests += @('-$D-', '-$L-', '-O+', '-DRELEASE')
+    } else {
+        $dccParamsTests += @('-$D+', '-$L+', '-O-', '-DDEBUG')
+    }
+    & dcc32 $dccParamsTests RadIATests.dpr
 } finally {
     Pop-Location
 }
 
 # 8. Executar os Testes Unitários automaticamente
 Write-Host "Executando suite de testes..." -ForegroundColor Yellow
-$testsExe = ".\Output\$delphiVer\bin\Win32\Debug\RadIATests.exe"
+$testsExe = ".\Output\$delphiVer\bin\Win32\$configName\RadIATests.exe"
 if (Test-Path $testsExe) {
     & $testsExe
     Write-Host "=============================================" -ForegroundColor Green

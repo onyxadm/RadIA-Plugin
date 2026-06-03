@@ -1,0 +1,20 @@
+RadIA - AI Assistant for Delphi IDE
+Copyright (c) 2026 Regys Silveira
+
+This product includes software developed by third parties:
+
+* Marked.js (https://github.com/markedjs/marked)
+  Copyright (c) 2011-2026, Christopher Jeffrey.
+  Licensed under the MIT License.
+
+* PrismJS (https://github.com/PrismJS/prism)
+  Copyright (c) 2012 Lea Verou.
+  Licensed under the MIT License.
+
+* jsdiff (https://github.com/kpdecker/jsdiff)
+  Copyright (c) 2009-2015, Kevin Decker.
+  Licensed under the BSD 3-Clause License.
+
+* diff2html (https://github.com/rtfpessoa/diff2html)
+  Copyright (c) 2014-2026 Rodrigo Pessoa.
+  Licensed under the MIT License.
