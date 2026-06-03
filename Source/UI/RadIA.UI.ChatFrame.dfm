@@ -44,14 +44,14 @@ object FrameAIChat: TFrameAIChat
     end
     object btnTemplates: TSpeedButton
       Left = 178
-      Top = 9
-      Width = 28
-      Height = 26
+      Top = 6
+      Width = 32
+      Height = 32
       Caption = #9889
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -12
+      Font.Height = -18
       Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       Hint = 'Templates de Prompt'
@@ -61,15 +61,15 @@ object FrameAIChat: TFrameAIChat
       OnClick = btnTemplatesClick
     end
     object btnExport: TSpeedButton
-      Left = 210
-      Top = 9
-      Width = 28
-      Height = 26
+      Left = 214
+      Top = 6
+      Width = 32
+      Height = 32
       Caption = #10515
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -12
+      Font.Height = -18
       Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       Hint = 'Exportar Conversa'
@@ -79,15 +79,15 @@ object FrameAIChat: TFrameAIChat
       OnClick = btnExportClick
     end
     object btnClear: TSpeedButton
-      Left = 242
-      Top = 9
-      Width = 28
-      Height = 26
+      Left = 250
+      Top = 6
+      Width = 32
+      Height = 32
       Caption = #9851
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -12
+      Font.Height = -18
       Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       Hint = 'Limpar Hist'#243'rico'
@@ -97,15 +97,15 @@ object FrameAIChat: TFrameAIChat
       OnClick = btnClearClick
     end
     object btnSettings: TSpeedButton
-      Left = 274
-      Top = 9
-      Width = 28
-      Height = 26
+      Left = 286
+      Top = 6
+      Width = 32
+      Height = 32
       Caption = #9881
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -12
+      Font.Height = -18
       Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       Hint = 'Configura'#231#245'es'
@@ -170,7 +170,7 @@ object FrameAIChat: TFrameAIChat
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -18
+      Font.Height = -26
       Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       ParentFont = False
