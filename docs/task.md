@@ -59,20 +59,20 @@ Esta é a checklist de desenvolvimento para a implementação do plugin **RadIA*
 ---
 
 ## Fase 5: Testes Unitários e Validação
-- [ ] **Criação do Projeto de Testes**
-  - [ ] Criar o projeto de console DUnitX `Tests/RadIATests.dproj` e o ponto de entrada `RadIATests.dpr`
-- [ ] **Escrita das Suítes de Teste**
-  - [ ] Criar `RadIA.Tests.Config.pas` para testar persistência e criptografia das credenciais no registro do Windows
-  - [ ] Criar `RadIA.Tests.Providers.pas` com testes de parser de JSON, formatação de payloads e simulação de erro de HTTP
-- [ ] **Validação Final da IDE**
-  - [ ] Compilar, instalar o pacote e testar a usabilidade de docking, atalhos rápidos e o fluxo completo de "Otimizar Código" com a tela de Diff
+- [x] **Criação do Projeto de Testes**
+  - [x] Criar o projeto de console DUnitX `Tests/RadIATests.dproj` e o ponto de entrada `RadIATests.dpr`
+- [x] **Escrita das Suítes de Teste**
+  - [x] Criar `RadIA.Tests.Config.pas` para testar persistência e criptografia das credenciais no registro do Windows
+  - [x] Criar `RadIA.Tests.Providers.pas` com testes de parser de JSON, formatação de payloads e simulação de erro de HTTP
+- [x] **Validação Final da IDE**
+  - [x] Compilar, instalar o pacote e testar a usabilidade de docking, atalhos rápidos e o fluxo completo de "Otimizar Código" com a tela de Diff
 
 ---
 
 ## Critérios de Aceitação para Entrega
-- [ ] **Compilação Sem Erros (Zero Errors/Warnings)**
-  - [ ] Compilar com sucesso o pacote principal (`RadIA.dpk`) pelo compilador do Delphi no terminal (MSBuild / DCC32 / DCC64) ou na IDE.
-  - [ ] Compilar com sucesso o projeto de testes unitários (`RadIATests.dproj`).
-- [ ] **Suíte de Testes Unitários Aprovada**
-  - [ ] Executar a suíte de testes do DUnitX (`RadIATests.exe`) e garantir que 100% dos testes unitários passem sem falhas.
+- [x] **Compilação Sem Erros (Zero Errors/Warnings)**
+  - [x] Compilar com sucesso o pacote principal (`RadIA.dpk`) pelo compilador do Delphi no terminal (MSBuild / DCC32 / DCC64) ou na IDE.
+  - [x] Compilar com sucesso o projeto de testes unitários (`RadIATests.dproj`).
+- [x] **Suíte de Testes Unitários Aprovada**
+  - [x] Executar a suíte de testes do DUnitX (`RadIATests.exe`) e garantir que 100% dos testes unitários passem sem falhas.
 
