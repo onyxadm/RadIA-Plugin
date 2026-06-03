@@ -32,6 +32,7 @@ type
     destructor Destroy; override;
     
     function CreateActiveProvider: IIAProvider;
+    function TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
     procedure SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback);
       
@@ -83,6 +84,46 @@ begin
   inherited Destroy;
 end;
 
+function TRadIAService.TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
+var
+  LMaxMessages: Integer;
+  LMaxPairs: Integer;
+  LStartIndex: Integer;
+  LCount: Integer;
+  LNonSystemHistory: TArray<IChatMessage>;
+  LMsg: IChatMessage;
+  I: Integer;
+begin
+  LMaxMessages := FConfig.GetMaxHistoryMessages;
+
+  { Separate system messages (handled externally) from user/assistant pairs }
+  SetLength(LNonSystemHistory, 0);
+  for LMsg in AHistory do
+  begin
+    if LMsg.Role <> mrSystem then
+    begin
+      SetLength(LNonSystemHistory, Length(LNonSystemHistory) + 1);
+      LNonSystemHistory[High(LNonSystemHistory)] := LMsg;
+    end;
+  end;
+
+  { LMaxMessages pairs = LMaxMessages * 2 messages (user + assistant) }
+  LMaxPairs := LMaxMessages * 2;
+  LCount := Length(LNonSystemHistory);
+
+  if LCount <= LMaxPairs then
+  begin
+    Result := LNonSystemHistory;
+    Exit;
+  end;
+
+  { Keep only the most recent LMaxPairs messages }
+  LStartIndex := LCount - LMaxPairs;
+  SetLength(Result, LMaxPairs);
+  for I := 0 to LMaxPairs - 1 do
+    Result[I] := LNonSystemHistory[LStartIndex + I];
+end;
+
 function TRadIAService.CreateActiveProvider: IIAProvider;
 var
   LProviderType: TAIProviderType;
@@ -112,6 +153,7 @@ var
   LMsg: IChatMessage;
   LMsgObj: TJSONObject;
   LHistory: TArray<IChatMessage>;
+  LTrimmedHistory: TArray<IChatMessage>;
   I: Integer;
 begin
   try
@@ -120,10 +162,13 @@ begin
     LModelName := FConfig.GetActiveModel(FConfig.GetActiveProvider);
     LSystemPrompt := FConfig.SystemPrompt;
 
-    { Serialize history to compute Hash }
+    { Apply trimming before processing }
+    LTrimmedHistory := TrimHistory(AHistory);
+
+    { Serialize trimmed history to compute Hash }
     LHistoryJson := TJSONArray.Create;
     try
-      for LMsg in AHistory do
+      for LMsg in LTrimmedHistory do
       begin
         LMsgObj := TJSONObject.Create;
         LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
@@ -141,7 +186,6 @@ begin
     { Query Cache }
     if FCacheManager.Get(LHash, LCachedResponse) then
     begin
-      { Return cache hit }
       ACallback(LCachedResponse, '', True);
       Exit;
     end;
@@ -149,13 +193,13 @@ begin
     { Inject System Prompt if configured }
     if not LSystemPrompt.IsEmpty then
     begin
-      SetLength(LHistory, Length(AHistory) + 1);
+      SetLength(LHistory, Length(LTrimmedHistory) + 1);
       LHistory[0] := TRadIAChatMessage.Create(mrSystem, LSystemPrompt);
-      for I := 0 to High(AHistory) do
-        LHistory[I + 1] := AHistory[I];
+      for I := 0 to High(LTrimmedHistory) do
+        LHistory[I + 1] := LTrimmedHistory[I];
     end
     else
-      LHistory := AHistory;
+      LHistory := LTrimmedHistory;
 
     { Perform the actual async prompt request }
     LProvider.SendPromptAsync(APrompt, LHistory,
@@ -163,7 +207,6 @@ begin
       begin
         if AError.IsEmpty then
         begin
-          { Save to cache on success }
           FCacheManager.Put(LHash, AResponse);
         end;
         ACallback(AResponse, AError, False);

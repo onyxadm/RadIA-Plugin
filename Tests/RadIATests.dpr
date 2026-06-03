@@ -23,7 +23,8 @@ uses
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',
   RadIA.Tests.Providers in 'Source\RadIA.Tests.Providers.pas',
   RadIA.Tests.Cache in 'Source\RadIA.Tests.Cache.pas',
-  RadIA.Tests.Ollama in 'Source\RadIA.Tests.Ollama.pas';
+  RadIA.Tests.Ollama in 'Source\RadIA.Tests.Ollama.pas',
+  RadIA.Tests.Service in 'Source\RadIA.Tests.Service.pas';
 
 var
   Runner: ITestRunner;

@@ -14,6 +14,8 @@ type
     FActiveModels: array[TAIProviderType] of string;
     FSystemPrompt: string;
     FOllamaBaseUrl: string;
+    FMaxHistoryMessages: Integer;
+    FOpenAICustomBaseUrl: string;
     
     function ProtectString(const AValue: string): string;
     function UnprotectString(const AValue: string): string;
@@ -31,6 +33,10 @@ type
     procedure SetSystemPrompt(const AValue: string);
     function GetOllamaBaseUrl: string;
     procedure SetOllamaBaseUrl(const AValue: string);
+    function GetMaxHistoryMessages: Integer;
+    procedure SetMaxHistoryMessages(const AValue: Integer);
+    function GetOpenAICustomBaseUrl: string;
+    procedure SetOpenAICustomBaseUrl(const AValue: string);
     procedure Save;
     procedure Load;
   end;
@@ -75,6 +81,8 @@ begin
   FActiveModels[ptOllama] := 'llama3:latest';
   FSystemPrompt := '';
   FOllamaBaseUrl := 'http://localhost:11434';
+  FMaxHistoryMessages := 20;
+  FOpenAICustomBaseUrl := '';
   Load;
 end;
 
@@ -132,6 +140,26 @@ begin
           FOllamaBaseUrl := 'http://localhost:11434';
       except
         FOllamaBaseUrl := 'http://localhost:11434';
+      end;
+
+      try
+        if LReg.ValueExists('MaxHistoryMessages') then
+          FMaxHistoryMessages := LReg.ReadInteger('MaxHistoryMessages')
+        else
+          FMaxHistoryMessages := 20;
+        if FMaxHistoryMessages <= 0 then
+          FMaxHistoryMessages := 20;
+      except
+        FMaxHistoryMessages := 20;
+      end;
+
+      try
+        if LReg.ValueExists('OpenAICustomBaseUrl') then
+          FOpenAICustomBaseUrl := LReg.ReadString('OpenAICustomBaseUrl')
+        else
+          FOpenAICustomBaseUrl := '';
+      except
+        FOpenAICustomBaseUrl := '';
       end;
 
       for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
@@ -201,6 +229,8 @@ begin
       LReg.WriteInteger('ActiveProvider', Integer(FActiveProvider));
       LReg.WriteString('SystemPrompt', FSystemPrompt);
       LReg.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
+      LReg.WriteInteger('MaxHistoryMessages', FMaxHistoryMessages);
+      LReg.WriteString('OpenAICustomBaseUrl', FOpenAICustomBaseUrl);
 
       for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
       begin
@@ -243,6 +273,29 @@ end;
 procedure TRadIAConfig.SetOllamaBaseUrl(const AValue: string);
 begin
   FOllamaBaseUrl := AValue;
+end;
+
+function TRadIAConfig.GetMaxHistoryMessages: Integer;
+begin
+  Result := FMaxHistoryMessages;
+end;
+
+procedure TRadIAConfig.SetMaxHistoryMessages(const AValue: Integer);
+begin
+  if AValue > 0 then
+    FMaxHistoryMessages := AValue
+  else
+    FMaxHistoryMessages := 20;
+end;
+
+function TRadIAConfig.GetOpenAICustomBaseUrl: string;
+begin
+  Result := FOpenAICustomBaseUrl;
+end;
+
+procedure TRadIAConfig.SetOpenAICustomBaseUrl(const AValue: string);
+begin
+  FOpenAICustomBaseUrl := AValue;
 end;
 
 function TRadIAConfig.UnprotectString(const AValue: string): string;

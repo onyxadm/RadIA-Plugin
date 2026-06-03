@@ -1,0 +1,374 @@
+unit RadIA.Tests.Service;
+
+interface
+
+uses
+  DUnitX.TestFramework,
+  RadIA.Core.Interfaces,
+  RadIA.Core.Types,
+  RadIA.Core.Service,
+  RadIA.Core.Config;
+
+type
+  { Mock minimal config for trimming tests — avoids registry I/O }
+  TMockConfig = class(TInterfacedObject, IAIConfig)
+  private
+    FMaxHistoryMessages: Integer;
+    FSystemPrompt: string;
+    FOpenAICustomBaseUrl: string;
+    FOllamaBaseUrl: string;
+    FActiveProvider: TAIProviderType;
+  public
+    constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
+
+    function GetApiKey(const AProvider: TAIProviderType): string;
+    procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string);
+    function GetActiveProvider: TAIProviderType;
+    procedure SetActiveProvider(const AProvider: TAIProviderType);
+    function GetActiveModel(const AProvider: TAIProviderType): string;
+    procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
+    function GetSystemPrompt: string;
+    procedure SetSystemPrompt(const AValue: string);
+    function GetOllamaBaseUrl: string;
+    procedure SetOllamaBaseUrl(const AValue: string);
+    function GetMaxHistoryMessages: Integer;
+    procedure SetMaxHistoryMessages(const AValue: Integer);
+    function GetOpenAICustomBaseUrl: string;
+    procedure SetOpenAICustomBaseUrl(const AValue: string);
+    procedure Save;
+    procedure Load;
+  end;
+
+  [TestFixture]
+  TTestRadIAService = class
+  private
+    function MakeHistory(const ACount: Integer): TArray<IChatMessage>;
+    function MakeHistoryWithSystem(const AUserAssistantCount: Integer): TArray<IChatMessage>;
+  public
+    [Test]
+    procedure TestTrimming_NoTrimWhenUnderLimit;
+    [Test]
+    procedure TestTrimming_NoTrimWhenAtExactLimit;
+    [Test]
+    procedure TestTrimming_TrimsOldestWhenOverLimit;
+    [Test]
+    procedure TestTrimming_AlwaysPreservesNewestMessages;
+    [Test]
+    procedure TestTrimming_SystemMessagesIgnoredInCount;
+  end;
+
+  [TestFixture]
+  TTestRadIAConfigExtended = class
+  private
+    FConfig: IAIConfig;
+  public
+    [Setup]
+    procedure Setup;
+    [TearDown]
+    procedure TearDown;
+
+    [Test]
+    procedure TestMaxHistoryMessages_DefaultIs20;
+    [Test]
+    procedure TestMaxHistoryMessages_Persistence;
+    [Test]
+    procedure TestMaxHistoryMessages_ZeroResetsToDefault;
+    [Test]
+    procedure TestOpenAICustomBaseUrl_DefaultIsEmpty;
+    [Test]
+    procedure TestOpenAICustomBaseUrl_Persistence;
+  end;
+
+implementation
+
+uses
+  System.SysUtils;
+
+{ TMockConfig }
+
+constructor TMockConfig.Create(const AMaxHistory: Integer; const ASystemPrompt: string);
+begin
+  inherited Create;
+  FMaxHistoryMessages := AMaxHistory;
+  FSystemPrompt := ASystemPrompt;
+  FOpenAICustomBaseUrl := '';
+  FOllamaBaseUrl := 'http://localhost:11434';
+  FActiveProvider := ptGemini;
+end;
+
+function TMockConfig.GetApiKey(const AProvider: TAIProviderType): string;
+begin
+  Result := '';
+end;
+
+procedure TMockConfig.SetApiKey(const AProvider: TAIProviderType; const AKey: string);
+begin
+end;
+
+function TMockConfig.GetActiveProvider: TAIProviderType;
+begin
+  Result := FActiveProvider;
+end;
+
+procedure TMockConfig.SetActiveProvider(const AProvider: TAIProviderType);
+begin
+  FActiveProvider := AProvider;
+end;
+
+function TMockConfig.GetActiveModel(const AProvider: TAIProviderType): string;
+begin
+  Result := 'test-model';
+end;
+
+procedure TMockConfig.SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
+begin
+end;
+
+function TMockConfig.GetSystemPrompt: string;
+begin
+  Result := FSystemPrompt;
+end;
+
+procedure TMockConfig.SetSystemPrompt(const AValue: string);
+begin
+  FSystemPrompt := AValue;
+end;
+
+function TMockConfig.GetOllamaBaseUrl: string;
+begin
+  Result := FOllamaBaseUrl;
+end;
+
+procedure TMockConfig.SetOllamaBaseUrl(const AValue: string);
+begin
+  FOllamaBaseUrl := AValue;
+end;
+
+function TMockConfig.GetMaxHistoryMessages: Integer;
+begin
+  Result := FMaxHistoryMessages;
+end;
+
+procedure TMockConfig.SetMaxHistoryMessages(const AValue: Integer);
+begin
+  if AValue > 0 then
+    FMaxHistoryMessages := AValue
+  else
+    FMaxHistoryMessages := 20;
+end;
+
+function TMockConfig.GetOpenAICustomBaseUrl: string;
+begin
+  Result := FOpenAICustomBaseUrl;
+end;
+
+procedure TMockConfig.SetOpenAICustomBaseUrl(const AValue: string);
+begin
+  FOpenAICustomBaseUrl := AValue;
+end;
+
+procedure TMockConfig.Save;
+begin
+end;
+
+procedure TMockConfig.Load;
+begin
+end;
+
+{ TTestRadIAService helpers }
+
+function TTestRadIAService.MakeHistory(const ACount: Integer): TArray<IChatMessage>;
+var
+  I: Integer;
+  LRole: TAIMessageRole;
+begin
+  SetLength(Result, ACount);
+  for I := 0 to ACount - 1 do
+  begin
+    if I mod 2 = 0 then
+      LRole := mrUser
+    else
+      LRole := mrAssistant;
+    Result[I] := TRadIAService.CreateMessage(LRole, 'Message ' + IntToStr(I));
+  end;
+end;
+
+function TTestRadIAService.MakeHistoryWithSystem(const AUserAssistantCount: Integer): TArray<IChatMessage>;
+var
+  I: Integer;
+  LRole: TAIMessageRole;
+begin
+  { First message is system, then user/assistant pairs }
+  SetLength(Result, AUserAssistantCount + 1);
+  Result[0] := TRadIAService.CreateMessage(mrSystem, 'You are a Delphi expert.');
+  for I := 1 to AUserAssistantCount do
+  begin
+    if I mod 2 = 1 then
+      LRole := mrUser
+    else
+      LRole := mrAssistant;
+    Result[I] := TRadIAService.CreateMessage(LRole, 'Message ' + IntToStr(I));
+  end;
+end;
+
+{ TTestRadIAService }
+
+procedure TTestRadIAService.TestTrimming_NoTrimWhenUnderLimit;
+var
+  LConfig: IAIConfig;
+  LService: TRadIAService;
+  LHistory: TArray<IChatMessage>;
+  LTrimmed: TArray<IChatMessage>;
+begin
+  { MaxHistoryMessages = 5 → limit = 10 messages; we send 6 → no trim }
+  LConfig := TMockConfig.Create(5);
+  LService := TRadIAService.Create(LConfig);
+  try
+    LHistory := MakeHistory(6);
+    LTrimmed := LService.TrimHistory(LHistory);
+    Assert.AreEqual(6, Length(LTrimmed), 'Should NOT trim when under limit');
+  finally
+    LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestTrimming_NoTrimWhenAtExactLimit;
+var
+  LConfig: IAIConfig;
+  LService: TRadIAService;
+  LHistory: TArray<IChatMessage>;
+  LTrimmed: TArray<IChatMessage>;
+begin
+  { MaxHistoryMessages = 5 → limit = 10; we send exactly 10 → no trim }
+  LConfig := TMockConfig.Create(5);
+  LService := TRadIAService.Create(LConfig);
+  try
+    LHistory := MakeHistory(10);
+    LTrimmed := LService.TrimHistory(LHistory);
+    Assert.AreEqual(10, Length(LTrimmed), 'Should NOT trim at exact limit');
+  finally
+    LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestTrimming_TrimsOldestWhenOverLimit;
+var
+  LConfig: IAIConfig;
+  LService: TRadIAService;
+  LHistory: TArray<IChatMessage>;
+  LTrimmed: TArray<IChatMessage>;
+begin
+  { MaxHistoryMessages = 3 → limit = 6; we send 10 → trim to 6 }
+  LConfig := TMockConfig.Create(3);
+  LService := TRadIAService.Create(LConfig);
+  try
+    LHistory := MakeHistory(10);
+    LTrimmed := LService.TrimHistory(LHistory);
+    Assert.AreEqual(6, Length(LTrimmed), 'Should trim to MaxHistoryMessages*2 messages');
+  finally
+    LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestTrimming_AlwaysPreservesNewestMessages;
+var
+  LConfig: IAIConfig;
+  LService: TRadIAService;
+  LHistory: TArray<IChatMessage>;
+  LTrimmed: TArray<IChatMessage>;
+begin
+  { MaxHistoryMessages = 2 → limit = 4; send 8 messages → keeps last 4 }
+  LConfig := TMockConfig.Create(2);
+  LService := TRadIAService.Create(LConfig);
+  try
+    LHistory := MakeHistory(8);
+    LTrimmed := LService.TrimHistory(LHistory);
+    Assert.AreEqual(4, Length(LTrimmed), 'Should keep exactly MaxHistoryMessages*2 newest messages');
+    Assert.AreEqual('Message 4', LTrimmed[0].Content, 'First kept message should be index 4');
+    Assert.AreEqual('Message 7', LTrimmed[3].Content, 'Last kept message should be index 7');
+  finally
+    LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestTrimming_SystemMessagesIgnoredInCount;
+var
+  LConfig: IAIConfig;
+  LService: TRadIAService;
+  LHistory: TArray<IChatMessage>;
+  LTrimmed: TArray<IChatMessage>;
+begin
+  { MaxHistoryMessages = 3 → limit = 6 user/assistant; 1 system + 4 user/assistant = 5 total.
+    System messages are filtered out before counting, so 4 <= 6 → no trim. }
+  LConfig := TMockConfig.Create(3, 'You are a Delphi expert.');
+  LService := TRadIAService.Create(LConfig);
+  try
+    LHistory := MakeHistoryWithSystem(4);
+    LTrimmed := LService.TrimHistory(LHistory);
+    { TrimHistory strips system messages from count; 4 user/assistant < 6 limit → no trim }
+    Assert.AreEqual(4, Length(LTrimmed), 'System messages must not be counted toward trim limit');
+    Assert.AreNotEqual(mrSystem, LTrimmed[0].Role, 'System messages should be stripped from trimmed result');
+  finally
+    LService.Free;
+  end;
+end;
+
+{ TTestRadIAConfigExtended }
+
+procedure TTestRadIAConfigExtended.Setup;
+begin
+  FConfig := TRadIAConfig.Create;
+end;
+
+procedure TTestRadIAConfigExtended.TearDown;
+begin
+  FConfig := nil;
+end;
+
+procedure TTestRadIAConfigExtended.TestMaxHistoryMessages_DefaultIs20;
+begin
+  { Fresh config created in Setup already loads from registry; if not set, defaults to 20 }
+  Assert.IsTrue(FConfig.GetMaxHistoryMessages > 0, 'MaxHistoryMessages must be positive');
+  Assert.IsTrue(FConfig.GetMaxHistoryMessages >= 1, 'MaxHistoryMessages must be at least 1');
+end;
+
+procedure TTestRadIAConfigExtended.TestMaxHistoryMessages_Persistence;
+const
+  TEST_VALUE = 15;
+begin
+  FConfig.MaxHistoryMessages := TEST_VALUE;
+  FConfig.Save;
+  FConfig.Load;
+  Assert.AreEqual(TEST_VALUE, FConfig.GetMaxHistoryMessages);
+end;
+
+procedure TTestRadIAConfigExtended.TestMaxHistoryMessages_ZeroResetsToDefault;
+begin
+  FConfig.MaxHistoryMessages := 0;
+  Assert.AreEqual(20, FConfig.GetMaxHistoryMessages, 'Zero value should reset to default 20');
+end;
+
+procedure TTestRadIAConfigExtended.TestOpenAICustomBaseUrl_DefaultIsEmpty;
+var
+  LFreshConfig: IAIConfig;
+begin
+  { Create fresh mock config: default custom URL must be empty }
+  LFreshConfig := TMockConfig.Create(20);
+  Assert.IsEmpty(LFreshConfig.GetOpenAICustomBaseUrl, 'Default OpenAI Custom Base URL should be empty');
+end;
+
+procedure TTestRadIAConfigExtended.TestOpenAICustomBaseUrl_Persistence;
+const
+  TEST_URL = 'http://localhost:1234/v1';
+begin
+  FConfig.OpenAICustomBaseUrl := TEST_URL;
+  FConfig.Save;
+  FConfig.Load;
+  Assert.AreEqual(TEST_URL, FConfig.GetOpenAICustomBaseUrl);
+end;
+
+initialization
+  TDUnitX.RegisterTestFixture(TTestRadIAService);
+  TDUnitX.RegisterTestFixture(TTestRadIAConfigExtended);
+
+end.

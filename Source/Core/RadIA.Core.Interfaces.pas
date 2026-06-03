@@ -43,10 +43,16 @@ type
     procedure SetSystemPrompt(const AValue: string);
     function GetOllamaBaseUrl: string;
     procedure SetOllamaBaseUrl(const AValue: string);
+    function GetMaxHistoryMessages: Integer;
+    procedure SetMaxHistoryMessages(const AValue: Integer);
+    function GetOpenAICustomBaseUrl: string;
+    procedure SetOpenAICustomBaseUrl(const AValue: string);
     procedure Save;
     procedure Load;
     property SystemPrompt: string read GetSystemPrompt write SetSystemPrompt;
     property OllamaBaseUrl: string read GetOllamaBaseUrl write SetOllamaBaseUrl;
+    property MaxHistoryMessages: Integer read GetMaxHistoryMessages write SetMaxHistoryMessages;
+    property OpenAICustomBaseUrl: string read GetOpenAICustomBaseUrl write SetOpenAICustomBaseUrl;
   end;
 
 implementation
