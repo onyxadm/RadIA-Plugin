@@ -27,13 +27,14 @@ implementation
 class function TConversationExporter.MarkdownToSimpleHTML(const AMarkdownText: string): string;
 var
   LInputLines: TArray<string>;
-  LOutputLines: TStringList;
+  LSb: TStringBuilder;
   I: Integer;
   LInCodeBlock: Boolean;
   LLine: string;
 begin
-  LInputLines := AMarkdownText.Split([#10, #13]);
-  LOutputLines := TStringList.Create;
+  { Handle CRLF robustly by normalizing to LF and splitting }
+  LInputLines := AMarkdownText.Replace(#13, '').Split([#10]);
+  LSb := TStringBuilder.Create;
   try
     LInCodeBlock := False;
     for I := 0 to High(LInputLines) do
@@ -45,12 +46,12 @@ begin
       begin
         if LInCodeBlock then
         begin
-          LOutputLines.Add('</code></pre>');
+          LSb.AppendLine('</code></pre>');
           LInCodeBlock := False;
         end
         else
         begin
-          LOutputLines.Add('<pre><code>');
+          LSb.AppendLine('<pre><code>');
           LInCodeBlock := True;
         end;
         Continue;
@@ -63,23 +64,23 @@ begin
 
       if LInCodeBlock then
       begin
-        LOutputLines.Add(LLine);
+        LSb.AppendLine(LLine);
       end
       else
       begin
         if LLine.Trim.IsEmpty then
-          LOutputLines.Add('<br/>')
+          LSb.AppendLine('<br/>')
         else
-          LOutputLines.Add('<p>' + LLine + '</p>');
+          LSb.AppendLine('<p>' + LLine + '</p>');
       end;
     end;
     
     if LInCodeBlock then
-      LOutputLines.Add('</code></pre>');
+      LSb.AppendLine('</code></pre>');
 
-    Result := LOutputLines.Text;
+    Result := LSb.ToString;
   finally
-    LOutputLines.Free;
+    LSb.Free;
   end;
 end;
 

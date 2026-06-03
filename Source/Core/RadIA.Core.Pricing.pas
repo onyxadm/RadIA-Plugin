@@ -20,7 +20,6 @@ type
     Source: public pricing pages as of mid-2025. }
   TPricingManager = class
   private
-    class function GetDefaultTable: TArray<TPricingEntry>; static;
     class function FindEntry(const AProvider: TAIProviderType; const AModel: string;
       out AEntry: TPricingEntry): Boolean; static;
   public
@@ -42,7 +41,7 @@ uses
 
 { Approximate prices (USD per 1M tokens) — updated mid-2025 }
 const
-  PRICING_TABLE: array[0..9] of TPricingEntry = (
+  PRICING_TABLE: array[0..14] of TPricingEntry = (
     { Google Gemini }
     (Provider: ptGemini; Model: 'gemini-1.5-flash';     InputPricePerMillion: 0.075;  OutputPricePerMillion: 0.30),
     (Provider: ptGemini; Model: 'gemini-1.5-pro';       InputPricePerMillion: 1.25;   OutputPricePerMillion: 5.00),
@@ -55,19 +54,19 @@ const
     { Anthropic Claude }
     (Provider: ptClaude; Model: 'claude-3-5-sonnet-20241022'; InputPricePerMillion: 3.00;  OutputPricePerMillion: 15.00),
     (Provider: ptClaude; Model: 'claude-3-5-haiku-20241022';  InputPricePerMillion: 0.80;  OutputPricePerMillion: 4.00),
-    (Provider: ptClaude; Model: 'claude-3-opus-20240229';     InputPricePerMillion: 15.00; OutputPricePerMillion: 75.00)
+    (Provider: ptClaude; Model: 'claude-3-opus-20240229';     InputPricePerMillion: 15.00; OutputPricePerMillion: 75.00),
+    { DeepSeek }
+    (Provider: ptDeepSeek; Model: 'deepseek-chat';      InputPricePerMillion: 0.14;   OutputPricePerMillion: 0.28),
+    (Provider: ptDeepSeek; Model: 'deepseek-reasoning'; InputPricePerMillion: 0.55;   OutputPricePerMillion: 2.19),
+    { Groq }
+    (Provider: ptGroq; Model: 'llama-3.3-70b-versatile'; InputPricePerMillion: 0.59;  OutputPricePerMillion: 0.79),
+    (Provider: ptGroq; Model: 'mixtral-8x7b-32768';      InputPricePerMillion: 0.24;  OutputPricePerMillion: 0.24),
+    (Provider: ptGroq; Model: 'gemma2-9b-it';            InputPricePerMillion: 0.20;  OutputPricePerMillion: 0.20)
   );
 
 { TPricingManager }
 
-class function TPricingManager.GetDefaultTable: TArray<TPricingEntry>;
-var
-  I: Integer;
-begin
-  SetLength(Result, Length(PRICING_TABLE));
-  for I := 0 to High(PRICING_TABLE) do
-    Result[I] := PRICING_TABLE[I];
-end;
+
 
 class function TPricingManager.FindEntry(const AProvider: TAIProviderType; const AModel: string;
   out AEntry: TPricingEntry): Boolean;
