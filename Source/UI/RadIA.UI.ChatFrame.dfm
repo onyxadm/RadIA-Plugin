@@ -42,12 +42,13 @@ object FrameAIChat: TFrameAIChat
       TabOrder = 1
       OnChange = cbModelChange
     end
-    object btnTemplates: TButton
+    object btnTemplates: TSpeedButton
       Left = 178
       Top = 9
       Width = 28
       Height = 26
       Caption = #9889
+      Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -57,15 +58,15 @@ object FrameAIChat: TFrameAIChat
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 2
       OnClick = btnTemplatesClick
     end
-    object btnExport: TButton
+    object btnExport: TSpeedButton
       Left = 210
       Top = 9
       Width = 28
       Height = 26
       Caption = #10515
+      Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -75,15 +76,15 @@ object FrameAIChat: TFrameAIChat
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 3
       OnClick = btnExportClick
     end
-    object btnClear: TButton
+    object btnClear: TSpeedButton
       Left = 242
       Top = 9
       Width = 28
       Height = 26
       Caption = #9851
+      Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -93,15 +94,15 @@ object FrameAIChat: TFrameAIChat
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 4
       OnClick = btnClearClick
     end
-    object btnSettings: TButton
+    object btnSettings: TSpeedButton
       Left = 274
       Top = 9
       Width = 28
       Height = 26
       Caption = #9881
+      Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -111,7 +112,6 @@ object FrameAIChat: TFrameAIChat
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 5
       OnClick = btnSettingsClick
     end
   end
@@ -150,6 +150,7 @@ object FrameAIChat: TFrameAIChat
       Width = 272
       Height = 86
       Align = alClient
+      BorderStyle = bsNone
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -159,20 +160,20 @@ object FrameAIChat: TFrameAIChat
       ScrollBars = ssVertical
       TabOrder = 0
     end
-    object btnSend: TButton
+    object btnSend: TSpeedButton
       Left = 272
       Top = 16
       Width = 48
       Height = 86
       Align = alRight
       Caption = #10148
+      Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -18
       Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       ParentFont = False
-      TabOrder = 1
       OnClick = btnSendClick
     end
   end

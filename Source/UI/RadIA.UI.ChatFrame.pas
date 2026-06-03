@@ -7,21 +7,21 @@ uses
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
   RadIA.Core.Service, RadIA.Core.PromptHistory, RadIA.Core.TokenUsage, Vcl.Menus,
-  RadIA.Core.PromptTemplates;
+  RadIA.Core.PromptTemplates, Vcl.Buttons;
 
 type
   TFrameAIChat = class(TFrame)
     pnlToolbar: TPanel;
     cbProvider: TComboBox;
     cbModel: TComboBox;
-    btnSettings: TButton;
-    btnClear: TButton;
-    btnExport: TButton;
-    btnTemplates: TButton;
+    btnSettings: TSpeedButton;
+    btnClear: TSpeedButton;
+    btnExport: TSpeedButton;
+    btnTemplates: TSpeedButton;
     SaveDialog: TSaveDialog;
     pnlInput: TPanel;
     memPrompt: TMemo;
-    btnSend: TButton;
+    btnSend: TSpeedButton;
     lblContext: TLabel;
     pnlBrowser: TPanel;
     EdgeBrowser: TEdgeBrowser;
@@ -440,7 +440,11 @@ begin
   memPrompt.Color := LInputBgColor;
   memPrompt.Font.Color := LTextColor;
 
-  // Botão Send
+  // SpeedButtons (Toolbar e Send)
+  btnTemplates.Font.Color := LTextColor;
+  btnExport.Font.Color := LTextColor;
+  btnClear.Font.Color := LTextColor;
+  btnSettings.Font.Color := LTextColor;
   btnSend.Font.Color := LTextColor;
 end;
 
