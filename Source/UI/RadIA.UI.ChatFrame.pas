@@ -74,8 +74,8 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, 
-  RadIA.Core.ConversationExporter;
+  System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigFrame,
+  RadIA.Core.Mediator, RadIA.Core.ConversationExporter;
 
 
 
@@ -103,14 +103,14 @@ begin
   LoadPromptHistory;
 
   memPrompt.OnKeyDown := Self.memPromptKeyDown;
-  GlobalOnRequestPrompt := Self.OnGlobalPromptRequest;
+  TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
 end;
 
 destructor TFrameAIChat.Destroy;
 begin
   if Assigned(FLifecycleGuard) then
     (FLifecycleGuard as ILifecycleGuard).Invalidate;
-  GlobalOnRequestPrompt := nil;
+  TRadIAMediator.Instance.UnregisterPromptHandler;
   FPromptHistoryManager.Free;
   FTemplateManager.Free;
   FAIService.Free;

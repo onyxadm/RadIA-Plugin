@@ -11,13 +11,13 @@ type
   private
     FRole: TAIMessageRole;
     FContent: string;
-    
+
     function GetRole: TAIMessageRole;
     function GetContent: string;
     procedure SetContent(const AValue: string);
   public
     constructor Create(const ARole: TAIMessageRole; const AContent: string);
-    
+
     property Role: TAIMessageRole read GetRole;
     property Content: string read GetContent write SetContent;
   end;
@@ -27,19 +27,24 @@ type
   private
     FConfig: IAIConfig;
     FCacheManager: TRadIACacheManager;
+
     function GetEffectiveSystemPrompt: string;
-    function BuildEffectiveHistory(const ASystemPrompt: string; const ATrimmedHistory: TArray<IChatMessage>): TArray<IChatMessage>;
+    function BuildEffectiveHistory(const ASystemPrompt: string;
+      const ATrimmedHistory: TArray<IChatMessage>): TArray<IChatMessage>;
+    function SerializeHistoryToJson(const AHistory: TArray<IChatMessage>): string;
+    function ComputePromptHash(const APrompt: string;
+      const ATrimmedHistory: TArray<IChatMessage>; const ASystemPrompt: string): string;
   public
     constructor Create(const AConfig: IAIConfig);
     destructor Destroy; override;
-    
+
     function CreateActiveProvider: IIAProvider;
     function TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
-    procedure SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+    procedure SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TCompletionCallback);
-    procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+    procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TStreamChunkCallback);
-      
+
     class function CreateMessage(const ARole: TAIMessageRole; const AContent: string): IChatMessage;
   end;
 
@@ -135,12 +140,12 @@ var
 begin
   LProviderType := FConfig.GetActiveProvider;
   case LProviderType of
-    ptGemini: Result := TRadIAGeminiProvider.Create(FConfig);
-    ptOpenAI: Result := TRadIAOpenAIProvider.Create(FConfig);
-    ptClaude: Result := TRadIAClaudeProvider.Create(FConfig);
-    ptOllama: Result := TRadIAOllamaProvider.Create(FConfig);
+    ptGemini:   Result := TRadIAGeminiProvider.Create(FConfig);
+    ptOpenAI:   Result := TRadIAOpenAIProvider.Create(FConfig);
+    ptClaude:   Result := TRadIAClaudeProvider.Create(FConfig);
+    ptOllama:   Result := TRadIAOllamaProvider.Create(FConfig);
     ptDeepSeek: Result := TRadIADeepSeekProvider.Create(FConfig);
-    ptGroq: Result := TRadIAGroqProvider.Create(FConfig);
+    ptGroq:     Result := TRadIAGroqProvider.Create(FConfig);
   else
     raise Exception.Create('Invalid active provider type selected.');
   end;
@@ -183,47 +188,55 @@ begin
     Result := ATrimmedHistory;
 end;
 
-procedure TRadIAService.SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+function TRadIAService.SerializeHistoryToJson(const AHistory: TArray<IChatMessage>): string;
+var
+  LHistoryJson: TJSONArray;
+  LMsg: IChatMessage;
+  LMsgObj: TJSONObject;
+begin
+  LHistoryJson := TJSONArray.Create;
+  try
+    for LMsg in AHistory do
+    begin
+      LMsgObj := TJSONObject.Create;
+      LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
+      LMsgObj.AddPair('content', LMsg.Content);
+      LHistoryJson.AddElement(LMsgObj);
+    end;
+    Result := LHistoryJson.ToJSON;
+  finally
+    LHistoryJson.Free;
+  end;
+end;
+
+function TRadIAService.ComputePromptHash(const APrompt: string;
+  const ATrimmedHistory: TArray<IChatMessage>; const ASystemPrompt: string): string;
+var
+  LProviderName: string;
+  LModelName: string;
+  LHistoryStr: string;
+begin
+  LProviderName := ProviderTypeToString(FConfig.GetActiveProvider);
+  LModelName    := FConfig.GetActiveModel(FConfig.GetActiveProvider);
+  LHistoryStr   := SerializeHistoryToJson(ATrimmedHistory);
+  Result := TRadIACacheManager.GenerateHash(LProviderName, LModelName, ASystemPrompt, APrompt, LHistoryStr);
+end;
+
+procedure TRadIAService.SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
   const ACallback: TCompletionCallback);
 var
   LProvider: IIAProvider;
   LHash: string;
   LCachedResponse: string;
-  LHistoryStr: string;
-  LProviderName: string;
-  LModelName: string;
   LSystemPrompt: string;
-  LHistoryJson: TJSONArray;
-  LMsg: IChatMessage;
-  LMsgObj: TJSONObject;
   LHistory: TArray<IChatMessage>;
   LTrimmedHistory: TArray<IChatMessage>;
 begin
   try
     LProvider := CreateActiveProvider;
-    LProviderName := ProviderTypeToString(FConfig.GetActiveProvider);
-    LModelName := FConfig.GetActiveModel(FConfig.GetActiveProvider);
-    
-    LSystemPrompt := GetEffectiveSystemPrompt;
-    LTrimmedHistory := TrimHistory(AHistory);
-
-    { Serialize trimmed history to compute Hash }
-    LHistoryJson := TJSONArray.Create;
-    try
-      for LMsg in LTrimmedHistory do
-      begin
-        LMsgObj := TJSONObject.Create;
-        LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
-        LMsgObj.AddPair('content', LMsg.Content);
-        LHistoryJson.AddElement(LMsgObj);
-      end;
-      LHistoryStr := LHistoryJson.ToJSON;
-    finally
-      LHistoryJson.Free;
-    end;
-
-    { Generate Hash }
-    LHash := TRadIACacheManager.GenerateHash(LProviderName, LModelName, LSystemPrompt, APrompt, LHistoryStr);
+    LSystemPrompt    := GetEffectiveSystemPrompt;
+    LTrimmedHistory  := TrimHistory(AHistory);
+    LHash            := ComputePromptHash(APrompt, LTrimmedHistory, LSystemPrompt);
 
     { Query Cache }
     if FCacheManager.Get(LHash, LCachedResponse) then
@@ -240,9 +253,7 @@ begin
       procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
       begin
         if AError.IsEmpty then
-        begin
           FCacheManager.Put(LHash, AResponse);
-        end;
         ACallback(AResponse, AError, False, AUsage);
       end);
   except
@@ -260,15 +271,43 @@ var
   LSystemPrompt: string;
   LHistory: TArray<IChatMessage>;
   LTrimmedHistory: TArray<IChatMessage>;
+  LHash: string;
+  LCachedResponse: string;
+  LAccumulator: string;
 begin
   try
-    LProvider := CreateActiveProvider;
-    LSystemPrompt := GetEffectiveSystemPrompt;
+    LProvider       := CreateActiveProvider;
+    LSystemPrompt   := GetEffectiveSystemPrompt;
     LTrimmedHistory := TrimHistory(AHistory);
-    LHistory := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
+    LHash           := ComputePromptHash(APrompt, LTrimmedHistory, LSystemPrompt);
 
-    { Perform the stream request }
-    LProvider.SendPromptStreamAsync(APrompt, LHistory, ACallback);
+    { R2 FIX: Check cache before streaming }
+    if FCacheManager.Get(LHash, LCachedResponse) then
+    begin
+      TThread.Queue(nil,
+        procedure
+        begin
+          ACallback(LCachedResponse, True, '');
+        end);
+      Exit;
+    end;
+
+    LHistory     := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
+    LAccumulator := '';
+
+    { R2 FIX: Wrap callback to accumulate chunks and persist to cache on completion }
+    LProvider.SendPromptStreamAsync(APrompt, LHistory,
+      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+      begin
+        if AError.IsEmpty then
+        begin
+          if not AChunk.IsEmpty then
+            LAccumulator := LAccumulator + AChunk;
+          if AIsDone and not LAccumulator.IsEmpty then
+            FCacheManager.Put(LHash, LAccumulator);
+        end;
+        ACallback(AChunk, AIsDone, AError);
+      end);
   except
     on E: Exception do
     begin

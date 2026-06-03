@@ -66,6 +66,8 @@ begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
   LMethod := LType.GetMethod('BuildRequestBody');
+  if not Assigned(LMethod) then
+    LMethod := LType.GetMethod('BuildOpenAICompatibleRequestBody');
   if Assigned(LMethod) then
   begin
     LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream]);
@@ -86,6 +88,8 @@ begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
   LMethod := LType.GetMethod('ParseResponseBody');
+  if not Assigned(LMethod) then
+    LMethod := LType.GetMethod('ParseOpenAICompatibleResponse');
   if Assigned(LMethod) then
   begin
     SetLength(LParams, 2);
@@ -113,6 +117,8 @@ begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
   LMethod := LType.GetMethod('ProcessStreamBuffer');
+  if not Assigned(LMethod) then
+    LMethod := LType.GetMethod('ProcessOpenAICompatibleStreamBuffer');
   if Assigned(LMethod) then
   begin
     SetLength(LParams, 2);

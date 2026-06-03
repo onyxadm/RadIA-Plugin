@@ -17,7 +17,10 @@ type
     FDocAction: TAction;
     FFixErrorAction: TAction;
     FShowChatAction: TAction;
-    
+
+    function CreateAction(const ACaption: string;
+      const AHandler: TNotifyEvent): TAction;
+
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
     procedure OnTestsExecute(Sender: TObject);
@@ -25,15 +28,15 @@ type
     procedure OnDocExecute(Sender: TObject);
     procedure OnFixErrorExecute(Sender: TObject);
     procedure OnShowChatExecute(Sender: TObject);
-    
+
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
   public
     constructor Create(AOwner: TComponent);
     destructor Destroy; override;
-    
+
     procedure PopulateContextMenu(const AContextMenu: TPopupMenu);
     procedure PopulateToolsMenu(const AMenuItem: TMenuItem);
-    
+
     property ActionList: TActionList read FActionList;
     property ExplainAction: TAction read FExplainAction;
     property OptimizeAction: TAction read FOptimizeAction;
@@ -48,48 +51,30 @@ implementation
 
 uses
   RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
-  RadIA.OTA.DockableForm;
+  RadIA.Core.Mediator, RadIA.OTA.DockableForm;
 
 { TRadIAEditorHook }
+
+function TRadIAEditorHook.CreateAction(const ACaption: string;
+  const AHandler: TNotifyEvent): TAction;
+begin
+  Result := TAction.Create(FActionList);
+  Result.ActionList := FActionList;
+  Result.Caption    := ACaption;
+  Result.OnExecute  := AHandler;
+end;
 
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   FActionList := TActionList.Create(AOwner);
-  
-  FExplainAction := TAction.Create(FActionList);
-  FExplainAction.ActionList := FActionList;
-  FExplainAction.Caption := 'RadIA: Explain Selected Code';
-  FExplainAction.OnExecute := OnExplainExecute;
-  
-  FOptimizeAction := TAction.Create(FActionList);
-  FOptimizeAction.ActionList := FActionList;
-  FOptimizeAction.Caption := 'RadIA: Optimize/Refactor Code';
-  FOptimizeAction.OnExecute := OnOptimizeExecute;
-  
-  FTestsAction := TAction.Create(FActionList);
-  FTestsAction.ActionList := FActionList;
-  FTestsAction.Caption := 'RadIA: Generate Unit Tests (DUnitX)';
-  FTestsAction.OnExecute := OnTestsExecute;
-  
-  FBugsAction := TAction.Create(FActionList);
-  FBugsAction.ActionList := FActionList;
-  FBugsAction.Caption := 'RadIA: Locate Bugs/Memory Leaks';
-  FBugsAction.OnExecute := OnBugsExecute;
-  
-  FDocAction := TAction.Create(FActionList);
-  FDocAction.ActionList := FActionList;
-  FDocAction.Caption := 'RadIA: Document Method (XML)';
-  FDocAction.OnExecute := OnDocExecute;
-  
-  FFixErrorAction := TAction.Create(FActionList);
-  FFixErrorAction.ActionList := FActionList;
-  FFixErrorAction.Caption := 'RadIA: Fix Last Compiler Error';
-  FFixErrorAction.OnExecute := OnFixErrorExecute;
-  
-  FShowChatAction := TAction.Create(FActionList);
-  FShowChatAction.ActionList := FActionList;
-  FShowChatAction.Caption := 'RadIA Chat Panel';
-  FShowChatAction.OnExecute := OnShowChatExecute;
+
+  FExplainAction   := CreateAction('RadIA: Explain Selected Code',          OnExplainExecute);
+  FOptimizeAction  := CreateAction('RadIA: Optimize/Refactor Code',         OnOptimizeExecute);
+  FTestsAction     := CreateAction('RadIA: Generate Unit Tests (DUnitX)',    OnTestsExecute);
+  FBugsAction      := CreateAction('RadIA: Locate Bugs/Memory Leaks',        OnBugsExecute);
+  FDocAction       := CreateAction('RadIA: Document Method (XML)',           OnDocExecute);
+  FFixErrorAction  := CreateAction('RadIA: Fix Last Compiler Error',         OnFixErrorExecute);
+  FShowChatAction  := CreateAction('RadIA Chat Panel',                       OnShowChatExecute);
 end;
 
 destructor TRadIAEditorHook.Destroy;
@@ -157,14 +142,11 @@ begin
     ShowMessage('Please select a block of code in the editor first.');
     Exit;
   end;
-  
+
   ShowRadIAChat;
-  
+
   LPrompt := Format('%s'#13#10'```pascal'#13#10'%s'#13#10'```', [ACommand, LSelectedText]);
-  if Assigned(GlobalOnRequestPrompt) then
-  begin
-    GlobalOnRequestPrompt(LPrompt, True);
-  end;
+  TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 
 procedure TRadIAEditorHook.OnExplainExecute(Sender: TObject);
@@ -186,11 +168,8 @@ begin
     ShowMessage('Please select a block of code to optimize first.');
     Exit;
   end;
-  
-  if Assigned(GlobalOnRequestDiff) then
-  begin
-    GlobalOnRequestDiff(LSelectedText);
-  end;
+
+  TRadIAMediator.Instance.RequestDiff(LSelectedText);
 end;
 
 procedure TRadIAEditorHook.OnTestsExecute(Sender: TObject);
@@ -213,12 +192,9 @@ begin
     ShowMessage('Please select a method block of code to document.');
     Exit;
   end;
-  
+
   LPrompt := Format('/doc'#13#10'```pascal'#13#10'%s'#13#10'```', [LSelectedText]);
-  if Assigned(GlobalOnRequestPrompt) then
-  begin
-    GlobalOnRequestPrompt(LPrompt, True);
-  end;
+  TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 
 procedure TRadIAEditorHook.OnFixErrorExecute(Sender: TObject);
@@ -241,13 +217,10 @@ begin
                    #13#10'```';
   end;
   
-  LPrompt := Format('/fix'#13#10'Compiler Error: %s'#13#10'File: %s (Line %d)'#13#10#13#10'%s', 
+  LPrompt := Format('/fix'#13#10'Compiler Error: %s'#13#10'File: %s (Line %d)'#13#10#13#10'%s',
     [LErrorMsg, ExtractFileName(LFileName), LLine, LSourceCode]);
-    
-  if Assigned(GlobalOnRequestPrompt) then
-  begin
-    GlobalOnRequestPrompt(LPrompt, True);
-  end;
+
+  TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 
 end.

@@ -126,17 +126,19 @@ begin
       { Check expiration (24 hours) }
       if HoursBetween(Now, LEntry.Timestamp) >= 24 then
       begin
-        { Expired entry, remove it }
+        { Expired entry — remove it and flag for persistence }
         FDictionary.Remove(AHash);
         FEntries.Remove(LEntry);
         FIsDirty := True;
         Exit;
       end;
-      
+
+      { Update LRU metadata without triggering a full cache save }
       LEntry.LastAccessed := Now;
       AResponse := LEntry.Response;
-      FIsDirty := True;
       Result := True;
+      { NOTE: Not marking FIsDirty here — LastAccessed is best-effort metadata.
+        It will be persisted on the next Put or on destruction. }
     end;
   finally
     FCriticalSection.Leave;

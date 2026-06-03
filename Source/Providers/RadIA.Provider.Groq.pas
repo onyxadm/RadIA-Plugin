@@ -9,14 +9,13 @@ uses
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAGroqProvider = class(TRadIAProviderBase)
-  private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
-    function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
-    procedure ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
+  protected
+    function GetModelsDiscoveryUrl: string; override;
+    function FilterModelId(const AId: string): Boolean; override;
   public
     constructor Create(const AConfig: IAIConfig); override;
-    
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TCompletionCallback); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TStreamChunkCallback); override;
@@ -28,7 +27,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections;
+  System.JSON, System.Threading;
 
 { TRadIAGroqProvider }
 
@@ -48,85 +47,20 @@ begin
   Result := 'Groq';
 end;
 
-function TRadIAGroqProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
-var
-  LRootObj: TJSONObject;
-  LMessagesArr: TJSONArray;
-  LMsgObj: TJSONObject;
-  LMsg: IChatMessage;
+function TRadIAGroqProvider.GetModelsDiscoveryUrl: string;
 begin
-  LRootObj := TJSONObject.Create;
-  try
-    LRootObj.AddPair('model', GetActiveModel);
-    if AStream then
-      LRootObj.AddPair('stream', TJSONBool.Create(True));
-    
-    LMessagesArr := TJSONArray.Create;
-    LRootObj.AddPair('messages', LMessagesArr);
-    
-    { Add History }
-    for LMsg in AHistory do
-    begin
-      LMsgObj := TJSONObject.Create;
-      LMessagesArr.AddElement(LMsgObj);
-      LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
-      LMsgObj.AddPair('content', LMsg.Content);
-    end;
-    
-    { Add Current Prompt }
-    LMsgObj := TJSONObject.Create;
-    LMessagesArr.AddElement(LMsgObj);
-    LMsgObj.AddPair('role', 'user');
-    LMsgObj.AddPair('content', APrompt);
-    
-    Result := LRootObj.ToJSON;
-  finally
-    LRootObj.Free;
-  end;
+  Result := 'https://api.groq.com/openai/v1/models';
 end;
 
-function TRadIAGroqProvider.ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
-var
-  LJsonObj: TJSONObject;
-  LChoices: TJSONArray;
-  LChoice: TJSONObject;
-  LMessage: TJSONObject;
-  LUsageNode: TJSONObject;
+function TRadIAGroqProvider.FilterModelId(const AId: string): Boolean;
 begin
-  Result := '';
-  AUsage := TTokenUsage.Empty;
-
-  LJsonObj := TJSONObject.ParseJSONValue(AResponseJson) as TJSONObject;
-  if not Assigned(LJsonObj) then
-    Exit;
-
-  try
-    LChoices := LJsonObj.GetValue('choices') as TJSONArray;
-    if Assigned(LChoices) and (LChoices.Count > 0) then
-    begin
-      LChoice := LChoices.Items[0] as TJSONObject;
-      LMessage := LChoice.GetValue('message') as TJSONObject;
-      if Assigned(LMessage) then
-        Result := LMessage.GetValue<string>('content', '');
-    end;
-
-    if Result.IsEmpty and Assigned(LJsonObj.GetValue('error')) then
-      raise Exception.Create(LJsonObj.GetValue('error').ToString);
-
-    LUsageNode := LJsonObj.GetValue('usage') as TJSONObject;
-    if Assigned(LUsageNode) then
-    begin
-      AUsage.PromptTokens     := LUsageNode.GetValue<Integer>('prompt_tokens', 0);
-      AUsage.CompletionTokens := LUsageNode.GetValue<Integer>('completion_tokens', 0);
-      AUsage.TotalTokens      := LUsageNode.GetValue<Integer>('total_tokens', 0);
-    end;
-  finally
-    LJsonObj.Free;
-  end;
+  { Accept only the model families supported by Groq }
+  Result := not AId.IsEmpty and
+    (AId.Contains('llama') or AId.Contains('mixtral') or AId.Contains('gemma'));
 end;
 
-procedure TRadIAGroqProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TCompletionCallback);
+procedure TRadIAGroqProvider.SendPromptAsync(const APrompt: string;
+  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
@@ -140,12 +74,11 @@ begin
   end;
 
   LUrl := 'https://api.groq.com/openai/v1/chat/completions';
-
   SetLength(LHeaders, 1);
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False);
   except
     on E: Exception do
     begin
@@ -162,7 +95,7 @@ begin
     begin
       try
         LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
-        LResponseText := ParseResponseBody(LResponseText, LUsage);
+        LResponseText := ParseOpenAICompatibleResponse(LResponseText, LUsage);
 
         TThread.Queue(nil,
           procedure
@@ -184,192 +117,15 @@ begin
   TTask.Run(LTaskProc);
 end;
 
-procedure TRadIAGroqProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
-var
-  LApiKey: string;
-  LUrl: string;
-  LHeaders: TNetHeaders;
-  LTaskProc: TProc;
+procedure TRadIAGroqProvider.FetchAvailableModelsAsync(
+  const ACallback: TProc<TArray<string>, string>);
 begin
-  LApiKey := GetApiKey;
-  if LApiKey.IsEmpty then
-  begin
-    TThread.Queue(nil,
-      procedure
-      begin
-        ACallback(GetAvailableModels, 'API Key is missing for Groq. Using fallback models.');
-      end);
-    Exit;
-  end;
-
-  LUrl := 'https://api.groq.com/openai/v1/models';
-  
-  SetLength(LHeaders, 1);
-  LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
-
-  LTaskProc := procedure
-               var
-                 LResponseText: string;
-                 LJson: TJSONObject;
-                 LDataArr: TJSONArray;
-                 LVal: TJSONValue;
-                 LModelObj: TJSONObject;
-                 LId: string;
-                 LModelsList: TList<string>;
-                 LModelsArray: TArray<string>;
-               begin
-                 LModelsList := TList<string>.Create;
-                 try
-                   try
-                     LResponseText := DoGetRequest(LUrl, LHeaders);
-                     LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
-                     if Assigned(LJson) then
-                     begin
-                       try
-                         LDataArr := LJson.GetValue('data') as TJSONArray;
-                         if Assigned(LDataArr) then
-                         begin
-                           for LVal in LDataArr do
-                           begin
-                             if LVal is TJSONObject then
-                             begin
-                               LModelObj := LVal as TJSONObject;
-                               LId := LModelObj.GetValue<string>('id', '');
-                               { Filter models: usually we want llama, mixtral, gemma }
-                               if not LId.IsEmpty and (LId.Contains('llama') or LId.Contains('mixtral') or LId.Contains('gemma')) then
-                               begin
-                                 LModelsList.Add(LId);
-                               end;
-                             end;
-                           end;
-                         end;
-                       finally
-                         LJson.Free;
-                       end;
-                     end;
-                     
-                     LModelsList.Sort;
-                     
-                     if LModelsList.Count = 0 then
-                       LModelsArray := GetAvailableModels
-                     else
-                       LModelsArray := LModelsList.ToArray;
-                       
-                     TThread.Queue(nil,
-                       procedure
-                       begin
-                         ACallback(LModelsArray, '');
-                       end);
-                   except
-                     on E: Exception do
-                     begin
-                       LModelsArray := GetAvailableModels;
-                       TThread.Queue(nil,
-                         procedure
-                         begin
-                           ACallback(LModelsArray, E.Message);
-                         end);
-                     end;
-                   end;
-                 finally
-                   LModelsList.Free;
-                 end;
-               end;
-
-  TTask.Run(LTaskProc);
+  { Delegates to the base implementation which uses GetModelsDiscoveryUrl and FilterModelId }
+  inherited FetchAvailableModelsAsync(ACallback);
 end;
 
-procedure TRadIAGroqProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
-var
-  LLine: string;
-  LJsonLine: string;
-  LJson: TJSONObject;
-  LChoices: TJSONArray;
-  LChoice: TJSONObject;
-  LDelta: TJSONObject;
-  LContent: string;
-  LIdx: Integer;
-  LStartPos: Integer;
-  LPtr: PChar;
-  LLen: Integer;
-  LLastProcessedPos: Integer;
-begin
-  LLen := ABuffer.Length;
-  if LLen = 0 then
-    Exit;
-
-  LPtr := PChar(ABuffer);
-  LStartPos := 0;
-  LLastProcessedPos := 0;
-  
-  while LStartPos < LLen do
-  begin
-    LIdx := LStartPos;
-    while (LIdx < LLen) and (LPtr[LIdx] <> #10) do
-      Inc(LIdx);
-      
-    if LIdx >= LLen then
-      Break;
-      
-    LLine := ABuffer.Substring(LStartPos, LIdx - LStartPos);
-    LStartPos := LIdx + 1;
-    LLastProcessedPos := LStartPos;
-    
-    LLine := Trim(LLine);
-    if LLine.StartsWith('data:') then
-    begin
-      LJsonLine := Trim(LLine.Substring(5));
-      if LJsonLine = '[DONE]' then
-      begin
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback('', True, '');
-          end);
-        
-        ABuffer := ABuffer.Substring(LLastProcessedPos);
-        Exit;
-      end;
-      
-      try
-        LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
-        if Assigned(LJson) then
-        begin
-          try
-            LChoices := LJson.GetValue('choices') as TJSONArray;
-            if Assigned(LChoices) and (LChoices.Count > 0) then
-            begin
-              LChoice := LChoices.Items[0] as TJSONObject;
-              LDelta := LChoice.GetValue('delta') as TJSONObject;
-              if Assigned(LDelta) then
-              begin
-                LContent := LDelta.GetValue<string>('content', '');
-                if not LContent.IsEmpty then
-                TThread.Queue(nil,
-                  procedure
-                  begin
-                    ACallback(LContent, False, '');
-                  end);
-              end;
-            end;
-          finally
-            LJson.Free;
-          end;
-        end;
-      except
-        { Ignore JSON parse errors }
-      end;
-    end;
-  end;
-  
-  if LLastProcessedPos > 0 then
-  begin
-    ABuffer := ABuffer.Substring(LLastProcessedPos);
-  end;
-end;
-
-procedure TRadIAGroqProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TStreamChunkCallback);
+procedure TRadIAGroqProvider.SendPromptStreamAsync(const APrompt: string;
+  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
@@ -383,12 +139,11 @@ begin
   end;
 
   LUrl := 'https://api.groq.com/openai/v1/chat/completions';
-
   SetLength(LHeaders, 1);
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory, True);
+    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True);
   except
     on E: Exception do
     begin
@@ -408,7 +163,7 @@ begin
           procedure(ABytes: TBytes)
           begin
             LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
-            ProcessStreamBuffer(LBufferText, ACallback);
+            ProcessOpenAICompatibleStreamBuffer(LBufferText, ACallback);
           end);
       except
         on E: Exception do

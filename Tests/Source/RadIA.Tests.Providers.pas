@@ -83,6 +83,8 @@ begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
   LMethod := LType.GetMethod('BuildRequestBody');
+  if not Assigned(LMethod) then
+    LMethod := LType.GetMethod('BuildOpenAICompatibleRequestBody');
   if Assigned(LMethod) then
   begin
     if Length(LMethod.GetParameters) = 3 then
@@ -106,6 +108,8 @@ begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
   LMethod := LType.GetMethod('ParseResponseBody');
+  if not Assigned(LMethod) then
+    LMethod := LType.GetMethod('ParseOpenAICompatibleResponse');
   if Assigned(LMethod) then
   begin
     SetLength(LParams, 2);

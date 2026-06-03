@@ -1,0 +1,103 @@
+unit RadIA.Core.Mediator;
+
+{ Implements the Mediator pattern to decouple IDE integration components
+  (EditorHook, MessageViewHook) from the UI layer (ChatFrame, DockableForm).
+
+  Replaces the mutable global procedure variables previously declared in
+  RadIA.Core.Types, eliminating accidental overrides and enabling future
+  support for multiple chat sessions.
+
+  Usage:
+    - UI layer registers handlers via TRadIAMediator.Instance.RegisterXxx
+    - Integration layer fires events via TRadIAMediator.Instance.RequestXxx
+}
+
+interface
+
+uses
+  System.SysUtils;
+
+type
+  TOnRequestPromptProc = reference to procedure(const APrompt: string; const AOpenChat: Boolean);
+  TOnRequestDiffProc   = reference to procedure(const AOriginalCode: string);
+
+  TRadIAMediator = class
+  private
+    class var FInstance: TRadIAMediator;
+    FOnRequestPrompt: TOnRequestPromptProc;
+    FOnRequestDiff: TOnRequestDiffProc;
+
+    constructor CreatePrivate;
+  public
+    class function Instance: TRadIAMediator;
+    class destructor Destroy;
+
+    { Registration (called by UI layer on startup) }
+    procedure RegisterPromptHandler(const AHandler: TOnRequestPromptProc);
+    procedure RegisterDiffHandler(const AHandler: TOnRequestDiffProc);
+
+    { Dispatch (called by integration layer) }
+    procedure RequestPrompt(const APrompt: string; const AOpenChat: Boolean);
+    procedure RequestDiff(const AOriginalCode: string);
+
+    { Unregister (called on teardown) }
+    procedure UnregisterPromptHandler;
+    procedure UnregisterDiffHandler;
+  end;
+
+implementation
+
+{ TRadIAMediator }
+
+constructor TRadIAMediator.CreatePrivate;
+begin
+  inherited Create;
+  FOnRequestPrompt := nil;
+  FOnRequestDiff   := nil;
+end;
+
+class function TRadIAMediator.Instance: TRadIAMediator;
+begin
+  if not Assigned(FInstance) then
+    FInstance := TRadIAMediator.CreatePrivate;
+  Result := FInstance;
+end;
+
+class destructor TRadIAMediator.Destroy;
+begin
+  FreeAndNil(FInstance);
+end;
+
+procedure TRadIAMediator.RegisterPromptHandler(const AHandler: TOnRequestPromptProc);
+begin
+  FOnRequestPrompt := AHandler;
+end;
+
+procedure TRadIAMediator.RegisterDiffHandler(const AHandler: TOnRequestDiffProc);
+begin
+  FOnRequestDiff := AHandler;
+end;
+
+procedure TRadIAMediator.UnregisterPromptHandler;
+begin
+  FOnRequestPrompt := nil;
+end;
+
+procedure TRadIAMediator.UnregisterDiffHandler;
+begin
+  FOnRequestDiff := nil;
+end;
+
+procedure TRadIAMediator.RequestPrompt(const APrompt: string; const AOpenChat: Boolean);
+begin
+  if Assigned(FOnRequestPrompt) then
+    FOnRequestPrompt(APrompt, AOpenChat);
+end;
+
+procedure TRadIAMediator.RequestDiff(const AOriginalCode: string);
+begin
+  if Assigned(FOnRequestDiff) then
+    FOnRequestDiff(AOriginalCode);
+end;
+
+end.

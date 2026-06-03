@@ -16,12 +16,14 @@ type
     FOllamaBaseUrl: string;
     FMaxHistoryMessages: Integer;
     FOpenAICustomBaseUrl: string;
-    
+
     function ProtectString(const AValue: string): string;
     function UnprotectString(const AValue: string): string;
+    function ReadRegString(const AReg: TObject; const AKey: string; const ADefault: string): string;
+    function ReadRegInt(const AReg: TObject; const AKey: string; const ADefault: Integer): Integer;
   public
     constructor Create;
-    
+
     { IAIConfig implementation }
     function GetApiKey(const AProvider: TAIProviderType): string;
     procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string);
@@ -44,7 +46,7 @@ type
 implementation
 
 uses
-  Winapi.Windows, System.Win.Registry, System.NetEncoding;
+  Winapi.Windows, System.Win.Registry, System.NetEncoding, System.Math;
 
 { Windows DPAPI Declarations }
 type
@@ -110,66 +112,64 @@ begin
   Result := FSystemPrompt;
 end;
 
+{ Registry read helpers — encapsulate the try/except boilerplate }
+
+function TRadIAConfig.ReadRegString(const AReg: TObject; const AKey: string;
+  const ADefault: string): string;
+var
+  LReg: TRegistry;
+begin
+  LReg := AReg as TRegistry;
+  try
+    if LReg.ValueExists(AKey) then
+      Result := LReg.ReadString(AKey)
+    else
+      Result := ADefault;
+  except
+    Result := ADefault;
+  end;
+end;
+
+function TRadIAConfig.ReadRegInt(const AReg: TObject; const AKey: string;
+  const ADefault: Integer): Integer;
+var
+  LReg: TRegistry;
+begin
+  LReg := AReg as TRegistry;
+  try
+    if LReg.ValueExists(AKey) then
+      Result := LReg.ReadInteger(AKey)
+    else
+      Result := ADefault;
+  except
+    Result := ADefault;
+  end;
+end;
+
 procedure TRadIAConfig.Load;
 var
   LReg: TRegistry;
   LProvider: TAIProviderType;
   LProvStr: string;
+  LMaxHist: Integer;
 begin
   LReg := TRegistry.Create;
   try
     LReg.RootKey := HKEY_CURRENT_USER;
     if LReg.OpenKeyReadOnly(FRegistryPath) then
     begin
-      try
-        if LReg.ValueExists('ActiveProvider') then
-          FActiveProvider := TAIProviderType(LReg.ReadInteger('ActiveProvider'));
-      except
-        FActiveProvider := ptGemini;
-      end;
+      FActiveProvider    := TAIProviderType(ReadRegInt(LReg, 'ActiveProvider', Integer(ptGemini)));
+      FSystemPrompt      := ReadRegString(LReg, 'SystemPrompt', '');
+      FOllamaBaseUrl     := ReadRegString(LReg, 'OllamaBaseUrl', 'http://localhost:11434');
+      FOpenAICustomBaseUrl := ReadRegString(LReg, 'OpenAICustomBaseUrl', '');
 
-      try
-        if LReg.ValueExists('SystemPrompt') then
-          FSystemPrompt := LReg.ReadString('SystemPrompt')
-        else
-          FSystemPrompt := '';
-      except
-        FSystemPrompt := '';
-      end;
-
-      try
-        if LReg.ValueExists('OllamaBaseUrl') then
-          FOllamaBaseUrl := LReg.ReadString('OllamaBaseUrl')
-        else
-          FOllamaBaseUrl := 'http://localhost:11434';
-      except
-        FOllamaBaseUrl := 'http://localhost:11434';
-      end;
-
-      try
-        if LReg.ValueExists('MaxHistoryMessages') then
-          FMaxHistoryMessages := LReg.ReadInteger('MaxHistoryMessages')
-        else
-          FMaxHistoryMessages := 20;
-        if FMaxHistoryMessages <= 0 then
-          FMaxHistoryMessages := 20;
-      except
-        FMaxHistoryMessages := 20;
-      end;
-
-      try
-        if LReg.ValueExists('OpenAICustomBaseUrl') then
-          FOpenAICustomBaseUrl := LReg.ReadString('OpenAICustomBaseUrl')
-        else
-          FOpenAICustomBaseUrl := '';
-      except
-        FOpenAICustomBaseUrl := '';
-      end;
+      LMaxHist := ReadRegInt(LReg, 'MaxHistoryMessages', 20);
+      FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, 20);
 
       for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
       begin
         LProvStr := ProviderTypeToString(LProvider);
-        
+
         { Load API Key }
         try
           if LReg.ValueExists(LProvStr + '_ApiKey') then

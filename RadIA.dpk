@@ -47,6 +47,7 @@ contains
   RadIA.Core.ConversationExporter in 'Source\Core\RadIA.Core.ConversationExporter.pas',
   RadIA.Core.PromptTemplates in 'Source\Core\RadIA.Core.PromptTemplates.pas',
   RadIA.Core.ProjectContext in 'Source\Core\RadIA.Core.ProjectContext.pas',
+  RadIA.Core.Mediator in 'Source\Core\RadIA.Core.Mediator.pas',
   RadIA.Provider.Base in 'Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in 'Source\Providers\RadIA.Provider.Gemini.pas',
   RadIA.Provider.OpenAI in 'Source\Providers\RadIA.Provider.OpenAI.pas',

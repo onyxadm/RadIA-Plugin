@@ -76,6 +76,8 @@ begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
   LMethod := LType.GetMethod('ProcessStreamBuffer');
+  if not Assigned(LMethod) then
+    LMethod := LType.GetMethod('ProcessOpenAICompatibleStreamBuffer');
   if Assigned(LMethod) then
   begin
     SetLength(LParams, 2);

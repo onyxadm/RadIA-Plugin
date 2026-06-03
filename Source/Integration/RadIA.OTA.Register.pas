@@ -35,7 +35,7 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, Vcl.Controls, Vcl.Forms, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.OTA.Helper, RadIA.Core.Types;
+  Vcl.Menus, Vcl.Controls, Vcl.Forms, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator;
 
 var
   GWizardIndex: Integer = -1;
@@ -59,12 +59,12 @@ begin
   inherited Create;
   FEditorHook := TRadIAEditorHook.Create(nil);
   RegisterMenus;
-  GlobalOnRequestDiff := OnRequestDiff;
+  TRadIAMediator.Instance.RegisterDiffHandler(OnRequestDiff);
 end;
 
 destructor TRadIAWizard.Destroy;
 begin
-  GlobalOnRequestDiff := nil;
+  TRadIAMediator.Instance.UnregisterDiffHandler;
   UnregisterMenus;
   FEditorHook.Free;
   inherited Destroy;
