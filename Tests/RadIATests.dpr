@@ -15,7 +15,6 @@ uses
   RadIA.Core.Service in '..\Source\Core\RadIA.Core.Service.pas',
   RadIA.Core.PromptHistory in '..\Source\Core\RadIA.Core.PromptHistory.pas',
   RadIA.Core.TokenUsage in '..\Source\Core\RadIA.Core.TokenUsage.pas',
-  RadIA.Core.Pricing in '..\Source\Core\RadIA.Core.Pricing.pas',
   RadIA.Core.ConversationExporter in '..\Source\Core\RadIA.Core.ConversationExporter.pas',
   RadIA.Core.PromptTemplates in '..\Source\Core\RadIA.Core.PromptTemplates.pas',
   RadIA.Core.ProjectContext in '..\Source\Core\RadIA.Core.ProjectContext.pas',

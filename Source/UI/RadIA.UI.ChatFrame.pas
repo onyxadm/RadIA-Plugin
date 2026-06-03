@@ -43,7 +43,6 @@ type
     FBrowserInitialized: Boolean;
     FPromptHistoryManager: TPromptHistoryManager;
     FAccumulatedUsage: TTokenUsage;
-    FAccumulatedCost: TTokenCost;
     FTemplateManager: TPromptTemplateManager;
     FPopupMenuTemplates: TPopupMenu;
     FLifecycleGuard: IInterface;
@@ -74,7 +73,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, RadIA.Core.Pricing, 
+  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, 
   RadIA.Core.ConversationExporter;
 
 type
@@ -122,7 +121,6 @@ begin
   FAIService := TRadIAService.Create(FConfig);
   FPromptHistoryManager := TPromptHistoryManager.Create;
   FAccumulatedUsage := TTokenUsage.Empty;
-  FAccumulatedCost := TTokenCost.Zero;
   FTemplateManager := TPromptTemplateManager.Create;
   FTemplateManager.Load;
   FPopupMenuTemplates := TPopupMenu.Create(Self);
@@ -257,7 +255,6 @@ var
 begin
   FHistory := [];
   FAccumulatedUsage := TTokenUsage.Empty;
-  FAccumulatedCost := TTokenCost.Zero;
   PostToWebView('clear_chat', '', '');
   PostToWebView('update_tokens', '', '');
   
@@ -509,7 +506,6 @@ begin
     procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
     var
       LAssistantMsg: IChatMessage;
-      LCost: TTokenCost;
       LStats: string;
       LUsage: TTokenUsage;
     begin
@@ -550,10 +546,7 @@ begin
           FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
           FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
           
-          LCost := TPricingManager.Calculate(LUsage, FConfig.GetActiveProvider, FConfig.GetActiveModel(FConfig.GetActiveProvider));
-          FAccumulatedCost.EstimatedCostUSD := FAccumulatedCost.EstimatedCostUSD + LCost.EstimatedCostUSD;
-          
-          LStats := TPricingManager.FormatTokenStats(FAccumulatedUsage, FAccumulatedCost);
+          LStats := FAccumulatedUsage.FormatStats;
           PostToWebView('update_tokens', '', LStats);
         end;
       end;

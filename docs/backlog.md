@@ -27,12 +27,12 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Os métodos de requisição e descoberta de modelos usam a URL personalizada quando fornecida.
     *   Validação com 3 testes unitários dedicados em `RadIA.Tests.Providers.pas`.
 
-### 4. Rastreamento de Tokens e Custo Estimado - Item #14
-*   **Descrição**: Exibe a contagem de tokens e estimativa de custos USD da sessão atual na barra de status da UI do Chat.
+### 4. Rastreamento de Tokens - Item #14
+*   **Descrição**: Exibe a contagem de tokens (Prompt e Completion) consumidos na barra de status da UI do Chat.
 *   **Detalhes**:
-    *   Implementado record `TTokenUsage` e cálculo em `TPricingManager` respeitando localidade invariant (USD).
+    *   Implementado record `TTokenUsage` para contabilizar tokens de entrada/saída.
     *   Barra de status dinâmica em HTML/CSS/JS sincronizada com o Delphi.
-    *   Validação com 6 testes unitários em `RadIA.Tests.TokenUsage.pas`.
+    *   Validação com testes unitários em `RadIA.Tests.TokenUsage.pas`.
 
 ### 5. Exportar Conversa (.md / .html) - Item #7
 *   **Descrição**: Permite salvar o histórico completo do chat ativo nos formatos Markdown ou HTML estruturado com um único clique.

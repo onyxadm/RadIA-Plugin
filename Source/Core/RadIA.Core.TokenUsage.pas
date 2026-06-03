@@ -2,6 +2,9 @@ unit RadIA.Core.TokenUsage;
 
 interface
 
+uses
+  System.SysUtils;
+
 type
   { Holds token counters returned from any AI provider response }
   TTokenUsage = record
@@ -11,14 +14,7 @@ type
 
     class function Empty: TTokenUsage; static;
     function IsEmpty: Boolean;
-  end;
-
-  { Calculated cost from a token usage + pricing table }
-  TTokenCost = record
-    EstimatedCostUSD: Double;
-    CurrencySymbol: string;
-
-    class function Zero: TTokenCost; static;
+    function FormatStats: string;
   end;
 
 implementation
@@ -37,12 +33,20 @@ begin
   Result := (PromptTokens = 0) and (CompletionTokens = 0);
 end;
 
-{ TTokenCost }
-
-class function TTokenCost.Zero: TTokenCost;
+function TTokenUsage.FormatStats: string;
+var
+  LSettings: TFormatSettings;
 begin
-  Result.EstimatedCostUSD := 0;
-  Result.CurrencySymbol := 'USD';
+  if IsEmpty then
+  begin
+    Result := '';
+    Exit;
+  end;
+
+  LSettings := TFormatSettings.Invariant;
+  Result := Format('%s %s · %s %s',
+    [#$2191, FormatFloat('#,##0', PromptTokens, LSettings),
+     #$2193, FormatFloat('#,##0', CompletionTokens, LSettings)], LSettings);
 end;
 
 end.

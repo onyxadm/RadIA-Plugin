@@ -64,15 +64,14 @@ graph TD
 | `RadIA.Core.Service.pas` | `TRadIAService`: orquestrador central de requisições (`SendPrompt` e `SendPromptStream`), cria o provedor ativo, injeta system prompt e contexto de projeto `.radia`, aplica trimming do histórico |
 | `RadIA.Core.Cache.pas` | `TRadIACacheManager`: cache LRU em JSON (`cache.json`), limite de 500 entradas, expiração de 24h, hash SHA-1 |
 | `RadIA.Core.PromptHistory.pas` | `TPromptHistoryManager`: histórico de consultas recentes (FIFO limite 50) persistido em JSON para navegação ↑/↓ no chat |
-| `RadIA.Core.TokenUsage.pas` | Record `TTokenUsage` (PromptTokens, CompletionTokens) e `TTokenCost` (EstimatedCostUSD) |
-| `RadIA.Core.Pricing.pas` | `TPricingManager`: estimativa de custo de tokens e formatação conforme locale invariant (USD) |
+| `RadIA.Core.TokenUsage.pas` | Record `TTokenUsage` (PromptTokens, CompletionTokens) e método helper de formatação de estatísticas |
 | `RadIA.Core.ConversationExporter.pas` | `TConversationExporter`: gerador de arquivos formatados nos formatos Markdown e HTML autossuficiente |
 | `RadIA.Core.PromptTemplates.pas` | `TPromptTemplateManager`: gerencia e carrega templates de prompts e slash commands em `%APPDATA%\RadIA\templates.json` |
 | `RadIA.Core.ProjectContext.pas` | `TProjectContextLoader`: lê o arquivo `.radia` da pasta do projeto e funde system prompts |
 
 ---
 
-### 2. Provedores (`Source/Providers/`)
+## 2. Provedores (`Source/Providers/`)
 
 Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
 
@@ -136,7 +135,7 @@ Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
 | `TTestRadIAOllama` | 2 | Geração e parsing do Ollama |
 | `TTestRadIAService` | 10 | Trimming automático de mensagens sob o limite, priorizando mensagens de sistema e as mais recentes |
 | `TTestPromptHistory` | 13 | FIFO de histórico de comandos e persistência |
-| `TTestTokenUsage` | 6 | Parsers de token usage dos responses das APIs e regras de cálculo do pricing manager |
+| `TTestTokenUsage` | 2 | Validação de inicialização de tokens e formatação de estatísticas para a UI |
 | `TTestConversationExporter` | 4 | Geração e layout estruturado de markdown/HTML |
 | `TTestPromptTemplates` | 4 | Resolução de placeholders e templates embutidos |
 | `TTestProjectContext` | 4 | Leitura e mescla do arquivo `.radia` |
