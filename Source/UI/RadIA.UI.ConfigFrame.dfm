@@ -10,7 +10,7 @@ object FrameAIConfig: TFrameAIConfig
     Top = 3
     Width = 643
     Height = 444
-    ActivePage = tsSystemPrompt
+    ActivePage = tsGemini
     Align = alClient
     TabOrder = 0
     TabWidth = 80

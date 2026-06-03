@@ -321,7 +321,7 @@ begin
   try
     LForm.Caption := 'RadIA Configuration';
     LForm.Position := poOwnerFormCenter;
-    LForm.Width := 540;
+    LForm.Width := 640;
     LForm.Height := 560;
     LForm.BorderStyle := bsDialog;
     
