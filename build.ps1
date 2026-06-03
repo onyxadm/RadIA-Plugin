@@ -101,9 +101,14 @@ if ($Install) {
     $targetBpl = "$publicBplDir\RadIA.bpl"
     $targetDcp = "$publicDcpDir\RadIA.dcp"
 
-    Write-Host "Copiando binários para as pastas da IDE..." -ForegroundColor Yellow
+    Write-Host "Copiando binários e recursos para as pastas da IDE..." -ForegroundColor Yellow
     Copy-Item -Path ".\Output\$delphiVer\bpl\RadIA.bpl" -Destination $targetBpl -Force
     Copy-Item -Path ".\Output\$delphiVer\dcp\RadIA.dcp" -Destination $targetDcp -Force
+
+    $targetWeb = "$publicBplDir\Web"
+    Write-Host "Copiando pasta de recursos Web locais..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Force -Path $targetWeb | Out-Null
+    Copy-Item -Path ".\Source\UI\Web\*" -Destination $targetWeb -Force -Recurse
 
     Write-Host "Registrando pacote no Registro do Windows..." -ForegroundColor Yellow
     $regPath = "HKCU:\Software\Embarcadero\BDS\$delphiVer\Known Packages"
