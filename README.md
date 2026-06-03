@@ -130,17 +130,22 @@ O histórico é restaurado integralmente ao reabrir a IDE, preservando todo o co
 
 ### 5.3 Compilação e Instalação Automatizada (PowerShell)
 
-Para compilar o pacote principal, executar os testes unitários de forma automatizada ou realizar a instalação direta na IDE do Delphi, você pode utilizar o script de build integrado na raiz do projeto:
+Para compilar o pacote principal, executar os testes unitários de forma automatizada ou realizar a instalação direta na IDE do Delphi, você pode utilizar o script de build integrado na raiz do projeto. Ele suporta os seguintes parâmetros/switches:
+
+*   `-Install`: Compila o plugin, executa os testes unitários, copia a BPL/DCP para o diretório público de documentos do Delphi e adiciona o pacote no Registro do Windows (`Known Packages`) da respectiva versão detectada da IDE.
+*   `-Release`: Compila o plugin e os testes unitários na configuração de Produção (Release), desligando símbolos de depuração e informações de debug (gerando uma BPL consideravelmente menor e mais rápida) e ativando as otimizações do compilador do Delphi.
+
+Exemplo de comandos:
 
 1. Abra o console do Windows PowerShell.
 2. Certifique-se de que a pasta `bin` da instalação do Delphi contendo o `dcc32` está presente no PATH do sistema.
-3. Execute o comando na raiz do projeto para apenas compilar e testar:
+3. Execute o comando na raiz do projeto para apenas compilar e testar em modo Debug:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\build.ps1
    ```
-   Ou adicione o parâmetro `-Install` para compilar, testar e instalar na IDE:
+4. Para compilar, testar e instalar na IDE em modo **Release** (Produção recomendado):
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install -Release
    ```
 4. O script detectará automaticamente a versão ativa do compilador, criará os diretórios de saída isolados por versão (ex: `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), executará a limpeza de arquivos DCU temporários das pastas de fontes, compilará o pacote principal, compilará os testes unitários e rodará automaticamente a suite de validação de testes.
 5. Se o parâmetro `-Install` foi informado, o script também copiará os arquivos de saída (`RadIA.bpl` e `RadIA.dcp`) para as pastas oficiais do Delphi (`C:\Users\Public\Documents\Embarcadero\Studio\<versao>\Bpl` e `Dcp`) e registrará o plugin na chave de Registro `Known Packages` do Delphi da respectiva versão detectada.

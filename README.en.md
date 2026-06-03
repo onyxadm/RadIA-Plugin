@@ -130,17 +130,22 @@ The conversation is fully restored when you reopen the IDE, preserving all previ
 
 ### 5.3 Automated Compilation and Installation (PowerShell)
 
-To compile the main package, run the unit tests in an automated way, or perform direct installation into the Delphi IDE, you can use the integrated build script in the project root:
+To compile the main package, run the unit tests in an automated way, or perform direct installation into the Delphi IDE, you can use the integrated build script in the project root. It supports the following parameters/switches:
+
+*   `-Install`: Compiles the plugin, runs the unit tests, copies the BPL/DCP to the Delphi public documents directory, and registers the package in the Windows Registry (`Known Packages`) for the detected IDE version.
+*   `-Release`: Compiles the plugin and unit tests in Release (Production) configuration, disabling debug symbols and debug information (generating a significantly smaller and faster BPL) and enabling Delphi compiler optimizations.
+
+Example commands:
 
 1. Open the Windows PowerShell console.
 2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
-3. Run the following command in the project root directory to only build and test:
+3. Run the following command in the project root directory to only build and test in Debug mode:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\build.ps1
    ```
-   Or add the `-Install` switch to compile, test, and install in the IDE:
+4. To compile, test, and install in the IDE in **Release** mode (recommended for production):
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install -Release
    ```
 4. The script will automatically detect the active compiler version, create the version-isolated output directories (e.g., `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), clean up temporary DCU files from source folders, compile the main package, compile the unit tests, and automatically run the validation test suite.
 5. If the `-Install` switch is provided, the script will also copy the output files (`RadIA.bpl` and `RadIA.dcp`) to the official Delphi folders (`C:\Users\Public\Documents\Embarcadero\Studio\<version>\Bpl` and `Dcp`) and register the plugin under the `Known Packages` Registry key for the detected Delphi version.
