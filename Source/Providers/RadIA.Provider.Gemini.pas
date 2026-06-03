@@ -214,27 +214,24 @@ begin
     var
       LResponseText: string;
       LUsage: TTokenUsage;
-      LQueueProc: TThreadProcedure;
     begin
       try
         LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
         LResponseText := ParseResponseBody(LResponseText, LUsage);
 
-        LQueueProc :=
+        TThread.Queue(nil,
           procedure
           begin
             ACallback(LResponseText, '', False, LUsage);
-          end;
-        TThread.Queue(nil, LQueueProc);
+          end);
       except
         on E: Exception do
         begin
-          LQueueProc :=
+          TThread.Queue(nil,
             procedure
             begin
               ACallback('', E.Message, False, TTokenUsage.Empty);
-            end;
-          TThread.Queue(nil, LQueueProc);
+            end);
         end;
       end;
     end;
@@ -274,7 +271,6 @@ begin
                  LCanGenerate: Boolean;
                  LModelsList: TList<string>;
                  LModelsArray: TArray<string>;
-                 LQueueProc: TThreadProcedure;
                begin
                  LModelsList := TList<string>.Create;
                  try
@@ -329,20 +325,20 @@ begin
                      else
                        LModelsArray := LModelsList.ToArray;
                        
-                     LQueueProc := procedure
-                                   begin
-                                     ACallback(LModelsArray, '');
-                                   end;
-                     TThread.Queue(nil, LQueueProc);
+                     TThread.Queue(nil,
+                       procedure
+                       begin
+                         ACallback(LModelsArray, '');
+                       end);
                    except
                      on E: Exception do
                      begin
                        LModelsArray := GetAvailableModels;
-                       LQueueProc := procedure
-                                     begin
-                                       ACallback(LModelsArray, E.Message);
-                                     end;
-                       TThread.Queue(nil, LQueueProc);
+                       TThread.Queue(nil,
+                         procedure
+                         begin
+                           ACallback(LModelsArray, E.Message);
+                         end);
                      end;
                    end;
                  finally
@@ -367,7 +363,6 @@ var
   LParts: TJSONArray;
   LPart: TJSONObject;
   LText: string;
-  LQueueProc: TThreadProcedure;
 begin
   while True do
   begin
@@ -422,11 +417,11 @@ begin
 
                   if not LText.IsEmpty then
                   begin
-                    LQueueProc := procedure
-                                  begin
-                                    ACallback(LText, False, '');
-                                  end;
-                    TThread.Queue(nil, LQueueProc);
+                    TThread.Queue(nil,
+                      procedure
+                      begin
+                        ACallback(LText, False, '');
+                      end);
                   end;
                 finally
                   LJson.Free;
@@ -479,7 +474,6 @@ begin
     procedure
     var
       LBufferText: string;
-      LQueueProc: TThreadProcedure;
     begin
       LBufferText := '';
       try
@@ -490,19 +484,19 @@ begin
             ProcessStreamBuffer(LBufferText, ACallback);
           end);
 
-        LQueueProc := procedure
-                      begin
-                        ACallback('', True, '');
-                      end;
-        TThread.Queue(nil, LQueueProc);
+        TThread.Queue(nil,
+          procedure
+          begin
+            ACallback('', True, '');
+          end);
       except
         on E: Exception do
         begin
-          LQueueProc := procedure
-                        begin
-                          ACallback('', True, E.Message);
-                        end;
-          TThread.Queue(nil, LQueueProc);
+          TThread.Queue(nil,
+            procedure
+            begin
+              ACallback('', True, E.Message);
+            end);
         end;
       end;
     end;

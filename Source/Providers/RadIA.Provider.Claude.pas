@@ -178,25 +178,24 @@ begin
                var
                  LResponseText: string;
                  LUsage: TTokenUsage;
-                 LQueueProc: TThreadProcedure;
                begin
                  try
                    LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
                    LResponseText := ParseResponseBody(LResponseText, LUsage);
                    
-                   LQueueProc := procedure
-                                 begin
-                                   ACallback(LResponseText, '', False, LUsage);
-                                 end;
-                   TThread.Queue(nil, LQueueProc);
+                   TThread.Queue(nil,
+                     procedure
+                     begin
+                       ACallback(LResponseText, '', False, LUsage);
+                     end);
                  except
                    on E: Exception do
                    begin
-                     LQueueProc := procedure
-                                   begin
-                                     ACallback('', E.Message, False, TTokenUsage.Empty);
-                                   end;
-                     TThread.Queue(nil, LQueueProc);
+                     TThread.Queue(nil,
+                       procedure
+                       begin
+                         ACallback('', E.Message, False, TTokenUsage.Empty);
+                       end);
                    end;
                  end;
                end;
@@ -212,7 +211,6 @@ var
   LTypeStr: string;
   LDeltaObj: TJSONObject;
   LText: string;
-  LQueueProc: TThreadProcedure;
   LIdx: Integer;
 begin
   while True do
@@ -243,20 +241,20 @@ begin
               if Assigned(LDeltaObj) and Assigned(LDeltaObj.GetValue('text')) then
               begin
                 LText := LDeltaObj.GetValue('text').Value;
-                LQueueProc := procedure
-                              begin
-                                ACallback(LText, False, '');
-                              end;
-                TThread.Queue(nil, LQueueProc);
+                TThread.Queue(nil,
+                  procedure
+                  begin
+                    ACallback(LText, False, '');
+                  end);
               end;
             end
             else if LTypeStr = 'message_stop' then
             begin
-              LQueueProc := procedure
-                            begin
-                              ACallback('', True, '');
-                            end;
-              TThread.Queue(nil, LQueueProc);
+              TThread.Queue(nil,
+                procedure
+                begin
+                  ACallback('', True, '');
+                end);
               Exit;
             end;
           finally
@@ -304,7 +302,6 @@ begin
     procedure
     var
       LBufferText: string;
-      LQueueProc: TThreadProcedure;
     begin
       LBufferText := '';
       try
@@ -315,19 +312,19 @@ begin
             ProcessStreamBuffer(LBufferText, ACallback);
           end);
 
-        LQueueProc := procedure
-                      begin
-                        ACallback('', True, '');
-                      end;
-        TThread.Queue(nil, LQueueProc);
+        TThread.Queue(nil,
+          procedure
+          begin
+            ACallback('', True, '');
+          end);
       except
         on E: Exception do
         begin
-          LQueueProc := procedure
-                        begin
-                          ACallback('', True, E.Message);
-                        end;
-          TThread.Queue(nil, LQueueProc);
+          TThread.Queue(nil,
+            procedure
+            begin
+              ACallback('', True, E.Message);
+            end);
         end;
       end;
     end;

@@ -140,25 +140,24 @@ begin
                var
                  LResponseText: string;
                  LUsage: TTokenUsage;
-                 LQueueProc: TThreadProcedure;
                begin
                  try
                    LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
                    LResponseText := ParseResponseBody(LResponseText, LUsage);
                    
-                   LQueueProc := procedure
-                                 begin
-                                   ACallback(LResponseText, '', False, LUsage);
-                                 end;
-                   TThread.Queue(nil, LQueueProc);
+                   TThread.Queue(nil,
+                     procedure
+                     begin
+                       ACallback(LResponseText, '', False, LUsage);
+                     end);
                  except
                    on E: Exception do
                    begin
-                     LQueueProc := procedure
-                                   begin
-                                     ACallback('', E.Message, False, TTokenUsage.Empty);
-                                   end;
-                     TThread.Queue(nil, LQueueProc);
+                     TThread.Queue(nil,
+                       procedure
+                       begin
+                         ACallback('', E.Message, False, TTokenUsage.Empty);
+                       end);
                    end;
                  end;
                end;
@@ -182,7 +181,6 @@ begin
                  LModelObj: TJSONObject;
                  LModelsList: TList<string>;
                  LModelsArray: TArray<string>;
-                 LQueueProc: TThreadProcedure;
                begin
                  LModelsList := TList<string>.Create;
                  try
@@ -216,20 +214,20 @@ begin
                      else
                        LModelsArray := LModelsList.ToArray;
                        
-                     LQueueProc := procedure
-                                   begin
-                                     ACallback(LModelsArray, '');
-                                   end;
-                     TThread.Queue(nil, LQueueProc);
+                     TThread.Queue(nil,
+                       procedure
+                       begin
+                         ACallback(LModelsArray, '');
+                       end);
                    except
                      on E: Exception do
                      begin
                        LModelsArray := GetAvailableModels;
-                       LQueueProc := procedure
-                                     begin
-                                       ACallback(LModelsArray, E.Message);
-                                     end;
-                       TThread.Queue(nil, LQueueProc);
+                       TThread.Queue(nil,
+                         procedure
+                         begin
+                           ACallback(LModelsArray, E.Message);
+                         end);
                      end;
                    end;
                  finally
@@ -247,7 +245,6 @@ var
   LMsgObj: TJSONObject;
   LContent: string;
   LDone: Boolean;
-  LQueueProc: TThreadProcedure;
   LIdx: Integer;
 begin
   while True do
@@ -279,20 +276,20 @@ begin
 
           if not LContent.IsEmpty then
           begin
-            LQueueProc := procedure
-                          begin
-                            ACallback(LContent, False, '');
-                          end;
-            TThread.Queue(nil, LQueueProc);
+            TThread.Queue(nil,
+              procedure
+              begin
+                ACallback(LContent, False, '');
+              end);
           end;
 
           if LDone then
           begin
-            LQueueProc := procedure
-                          begin
-                            ACallback('', True, '');
-                          end;
-            TThread.Queue(nil, LQueueProc);
+            TThread.Queue(nil,
+              procedure
+              begin
+                ACallback('', True, '');
+              end);
             Exit;
           end;
         finally
@@ -327,7 +324,6 @@ begin
     procedure
     var
       LBufferText: string;
-      LQueueProc: TThreadProcedure;
     begin
       LBufferText := '';
       try
@@ -338,19 +334,19 @@ begin
             ProcessStreamBuffer(LBufferText, ACallback);
           end);
 
-        LQueueProc := procedure
-                      begin
-                        ACallback('', True, '');
-                      end;
-        TThread.Queue(nil, LQueueProc);
+        TThread.Queue(nil,
+          procedure
+          begin
+            ACallback('', True, '');
+          end);
       except
         on E: Exception do
         begin
-          LQueueProc := procedure
-                        begin
-                          ACallback('', True, E.Message);
-                        end;
-          TThread.Queue(nil, LQueueProc);
+          TThread.Queue(nil,
+            procedure
+            begin
+              ACallback('', True, E.Message);
+            end);
         end;
       end;
     end;
