@@ -49,19 +49,34 @@ procedure LogDebug(const AMsg: string);
 var
   LFolder: string;
   LFile: string;
-  LStream: TStringList;
+  LStream: TFileStream;
+  LWriter: TStreamWriter;
+  LText: string;
 begin
-  LFolder := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA';
-  ForceDirectories(LFolder);
-  LFile := LFolder + '\log.txt';
-  LStream := TStringList.Create;
   try
+    LFolder := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA';
+    ForceDirectories(LFolder);
+    LFile := LFolder + '\log.txt';
+    
     if FileExists(LFile) then
-      LStream.LoadFromFile(LFile);
-    LStream.Add(FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - ' + AMsg);
-    LStream.SaveToFile(LFile);
-  finally
-    LStream.Free;
+      LStream := TFileStream.Create(LFile, fmOpenWrite or fmShareDenyNone)
+    else
+      LStream := TFileStream.Create(LFile, fmCreate or fmShareDenyNone);
+      
+    try
+      LStream.Seek(0, soEnd);
+      LWriter := TStreamWriter.Create(LStream, TEncoding.UTF8);
+      try
+        LText := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - ' + AMsg;
+        LWriter.WriteLine(LText);
+      finally
+        LWriter.Free;
+      end;
+    finally
+      LStream.Free;
+    end;
+  except
+    // Silently capture any file access exception to prevent IDE crash on plugin start
   end;
 end;
 

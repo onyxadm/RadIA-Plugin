@@ -7,7 +7,7 @@ uses
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
   RadIA.Core.Service, RadIA.Core.PromptHistory, RadIA.Core.TokenUsage, Vcl.Menus,
-  RadIA.Core.PromptTemplates, Vcl.Buttons;
+  RadIA.Core.PromptTemplates, Vcl.Buttons, Winapi.WebView2, Winapi.ActiveX;
 
 type
   TFrameAIChat = class(TFrame)
@@ -33,7 +33,11 @@ type
     procedure btnExportClick(Sender: TObject);
     procedure btnSettingsClick(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
-    procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; const AMessage: string);
+    {$IF CompilerVersion >= 35.0}
+    procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+    {$ELSE}
+    procedure EdgeBrowserWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
+    {$ENDIF}
     procedure memPromptKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     FConfig: IAIConfig;
@@ -65,6 +69,7 @@ type
     procedure OnTemplateMenuClick(Sender: TObject);
     procedure ApplyIDETheme;
     procedure UpdateVCLColors(const AThemeName: string);
+    procedure ProcessWebMessage(const AMessage: string);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -98,6 +103,12 @@ begin
       LThemingServices.ApplyTheme(Self);
     end;
   end;
+
+  {$IF CompilerVersion >= 35.0}
+  EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
+  {$ELSE}
+  EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceivedLegacy;
+  {$ENDIF}
   
   FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.Create;
@@ -488,7 +499,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; const AMessage: string);
+procedure TFrameAIChat.ProcessWebMessage(const AMessage: string);
 var
   LJson: TJSONObject;
   LAction: string;
@@ -513,6 +524,28 @@ begin
     end;
   end;
 end;
+
+{$IF CompilerVersion >= 35.0}
+procedure TFrameAIChat.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+var
+  LJsonStr: PWideChar;
+begin
+  if Assigned(Args.ArgsInterface) then
+  begin
+    Args.ArgsInterface.Get_WebMessageAsJson(LJsonStr);
+    try
+      ProcessWebMessage(string(LJsonStr));
+    finally
+      CoTaskMemFree(LJsonStr);
+    end;
+  end;
+end;
+{$ELSE}
+procedure TFrameAIChat.EdgeBrowserWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
+begin
+  ProcessWebMessage(AMessage);
+end;
+{$ENDIF}
 
 procedure TFrameAIChat.btnSendClick(Sender: TObject);
 var
