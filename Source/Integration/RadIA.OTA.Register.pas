@@ -42,6 +42,26 @@ var
   GAboutBoxIndex: Integer = -1;
   LAboutServices: IOTAAboutBoxServices;
 
+procedure LogDebug(const AMsg: string);
+var
+  LFolder: string;
+  LFile: string;
+  LStream: TStringList;
+begin
+  LFolder := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA';
+  ForceDirectories(LFolder);
+  LFile := LFolder + '\log.txt';
+  LStream := TStringList.Create;
+  try
+    if FileExists(LFile) then
+      LStream.LoadFromFile(LFile);
+    LStream.Add(FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - ' + AMsg);
+    LStream.SaveToFile(LFile);
+  finally
+    LStream.Free;
+  end;
+end;
+
 procedure RegisterSplashAndAbout;
 var
   LBitmap: TBitmap;
@@ -114,10 +134,28 @@ var
   LOTAInstance: IOTAWizard;
   LWizardServices: IOTAWizardServices;
 begin
+  LogDebug('Register called');
+  if not Assigned(BorlandIDEServices) then
+  begin
+    LogDebug('Error: BorlandIDEServices is nil');
+    Exit;
+  end;
+
   if Supports(BorlandIDEServices, IOTAWizardServices, LWizardServices) then
   begin
-    LOTAInstance := TRadIAWizard.Create;
-    GWizardIndex := LWizardServices.AddWizard(LOTAInstance);
+    LogDebug('IOTAWizardServices supported');
+    try
+      LOTAInstance := TRadIAWizard.Create;
+      GWizardIndex := LWizardServices.AddWizard(LOTAInstance);
+      LogDebug(Format('Wizard added successfully with index: %d', [GWizardIndex]));
+    except
+      on E: Exception do
+        LogDebug('Exception during Wizard creation: ' + E.Message);
+    end;
+  end
+  else
+  begin
+    LogDebug('Error: IOTAWizardServices NOT supported');
   end;
   RegisterSplashAndAbout;
 end;
@@ -126,6 +164,7 @@ end;
 
 constructor TRadIAWizard.Create;
 begin
+  LogDebug('TRadIAWizard.Create called');
   inherited Create;
   FEditorHook := TRadIAEditorHook.Create(nil);
   RegisterMenus;
@@ -243,21 +282,39 @@ var
   LToolsMenu: TMenuItem;
   LPopupMenu: TComponent;
 begin
+  LogDebug('RegisterMenus called');
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
   begin
+    LogDebug('INTAServices supported');
     { Register tools actions }
     LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
     if Assigned(LToolsMenu) then
     begin
+      LogDebug('Tools/Ferramentas menu found');
       TRadIAEditorHook(FEditorHook).PopulateToolsMenu(LToolsMenu);
+      LogDebug('Tools menu populated');
+    end
+    else
+    begin
+      LogDebug('Error: Tools/Ferramentas menu NOT found');
     end;
     
     { Register editor context menu }
     LPopupMenu := Application.FindComponent('EditorContextMenu');
     if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
     begin
+      LogDebug('EditorContextMenu found');
       TRadIAEditorHook(FEditorHook).PopulateContextMenu(TPopupMenu(LPopupMenu));
+      LogDebug('Editor context menu populated');
+    end
+    else
+    begin
+      LogDebug('Warning: EditorContextMenu NOT found');
     end;
+  end
+  else
+  begin
+    LogDebug('Error: INTAServices NOT supported');
   end;
 end;
 
@@ -269,6 +326,7 @@ var
   I: Integer;
   LHook: TRadIAEditorHook;
 begin
+  LogDebug('UnregisterMenus called');
   if not Assigned(FEditorHook) then
     Exit;
     
