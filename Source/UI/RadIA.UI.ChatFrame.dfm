@@ -15,39 +15,54 @@ object FrameAIChat: TFrameAIChat
     object cbProvider: TComboBox
       Left = 5
       Top = 6
-      Width = 90
+      Width = 80
       Height = 22
       Style = csDropDownList
       TabOrder = 0
       OnChange = cbProviderChange
     end
     object cbModel: TComboBox
-      Left = 100
+      Left = 90
       Top = 6
-      Width = 120
+      Width = 100
       Height = 22
       Style = csDropDownList
       TabOrder = 1
       OnChange = cbModelChange
     end
-    object btnClear: TButton
-      Left = 225
+    object btnExport: TButton
+      Left = 195
       Top = 5
-      Width = 42
+      Width = 40
+      Height = 24
+      Caption = 'Export'
+      TabOrder = 2
+      OnClick = btnExportClick
+    end
+    object btnClear: TButton
+      Left = 238
+      Top = 5
+      Width = 38
       Height = 24
       Caption = 'Clear'
-      TabOrder = 2
+      TabOrder = 3
       OnClick = btnClearClick
     end
     object btnSettings: TButton
-      Left = 271
+      Left = 278
       Top = 5
-      Width = 44
+      Width = 38
       Height = 24
       Caption = 'Setup'
-      TabOrder = 3
+      TabOrder = 4
       OnClick = btnSettingsClick
     end
+  end
+  object SaveDialog: TSaveDialog
+    Filter = 'Markdown File (*.md)|*.md|HTML File (*.html)|*.html'
+    DefaultExt = 'md'
+    Left = 150
+    Top = 200
   end
   object pnlInput: TPanel
     Left = 0

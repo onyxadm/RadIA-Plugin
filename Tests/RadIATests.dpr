@@ -16,6 +16,7 @@ uses
   RadIA.Core.PromptHistory in '..\Source\Core\RadIA.Core.PromptHistory.pas',
   RadIA.Core.TokenUsage in '..\Source\Core\RadIA.Core.TokenUsage.pas',
   RadIA.Core.Pricing in '..\Source\Core\RadIA.Core.Pricing.pas',
+  RadIA.Core.ConversationExporter in '..\Source\Core\RadIA.Core.ConversationExporter.pas',
   RadIA.Provider.Base in '..\Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in '..\Source\Providers\RadIA.Provider.Gemini.pas',
   RadIA.Provider.OpenAI in '..\Source\Providers\RadIA.Provider.OpenAI.pas',
@@ -29,7 +30,8 @@ uses
   RadIA.Tests.Ollama in 'Source\RadIA.Tests.Ollama.pas',
   RadIA.Tests.Service in 'Source\RadIA.Tests.Service.pas',
   RadIA.Tests.PromptHistory in 'Source\RadIA.Tests.PromptHistory.pas',
-  RadIA.Tests.TokenUsage in 'Source\RadIA.Tests.TokenUsage.pas';
+  RadIA.Tests.TokenUsage in 'Source\RadIA.Tests.TokenUsage.pas',
+  RadIA.Tests.Exporter in 'Source\RadIA.Tests.Exporter.pas';
 
 var
   Runner: ITestRunner;

@@ -15,6 +15,8 @@ type
     cbModel: TComboBox;
     btnSettings: TButton;
     btnClear: TButton;
+    btnExport: TButton;
+    SaveDialog: TSaveDialog;
     pnlInput: TPanel;
     memPrompt: TMemo;
     btnSend: TButton;
@@ -25,6 +27,7 @@ type
     procedure cbProviderChange(Sender: TObject);
     procedure cbModelChange(Sender: TObject);
     procedure btnClearClick(Sender: TObject);
+    procedure btnExportClick(Sender: TObject);
     procedure btnSettingsClick(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
     procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; const AMessage: string);
@@ -62,7 +65,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, RadIA.Core.Pricing;
+  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, RadIA.Core.Pricing, RadIA.Core.ConversationExporter;
 
 constructor TFrameAIChat.Create(AOwner: TComponent);
 begin
@@ -209,6 +212,38 @@ begin
       TFile.Delete(LHistoryFile);
     except
       // Ignore delete errors
+    end;
+  end;
+end;
+
+procedure TFrameAIChat.btnExportClick(Sender: TObject);
+var
+  LContent: string;
+  LProviderName: string;
+  LModelName: string;
+begin
+  if Length(FHistory) = 0 then
+  begin
+    ShowMessage('Não há histórico de conversa para exportar.');
+    Exit;
+  end;
+
+  if SaveDialog.Execute then
+  begin
+    LProviderName := cbProvider.Text;
+    LModelName := cbModel.Text;
+    
+    if SameText(ExtractFileExt(SaveDialog.FileName), '.html') then
+      LContent := TConversationExporter.ExportToHTML(FHistory, LProviderName, LModelName)
+    else
+      LContent := TConversationExporter.ExportToMarkdown(FHistory, LProviderName, LModelName);
+
+    try
+      TFile.WriteAllText(SaveDialog.FileName, LContent, TEncoding.UTF8);
+      ShowMessage('Conversa exportada com sucesso!');
+    except
+      on E: Exception do
+        ShowMessage('Erro ao exportar conversa: ' + E.Message);
     end;
   end;
 end;
