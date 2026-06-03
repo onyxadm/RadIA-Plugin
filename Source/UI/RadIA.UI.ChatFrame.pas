@@ -119,13 +119,22 @@ end;
 procedure TFrameAIChat.CopyWebFiles;
 var
   LSourceDir: string;
+  LModuleDir: string;
   LFile: string;
   LFilesToCopy: TArray<string>;
 begin
   ForceDirectories(FWebFilesDir);
   
-  { Copy files from development Source directory if present (or fallback to local folder) }
-  LSourceDir := 'D:\Projetos\PluginDelphiIA\Source\UI\Web';
+  { 1. Try to find the Web folder relative to the running BPL/DLL module }
+  LModuleDir := ExtractFilePath(GetModuleName(HInstance));
+  LSourceDir := TPath.Combine(LModuleDir, 'Web');
+  
+  { 2. Fallback to the hardcoded development path if module-relative path doesn't exist }
+  if not TDirectory.Exists(LSourceDir) then
+  begin
+    LSourceDir := 'D:\Projetos\PluginDelphiIA\Source\UI\Web';
+  end;
+  
   if not TDirectory.Exists(LSourceDir) then
     Exit;
     

@@ -33,6 +33,7 @@ package RadIA;
 requires
   rtl,
   vcl,
+  vclie,
   designide;
 
 contains

@@ -80,7 +80,7 @@ end;
 
 destructor TFormRadIADockable.Destroy;
 begin
-  FChatFrame.Free;
+  FormRadIADockable := nil;
   inherited Destroy;
 end;
 
