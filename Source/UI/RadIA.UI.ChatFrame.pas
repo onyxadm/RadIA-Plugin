@@ -518,27 +518,31 @@ end;
 
 procedure TFrameAIChat.ProcessWebMessage(const AMessage: string);
 var
+  LParsed: TJSONValue;
   LJson: TJSONObject;
   LAction: string;
   LCode: string;
 begin
-  LJson := TJSONObject.ParseJSONValue(AMessage) as TJSONObject;
-  if Assigned(LJson) then
-  begin
-    try
-      LAction := LJson.GetValue<string>('action', '');
-      if LAction = 'apply_code' then
-      begin
-        LCode := LJson.GetValue<string>('code', '');
-        TThread.Queue(nil,
-          procedure
-          begin
-            TRadIAOTAHelper.ReplaceActiveEditorText(LCode);
-          end);
-      end;
-    finally
-      LJson.Free;
+  LParsed := TJSONObject.ParseJSONValue(AMessage);
+  if not Assigned(LParsed) then
+    Exit;
+  try
+    if not (LParsed is TJSONObject) then
+      Exit;
+
+    LJson := LParsed as TJSONObject;
+    LAction := LJson.GetValue<string>('action', '');
+    if LAction = 'apply_code' then
+    begin
+      LCode := LJson.GetValue<string>('code', '');
+      TThread.Queue(nil,
+        procedure
+        begin
+          TRadIAOTAHelper.ReplaceActiveEditorText(LCode);
+        end);
     end;
+  finally
+    LParsed.Free;
   end;
 end;
 
