@@ -106,6 +106,19 @@ RadIA automatically saves the full chat history to:
 ```
 The conversation is fully restored when you reopen the IDE, preserving all previous context. To clear the history, click the **Clear** button at the top of the chat panel.
 
+### 5.3 Automated Compilation (PowerShell)
+
+To compile the main package and execute unit tests in an automated way without opening the Delphi IDE, you can use the integrated build script in the project root:
+
+1. Open the Windows PowerShell console.
+2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
+3. Run the following command in the project root directory:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\build.ps1
+   ```
+4. The script will automatically detect the active compiler version, create the version-isolated output directories (e.g., `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), clean up temporary DCU files from source folders, compile the main package, compile the unit tests, and automatically run the validation test suite.
+5. After the build, you can install the generated BPL into the IDE by pointing it to the file located at `Output\<version>\bpl\RadIA.bpl`.
+
 ### 6. Repository Structure
 ```
 PluginDelphiIA/
