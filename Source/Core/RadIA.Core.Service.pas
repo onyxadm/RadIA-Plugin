@@ -27,6 +27,8 @@ type
   private
     FConfig: IAIConfig;
     FCacheManager: TRadIACacheManager;
+    function GetEffectiveSystemPrompt: string;
+    function BuildEffectiveHistory(const ASystemPrompt: string; const ATrimmedHistory: TArray<IChatMessage>): TArray<IChatMessage>;
   public
     constructor Create(const AConfig: IAIConfig);
     destructor Destroy; override;
@@ -144,6 +146,43 @@ begin
   end;
 end;
 
+function TRadIAService.GetEffectiveSystemPrompt: string;
+var
+  LSystemPrompt: string;
+  LProjectFolder: string;
+  LProjectContext: string;
+begin
+  LSystemPrompt := FConfig.SystemPrompt;
+  LProjectFolder := TRadIAOTAHelper.GetActiveProjectFolder;
+  if not LProjectFolder.IsEmpty then
+  begin
+    if TProjectContextLoader.LoadContext(LProjectFolder, LProjectContext) and not LProjectContext.IsEmpty then
+    begin
+      if LSystemPrompt.IsEmpty then
+        LSystemPrompt := LProjectContext
+      else
+        LSystemPrompt := LProjectContext + sLineBreak + sLineBreak + LSystemPrompt;
+    end;
+  end;
+  Result := LSystemPrompt;
+end;
+
+function TRadIAService.BuildEffectiveHistory(const ASystemPrompt: string;
+  const ATrimmedHistory: TArray<IChatMessage>): TArray<IChatMessage>;
+var
+  I: Integer;
+begin
+  if not ASystemPrompt.IsEmpty then
+  begin
+    SetLength(Result, Length(ATrimmedHistory) + 1);
+    Result[0] := TRadIAChatMessage.Create(mrSystem, ASystemPrompt);
+    for I := 0 to High(ATrimmedHistory) do
+      Result[I + 1] := ATrimmedHistory[I];
+  end
+  else
+    Result := ATrimmedHistory;
+end;
+
 procedure TRadIAService.SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>; 
   const ACallback: TCompletionCallback);
 var
@@ -159,30 +198,13 @@ var
   LMsgObj: TJSONObject;
   LHistory: TArray<IChatMessage>;
   LTrimmedHistory: TArray<IChatMessage>;
-  I: Integer;
-  LProjectFolder: string;
-  LProjectContext: string;
 begin
   try
     LProvider := CreateActiveProvider;
     LProviderName := ProviderTypeToString(FConfig.GetActiveProvider);
     LModelName := FConfig.GetActiveModel(FConfig.GetActiveProvider);
-    LSystemPrompt := FConfig.SystemPrompt;
-
-    { Load project context (.radia) if active }
-    LProjectFolder := TRadIAOTAHelper.GetActiveProjectFolder;
-    if not LProjectFolder.IsEmpty then
-    begin
-      if TProjectContextLoader.LoadContext(LProjectFolder, LProjectContext) and not LProjectContext.IsEmpty then
-      begin
-        if LSystemPrompt.IsEmpty then
-          LSystemPrompt := LProjectContext
-        else
-          LSystemPrompt := LProjectContext + sLineBreak + sLineBreak + LSystemPrompt;
-      end;
-    end;
-
-    { Apply trimming before processing }
+    
+    LSystemPrompt := GetEffectiveSystemPrompt;
     LTrimmedHistory := TrimHistory(AHistory);
 
     { Serialize trimmed history to compute Hash }
@@ -210,16 +232,8 @@ begin
       Exit;
     end;
 
-    { Inject System Prompt if configured }
-    if not LSystemPrompt.IsEmpty then
-    begin
-      SetLength(LHistory, Length(LTrimmedHistory) + 1);
-      LHistory[0] := TRadIAChatMessage.Create(mrSystem, LSystemPrompt);
-      for I := 0 to High(LTrimmedHistory) do
-        LHistory[I + 1] := LTrimmedHistory[I];
-    end
-    else
-      LHistory := LTrimmedHistory;
+    { Build effective history with system instructions }
+    LHistory := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
 
     { Perform the actual async prompt request }
     LProvider.SendPromptAsync(APrompt, LHistory,
@@ -246,40 +260,12 @@ var
   LSystemPrompt: string;
   LHistory: TArray<IChatMessage>;
   LTrimmedHistory: TArray<IChatMessage>;
-  I: Integer;
-  LProjectFolder: string;
-  LProjectContext: string;
 begin
   try
     LProvider := CreateActiveProvider;
-    LSystemPrompt := FConfig.SystemPrompt;
-
-    { Load project context (.radia) if active }
-    LProjectFolder := TRadIAOTAHelper.GetActiveProjectFolder;
-    if not LProjectFolder.IsEmpty then
-    begin
-      if TProjectContextLoader.LoadContext(LProjectFolder, LProjectContext) and not LProjectContext.IsEmpty then
-      begin
-        if LSystemPrompt.IsEmpty then
-          LSystemPrompt := LProjectContext
-        else
-          LSystemPrompt := LProjectContext + sLineBreak + sLineBreak + LSystemPrompt;
-      end;
-    end;
-
-    { Apply trimming before processing }
+    LSystemPrompt := GetEffectiveSystemPrompt;
     LTrimmedHistory := TrimHistory(AHistory);
-
-    { Inject System Prompt if configured }
-    if not LSystemPrompt.IsEmpty then
-    begin
-      SetLength(LHistory, Length(LTrimmedHistory) + 1);
-      LHistory[0] := TRadIAChatMessage.Create(mrSystem, LSystemPrompt);
-      for I := 0 to High(LTrimmedHistory) do
-        LHistory[I + 1] := LTrimmedHistory[I];
-    end
-    else
-      LHistory := LTrimmedHistory;
+    LHistory := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
 
     { Perform the stream request }
     LProvider.SendPromptStreamAsync(APrompt, LHistory, ACallback);

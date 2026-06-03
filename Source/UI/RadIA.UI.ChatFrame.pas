@@ -46,6 +46,7 @@ type
     FAccumulatedCost: TTokenCost;
     FTemplateManager: TPromptTemplateManager;
     FPopupMenuTemplates: TPopupMenu;
+    FLifecycleGuard: IInterface;
     
     procedure InitializeWebView;
     procedure CopyWebFiles;
@@ -76,12 +77,47 @@ uses
   System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, RadIA.Core.Pricing, 
   RadIA.Core.ConversationExporter;
 
+type
+  ILifecycleGuard = interface
+    ['{B95A2B5E-379E-4B0D-9509-5D34C3DE154B}']
+    function IsAlive: Boolean;
+    procedure Invalidate;
+  end;
+
+  TLifecycleGuard = class(TInterfacedObject, ILifecycleGuard)
+  private
+    FIsAlive: Boolean;
+  public
+    constructor Create;
+    function IsAlive: Boolean;
+    procedure Invalidate;
+  end;
+
+{ TLifecycleGuard }
+
+constructor TLifecycleGuard.Create;
+begin
+  inherited Create;
+  FIsAlive := True;
+end;
+
+function TLifecycleGuard.IsAlive: Boolean;
+begin
+  Result := FIsAlive;
+end;
+
+procedure TLifecycleGuard.Invalidate;
+begin
+  FIsAlive := False;
+end;
+
 constructor TFrameAIChat.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   FBrowserInitialized := False;
   FHistory := [];
   
+  FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.Create;
   FAIService := TRadIAService.Create(FConfig);
   FPromptHistoryManager := TPromptHistoryManager.Create;
@@ -105,6 +141,8 @@ end;
 
 destructor TFrameAIChat.Destroy;
 begin
+  if Assigned(FLifecycleGuard) then
+    (FLifecycleGuard as ILifecycleGuard).Invalidate;
   GlobalOnRequestPrompt := nil;
   FPromptHistoryManager.Free;
   FTemplateManager.Free;
@@ -158,11 +196,13 @@ procedure TFrameAIChat.UpdateModelsCombo;
 var
   LActiveModel: string;
   LProvider: IIAProvider;
+  LGuard: ILifecycleGuard;
 begin
   cbModel.Items.Clear;
   cbModel.Items.Add('Loading...');
   cbModel.ItemIndex := 0;
   cbModel.Enabled := False;
+  LGuard := FLifecycleGuard as ILifecycleGuard;
 
   try
     LProvider := FAIService.CreateActiveProvider;
@@ -171,6 +211,9 @@ begin
       var
         LModel: string;
       begin
+        if not LGuard.IsAlive then
+          Exit;
+          
         cbModel.Items.Clear;
         for LModel in AModels do
         begin
@@ -452,11 +495,13 @@ procedure TFrameAIChat.SendPromptToAI(const APromptText: string);
 var
   LUserMsg: IChatMessage;
   LFullResponse: string;
+  LGuard: ILifecycleGuard;
 begin
   btnSend.Enabled := False;
   
   LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText);
   LFullResponse := '';
+  LGuard := FLifecycleGuard as ILifecycleGuard;
   
   PostToWebView('show_typing', '', '');
   
@@ -468,6 +513,9 @@ begin
       LStats: string;
       LUsage: TTokenUsage;
     begin
+      if not LGuard.IsAlive then
+        Exit;
+        
       if not AError.IsEmpty then
       begin
         btnSend.Enabled := True;

@@ -3,7 +3,7 @@ unit RadIA.Core.Cache;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections;
+  System.SysUtils, System.Classes, System.Generics.Collections, System.SyncObjs;
 
 type
   TRadIACacheEntry = class
@@ -24,6 +24,8 @@ type
     FFilePath: string;
     FEntries: TObjectList<TRadIACacheEntry>;
     FLimit: Integer;
+    FCriticalSection: TCriticalSection;
+    FIsDirty: Boolean;
     
     procedure LoadCache;
     procedure SaveCache;
@@ -51,6 +53,8 @@ constructor TRadIACacheManager.Create(const AFilePath: string; ALimit: Integer);
 begin
   inherited Create;
   FLimit := ALimit;
+  FCriticalSection := TCriticalSection.Create;
+  FIsDirty := False;
   FEntries := TObjectList<TRadIACacheEntry>.Create(True);
   
   if AFilePath.IsEmpty then
@@ -63,20 +67,35 @@ end;
 
 destructor TRadIACacheManager.Destroy;
 begin
+  if FIsDirty then
+  begin
+    try
+      SaveCache;
+    except
+      // Ignore save errors during destruction
+    end;
+  end;
   FEntries.Free;
+  FCriticalSection.Free;
   inherited Destroy;
 end;
 
 procedure TRadIACacheManager.Clear;
 begin
-  FEntries.Clear;
-  if TFile.Exists(FFilePath) then
-  begin
-    try
-      TFile.Delete(FFilePath);
-    except
-      // Ignore delete errors
+  FCriticalSection.Enter;
+  try
+    FEntries.Clear;
+    if TFile.Exists(FFilePath) then
+    begin
+      try
+        TFile.Delete(FFilePath);
+      except
+        // Ignore delete errors
+      end;
     end;
+    FIsDirty := False;
+  finally
+    FCriticalSection.Leave;
   end;
 end;
 
@@ -96,25 +115,30 @@ var
 begin
   Result := False;
   AResponse := '';
-  for LEntry in FEntries do
-  begin
-    if LEntry.Hash = AHash then
+  FCriticalSection.Enter;
+  try
+    for LEntry in FEntries do
     begin
-      { Check expiration (24 hours) }
-      if HoursBetween(Now, LEntry.Timestamp) >= 24 then
+      if LEntry.Hash = AHash then
       begin
-        { Expired entry, remove it }
-        FEntries.Remove(LEntry);
-        SaveCache;
+        { Check expiration (24 hours) }
+        if HoursBetween(Now, LEntry.Timestamp) >= 24 then
+        begin
+          { Expired entry, remove it }
+          FEntries.Remove(LEntry);
+          FIsDirty := True;
+          Exit;
+        end;
+        
+        LEntry.LastAccessed := Now;
+        AResponse := LEntry.Response;
+        FIsDirty := True;
+        Result := True;
         Exit;
       end;
-      
-      LEntry.LastAccessed := Now;
-      AResponse := LEntry.Response;
-      SaveCache;
-      Result := True;
-      Exit;
     end;
+  finally
+    FCriticalSection.Leave;
   end;
 end;
 
@@ -183,43 +207,50 @@ var
   LMinIndex: Integer;
   LMinDate: TDateTime;
 begin
-  { If already exists, update response and refresh timestamp }
-  for LEntry in FEntries do
-  begin
-    if LEntry.Hash = AHash then
+  FCriticalSection.Enter;
+  try
+    { If already exists, update response and refresh timestamp }
+    for LEntry in FEntries do
     begin
-      LEntry.Response := AResponse;
-      LEntry.Timestamp := Now;
-      LEntry.LastAccessed := Now;
-      SaveCache;
-      Exit;
-    end;
-  end;
-
-  { If limit reached, discard LRU (Least Recently Used) }
-  if FEntries.Count >= FLimit then
-  begin
-    LMinIndex := 0;
-    LMinDate := FEntries[0].LastAccessed;
-    for I := 1 to FEntries.Count - 1 do
-    begin
-      if FEntries[I].LastAccessed < LMinDate then
+      if LEntry.Hash = AHash then
       begin
-        LMinDate := FEntries[I].LastAccessed;
-        LMinIndex := I;
+        LEntry.Response := AResponse;
+        LEntry.Timestamp := Now;
+        LEntry.LastAccessed := Now;
+        FIsDirty := True;
+        SaveCache;
+        Exit;
       end;
     end;
-    FEntries.Delete(LMinIndex);
-  end;
 
-  { Add new entry }
-  LEntry := TRadIACacheEntry.Create;
-  LEntry.Hash := AHash;
-  LEntry.Response := AResponse;
-  LEntry.Timestamp := Now;
-  LEntry.LastAccessed := Now;
-  FEntries.Add(LEntry);
-  SaveCache;
+    { If limit reached, discard LRU (Least Recently Used) }
+    if FEntries.Count >= FLimit then
+    begin
+      LMinIndex := 0;
+      LMinDate := FEntries[0].LastAccessed;
+      for I := 1 to FEntries.Count - 1 do
+      begin
+        if FEntries[I].LastAccessed < LMinDate then
+        begin
+          LMinDate := FEntries[I].LastAccessed;
+          LMinIndex := I;
+        end;
+      end;
+      FEntries.Delete(LMinIndex);
+    end;
+
+    { Add new entry }
+    LEntry := TRadIACacheEntry.Create;
+    LEntry.Hash := AHash;
+    LEntry.Response := AResponse;
+    LEntry.Timestamp := Now;
+    LEntry.LastAccessed := Now;
+    FEntries.Add(LEntry);
+    FIsDirty := True;
+    SaveCache;
+  finally
+    FCriticalSection.Leave;
+  end;
 end;
 
 procedure TRadIACacheManager.SaveCache;
