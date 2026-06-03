@@ -33,7 +33,7 @@ A interface utiliza uma arquitetura híbrida:
 ### 4. Requisitos do Sistema
 *   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria ou 12 Athens (ou superior).
 *   **OS:** Windows 10 / 11 (64-bit).
-*   **Web Engine:** *Microsoft Edge WebView2 Runtime* instalado no sistema Windows (pré-instalado em versões modernas do Windows).
+*   **Web Engine:** *Microsoft Edge WebView2 Runtime* instalado no sistema Windows (pré-instalado em versões modernas do Windows). **Importante:** A DLL `WebView2Loader.dll` correspondente à arquitetura da IDE (32-bit para Delphi 10.4, 64-bit para Delphi 11 e 12) deve estar presente na pasta `bin` da instalação do Delphi (ex: `C:\Program Files (x86)\Embarcadero\Studio\<versao>\bin`) ou no PATH do sistema.
 *   **API Keys:** Chaves de desenvolvedor ativas para Google Gemini, OpenAI ou Anthropic.
 
 ### 5. Instalação
@@ -108,7 +108,7 @@ The user interface uses a hybrid architecture:
 ### 4. Prerequisites
 *   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria, or 12 Athens (or newer).
 *   **OS:** Windows 10 / 11 (64-bit).
-*   **Web Engine:** *Microsoft Edge WebView2 Runtime* installed on the Windows system (pre-installed on modern Windows versions).
+*   **Web Engine:** *Microsoft Edge WebView2 Runtime* installed on the Windows system (pre-installed on modern Windows versions). **Important:** The `WebView2Loader.dll` matching the IDE's architecture (32-bit for Delphi 10.4, 64-bit for Delphi 11 and 12) must be present in Delphi's `bin` installation directory (e.g., `C:\Program Files (x86)\Embarcadero\Studio\<version>\bin`) or in the Windows system PATH.
 *   **API Keys:** Active developer keys for Google Gemini, OpenAI, or Anthropic.
 
 ### 5. Installation
