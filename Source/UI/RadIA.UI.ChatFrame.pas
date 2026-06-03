@@ -321,8 +321,8 @@ begin
   try
     LForm.Caption := 'RadIA Configuration';
     LForm.Position := poOwnerFormCenter;
-    LForm.Width := 420;
-    LForm.Height := 440;
+    LForm.Width := 540;
+    LForm.Height := 560;
     LForm.BorderStyle := bsDialog;
     
     LConfigFrame := TFrameAIConfig.Create(LForm);
@@ -335,6 +335,7 @@ begin
       if LThemingServices.IDEThemingEnabled then
       begin
         LThemingServices.ApplyTheme(LForm);
+        LThemingServices.ApplyTheme(LConfigFrame);
       end;
     end;
     
@@ -377,8 +378,22 @@ begin
 end;
 
 procedure TFrameAIChat.SetTheme(const AThemeName: string);
+var
+  LJson: TJSONObject;
 begin
-  PostToWebView('set_theme', '', AThemeName.ToLower);
+  if not FBrowserInitialized then
+    Exit;
+    
+  LJson := TJSONObject.Create;
+  try
+    LJson.AddPair('action', 'set_theme');
+    LJson.AddPair('theme', AThemeName.ToLower);
+    
+    if Assigned(EdgeBrowser.DefaultInterface) then
+      EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+  finally
+    LJson.Free;
+  end;
 end;
 
 procedure TFrameAIChat.ApplyIDETheme;

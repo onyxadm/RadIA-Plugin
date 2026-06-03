@@ -47,7 +47,7 @@ object FrameAIChat: TFrameAIChat
       Top = 9
       Width = 28
       Height = 26
-      Caption = #9145
+      Caption = #9889
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -65,7 +65,7 @@ object FrameAIChat: TFrameAIChat
       Top = 9
       Width = 28
       Height = 26
-      Caption = #128172
+      Caption = #10515
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -83,7 +83,7 @@ object FrameAIChat: TFrameAIChat
       Top = 9
       Width = 28
       Height = 26
-      Caption = #128465
+      Caption = #9851
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -99,12 +99,12 @@ object FrameAIChat: TFrameAIChat
     object btnSettings: TButton
       Left = 274
       Top = 9
-      Width = 40
+      Width = 28
       Height = 26
-      Caption = #9881' AI'
+      Caption = #9881
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -11
+      Font.Height = -12
       Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       Hint = 'Configura'#231#245'es'
