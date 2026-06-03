@@ -19,6 +19,8 @@ type
     grpClaude: TGroupBox;
     lblClaudeKey: TLabel;
     edtClaudeKey: TEdit;
+    grpSystemPrompt: TGroupBox;
+    memSystemPrompt: TMemo;
     pnlFooter: TPanel;
     btnSave: TButton;
     btnCancel: TButton;
@@ -50,6 +52,7 @@ begin
   edtGeminiKey.Text := FConfig.GetApiKey(ptGemini);
   edtOpenAIKey.Text := FConfig.GetApiKey(ptOpenAI);
   edtClaudeKey.Text := FConfig.GetApiKey(ptClaude);
+  memSystemPrompt.Text := FConfig.SystemPrompt;
 end;
 
 procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
@@ -59,6 +62,7 @@ begin
   FConfig.SetApiKey(ptGemini, Trim(edtGeminiKey.Text));
   FConfig.SetApiKey(ptOpenAI, Trim(edtOpenAIKey.Text));
   FConfig.SetApiKey(ptClaude, Trim(edtClaudeKey.Text));
+  FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.Save;
   
   ShowMessage('Settings saved successfully.');

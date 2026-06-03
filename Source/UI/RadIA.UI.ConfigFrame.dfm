@@ -81,6 +81,22 @@ object FrameAIConfig: TFrameAIConfig
         TabOrder = 0
       end
     end
+    object grpSystemPrompt: TGroupBox
+      Left = 10
+      Top = 265
+      Width = 300
+      Height = 130
+      Caption = ' Custom System Instructions '
+      TabOrder = 3
+      object memSystemPrompt: TMemo
+        Left = 10
+        Top = 22
+        Width = 280
+        Height = 98
+        ScrollBars = ssVertical
+        TabOrder = 0
+      end
+    end
   end
   object pnlFooter: TPanel
     Left = 0

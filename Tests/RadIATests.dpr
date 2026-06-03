@@ -11,6 +11,7 @@ uses
   RadIA.Core.Types in '..\Source\Core\RadIA.Core.Types.pas',
   RadIA.Core.Interfaces in '..\Source\Core\RadIA.Core.Interfaces.pas',
   RadIA.Core.Config in '..\Source\Core\RadIA.Core.Config.pas',
+  RadIA.Core.Cache in '..\Source\Core\RadIA.Core.Cache.pas',
   RadIA.Core.Service in '..\Source\Core\RadIA.Core.Service.pas',
   RadIA.Provider.Base in '..\Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in '..\Source\Providers\RadIA.Provider.Gemini.pas',
@@ -19,7 +20,8 @@ uses
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',
-  RadIA.Tests.Providers in 'Source\RadIA.Tests.Providers.pas';
+  RadIA.Tests.Providers in 'Source\RadIA.Tests.Providers.pas',
+  RadIA.Tests.Cache in 'Source\RadIA.Tests.Cache.pas';
 
 var
   Runner: ITestRunner;

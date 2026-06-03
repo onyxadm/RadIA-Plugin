@@ -12,6 +12,7 @@ type
     FApiKeys: array[TAIProviderType] of string;
     FActiveProvider: TAIProviderType;
     FActiveModels: array[TAIProviderType] of string;
+    FSystemPrompt: string;
     
     function ProtectString(const AValue: string): string;
     function UnprotectString(const AValue: string): string;
@@ -25,6 +26,8 @@ type
     procedure SetActiveProvider(const AProvider: TAIProviderType);
     function GetActiveModel(const AProvider: TAIProviderType): string;
     procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
+    function GetSystemPrompt: string;
+    procedure SetSystemPrompt(const AValue: string);
     procedure Save;
     procedure Load;
   end;
@@ -65,6 +68,7 @@ begin
   FActiveModels[ptGemini] := MODEL_GEMINI_15_FLASH;
   FActiveModels[ptOpenAI] := MODEL_OPENAI_GPT4O_MINI;
   FActiveModels[ptClaude] := MODEL_CLAUDE_3_HAIKU;
+  FSystemPrompt := '';
   Load;
 end;
 
@@ -83,6 +87,11 @@ begin
   Result := FApiKeys[AProvider];
 end;
 
+function TRadIAConfig.GetSystemPrompt: string;
+begin
+  Result := FSystemPrompt;
+end;
+
 procedure TRadIAConfig.Load;
 var
   LReg: TRegistry;
@@ -99,6 +108,15 @@ begin
           FActiveProvider := TAIProviderType(LReg.ReadInteger('ActiveProvider'));
       except
         FActiveProvider := ptGemini;
+      end;
+
+      try
+        if LReg.ValueExists('SystemPrompt') then
+          FSystemPrompt := LReg.ReadString('SystemPrompt')
+        else
+          FSystemPrompt := '';
+      except
+        FSystemPrompt := '';
       end;
 
       for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
@@ -166,6 +184,7 @@ begin
     if LReg.OpenKey(FRegistryPath, True) then
     begin
       LReg.WriteInteger('ActiveProvider', Integer(FActiveProvider));
+      LReg.WriteString('SystemPrompt', FSystemPrompt);
 
       for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
       begin
@@ -193,6 +212,11 @@ end;
 procedure TRadIAConfig.SetApiKey(const AProvider: TAIProviderType; const AKey: string);
 begin
   FApiKeys[AProvider] := AKey;
+end;
+
+procedure TRadIAConfig.SetSystemPrompt(const AValue: string);
+begin
+  FSystemPrompt := AValue;
 end;
 
 function TRadIAConfig.UnprotectString(const AValue: string): string;

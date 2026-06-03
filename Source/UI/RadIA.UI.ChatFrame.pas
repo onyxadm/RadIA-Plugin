@@ -124,32 +124,43 @@ end;
 
 procedure TFrameAIChat.UpdateModelsCombo;
 var
-  LProviderType: TAIProviderType;
   LActiveModel: string;
-  LModels: TArray<string>;
-  LModel: string;
+  LProvider: IIAProvider;
 begin
   cbModel.Items.Clear;
-  LProviderType := TAIProviderType(cbProvider.ItemIndex);
-  
-  case LProviderType of
-    ptGemini:
-      LModels := TArray<string>.Create(MODEL_GEMINI_15_FLASH, MODEL_GEMINI_15_PRO);
-    ptOpenAI:
-      LModels := TArray<string>.Create(MODEL_OPENAI_GPT4O_MINI, MODEL_OPENAI_GPT4O);
-    ptClaude:
-      LModels := TArray<string>.Create(MODEL_CLAUDE_3_HAIKU, MODEL_CLAUDE_35_SONNET);
+  cbModel.Items.Add('Loading...');
+  cbModel.ItemIndex := 0;
+  cbModel.Enabled := False;
+
+  try
+    LProvider := FAIService.CreateActiveProvider;
+    LProvider.FetchAvailableModelsAsync(
+      procedure(AModels: TArray<string>; AError: string)
+      var
+        LModel: string;
+      begin
+        cbModel.Items.Clear;
+        for LModel in AModels do
+        begin
+          cbModel.Items.Add(LModel);
+        end;
+        
+        LActiveModel := FConfig.GetActiveModel(LProvider.GetProviderType);
+        cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
+        if cbModel.ItemIndex = -1 then
+          cbModel.ItemIndex := 0;
+          
+        cbModel.Enabled := True;
+      end);
+  except
+    on E: Exception do
+    begin
+      cbModel.Items.Clear;
+      cbModel.Items.Add('Error loading models');
+      cbModel.ItemIndex := 0;
+      cbModel.Enabled := True;
+    end;
   end;
-  
-  for LModel in LModels do
-  begin
-    cbModel.Items.Add(LModel);
-  end;
-  
-  LActiveModel := FConfig.GetActiveModel(LProviderType);
-  cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
-  if cbModel.ItemIndex = -1 then
-    cbModel.ItemIndex := 0;
 end;
 
 procedure TFrameAIChat.cbProviderChange(Sender: TObject);
@@ -181,7 +192,7 @@ begin
     LForm.Caption := 'RadIA Configuration';
     LForm.Position := poOwnerFormCenter;
     LForm.Width := 340;
-    LForm.Height := 340;
+    LForm.Height := 490;
     LForm.BorderStyle := bsDialog;
     
     LConfigFrame := TFrameAIConfig.Create(LForm);
@@ -285,9 +296,10 @@ begin
   LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText);
   
   FAIService.SendPrompt(APromptText, FHistory,
-    procedure(const AResponse: string; const AError: string)
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean)
     var
       LAssistantMsg: IChatMessage;
+      LDisplayResponse: string;
     begin
       btnSend.Enabled := True;
       if not AError.IsEmpty then
@@ -296,7 +308,11 @@ begin
         Exit;
       end;
       
-      PostToWebView('add_message', 'assistant', AResponse);
+      LDisplayResponse := AResponse;
+      if AFromCache then
+        LDisplayResponse := LDisplayResponse + sLineBreak + sLineBreak + '*[resposta obtida de cache local]*';
+
+      PostToWebView('add_message', 'assistant', LDisplayResponse);
       
       { Save history }
       FHistory := FHistory + [LUserMsg];

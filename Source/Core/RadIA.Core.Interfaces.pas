@@ -7,7 +7,7 @@ uses
 
 type
   { Callback type for asynchronous AI responses }
-  TCompletionCallback = reference to procedure(const AResponse: string; const AError: string);
+  TCompletionCallback = reference to procedure(const AResponse: string; const AError: string; AFromCache: Boolean);
 
   { Interface representing a message in the chat history }
   IChatMessage = interface
@@ -24,6 +24,7 @@ type
     ['{A2833F49-9A0B-432D-8B8D-20DFF15FF25D}']
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback);
+    procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
     function GetAvailableModels: TArray<string>;
     function GetName: string;
     function GetProviderType: TAIProviderType;
@@ -38,8 +39,11 @@ type
     procedure SetActiveProvider(const AProvider: TAIProviderType);
     function GetActiveModel(const AProvider: TAIProviderType): string;
     procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
+    function GetSystemPrompt: string;
+    procedure SetSystemPrompt(const AValue: string);
     procedure Save;
     procedure Load;
+    property SystemPrompt: string read GetSystemPrompt write SetSystemPrompt;
   end;
 
 implementation

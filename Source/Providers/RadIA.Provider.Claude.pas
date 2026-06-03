@@ -137,7 +137,7 @@ begin
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
-    ACallback('', 'API Key is missing for Anthropic Claude. Please check settings.');
+    ACallback('', 'API Key is missing for Anthropic Claude. Please check settings.', False);
     Exit;
   end;
 
@@ -152,7 +152,7 @@ begin
   except
     on E: Exception do
     begin
-      ACallback('', 'Error building request JSON: ' + E.Message);
+      ACallback('', 'Error building request JSON: ' + E.Message, False);
       Exit;
     end;
   end;
@@ -168,7 +168,7 @@ begin
                    
                    LQueueProc := procedure
                                  begin
-                                   ACallback(LResponseText, '');
+                                   ACallback(LResponseText, '', False);
                                  end;
                    TThread.Queue(nil, LQueueProc);
                  except
@@ -176,7 +176,7 @@ begin
                    begin
                      LQueueProc := procedure
                                    begin
-                                     ACallback('', E.Message);
+                                     ACallback('', E.Message, False);
                                    end;
                      TThread.Queue(nil, LQueueProc);
                    end;

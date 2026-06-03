@@ -17,6 +17,7 @@ type
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback); override;
+    procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -24,7 +25,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading;
+  System.JSON, System.Threading, System.Generics.Collections;
 
 { TRadIAOpenAIProvider }
 
@@ -123,7 +124,7 @@ begin
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
-    ACallback('', 'API Key is missing for OpenAI. Please check settings.');
+    ACallback('', 'API Key is missing for OpenAI. Please check settings.', False);
     Exit;
   end;
 
@@ -137,7 +138,7 @@ begin
   except
     on E: Exception do
     begin
-      ACallback('', 'Error building request JSON: ' + E.Message);
+      ACallback('', 'Error building request JSON: ' + E.Message, False);
       Exit;
     end;
   end;
@@ -153,7 +154,7 @@ begin
                    
                    LQueueProc := procedure
                                  begin
-                                   ACallback(LResponseText, '');
+                                   ACallback(LResponseText, '', False);
                                  end;
                    TThread.Queue(nil, LQueueProc);
                  except
@@ -161,10 +162,107 @@ begin
                    begin
                      LQueueProc := procedure
                                    begin
-                                     ACallback('', E.Message);
+                                     ACallback('', E.Message, False);
                                    end;
                      TThread.Queue(nil, LQueueProc);
                    end;
+                 end;
+               end;
+
+  TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAOpenAIProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
+var
+  LApiKey: string;
+  LUrl: string;
+  LHeaders: TNetHeaders;
+  LTaskProc: TProc;
+begin
+  LApiKey := GetApiKey;
+  if LApiKey.IsEmpty then
+  begin
+    TThread.Queue(nil,
+      procedure
+      begin
+        ACallback(GetAvailableModels, 'API Key is missing for OpenAI. Using fallback models.');
+      end);
+    Exit;
+  end;
+
+  LUrl := 'https://api.openai.com/v1/models';
+  
+  SetLength(LHeaders, 1);
+  LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
+
+  LTaskProc := procedure
+               var
+                 LResponseText: string;
+                 LJson: TJSONObject;
+                 LDataArr: TJSONArray;
+                 LVal: TJSONValue;
+                 LModelObj: TJSONObject;
+                 LId: string;
+                 LModelsList: TList<string>;
+                 LModelsArray: TArray<string>;
+                 LQueueProc: TThreadProcedure;
+               begin
+                 LModelsList := TList<string>.Create;
+                 try
+                   try
+                     LResponseText := DoGetRequest(LUrl, LHeaders);
+                     LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
+                     if Assigned(LJson) then
+                     begin
+                       try
+                         LDataArr := LJson.GetValue('data') as TJSONArray;
+                         if Assigned(LDataArr) then
+                         begin
+                           for LVal in LDataArr do
+                           begin
+                             if LVal is TJSONObject then
+                             begin
+                               LModelObj := LVal as TJSONObject;
+                               LId := LModelObj.GetValue('id').Value;
+                               
+                               { Filter: gpt-* or o1-* or o3-* (chat and reasoning models) }
+                               if LId.StartsWith('gpt-') or LId.StartsWith('o1-') or LId.StartsWith('o3-') then
+                               begin
+                                 LModelsList.Add(LId);
+                               end;
+                             end;
+                           end;
+                         end;
+                       finally
+                         LJson.Free;
+                       end;
+                     end;
+                     
+                     LModelsList.Sort;
+                     
+                     if LModelsList.Count = 0 then
+                       LModelsArray := GetAvailableModels
+                     else
+                       LModelsArray := LModelsList.ToArray;
+                       
+                     LQueueProc := procedure
+                                   begin
+                                     ACallback(LModelsArray, '');
+                                   end;
+                     TThread.Queue(nil, LQueueProc);
+                   except
+                     on E: Exception do
+                     begin
+                       LModelsArray := GetAvailableModels;
+                       LQueueProc := procedure
+                                     begin
+                                       ACallback(LModelsArray, E.Message);
+                                     end;
+                       TThread.Queue(nil, LQueueProc);
+                     end;
+                   end;
+                 finally
+                   LModelsList.Free;
                  end;
                end;
 

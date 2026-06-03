@@ -127,7 +127,7 @@ begin
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
   FAIService.SendPrompt(LPrompt, [],
-    procedure(const AResponse: string; const AError: string)
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean)
     var
       LCleanedResponse: string;
     begin

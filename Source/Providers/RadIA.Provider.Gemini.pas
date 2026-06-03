@@ -17,6 +17,7 @@ type
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback); override;
+    procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -24,7 +25,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading;
+  System.JSON, System.Threading, System.Generics.Collections;
 
 { TRadIAGeminiProvider }
 
@@ -178,7 +179,7 @@ begin
   
   if LApiKey.IsEmpty then
   begin
-    ACallback('', 'API Key is missing for Google Gemini. Please check settings.');
+    ACallback('', 'API Key is missing for Google Gemini. Please check settings.', False);
     Exit;
   end;
 
@@ -190,7 +191,7 @@ begin
   except
     on E: Exception do
     begin
-      ACallback('', 'Error building request JSON: ' + E.Message);
+      ACallback('', 'Error building request JSON: ' + E.Message, False);
       Exit;
     end;
   end;
@@ -206,7 +207,7 @@ begin
                    
                    LQueueProc := procedure
                                  begin
-                                   ACallback(LResponseText, '');
+                                   ACallback(LResponseText, '', False);
                                  end;
                    TThread.Queue(nil, LQueueProc);
                  except
@@ -214,10 +215,121 @@ begin
                    begin
                      LQueueProc := procedure
                                    begin
-                                     ACallback('', E.Message);
+                                     ACallback('', E.Message, False);
                                    end;
                      TThread.Queue(nil, LQueueProc);
                    end;
+                 end;
+               end;
+
+  TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAGeminiProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
+var
+  LApiKey: string;
+  LUrl: string;
+  LTaskProc: TProc;
+begin
+  LApiKey := GetApiKey;
+  if LApiKey.IsEmpty then
+  begin
+    TThread.Queue(nil,
+      procedure
+      begin
+        ACallback(GetAvailableModels, 'API Key is missing for Google Gemini. Using fallback models.');
+      end);
+    Exit;
+  end;
+
+  LUrl := Format('https://generativelanguage.googleapis.com/v1beta/models?key=%s', [LApiKey]);
+
+  LTaskProc := procedure
+               var
+                 LResponseText: string;
+                 LJson: TJSONObject;
+                 LModelsArr: TJSONArray;
+                 LVal: TJSONValue;
+                 LModelObj: TJSONObject;
+                 LName: string;
+                 LMethodsArr: TJSONArray;
+                 LMethodVal: TJSONValue;
+                 LCanGenerate: Boolean;
+                 LModelsList: TList<string>;
+                 LModelsArray: TArray<string>;
+                 LQueueProc: TThreadProcedure;
+               begin
+                 LModelsList := TList<string>.Create;
+                 try
+                   try
+                     LResponseText := DoGetRequest(LUrl, nil);
+                     LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
+                     if Assigned(LJson) then
+                     begin
+                       try
+                         LModelsArr := LJson.GetValue('models') as TJSONArray;
+                         if Assigned(LModelsArr) then
+                         begin
+                           for LVal in LModelsArr do
+                           begin
+                             if LVal is TJSONObject then
+                             begin
+                               LModelObj := LVal as TJSONObject;
+                               LName := LModelObj.GetValue('name').Value;
+                               
+                               { Check if it supports generateContent }
+                               LCanGenerate := False;
+                               LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
+                               if Assigned(LMethodsArr) then
+                               begin
+                                 for LMethodVal in LMethodsArr do
+                                 begin
+                                   if SameText(LMethodVal.Value, 'generateContent') then
+                                   begin
+                                     LCanGenerate := True;
+                                     Break;
+                                   end;
+                                 end;
+                               end;
+                               
+                               if LCanGenerate then
+                               begin
+                                 { Remove prefix 'models/' }
+                                 if LName.StartsWith('models/') then
+                                   LName := LName.Substring(7);
+                                 LModelsList.Add(LName);
+                               end;
+                             end;
+                           end;
+                         end;
+                       finally
+                         LJson.Free;
+                       end;
+                     end;
+                     
+                     if LModelsList.Count = 0 then
+                       LModelsArray := GetAvailableModels
+                     else
+                       LModelsArray := LModelsList.ToArray;
+                       
+                     LQueueProc := procedure
+                                   begin
+                                     ACallback(LModelsArray, '');
+                                   end;
+                     TThread.Queue(nil, LQueueProc);
+                   except
+                     on E: Exception do
+                     begin
+                       LModelsArray := GetAvailableModels;
+                       LQueueProc := procedure
+                                     begin
+                                       ACallback(LModelsArray, E.Message);
+                                     end;
+                       TThread.Queue(nil, LQueueProc);
+                     end;
+                   end;
+                 finally
+                   LModelsList.Free;
                  end;
                end;
 

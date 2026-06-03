@@ -22,6 +22,8 @@ type
     procedure TestApiKeyEncryptionAndDecryption;
     [Test]
     procedure TestActiveModelPersistence;
+    [Test]
+    procedure TestSystemPromptPersistence;
   end;
 
 implementation
@@ -89,6 +91,17 @@ begin
   
   FConfig.Load;
   Assert.AreEqual(TEST_MODEL, FConfig.GetActiveModel(ptGemini));
+end;
+
+procedure TTestRadIAConfig.TestSystemPromptPersistence;
+const
+  TEST_PROMPT = 'You are a Delphi Senior Software Architect. Output only Pascal code.';
+begin
+  FConfig.SystemPrompt := TEST_PROMPT;
+  FConfig.Save;
+  
+  FConfig.Load;
+  Assert.AreEqual(TEST_PROMPT, FConfig.SystemPrompt);
 end;
 
 initialization

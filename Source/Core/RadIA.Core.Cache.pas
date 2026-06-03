@@ -1,0 +1,249 @@
+unit RadIA.Core.Cache;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, System.Generics.Collections;
+
+type
+  TRadIACacheEntry = class
+  private
+    FHash: string;
+    FResponse: string;
+    FTimestamp: TDateTime;
+    FLastAccessed: TDateTime;
+  public
+    property Hash: string read FHash write FHash;
+    property Response: string read FResponse write FResponse;
+    property Timestamp: TDateTime read FTimestamp write FTimestamp;
+    property LastAccessed: TDateTime read FLastAccessed write FLastAccessed;
+  end;
+
+  TRadIACacheManager = class
+  private
+    FFilePath: string;
+    FEntries: TObjectList<TRadIACacheEntry>;
+    FLimit: Integer;
+    
+    procedure LoadCache;
+    procedure SaveCache;
+  public
+    constructor Create(const AFilePath: string = ''; ALimit: Integer = 500);
+    destructor Destroy; override;
+    
+    function Get(const AHash: string; out AResponse: string): Boolean;
+    procedure Put(const AHash: string; const AResponse: string);
+    procedure Clear;
+    
+    class function GenerateHash(const AProvider: string; const AModel: string; 
+      const ASystemPrompt: string; const APrompt: string; 
+      const AHistory: string): string;
+  end;
+
+implementation
+
+uses
+  System.IOUtils, System.JSON, System.Hash, System.DateUtils;
+
+{ TRadIACacheManager }
+
+constructor TRadIACacheManager.Create(const AFilePath: string; ALimit: Integer);
+begin
+  inherited Create;
+  FLimit := ALimit;
+  FEntries := TObjectList<TRadIACacheEntry>.Create(True);
+  
+  if AFilePath.IsEmpty then
+    FFilePath := TPath.Combine(TPath.GetHomePath, 'RadIA\cache.json')
+  else
+    FFilePath := AFilePath;
+    
+  LoadCache;
+end;
+
+destructor TRadIACacheManager.Destroy;
+begin
+  FEntries.Free;
+  inherited Destroy;
+end;
+
+procedure TRadIACacheManager.Clear;
+begin
+  FEntries.Clear;
+  if TFile.Exists(FFilePath) then
+  begin
+    try
+      TFile.Delete(FFilePath);
+    except
+      // Ignore delete errors
+    end;
+  end;
+end;
+
+class function TRadIACacheManager.GenerateHash(const AProvider: string; const AModel: string; 
+  const ASystemPrompt: string; const APrompt: string; 
+  const AHistory: string): string;
+var
+  LConcat: string;
+begin
+  LConcat := AProvider + '||' + AModel + '||' + ASystemPrompt + '||' + APrompt + '||' + AHistory;
+  Result := THashSHA1.GetHashString(LConcat);
+end;
+
+function TRadIACacheManager.Get(const AHash: string; out AResponse: string): Boolean;
+var
+  LEntry: TRadIACacheEntry;
+begin
+  Result := False;
+  AResponse := '';
+  for LEntry in FEntries do
+  begin
+    if LEntry.Hash = AHash then
+    begin
+      { Check expiration (24 hours) }
+      if HoursBetween(Now, LEntry.Timestamp) >= 24 then
+      begin
+        { Expired entry, remove it }
+        FEntries.Remove(LEntry);
+        SaveCache;
+        Exit;
+      end;
+      
+      LEntry.LastAccessed := Now;
+      AResponse := LEntry.Response;
+      SaveCache;
+      Result := True;
+      Exit;
+    end;
+  end;
+end;
+
+procedure TRadIACacheManager.LoadCache;
+var
+  LContent: string;
+  LJsonArr: TJSONArray;
+  LVal: TJSONValue;
+  LEntryObj: TJSONObject;
+  LEntry: TRadIACacheEntry;
+begin
+  FEntries.Clear;
+  
+  { Ensure directory exists }
+  ForceDirectories(TPath.GetDirectoryName(FFilePath));
+  
+  if not TFile.Exists(FFilePath) then
+    Exit;
+
+  try
+    LContent := TFile.ReadAllText(FFilePath, TEncoding.UTF8);
+    if LContent.IsEmpty then
+      Exit;
+
+    LJsonArr := TJSONObject.ParseJSONValue(LContent) as TJSONArray;
+    if Assigned(LJsonArr) then
+    begin
+      try
+        for LVal in LJsonArr do
+        begin
+          if LVal is TJSONObject then
+          begin
+            LEntryObj := LVal as TJSONObject;
+            LEntry := TRadIACacheEntry.Create;
+            LEntry.Hash := LEntryObj.GetValue('hash').Value;
+            LEntry.Response := LEntryObj.GetValue('response').Value;
+            
+            try
+              LEntry.Timestamp := ISO8601ToDate(LEntryObj.GetValue('timestamp').Value);
+            except
+              LEntry.Timestamp := Now;
+            end;
+            
+            try
+              LEntry.LastAccessed := ISO8601ToDate(LEntryObj.GetValue('last_accessed').Value);
+            except
+              LEntry.LastAccessed := Now;
+            end;
+            
+            FEntries.Add(LEntry);
+          end;
+        end;
+      finally
+        LJsonArr.Free;
+      end;
+    end;
+  except
+    FEntries.Clear;
+  end;
+end;
+
+procedure TRadIACacheManager.Put(const AHash: string; const AResponse: string);
+var
+  LEntry: TRadIACacheEntry;
+  I: Integer;
+  LMinIndex: Integer;
+  LMinDate: TDateTime;
+begin
+  { If already exists, update response and refresh timestamp }
+  for LEntry in FEntries do
+  begin
+    if LEntry.Hash = AHash then
+    begin
+      LEntry.Response := AResponse;
+      LEntry.Timestamp := Now;
+      LEntry.LastAccessed := Now;
+      SaveCache;
+      Exit;
+    end;
+  end;
+
+  { If limit reached, discard LRU (Least Recently Used) }
+  if FEntries.Count >= FLimit then
+  begin
+    LMinIndex := 0;
+    LMinDate := FEntries[0].LastAccessed;
+    for I := 1 to FEntries.Count - 1 do
+    begin
+      if FEntries[I].LastAccessed < LMinDate then
+      begin
+        LMinDate := FEntries[I].LastAccessed;
+        LMinIndex := I;
+      end;
+    end;
+    FEntries.Delete(LMinIndex);
+  end;
+
+  { Add new entry }
+  LEntry := TRadIACacheEntry.Create;
+  LEntry.Hash := AHash;
+  LEntry.Response := AResponse;
+  LEntry.Timestamp := Now;
+  LEntry.LastAccessed := Now;
+  FEntries.Add(LEntry);
+  SaveCache;
+end;
+
+procedure TRadIACacheManager.SaveCache;
+var
+  LJsonArr: TJSONArray;
+  LEntryObj: TJSONObject;
+  LEntry: TRadIACacheEntry;
+begin
+  LJsonArr := TJSONArray.Create;
+  try
+    for LEntry in FEntries do
+    begin
+      LEntryObj := TJSONObject.Create;
+      LEntryObj.AddPair('hash', LEntry.Hash);
+      LEntryObj.AddPair('response', LEntry.Response);
+      LEntryObj.AddPair('timestamp', DateToISO8601(LEntry.Timestamp));
+      LEntryObj.AddPair('last_accessed', DateToISO8601(LEntry.LastAccessed));
+      LJsonArr.AddElement(LEntryObj);
+    end;
+    
+    TFile.WriteAllText(FFilePath, LJsonArr.ToJSON, TEncoding.UTF8);
+  finally
+    LJsonArr.Free;
+  end;
+end;
+
+end.
