@@ -14,6 +14,7 @@ type
     class function InsertTextAtCursor(const AText: string): Boolean;
     class function GetActiveUnitName: string;
     class function GetActiveProjectName: string;
+    class function GetActiveProjectFolder: string;
     class function GetCurrentEditBuffer: IOTAEditBuffer;
   end;
 
@@ -140,6 +141,22 @@ begin
     if Assigned(LProject) then
     begin
       Result := ChangeFileExt(ExtractFileName(LProject.FileName), '');
+    end;
+  end;
+end;
+
+class function TRadIAOTAHelper.GetActiveProjectFolder: string;
+var
+  LModuleServices: IOTAModuleServices;
+  LProject: IOTAProject;
+begin
+  Result := '';
+  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
+  begin
+    LProject := LModuleServices.GetActiveProject;
+    if Assigned(LProject) then
+    begin
+      Result := ExtractFilePath(LProject.FileName);
     end;
   end;
 end;

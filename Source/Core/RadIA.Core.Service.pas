@@ -42,7 +42,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON,
+  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.Core.ProjectContext,
   RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama;
 
 { TRadIAChatMessage }
@@ -155,12 +155,27 @@ var
   LHistory: TArray<IChatMessage>;
   LTrimmedHistory: TArray<IChatMessage>;
   I: Integer;
+  LProjectFolder: string;
+  LProjectContext: string;
 begin
   try
     LProvider := CreateActiveProvider;
     LProviderName := ProviderTypeToString(FConfig.GetActiveProvider);
     LModelName := FConfig.GetActiveModel(FConfig.GetActiveProvider);
     LSystemPrompt := FConfig.SystemPrompt;
+
+    { Load project context (.radia) if active }
+    LProjectFolder := TRadIAOTAHelper.GetActiveProjectFolder;
+    if not LProjectFolder.IsEmpty then
+    begin
+      if TProjectContextLoader.LoadContext(LProjectFolder, LProjectContext) and not LProjectContext.IsEmpty then
+      begin
+        if LSystemPrompt.IsEmpty then
+          LSystemPrompt := LProjectContext
+        else
+          LSystemPrompt := LProjectContext + sLineBreak + sLineBreak + LSystemPrompt;
+      end;
+    end;
 
     { Apply trimming before processing }
     LTrimmedHistory := TrimHistory(AHistory);
