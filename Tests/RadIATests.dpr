@@ -13,6 +13,7 @@ uses
   RadIA.Core.Config in '..\Source\Core\RadIA.Core.Config.pas',
   RadIA.Core.Cache in '..\Source\Core\RadIA.Core.Cache.pas',
   RadIA.Core.Service in '..\Source\Core\RadIA.Core.Service.pas',
+  RadIA.Core.PromptHistory in '..\Source\Core\RadIA.Core.PromptHistory.pas',
   RadIA.Provider.Base in '..\Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in '..\Source\Providers\RadIA.Provider.Gemini.pas',
   RadIA.Provider.OpenAI in '..\Source\Providers\RadIA.Provider.OpenAI.pas',
@@ -24,7 +25,8 @@ uses
   RadIA.Tests.Providers in 'Source\RadIA.Tests.Providers.pas',
   RadIA.Tests.Cache in 'Source\RadIA.Tests.Cache.pas',
   RadIA.Tests.Ollama in 'Source\RadIA.Tests.Ollama.pas',
-  RadIA.Tests.Service in 'Source\RadIA.Tests.Service.pas';
+  RadIA.Tests.Service in 'Source\RadIA.Tests.Service.pas',
+  RadIA.Tests.PromptHistory in 'Source\RadIA.Tests.PromptHistory.pas';
 
 var
   Runner: ITestRunner;

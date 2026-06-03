@@ -5,7 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service;
+  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
+  RadIA.Core.Service, RadIA.Core.PromptHistory;
 
 type
   TFrameAIChat = class(TFrame)
@@ -27,12 +28,14 @@ type
     procedure btnSettingsClick(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
     procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; const AMessage: string);
+    procedure memPromptKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     FConfig: IAIConfig;
     FAIService: TRadIAService;
     FHistory: TArray<IChatMessage>;
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
+    FPromptHistoryManager: TPromptHistoryManager;
     
     procedure InitializeWebView;
     procedure CopyWebFiles;
@@ -43,6 +46,8 @@ type
     procedure OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
     procedure LoadChatHistory;
     procedure SaveChatHistory;
+    procedure LoadPromptHistory;
+    procedure SavePromptHistory;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -65,19 +70,23 @@ begin
   
   FConfig := TRadIAConfig.Create;
   FAIService := TRadIAService.Create(FConfig);
+  FPromptHistoryManager := TPromptHistoryManager.Create;
   
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   CopyWebFiles;
   
   LoadConfig;
   InitializeWebView;
-  
+  LoadPromptHistory;
+
+  memPrompt.OnKeyDown := Self.memPromptKeyDown;
   GlobalOnRequestPrompt := Self.OnGlobalPromptRequest;
 end;
 
 destructor TFrameAIChat.Destroy;
 begin
   GlobalOnRequestPrompt := nil;
+  FPromptHistoryManager.Free;
   FAIService.Free;
   inherited Destroy;
 end;
@@ -297,7 +306,11 @@ begin
   LText := Trim(memPrompt.Text);
   if LText.IsEmpty then
     Exit;
-    
+
+  { Save to prompt history before clearing the input }
+  FPromptHistoryManager.Add(LText);
+  SavePromptHistory;
+
   memPrompt.Text := '';
   PostToWebView('add_message', 'user', LText);
   SendPromptToAI(LText);
@@ -422,6 +435,47 @@ begin
   finally
     LJsonArr.Free;
   end;
+end;
+
+procedure TFrameAIChat.memPromptKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+var
+  LPrompt: string;
+begin
+  { Navigate history with ↑ and ↓ arrows (no modifier keys) }
+  if Shift <> [] then
+    Exit;
+
+  if Key = VK_UP then
+  begin
+    LPrompt := FPromptHistoryManager.NavigateUp;
+    memPrompt.Text := LPrompt;
+    { Move cursor to end of text }
+    memPrompt.SelStart := Length(LPrompt);
+    Key := 0; { Consume the key event }
+  end
+  else if Key = VK_DOWN then
+  begin
+    LPrompt := FPromptHistoryManager.NavigateDown;
+    memPrompt.Text := LPrompt;
+    memPrompt.SelStart := Length(LPrompt);
+    Key := 0;
+  end;
+end;
+
+procedure TFrameAIChat.LoadPromptHistory;
+var
+  LHistoryFile: string;
+begin
+  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\prompt_history.json');
+  FPromptHistoryManager.LoadFromFile(LHistoryFile);
+end;
+
+procedure TFrameAIChat.SavePromptHistory;
+var
+  LHistoryFile: string;
+begin
+  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\prompt_history.json');
+  FPromptHistoryManager.SaveToFile(LHistoryFile);
 end;
 
 end.
