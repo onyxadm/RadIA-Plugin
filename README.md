@@ -211,3 +211,8 @@ Este projeto adota rigidamente:
 *   Práticas de **Clean Code** com total isolamento em threads (thread-safety).
 *   Princípios **DRY** (Don't Repeat Yourself) e **KISS** (Keep It Simple, Stupid).
 *   Uso exclusivo do idioma **Inglês** para todo código fonte do projeto.
+
+### 8. Aviso de Marcas Registradas (Trademark Disclaimer)
+Todas as marcas registradas, logotipos, marcas de serviço e nomes comerciais mencionados neste projeto (incluindo, mas não se limitando a: *Embarcadero Delphi*, *Microsoft Windows*, *Microsoft Edge*, *WebView2*, *Google Gemini*, *OpenAI ChatGPT*, *Anthropic Claude*, *DeepSeek*, *Groq* e *Ollama*) são de propriedade de seus respectivos proprietários.
+
+A menção a estes nomes e marcas serve unicamente para fins de descrição de compatibilidade, configuração e integração tecnológica. O **RadIA** é um projeto independente e open-source, não possuindo qualquer filiação, patrocínio, endosso ou associação oficial com os proprietários das referidas marcas.

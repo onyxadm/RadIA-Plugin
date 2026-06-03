@@ -211,3 +211,8 @@ This project strictly enforces:
 *   **Clean Code** patterns with complete thread-safety.
 *   **DRY (Don't Repeat Yourself)** & **KISS (Keep It Simple, Stupid)**.
 *   Strictly using **English** for all programming artifacts.
+
+### 8. Trademark Disclaimer
+All trademarks, logos, service marks, and trade names mentioned in this project (including, but not limited to: *Embarcadero Delphi*, *Microsoft Windows*, *Microsoft Edge*, *WebView2*, *Google Gemini*, *OpenAI ChatGPT*, *Anthropic Claude*, *DeepSeek*, *Groq*, and *Ollama*) are the property of their respective owners.
+
+The use of these names and trademarks is solely for compatibility, configuration, and technology integration description purposes. **RadIA** is an independent, open-source project and has no official affiliation, sponsorship, endorsement, or association with the owners of these trademarks.
