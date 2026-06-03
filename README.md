@@ -127,17 +127,10 @@ O **Ollama** permite executar LLMs de código aberto (Llama 3, Mistral, Phi-3, C
 
 ### 5.2 Histórico de Conversas Persistente
 
-O RadIA salva automaticamente o histórico do chat em:
-```
-%APPDATA%\RadIA\history.json
-```
-O histórico é restaurado integralmente ao reabrir a IDE, preservando todo o contexto da conversa anterior. Para limpar o histórico, clique no botão **Clear** no topo do painel de chat.
-
-### 5.3 Compilação e Instalação Automatizada (PowerShell)
-
-Para compilar o pacote principal, executar os testes unitários de forma automatizada ou realizar a instalação direta na IDE do Delphi, você pode utilizar o script de build integrado na raiz do projeto. Ele suporta os seguintes parâmetros/switches:
+OPara compilar o pacote principal, executar os testes unitários de forma automatizada, realizar a instalação direta ou desinstalação na IDE do Delphi, você pode utilizar o script de build integrado na raiz do projeto. Ele suporta os seguintes parâmetros/switches:
 
 *   `-Install`: Compila o plugin, executa os testes unitários, copia a BPL/DCP para o diretório público de documentos do Delphi e adiciona o pacote no Registro do Windows (`Known Packages`) da respectiva versão detectada da IDE.
+*   `-Uninstall`: Remove as BPLs, DCPs e a pasta de recursos Web copiados anteriormente das pastas públicas da IDE do Delphi e apaga o pacote do Registro do Windows (`Known Packages`), desinstalando o plugin de forma limpa.
 *   `-Release`: Compila o plugin e os testes unitários na configuração de Produção (Release), desligando símbolos de depuração e informações de debug (gerando uma BPL consideravelmente menor e mais rápida) e ativando as otimizações do compilador do Delphi.
 *   `-IDE64`: Compila e instala o plugin especificamente para a IDE de 64 bits do Delphi (disponível a partir do Delphi 13 Florence), gerando o binário em Win64 e registrando na chave de registro correspondente `Known Packages` de 64 bits (`BDS\<versao>_x64`). Se omitido, compila para a IDE padrão de 32 bits (Win32).
 
@@ -153,7 +146,12 @@ Exemplo de comandos:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install -Release
    ```
-4. O script detectará automaticamente a versão ativa do compilador, criará os diretórios de saída isolados por versão (ex: `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), executará a limpeza de arquivos DCU temporários das pastas de fontes, compilará o pacote principal, compilará os testes unitários e rodará automaticamente a suite de validação de testes.
+5. Para desinstalar o plugin da IDE de forma limpa:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Uninstall
+   ```
+6. O script detectará automaticamente a versão ativa do compilador, criará os diretórios de saída isolados por versão (ex: `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), executará a limpeza de arquivos DCU temporários das pastas de fontes, compilará o pacote principal, compilará os testes unitários e rodará automaticamente a suite de validação de testes.
+7. Se o parâmetro `-Install` foi informado, o script também copiará os arquivos de saída (`RadIA.bpl` e `RadIA.dcp`) para as pastas oficiais do Delphi (`C:\Users\Public\Documents\Embarcadero\Studio\<versao>\Bpl` e `Dcp`) e registrará o plugin na chave de Registro `Known Packages` do Delphi da respectiva versão detectada.�rios e rodará automaticamente a suite de validação de testes.
 5. Se o parâmetro `-Install` foi informado, o script também copiará os arquivos de saída (`RadIA.bpl` e `RadIA.dcp`) para as pastas oficiais do Delphi (`C:\Users\Public\Documents\Embarcadero\Studio\<versao>\Bpl` e `Dcp`) e registrará o plugin na chave de Registro `Known Packages` do Delphi da respectiva versão detectada.
 
 ### 5.4 Guia de Obtenção de Chaves de API e Configurações por Provedor

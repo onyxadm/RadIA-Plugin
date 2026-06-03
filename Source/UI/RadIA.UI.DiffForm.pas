@@ -28,6 +28,7 @@ type
     FBrowserInitialized: Boolean;
     FLifecycleGuard: IInterface;
     
+    procedure FormShow(Sender: TObject);
     procedure RequestRefactoring;
     procedure RenderDiffInBrowser;
     procedure PostToWebView(const AAction, AText: string);
@@ -63,14 +64,22 @@ begin
     end;
   end;
   
-  EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
-  EdgeBrowser.Navigate('file:///' + TPath.Combine(FWebFilesDir, 'diff.html').Replace('\', '/'));
+  OnShow := FormShow;
 end;
 
 procedure TFormAIDiff.FormDestroy(Sender: TObject);
 begin
   (FLifecycleGuard as ILifecycleGuard).Invalidate;
   FAIService.Free;
+end;
+
+procedure TFormAIDiff.FormShow(Sender: TObject);
+begin
+  if not FBrowserInitialized then
+  begin
+    EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
+    EdgeBrowser.Navigate('file:///' + TPath.Combine(FWebFilesDir, 'diff.html').Replace('\', '/'));
+  end;
 end;
 
 procedure TFormAIDiff.InitializeDiff(const AUnitName, AOriginalCode: string);

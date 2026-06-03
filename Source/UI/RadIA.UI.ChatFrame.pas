@@ -41,12 +41,14 @@ type
     FHistory: TArray<IChatMessage>;
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
+    FWebViewInitialized: Boolean;
     FPromptHistoryManager: TPromptHistoryManager;
     FAccumulatedUsage: TTokenUsage;
     FTemplateManager: TPromptTemplateManager;
     FPopupMenuTemplates: TPopupMenu;
     FLifecycleGuard: IInterface;
     
+    procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
     procedure InitializeWebView;
     procedure CopyWebFiles;
     procedure LoadConfig;
@@ -85,6 +87,7 @@ var
 begin
   inherited Create(AOwner);
   FBrowserInitialized := False;
+  FWebViewInitialized := False;
   FHistory := [];
   
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
@@ -109,7 +112,6 @@ begin
   CopyWebFiles;
   
   LoadConfig;
-  InitializeWebView;
   LoadPromptHistory;
 
   memPrompt.OnKeyDown := Self.memPromptKeyDown;
@@ -125,6 +127,16 @@ begin
   FTemplateManager.Free;
   FAIService.Free;
   inherited Destroy;
+end;
+
+procedure TFrameAIChat.CMShowingChanged(var Message: TMessage);
+begin
+  inherited;
+  if Showing and not FWebViewInitialized then
+  begin
+    FWebViewInitialized := True;
+    InitializeWebView;
+  end;
 end;
 
 procedure TFrameAIChat.CopyWebFiles;

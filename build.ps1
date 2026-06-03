@@ -1,5 +1,6 @@
 param(
     [switch]$Install,
+    [switch]$Uninstall,
     [switch]$Release,
     [switch]$IDE64
 )
@@ -45,6 +46,64 @@ switch ($compilerVersion) {
 }
 
 Write-Host "Versão do Delphi correspondente (DelphiVer): $delphiVer" -ForegroundColor Green
+
+# Processar Desinstalação (se a flag -Uninstall for fornecida)
+if ($Uninstall) {
+    if (Get-Process bds -ErrorAction SilentlyContinue) {
+        Write-Host ""
+        Write-Host "=========================================================================" -ForegroundColor Red
+        Write-Host "ERRO: A IDE do Delphi (bds.exe) está aberta no momento." -ForegroundColor Red
+        Write-Host "Por favor, salve seu trabalho e feche todas as instâncias da IDE" -ForegroundColor Red
+        Write-Host "antes de executar a desinstalação do plugin RadIA para evitar arquivos travados." -ForegroundColor Red
+        Write-Host "=========================================================================" -ForegroundColor Red
+        Write-Host ""
+        throw "A IDE do Delphi está aberta."
+    }
+
+    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host "       Desinstalando Plugin do Delphi        " -ForegroundColor Cyan
+    Write-Host "=============================================" -ForegroundColor Cyan
+
+    $publicStudioDir = "C:\Users\Public\Documents\Embarcadero\Studio\$delphiVer"
+    $publicBplDir = "$publicStudioDir\Bpl"
+    $publicDcpDir = "$publicStudioDir\Dcp"
+
+    $targetBplDir = $publicBplDir
+    $targetDcpDir = $publicDcpDir
+    if ($IDE64) {
+        $targetBplDir = "$publicBplDir\Win64"
+        $targetDcpDir = "$publicDcpDir\Win64"
+    }
+
+    $targetBpl = "$targetBplDir\RadIA.bpl"
+    $targetDcp = "$targetDcpDir\RadIA.dcp"
+    $targetWeb = "$publicBplDir\Web"
+
+    Write-Host "Removendo pacote do Registro do Windows..." -ForegroundColor Yellow
+    $regPath = "HKCU:\Software\Embarcadero\BDS\$delphiVer\Known Packages"
+    if ($IDE64) {
+        $regPath = "HKCU:\Software\Embarcadero\BDS\${delphiVer}_x64\Known Packages"
+    }
+    if (Test-Path $regPath) {
+        Remove-ItemProperty -Path $regPath -Name $targetBpl -ErrorAction SilentlyContinue | Out-Null
+    }
+
+    Write-Host "Removendo binários e recursos do sistema..." -ForegroundColor Yellow
+    if (Test-Path $targetBpl) {
+        Remove-Item -Path $targetBpl -Force | Out-Null
+    }
+    if (Test-Path $targetDcp) {
+        Remove-Item -Path $targetDcp -Force | Out-Null
+    }
+    if (Test-Path $targetWeb) {
+        Remove-Item -Path $targetWeb -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+    }
+
+    Write-Host "=============================================" -ForegroundColor Green
+    Write-Host " Plugin desinstalado com sucesso do Delphi!  " -ForegroundColor Green
+    Write-Host "=============================================" -ForegroundColor Green
+    Exit
+}
 
 # 3. Definir plataforma e compilador do pacote
 $platform = "Win32"
