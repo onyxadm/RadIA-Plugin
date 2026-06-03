@@ -16,6 +16,7 @@ type
     FBugsAction: TAction;
     FDocAction: TAction;
     FFixErrorAction: TAction;
+    FShowChatAction: TAction;
     
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
@@ -23,6 +24,7 @@ type
     procedure OnBugsExecute(Sender: TObject);
     procedure OnDocExecute(Sender: TObject);
     procedure OnFixErrorExecute(Sender: TObject);
+    procedure OnShowChatExecute(Sender: TObject);
     
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
   public
@@ -39,12 +41,14 @@ type
     property BugsAction: TAction read FBugsAction;
     property DocAction: TAction read FDocAction;
     property FixErrorAction: TAction read FFixErrorAction;
+    property ShowChatAction: TAction read FShowChatAction;
   end;
 
 implementation
 
 uses
-  RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types;
+  RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
+  RadIA.OTA.DockableForm;
 
 { TRadIAEditorHook }
 
@@ -81,6 +85,11 @@ begin
   FFixErrorAction.ActionList := FActionList;
   FFixErrorAction.Caption := 'RadIA: Fix Last Compiler Error';
   FFixErrorAction.OnExecute := OnFixErrorExecute;
+  
+  FShowChatAction := TAction.Create(FActionList);
+  FShowChatAction.ActionList := FActionList;
+  FShowChatAction.Caption := 'RadIA Chat Panel';
+  FShowChatAction.OnExecute := OnShowChatExecute;
 end;
 
 destructor TRadIAEditorHook.Destroy;
@@ -130,6 +139,10 @@ begin
     Exit;
     
   LItem := TMenuItem.Create(AMenuItem);
+  LItem.Action := FShowChatAction;
+  AMenuItem.Add(LItem);
+  
+  LItem := TMenuItem.Create(AMenuItem);
   LItem.Action := FFixErrorAction;
   AMenuItem.Add(LItem);
 end;
@@ -145,6 +158,8 @@ begin
     Exit;
   end;
   
+  ShowRadIAChat;
+  
   LPrompt := Format('%s'#13#10'```pascal'#13#10'%s'#13#10'```', [ACommand, LSelectedText]);
   if Assigned(GlobalOnRequestPrompt) then
   begin
@@ -155,6 +170,11 @@ end;
 procedure TRadIAEditorHook.OnExplainExecute(Sender: TObject);
 begin
   SendCommandToChat('/explain', 'Explain the following Delphi Pascal code block in detail:');
+end;
+
+procedure TRadIAEditorHook.OnShowChatExecute(Sender: TObject);
+begin
+  ShowRadIAChat;
 end;
 
 procedure TRadIAEditorHook.OnOptimizeExecute(Sender: TObject);

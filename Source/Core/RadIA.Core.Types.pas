@@ -27,6 +27,15 @@ function StringToProviderType(const AString: string): TAIProviderType;
 function MessageRoleToString(const ARole: TAIMessageRole): string;
 function StringToMessageRole(const AString: string): TAIMessageRole;
 
+type
+  { Event types for global UI communication to avoid circular references }
+  TOnRequestPromptEvent = procedure(const APrompt: string; const AOpenChat: Boolean) of object;
+  TOnRequestDiffEvent = procedure(const AOriginalCode: string) of object;
+
+var
+  GlobalOnRequestPrompt: TOnRequestPromptEvent = nil;
+  GlobalOnRequestDiff: TOnRequestDiffEvent = nil;
+
 implementation
 
 uses

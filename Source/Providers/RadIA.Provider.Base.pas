@@ -3,7 +3,7 @@ unit RadIA.Provider.Base;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, System.Threading,
+  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, System.Threading,
   RadIA.Core.Interfaces, RadIA.Core.Types;
 
 type

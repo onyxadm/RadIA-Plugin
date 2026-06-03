@@ -14,9 +14,8 @@ type
   public
     constructor Create(const AConfig: IAIConfig); override;
     
-    { IIAProvider implementation }
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback) override;
+      const ACallback: TCompletionCallback); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -171,6 +170,7 @@ procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHis
   const ACallback: TCompletionCallback);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
+  LTaskProc: TProc;
 begin
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
@@ -194,31 +194,33 @@ begin
     end;
   end;
 
-  TTask.Run(
-    procedure
-    var
-      LResponseText: string;
-    begin
-      try
-        LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
-        LResponseText := ParseResponseBody(LResponseText);
-        
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback(LResponseText, '');
-          end);
-      except
-        on E: Exception do
-        begin
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', E.Message);
-            end);
-        end;
-      end;
-    end);
+  LTaskProc := procedure
+               var
+                 LResponseText: string;
+                 LQueueProc: TThreadProcedure;
+               begin
+                 try
+                   LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
+                   LResponseText := ParseResponseBody(LResponseText);
+                   
+                   LQueueProc := procedure
+                                 begin
+                                   ACallback(LResponseText, '');
+                                 end;
+                   TThread.Queue(nil, LQueueProc);
+                 except
+                   on E: Exception do
+                   begin
+                     LQueueProc := procedure
+                                   begin
+                                     ACallback('', E.Message);
+                                   end;
+                     TThread.Queue(nil, LQueueProc);
+                   end;
+                 end;
+               end;
+
+  TTask.Run(LTaskProc);
 end;
 
 end.

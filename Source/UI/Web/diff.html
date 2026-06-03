@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RadIA Smart Diff</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.2.0/diff.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      overflow-x: hidden;
+      font-size: 12px;
+    }
+    body.light-theme {
+      background-color: #f3f3f3;
+      color: #333333;
+    }
+    #diff-output {
+      padding: 5px;
+    }
+    
+    /* Dark mode styling overrides for diff2html */
+    body.dark-theme .d2h-wrapper {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+    }
+    body.dark-theme .d2h-file-wrapper {
+      border: 1px solid #3c3c3c;
+      background-color: #1e1e1e;
+    }
+    body.dark-theme .d2h-file-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #3c3c3c;
+      color: #858585;
+    }
+    body.dark-theme .d2h-file-name-wrapper {
+      color: #d4d4d4;
+    }
+    body.dark-theme .d2h-code-side-line {
+      color: #d4d4d4;
+      background-color: #1e1e1e;
+    }
+    body.dark-theme .d2h-code-side-linenumber {
+      background-color: #2d2d2d;
+      border-color: #3c3c3c;
+      color: #858585;
+    }
+    body.dark-theme .d2h-del {
+      background-color: #3f2222;
+      border-color: #7d3c3c;
+    }
+    body.dark-theme .d2h-ins {
+      background-color: #223f22;
+      border-color: #3c7d3c;
+    }
+    body.dark-theme .d2h-code-side-line del {
+      background-color: #5f2f2f;
+      color: #ff9999;
+    }
+    body.dark-theme .d2h-code-side-line ins {
+      background-color: #2f5f2f;
+      color: #99ff99;
+    }
+    body.dark-theme .d2h-emptyplaceholder {
+      background-color: #1e1e1e;
+      border-color: #3c3c3c;
+    }
+  </style>
+</head>
+<body class="dark-theme">
+  <div id="diff-output">Generating code comparison... Please wait.</div>
+  
+  <script>
+    function renderDiff(fileName, originalCode, modifiedCode) {
+      try {
+        // Generate patch via jsdiff
+        const patch = Diff.createPatch(fileName, originalCode, modifiedCode, 'Original', 'Suggested Refactoring');
+        
+        // Render side-by-side comparison using diff2html
+        const diffHtml = Diff2Html.html(patch, {
+          drawFileList: false,
+          matching: 'lines',
+          outputFormat: 'side-by-side'
+        });
+        
+        document.getElementById('diff-output').innerHTML = diffHtml;
+      } catch (err) {
+        document.getElementById('diff-output').innerHTML = '<div style="color: red; padding: 10px;">Error generating diff: ' + err.message + '</div>';
+      }
+    }
+    
+    function setTheme(theme) {
+      document.body.className = '';
+      document.body.classList.add(theme + '-theme');
+    }
+    
+    // Listen for messages from WebView2
+    if (window.chrome && window.chrome.webview) {
+      window.chrome.webview.addEventListener('message', event => {
+        const data = event.data;
+        if (data.action === 'render') {
+          renderDiff(data.fileName, data.original, data.modified);
+        } else if (data.action === 'set_theme') {
+          setTheme(data.theme);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

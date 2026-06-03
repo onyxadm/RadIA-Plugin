@@ -18,53 +18,37 @@ implementation
 
 class function TRadIAMessageViewHook.GetLastCompilerError(out AErrorMessage: string; out AFileName: string; out ALine: Integer): Boolean;
 var
-  LMessageServices: IOTAMessageServices;
-  LGroup: IOTAMessageGroup;
+  LModuleServices: IOTAModuleServices;
+  LModule: IOTAModule;
+  LModuleErrors: IOTAModuleErrors;
+  LErrors: TOTAErrors;
   I: Integer;
-  LMsgText: string;
-  LRef: string;
-  LPosColon1, LPosColon2: Integer;
 begin
   Result := False;
   AErrorMessage := '';
   AFileName := '';
   ALine := 0;
   
-  if not Supports(BorlandIDEServices, IOTAMessageServices, LMessageServices) then
+  if not Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
     Exit;
     
-  { Get the main build messages group }
-  LGroup := LMessageServices.GetGroup('Build');
-  if not Assigned(LGroup) then
+  LModule := LModuleServices.CurrentModule;
+  if not Assigned(LModule) then
     Exit;
     
-  { Iterate backwards to find the last error }
-  for I := LGroup.MessageCount - 1 downto 0 do
+  if Supports(LModule, IOTAModuleErrors, LModuleErrors) then
   begin
-    LMsgText := LGroup.GetMessage(I);
-    
-    { Delphi compiler errors usually look like: 
-      "D:\Path\Unit1.pas(25): E2003 Undefined identifier: 'SomeVar'"
-      or contain "Error:" or "[dcc32 Error]" }
-    if (Pos('Error:', LMsgText) > 0) or (Pos('error', LowerCase(LMsgText)) > 0) or (Pos('): E', LMsgText) > 0) then
+    AFileName := LModule.FileName;
+    LErrors := LModuleErrors.GetErrors(AFileName);
+    for I := 0 to Length(LErrors) - 1 do
     begin
-      { Parse line number and file path if formatted as Path(Line): E... }
-      LPosColon1 := Pos('(', LMsgText);
-      LPosColon2 := Pos('):', LMsgText);
-      if (LPosColon1 > 0) and (LPosColon2 > LPosColon1) then
+      if LErrors[I].Severity = 1 then { 1 = Error }
       begin
-        AFileName := Copy(LMsgText, 1, LPosColon1 - 1);
-        LRef := Copy(LMsgText, LPosColon1 + 1, LPosColon2 - LPosColon1 - 1);
-        TryStrToInt(LRef, ALine);
-        AErrorMessage := Copy(LMsgText, LPosColon2 + 2, Length(LMsgText)).Trim;
-      end
-      else
-      begin
-        AErrorMessage := LMsgText;
+        AErrorMessage := LErrors[I].Text;
+        ALine := LErrors[I].Start.Line;
+        Result := True;
+        Exit;
       end;
-      
-      Result := True;
-      Break;
     end;
   end;
 end;

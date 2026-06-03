@@ -37,7 +37,6 @@ var
   LEditBuffer: IOTAEditBuffer;
   LEditBlock: IOTAEditBlock;
   LEditReader: IOTAEditReader;
-  LCharCount: Integer;
   LBufferText: AnsiString;
   LBytesRead: Integer;
 begin
@@ -47,7 +46,7 @@ begin
   LEditBuffer := GetCurrentEditBuffer;
   if not Assigned(LEditBuffer) then
     Exit;
-
+    
   if ASelectedOnly then
   begin
     LEditBlock := LEditBuffer.EditBlock;
@@ -60,11 +59,10 @@ begin
   else
   begin
     { Read the entire buffer }
-    LCharCount := LEditBuffer.BufferLinesCount; // Approximation or read via EditReader
     LEditReader := LEditBuffer.CreateReader;
     if Assigned(LEditReader) then
     begin
-      SetLength(LBufferText, LEditBuffer.CreateReader.GetText(0, nil, 0)); // Get size first
+      SetLength(LBufferText, LEditReader.GetText(0, nil, 0)); // Get size first
       LBytesRead := LEditReader.GetText(0, PAnsiChar(LBufferText), Length(LBufferText));
       SetLength(LBufferText, LBytesRead);
       AText := string(LBufferText);
@@ -85,10 +83,10 @@ begin
     Exit;
 
   LEditBlock := LEditBuffer.EditBlock;
-  if Assigned(LEditBlock) and (LEditBlock.Size > 0) then
+  if Assigned(LEditBlock) and (LEditBlock.Size > 0) and (LEditBuffer.EditViewCount > 0) then
   begin
     LPosition := LEditBuffer.EditViews[0].Position;
-    LPosition.Move(LEditBlock.StartRow, LEditBlock.StartColumn);
+    LPosition.Move(LEditBlock.StartingRow, LEditBlock.StartingColumn);
     LEditBlock.Delete;
     LEditBuffer.EditViews[0].Position.InsertText(ANewText);
     Result := True;
@@ -107,7 +105,7 @@ var
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
-  if Assigned(LEditBuffer) and (LEditBuffer.EditViewsCount > 0) then
+  if Assigned(LEditBuffer) and (LEditBuffer.EditViewCount > 0) then
   begin
     LView := LEditBuffer.EditViews[0];
     if Assigned(LView) and Assigned(LView.Position) then
@@ -133,7 +131,6 @@ end;
 class function TRadIAOTAHelper.GetActiveProjectName: string;
 var
   LModuleServices: IOTAModuleServices;
-  LModule: IOTAModule;
   LProject: IOTAProject;
 begin
   Result := '';

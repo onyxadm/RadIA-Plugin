@@ -3,7 +3,7 @@ unit RadIA.Provider.OpenAI;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, RadIA.Core.Interfaces,
+  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, RadIA.Core.Interfaces,
   RadIA.Core.Types, RadIA.Provider.Base;
 
 type
@@ -14,9 +14,8 @@ type
   public
     constructor Create(const AConfig: IAIConfig); override;
     
-    { IIAProvider implementation }
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback) override;
+      const ACallback: TCompletionCallback); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -118,6 +117,7 @@ procedure TRadIAOpenAIProvider.SendPromptAsync(const APrompt: string; const AHis
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
+  LTaskProc: TProc;
 begin
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
@@ -141,31 +141,33 @@ begin
     end;
   end;
 
-  TTask.Run(
-    procedure
-    var
-      LResponseText: string;
-    begin
-      try
-        LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
-        LResponseText := ParseResponseBody(LResponseText);
-        
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback(LResponseText, '');
-          end);
-      except
-        on E: Exception do
-        begin
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', E.Message);
-            end);
-        end;
-      end;
-    end);
+  LTaskProc := procedure
+               var
+                 LResponseText: string;
+                 LQueueProc: TThreadProcedure;
+               begin
+                 try
+                   LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
+                   LResponseText := ParseResponseBody(LResponseText);
+                   
+                   LQueueProc := procedure
+                                 begin
+                                   ACallback(LResponseText, '');
+                                 end;
+                   TThread.Queue(nil, LQueueProc);
+                 except
+                   on E: Exception do
+                   begin
+                     LQueueProc := procedure
+                                   begin
+                                     ACallback('', E.Message);
+                                   end;
+                     TThread.Queue(nil, LQueueProc);
+                   end;
+                 end;
+               end;
+
+  TTask.Run(LTaskProc);
 end;
 
 end.

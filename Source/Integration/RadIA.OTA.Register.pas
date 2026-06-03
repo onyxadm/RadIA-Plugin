@@ -12,14 +12,21 @@ type
     FEditorHook: TObject;
     procedure RegisterMenus;
     procedure UnregisterMenus;
+    procedure OnRequestDiff(const AOriginalCode: string);
   public
     constructor Create;
     destructor Destroy; override;
     
+    { IOTANotifier implementation }
+    procedure AfterSave;
+    procedure BeforeSave;
+    procedure Destroyed;
+    procedure Modified;
+    
     { IOTAWizard implementation }
     function GetName: string;
     function GetIDString: string;
-    function GetDestroyingBehavior: TOTAIDEDestroyingBehavior;
+    function GetState: TWizardState;
     procedure Execute;
   end;
 
@@ -28,7 +35,7 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, RadIA.OTA.EditorHook;
+  Vcl.Menus, Vcl.Controls, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.OTA.Helper, RadIA.Core.Types;
 
 var
   GWizardIndex: Integer = -1;
@@ -52,18 +59,31 @@ begin
   inherited Create;
   FEditorHook := TRadIAEditorHook.Create(nil);
   RegisterMenus;
+  GlobalOnRequestDiff := OnRequestDiff;
 end;
 
 destructor TRadIAWizard.Destroy;
 begin
+  GlobalOnRequestDiff := nil;
   UnregisterMenus;
   FEditorHook.Free;
   inherited Destroy;
 end;
 
-function TRadIAWizard.GetDestroyingBehavior: TOTAIDEDestroyingBehavior;
+procedure TRadIAWizard.AfterSave;
 begin
-  Result := odRelease;
+end;
+
+procedure TRadIAWizard.BeforeSave;
+begin
+end;
+
+procedure TRadIAWizard.Destroyed;
+begin
+end;
+
+procedure TRadIAWizard.Modified;
+begin
 end;
 
 function TRadIAWizard.GetIDString: string;
@@ -76,9 +96,38 @@ begin
   Result := 'RadIA';
 end;
 
+function TRadIAWizard.GetState: TWizardState;
+begin
+  Result := [wsEnabled];
+end;
+
 procedure TRadIAWizard.Execute;
 begin
   // Handled on menu and context clicks, nothing to execute on start
+end;
+
+procedure TRadIAWizard.OnRequestDiff(const AOriginalCode: string);
+var
+  LForm: TFormAIDiff;
+  LActiveFile: string;
+  LEditBuffer: IOTAEditBuffer;
+begin
+  LForm := TFormAIDiff.Create(nil);
+  try
+    LEditBuffer := TRadIAOTAHelper.GetCurrentEditBuffer;
+    if Assigned(LEditBuffer) then
+      LActiveFile := LEditBuffer.FileName
+    else
+      LActiveFile := 'ActiveUnit.pas';
+      
+    LForm.InitializeDiff(ExtractFileName(LActiveFile), AOriginalCode);
+    if LForm.ShowModal = mrOk then
+    begin
+      TRadIAOTAHelper.ReplaceActiveEditorText(LForm.SuggestedCode);
+    end;
+  finally
+    LForm.Free;
+  end;
 end;
 
 procedure TRadIAWizard.RegisterMenus;
