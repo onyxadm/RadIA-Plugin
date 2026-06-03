@@ -159,7 +159,8 @@ begin
         if Assigned(LParts) and (LParts.Count > 0) then
         begin
           LPart := LParts.Items[0] as TJSONObject;
-          Result := LPart.GetValue('text').Value;
+          if Assigned(LPart) then
+            Result := LPart.GetValue<string>('text', '');
         end;
       end;
     end;
@@ -288,29 +289,32 @@ begin
                              if LVal is TJSONObject then
                              begin
                                LModelObj := LVal as TJSONObject;
-                               LName := LModelObj.GetValue('name').Value;
+                               LName := LModelObj.GetValue<string>('name', '');
                                
-                               { Check if it supports generateContent }
-                               LCanGenerate := False;
-                               LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
-                               if Assigned(LMethodsArr) then
+                               if not LName.IsEmpty then
                                begin
-                                 for LMethodVal in LMethodsArr do
+                                 { Check if it supports generateContent }
+                                 LCanGenerate := False;
+                                 LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
+                                 if Assigned(LMethodsArr) then
                                  begin
-                                   if SameText(LMethodVal.Value, 'generateContent') then
+                                   for LMethodVal in LMethodsArr do
                                    begin
-                                     LCanGenerate := True;
-                                     Break;
+                                     if SameText(LMethodVal.Value, 'generateContent') then
+                                     begin
+                                       LCanGenerate := True;
+                                       Break;
+                                     end;
                                    end;
                                  end;
-                               end;
-                               
-                               if LCanGenerate then
-                               begin
-                                 { Remove prefix 'models/' }
-                                 if LName.StartsWith('models/') then
-                                   LName := LName.Substring(7);
-                                 LModelsList.Add(LName);
+                                 
+                                 if LCanGenerate then
+                                 begin
+                                   { Remove prefix 'models/' }
+                                   if LName.StartsWith('models/') then
+                                     LName := LName.Substring(7);
+                                   LModelsList.Add(LName);
+                                 end;
                                end;
                              end;
                            end;
@@ -408,12 +412,13 @@ begin
                     LContent := LCandidate.GetValue('content') as TJSONObject;
                     if Assigned(LContent) then
                     begin
-                      LParts := LContent.GetValue('parts') as TJSONArray;
-                      if Assigned(LParts) and (LParts.Count > 0) then
-                      begin
-                        LPart := LParts.Items[0] as TJSONObject;
-                        LText := LPart.GetValue('text').Value;
-                      end;
+                       LParts := LContent.GetValue('parts') as TJSONArray;
+                       if Assigned(LParts) and (LParts.Count > 0) then
+                       begin
+                         LPart := LParts.Items[0] as TJSONObject;
+                         if Assigned(LPart) then
+                           LText := LPart.GetValue<string>('text', '');
+                       end;
                     end;
                   end;
 

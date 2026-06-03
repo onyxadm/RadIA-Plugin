@@ -107,7 +107,7 @@ begin
       LChoice := LChoices.Items[0] as TJSONObject;
       LMessage := LChoice.GetValue('message') as TJSONObject;
       if Assigned(LMessage) then
-        Result := LMessage.GetValue('content').Value;
+        Result := LMessage.GetValue<string>('content', '');
     end;
 
     if Result.IsEmpty and Assigned(LJsonObj.GetValue('error')) then
@@ -234,9 +234,9 @@ begin
                              if LVal is TJSONObject then
                              begin
                                LModelObj := LVal as TJSONObject;
-                               LId := LModelObj.GetValue('id').Value;
+                               LId := LModelObj.GetValue<string>('id', '');
                                { Filter models: usually we want llama, mixtral, gemma }
-                               if LId.Contains('llama') or LId.Contains('mixtral') or LId.Contains('gemma') then
+                               if not LId.IsEmpty and (LId.Contains('llama') or LId.Contains('mixtral') or LId.Contains('gemma')) then
                                begin
                                  LModelsList.Add(LId);
                                end;
@@ -341,9 +341,10 @@ begin
             begin
               LChoice := LChoices.Items[0] as TJSONObject;
               LDelta := LChoice.GetValue('delta') as TJSONObject;
-              if Assigned(LDelta) and Assigned(LDelta.GetValue('content')) then
+              if Assigned(LDelta) then
               begin
-                LContent := LDelta.GetValue('content').Value;
+                LContent := LDelta.GetValue<string>('content', '');
+                if not LContent.IsEmpty then
                 TThread.Queue(nil,
                   procedure
                   begin

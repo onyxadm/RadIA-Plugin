@@ -108,7 +108,7 @@ begin
       LChoice := LChoices.Items[0] as TJSONObject;
       LMessage := LChoice.GetValue('message') as TJSONObject;
       if Assigned(LMessage) then
-        Result := LMessage.GetValue('content').Value;
+        Result := LMessage.GetValue<string>('content', '');
     end;
 
     { Check for API error }
@@ -245,10 +245,10 @@ begin
                              if LVal is TJSONObject then
                              begin
                                LModelObj := LVal as TJSONObject;
-                               LId := LModelObj.GetValue('id').Value;
+                               LId := LModelObj.GetValue<string>('id', '');
                                
                                { Filter: gpt-* or o1-* or o3-* (chat and reasoning models) }
-                               if LId.StartsWith('gpt-') or LId.StartsWith('o1-') or LId.StartsWith('o3-') then
+                               if not LId.IsEmpty and (LId.StartsWith('gpt-') or LId.StartsWith('o1-') or LId.StartsWith('o3-')) then
                                begin
                                  LModelsList.Add(LId);
                                end;
@@ -353,9 +353,10 @@ begin
             begin
               LChoice := LChoices.Items[0] as TJSONObject;
               LDelta := LChoice.GetValue('delta') as TJSONObject;
-              if Assigned(LDelta) and Assigned(LDelta.GetValue('content')) then
+              if Assigned(LDelta) then
               begin
-                LContent := LDelta.GetValue('content').Value;
+                LContent := LDelta.GetValue<string>('content', '');
+                if not LContent.IsEmpty then
                 TThread.Queue(nil,
                   procedure
                   begin

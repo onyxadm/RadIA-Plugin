@@ -107,7 +107,7 @@ begin
       LChoice := LChoices.Items[0] as TJSONObject;
       LMessage := LChoice.GetValue('message') as TJSONObject;
       if Assigned(LMessage) then
-        Result := LMessage.GetValue('content').Value;
+        Result := LMessage.GetValue<string>('content', '');
     end;
 
     if Result.IsEmpty and Assigned(LJsonObj.GetValue('error')) then
@@ -234,8 +234,9 @@ begin
                              if LVal is TJSONObject then
                              begin
                                LModelObj := LVal as TJSONObject;
-                               LId := LModelObj.GetValue('id').Value;
-                               LModelsList.Add(LId);
+                               LId := LModelObj.GetValue<string>('id', '');
+                               if not LId.IsEmpty then
+                                 LModelsList.Add(LId);
                              end;
                            end;
                          end;
@@ -337,9 +338,10 @@ begin
             begin
               LChoice := LChoices.Items[0] as TJSONObject;
               LDelta := LChoice.GetValue('delta') as TJSONObject;
-              if Assigned(LDelta) and Assigned(LDelta.GetValue('content')) then
+              if Assigned(LDelta) then
               begin
-                LContent := LDelta.GetValue('content').Value;
+                LContent := LDelta.GetValue<string>('content', '');
+                if not LContent.IsEmpty then
                 TThread.Queue(nil,
                   procedure
                   begin

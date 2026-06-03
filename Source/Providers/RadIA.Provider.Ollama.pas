@@ -99,7 +99,7 @@ begin
       LMsgObj := LJsonObj.GetValue('message') as TJSONObject;
       if Assigned(LMsgObj) then
       begin
-        Result := LMsgObj.GetValue('content').Value;
+        Result := LMsgObj.GetValue<string>('content', '');
       end;
       
       if Result.IsEmpty then
@@ -179,6 +179,7 @@ begin
                  LModelsArr: TJSONArray;
                  LVal: TJSONValue;
                  LModelObj: TJSONObject;
+                 LName: string;
                  LModelsList: TList<string>;
                  LModelsArray: TArray<string>;
                begin
@@ -197,8 +198,10 @@ begin
                            begin
                              if LVal is TJSONObject then
                              begin
-                                LModelObj := LVal as TJSONObject;
-                                LModelsList.Add(LModelObj.GetValue('name').Value);
+                               LModelObj := LVal as TJSONObject;
+                               LName := LModelObj.GetValue<string>('name', '');
+                               if not LName.IsEmpty then
+                                 LModelsList.Add(LName);
                              end;
                            end;
                          end;
@@ -283,9 +286,9 @@ begin
         try
           LContent := '';
           LMsgObj := LJson.GetValue('message') as TJSONObject;
-          if Assigned(LMsgObj) and (LMsgObj.GetValue('content') <> nil) then
+          if Assigned(LMsgObj) then
           begin
-            LContent := LMsgObj.GetValue('content').Value;
+            LContent := LMsgObj.GetValue<string>('content', '');
           end;
 
           LDone := LJson.GetValue<Boolean>('done', False);

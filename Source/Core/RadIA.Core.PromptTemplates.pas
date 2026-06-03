@@ -109,10 +109,12 @@ begin
             if LVal is TJSONObject then
             begin
               LObj := LVal as TJSONObject;
-              LTemplate.Name := LObj.GetValue('name').Value;
-              LTemplate.Description := LObj.GetValue('description').Value;
-              LTemplate.Template := LObj.GetValue('template').Value;
-              FTemplates.Add(LTemplate);
+              LTemplate.Name := LObj.GetValue<string>('name', '');
+              LTemplate.Description := LObj.GetValue<string>('description', '');
+              LTemplate.Template := LObj.GetValue<string>('template', '');
+              
+              if not LTemplate.Name.IsEmpty then
+                FTemplates.Add(LTemplate);
             end;
           end;
         finally

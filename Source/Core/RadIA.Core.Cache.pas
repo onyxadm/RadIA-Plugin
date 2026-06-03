@@ -150,6 +150,7 @@ var
   LVal: TJSONValue;
   LEntryObj: TJSONObject;
   LEntry: TRadIACacheEntry;
+  LHash, LResponse: string;
 begin
   FEntries.Clear;
   FDictionary.Clear;
@@ -174,18 +175,24 @@ begin
           if LVal is TJSONObject then
           begin
             LEntryObj := LVal as TJSONObject;
+            LHash := LEntryObj.GetValue<string>('hash', '');
+            LResponse := LEntryObj.GetValue<string>('response', '');
+            
+            if LHash.IsEmpty then
+              Continue;
+              
             LEntry := TRadIACacheEntry.Create;
-            LEntry.Hash := LEntryObj.GetValue('hash').Value;
-            LEntry.Response := LEntryObj.GetValue('response').Value;
+            LEntry.Hash := LHash;
+            LEntry.Response := LResponse;
             
             try
-              LEntry.Timestamp := ISO8601ToDate(LEntryObj.GetValue('timestamp').Value);
+              LEntry.Timestamp := ISO8601ToDate(LEntryObj.GetValue<string>('timestamp', ''));
             except
               LEntry.Timestamp := Now;
             end;
             
             try
-              LEntry.LastAccessed := ISO8601ToDate(LEntryObj.GetValue('last_accessed').Value);
+              LEntry.LastAccessed := ISO8601ToDate(LEntryObj.GetValue<string>('last_accessed', ''));
             except
               LEntry.LastAccessed := Now;
             end;

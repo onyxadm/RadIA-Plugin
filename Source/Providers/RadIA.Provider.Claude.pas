@@ -118,9 +118,9 @@ begin
       if Assigned(LContentArr) and (LContentArr.Count > 0) then
       begin
         LContentObj := LContentArr.Items[0] as TJSONObject;
-        if Assigned(LContentObj) and (LContentObj.GetValue('text') <> nil) then
+        if Assigned(LContentObj) then
         begin
-          Result := LContentObj.GetValue('text').Value;
+          Result := LContentObj.GetValue<string>('text', '');
         end;
       end;
       
@@ -254,9 +254,10 @@ begin
             if LTypeStr = 'content_block_delta' then
             begin
               LDeltaObj := LJson.GetValue('delta') as TJSONObject;
-              if Assigned(LDeltaObj) and Assigned(LDeltaObj.GetValue('text')) then
+              if Assigned(LDeltaObj) then
               begin
-                LText := LDeltaObj.GetValue('text').Value;
+                LText := LDeltaObj.GetValue<string>('text', '');
+                if not LText.IsEmpty then
                 TThread.Queue(nil,
                   procedure
                   begin

@@ -385,10 +385,10 @@ begin
   if Assigned(LJson) then
   begin
     try
-      LAction := LJson.GetValue('action').Value;
+      LAction := LJson.GetValue<string>('action', '');
       if LAction = 'apply_code' then
       begin
-        LCode := LJson.GetValue('code').Value;
+        LCode := LJson.GetValue<string>('code', '');
         TThread.Queue(nil,
           procedure
           begin
@@ -593,16 +593,19 @@ begin
             if LVal is TJSONObject then
             begin
               LMsgObj := LVal as TJSONObject;
-              LRoleStr := LMsgObj.GetValue('role').Value;
-              LContentStr := LMsgObj.GetValue('content').Value;
+              LRoleStr := LMsgObj.GetValue<string>('role', '');
+              LContentStr := LMsgObj.GetValue<string>('content', '');
               
-              LRole := StringToMessageRole(LRoleStr);
-              LMsg := TRadIAService.CreateMessage(LRole, LContentStr);
-              
-              FHistory := FHistory + [LMsg];
-              
-              { Render message in WebView }
-              PostToWebView('add_message', LRoleStr, LContentStr);
+              if not LContentStr.IsEmpty then
+              begin
+                LRole := StringToMessageRole(LRoleStr);
+                LMsg := TRadIAService.CreateMessage(LRole, LContentStr);
+                
+                FHistory := FHistory + [LMsg];
+                
+                { Render message in WebView }
+                PostToWebView('add_message', LRoleStr, LContentStr);
+              end;
             end;
           end;
         finally
