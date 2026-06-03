@@ -26,6 +26,7 @@ type
     FUnitName: string;
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
+    FLifecycleGuard: IInterface;
     
     procedure RequestRefactoring;
     procedure RenderDiffInBrowser;
@@ -47,6 +48,7 @@ uses
 procedure TFormAIDiff.FormCreate(Sender: TObject);
 begin
   FBrowserInitialized := False;
+  FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.Create;
   FAIService := TRadIAService.Create(FConfig);
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
@@ -56,6 +58,7 @@ end;
 
 procedure TFormAIDiff.FormDestroy(Sender: TObject);
 begin
+  (FLifecycleGuard as ILifecycleGuard).Invalidate;
   FAIService.Free;
 end;
 
@@ -130,7 +133,12 @@ begin
     procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
     var
       LCleanedResponse: string;
+      LGuard: ILifecycleGuard;
     begin
+      LGuard := FLifecycleGuard as ILifecycleGuard;
+      if not LGuard.IsAlive then
+        Exit;
+
       if not AError.IsEmpty then
       begin
         FSuggestedCode := '// Error requesting refactoring: ' + AError + #13#10 + FOriginalCode;
@@ -151,7 +159,12 @@ begin
         FSuggestedCode := LCleanedResponse.Trim;
       end;
       
-      TThread.Queue(nil, RenderDiffInBrowser);
+      TThread.Queue(nil, 
+        procedure
+        begin
+          if LGuard.IsAlive then
+            RenderDiffInBrowser;
+        end);
     end);
 end;
 

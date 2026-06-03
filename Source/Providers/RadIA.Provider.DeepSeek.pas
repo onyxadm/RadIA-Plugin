@@ -289,11 +289,16 @@ var
   LDelta: TJSONObject;
   LContent: string;
   LQueueProc: TThreadProcedure;
+  LIdx: Integer;
 begin
-  while ABuffer.Contains(#10) do
+  while True do
   begin
-    LLine := ABuffer.Substring(0, ABuffer.IndexOf(#10));
-    ABuffer := ABuffer.Substring(ABuffer.IndexOf(#10) + 1);
+    LIdx := ABuffer.IndexOf(#10);
+    if LIdx = -1 then
+      Break;
+      
+    LLine := ABuffer.Substring(0, LIdx);
+    ABuffer := ABuffer.Substring(LIdx + 1);
     
     LLine := Trim(LLine);
     if LLine.StartsWith('data:') then

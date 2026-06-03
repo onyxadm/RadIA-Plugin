@@ -38,7 +38,7 @@ var
   LEditBuffer: IOTAEditBuffer;
   LEditBlock: IOTAEditBlock;
   LEditReader: IOTAEditReader;
-  LBufferText: AnsiString;
+  LBytes: TBytes;
   LBytesRead: Integer;
 begin
   Result := False;
@@ -63,11 +63,19 @@ begin
     LEditReader := LEditBuffer.CreateReader;
     if Assigned(LEditReader) then
     begin
-      SetLength(LBufferText, LEditReader.GetText(0, nil, 0)); // Get size first
-      LBytesRead := LEditReader.GetText(0, PAnsiChar(LBufferText), Length(LBufferText));
-      SetLength(LBufferText, LBytesRead);
-      AText := string(LBufferText);
-      Result := True;
+      SetLength(LBytes, LEditReader.GetText(0, nil, 0)); // Get size first
+      if Length(LBytes) > 0 then
+      begin
+        LBytesRead := LEditReader.GetText(0, PAnsiChar(@LBytes[0]), Length(LBytes));
+        SetLength(LBytes, LBytesRead);
+        AText := TEncoding.UTF8.GetString(LBytes);
+        Result := True;
+      end
+      else
+      begin
+        AText := '';
+        Result := True;
+      end;
     end;
   end;
 end;

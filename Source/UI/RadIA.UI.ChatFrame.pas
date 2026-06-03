@@ -76,39 +76,7 @@ uses
   System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, 
   RadIA.Core.ConversationExporter;
 
-type
-  ILifecycleGuard = interface
-    ['{B95A2B5E-379E-4B0D-9509-5D34C3DE154B}']
-    function IsAlive: Boolean;
-    procedure Invalidate;
-  end;
 
-  TLifecycleGuard = class(TInterfacedObject, ILifecycleGuard)
-  private
-    FIsAlive: Boolean;
-  public
-    constructor Create;
-    function IsAlive: Boolean;
-    procedure Invalidate;
-  end;
-
-{ TLifecycleGuard }
-
-constructor TLifecycleGuard.Create;
-begin
-  inherited Create;
-  FIsAlive := True;
-end;
-
-function TLifecycleGuard.IsAlive: Boolean;
-begin
-  Result := FIsAlive;
-end;
-
-procedure TLifecycleGuard.Invalidate;
-begin
-  FIsAlive := False;
-end;
 
 constructor TFrameAIChat.Create(AOwner: TComponent);
 begin
@@ -569,6 +537,7 @@ var
   LMsg: IChatMessage;
   LRoleStr, LContentStr: string;
   LRole: TAIMessageRole;
+  LParsedVal: TJSONValue;
 begin
   FHistory := [];
   LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
@@ -580,29 +549,37 @@ begin
     if LContent.IsEmpty then
       Exit;
 
-    LJsonArr := TJSONObject.ParseJSONValue(LContent) as TJSONArray;
-    if Assigned(LJsonArr) then
+    LParsedVal := TJSONObject.ParseJSONValue(LContent);
+    if Assigned(LParsedVal) then
     begin
-      try
-        for LVal in LJsonArr do
-        begin
-          if LVal is TJSONObject then
+      if LParsedVal is TJSONArray then
+      begin
+        LJsonArr := LParsedVal as TJSONArray;
+        try
+          for LVal in LJsonArr do
           begin
-            LMsgObj := LVal as TJSONObject;
-            LRoleStr := LMsgObj.GetValue('role').Value;
-            LContentStr := LMsgObj.GetValue('content').Value;
-            
-            LRole := StringToMessageRole(LRoleStr);
-            LMsg := TRadIAService.CreateMessage(LRole, LContentStr);
-            
-            FHistory := FHistory + [LMsg];
-            
-            { Render message in WebView }
-            PostToWebView('add_message', LRoleStr, LContentStr);
+            if LVal is TJSONObject then
+            begin
+              LMsgObj := LVal as TJSONObject;
+              LRoleStr := LMsgObj.GetValue('role').Value;
+              LContentStr := LMsgObj.GetValue('content').Value;
+              
+              LRole := StringToMessageRole(LRoleStr);
+              LMsg := TRadIAService.CreateMessage(LRole, LContentStr);
+              
+              FHistory := FHistory + [LMsg];
+              
+              { Render message in WebView }
+              PostToWebView('add_message', LRoleStr, LContentStr);
+            end;
           end;
+        finally
+          LJsonArr.Free;
         end;
-      finally
-        LJsonArr.Free;
+      end
+      else
+      begin
+        LParsedVal.Free;
       end;
     end;
   except

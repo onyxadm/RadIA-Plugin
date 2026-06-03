@@ -6,6 +6,22 @@ uses
   System.SysUtils, System.Classes, RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 type
+  ILifecycleGuard = interface
+    ['{F4EED9A6-6CBA-43B6-9E39-1E38AA2C7301}']
+    function GetIsAlive: Boolean;
+    procedure Invalidate;
+    property IsAlive: Boolean read GetIsAlive;
+  end;
+
+  TLifecycleGuard = class(TInterfacedObject, ILifecycleGuard)
+  private
+    FIsAlive: Boolean;
+    function GetIsAlive: Boolean;
+  public
+    constructor Create;
+    procedure Invalidate;
+  end;
+
   { Callback type for asynchronous AI responses.
     AResponse   : Text returned by the AI (empty on error)
     AError      : Error description (empty on success)
@@ -72,5 +88,23 @@ type
   end;
 
 implementation
+
+{ TLifecycleGuard }
+
+constructor TLifecycleGuard.Create;
+begin
+  inherited Create;
+  FIsAlive := True;
+end;
+
+function TLifecycleGuard.GetIsAlive: Boolean;
+begin
+  Result := FIsAlive;
+end;
+
+procedure TLifecycleGuard.Invalidate;
+begin
+  FIsAlive := False;
+end;
 
 end.

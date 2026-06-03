@@ -84,6 +84,7 @@ var
   LVal: TJSONValue;
   LObj: TJSONObject;
   LTemplate: TPromptTemplate;
+  LParsedVal: TJSONValue;
 begin
   FTemplates.Clear;
   
@@ -96,23 +97,32 @@ begin
 
   try
     LJsonContent := TFile.ReadAllText(FFilePath, TEncoding.UTF8);
-    LJsonArr := TJSONObject.ParseJSONValue(LJsonContent) as TJSONArray;
-    if Assigned(LJsonArr) then
+    LParsedVal := TJSONObject.ParseJSONValue(LJsonContent);
+    if Assigned(LParsedVal) then
     begin
-      try
-        for LVal in LJsonArr do
-        begin
-          if LVal is TJSONObject then
+      if LParsedVal is TJSONArray then
+      begin
+        LJsonArr := LParsedVal as TJSONArray;
+        try
+          for LVal in LJsonArr do
           begin
-            LObj := LVal as TJSONObject;
-            LTemplate.Name := LObj.GetValue('name').Value;
-            LTemplate.Description := LObj.GetValue('description').Value;
-            LTemplate.Template := LObj.GetValue('template').Value;
-            FTemplates.Add(LTemplate);
+            if LVal is TJSONObject then
+            begin
+              LObj := LVal as TJSONObject;
+              LTemplate.Name := LObj.GetValue('name').Value;
+              LTemplate.Description := LObj.GetValue('description').Value;
+              LTemplate.Template := LObj.GetValue('template').Value;
+              FTemplates.Add(LTemplate);
+            end;
           end;
+        finally
+          LJsonArr.Free;
         end;
-      finally
-        LJsonArr.Free;
+      end
+      else
+      begin
+        LParsedVal.Free;
+        CreateDefaultTemplates;
       end;
     end;
   except

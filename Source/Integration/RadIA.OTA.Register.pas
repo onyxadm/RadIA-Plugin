@@ -147,9 +147,31 @@ begin
 end;
 
 procedure TRadIAWizard.UnregisterMenus;
+var
+  LNTAServices: INTAServices;
+  LToolsMenu: TMenuItem;
+  I: Integer;
+  LHook: TRadIAEditorHook;
 begin
-  // Menu items are freed automatically when their parent menu is freed,
-  // but cleanup logic can be placed here if needed.
+  if not Assigned(FEditorHook) then
+    Exit;
+    
+  LHook := TRadIAEditorHook(FEditorHook);
+  if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
+  begin
+    LToolsMenu := LNTAServices.MainMenu.Items.Find('Tools');
+    if Assigned(LToolsMenu) then
+    begin
+      for I := LToolsMenu.Count - 1 downto 0 do
+      begin
+        if (LToolsMenu.Items[I].Action = LHook.ShowChatAction) or
+           (LToolsMenu.Items[I].Action = LHook.FixErrorAction) then
+        begin
+          LToolsMenu.Items[I].Free;
+        end;
+      end;
+    end;
+  end;
 end;
 
 initialization

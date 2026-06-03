@@ -75,6 +75,9 @@ var
 begin
   LHTTPClient := THTTPClient.Create;
   try
+    LHTTPClient.ConnectionTimeout := 10000;
+    LHTTPClient.SendTimeout := 10000;
+    LHTTPClient.ResponseTimeout := 60000;
     LHTTPClient.AcceptCharSet := 'utf-8';
     
     LResponse := LHTTPClient.Get(AUrl, nil, AHeaders);
@@ -99,6 +102,9 @@ begin
   LHTTPClient := THTTPClient.Create;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   try
+    LHTTPClient.ConnectionTimeout := 10000;
+    LHTTPClient.SendTimeout := 10000;
+    LHTTPClient.ResponseTimeout := 60000;
     LHTTPClient.ContentType := 'application/json';
     LHTTPClient.AcceptCharSet := 'utf-8';
     
@@ -128,6 +134,9 @@ begin
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   LTargetStream := TStreamingTargetStream.Create(AOnWrite);
   try
+    LHTTPClient.ConnectionTimeout := 10000;
+    LHTTPClient.SendTimeout := 10000;
+    LHTTPClient.ResponseTimeout := 60000;
     LHTTPClient.ContentType := 'application/json';
     LHTTPClient.AcceptCharSet := 'utf-8';
     

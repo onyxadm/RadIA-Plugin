@@ -165,6 +165,7 @@ var
   LContent: string;
   LJsonArr: TJSONArray;
   LVal: TJSONValue;
+  LParsedVal: TJSONValue;
 begin
   FHistory.Clear;
   ResetCursor;
@@ -177,17 +178,25 @@ begin
     if LContent.IsEmpty then
       Exit;
 
-    LJsonArr := TJSONObject.ParseJSONValue(LContent) as TJSONArray;
-    if Assigned(LJsonArr) then
+    LParsedVal := TJSONObject.ParseJSONValue(LContent);
+    if Assigned(LParsedVal) then
     begin
-      try
-        for LVal in LJsonArr do
-        begin
-          if FHistory.Count < FMaxSize then
-            FHistory.Add(LVal.Value);
+      if LParsedVal is TJSONArray then
+      begin
+        LJsonArr := LParsedVal as TJSONArray;
+        try
+          for LVal in LJsonArr do
+          begin
+            if FHistory.Count < FMaxSize then
+              FHistory.Add(LVal.Value);
+          end;
+        finally
+          LJsonArr.Free;
         end;
-      finally
-        LJsonArr.Free;
+      end
+      else
+      begin
+        LParsedVal.Free;
       end;
     end;
   except
