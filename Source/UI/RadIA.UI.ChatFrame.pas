@@ -139,7 +139,9 @@ begin
   if not TDirectory.Exists(LSourceDir) then
     Exit;
     
-  LFilesToCopy := TArray<string>.Create('chat.html', 'chat.css', 'chat.js', 'diff.html');
+  LFilesToCopy := TArray<string>.Create('chat.html', 'chat.css', 'chat.js', 'diff.html',
+    'marked.min.js', 'prism.min.js', 'prism-pascal.min.js', 'prism-tomorrow.min.css',
+    'diff2html.min.css', 'diff2html.min.js', 'diff.min.js');
   for LFile in LFilesToCopy do
   begin
     if TFile.Exists(TPath.Combine(LSourceDir, LFile)) then
