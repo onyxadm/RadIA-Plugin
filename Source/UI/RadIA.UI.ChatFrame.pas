@@ -535,6 +535,11 @@ begin
     if LAction = 'apply_code' then
     begin
       LCode := LJson.GetValue<string>('code', '');
+      { Normalize line endings to LF only (#10).
+        The Delphi OTA editor's InsertText works with LF internally.
+        Collapse any CRLF or bare CR to a single LF. }
+      LCode := StringReplace(LCode, #13#10, #10, [rfReplaceAll]);
+      LCode := StringReplace(LCode, #13,    #10, [rfReplaceAll]);
       TThread.Queue(nil,
         procedure
         begin
