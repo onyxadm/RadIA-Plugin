@@ -44,17 +44,17 @@ Esta é a checklist de desenvolvimento para a implementação do plugin **RadIA*
 ---
 
 ## Fase 4: Interface do Usuário (VCL + Edge/WebView2)
-- [ ] **Páginas e Estilos do Chat (Web)**
-  - [ ] Criar `Source/UI/Web/chat.html` com estrutura de mensagens (balões) e suporte a temas Light/Dark
-  - [ ] Criar `Source/UI/Web/chat.css` com estilos limpos e modernos (fontes profissionais, design de caixa de código)
-  - [ ] Criar `Source/UI/Web/chat.js` incluindo Marked.js (Markdown parser) e Prism.js (Syntax Highlighting) e listeners de recebimento de dados do Delphi
-- [ ] **Frames VCL do Chat e Configurações**
-  - [ ] Criar `RadIA.UI.ChatFrame.pas` / `.dfm` gerenciando o `TEdgeBrowser`/`TWebBrowser` e a área de entrada de texto
-  - [ ] Criar `RadIA.UI.ConfigFrame.pas` / `.dfm` contendo a UI VCL para configuração das chaves de API e seleção do modelo ativo de cada IA
-- [ ] **Visualizador de Diff (Smart Diff Form)**
-  - [ ] Criar `RadIA.UI.DiffForm.pas` / `.dfm` implementando a tela modal lado a lado para aceitar ou descartar as refatorações sugeridas via interface web local baseada em `diff2html`
-- [ ] **Formulário Acoplável (Dockable Form)**
-  - [ ] Criar `RadIA.OTA.DockableForm.pas` que implementa `INTADockableForm`, encapsula o frame do chat e se ajusta automaticamente ao tema de cores atual da IDE através de `IOTAThemeServices`
+- [x] **Páginas e Estilos do Chat (Web)**
+  - [x] Criar `Source/UI/Web/chat.html` com estrutura de mensagens (balões) e suporte a temas Light/Dark
+  - [x] Criar `Source/UI/Web/chat.css` com estilos limpos e modernos (fontes profissionais, design de caixa de código)
+  - [x] Criar `Source/UI/Web/chat.js` incluindo Marked.js (Markdown parser) e Prism.js (Syntax Highlighting) e listeners de recebimento de dados do Delphi
+- [x] **Frames VCL do Chat e Configurações**
+  - [x] Criar `RadIA.UI.ChatFrame.pas` / `.dfm` gerenciando o `TEdgeBrowser`/`TWebBrowser` e a área de entrada de texto
+  - [x] Criar `RadIA.UI.ConfigFrame.pas` / `.dfm` contendo a UI VCL para configuração das chaves de API e seleção do modelo ativo de cada IA
+- [x] **Visualizador de Diff (Smart Diff Form)**
+  - [x] Criar `RadIA.UI.DiffForm.pas` / `.dfm` implementando a tela modal lado a lado para aceitar ou descartar as refatorações sugeridas via interface web local baseada em `diff2html`
+- [x] **Formulário Acoplável (Dockable Form)**
+  - [x] Criar `RadIA.OTA.DockableForm.pas` que implementa `INTADockableForm`, encapsula o frame do chat e se ajusta automaticamente ao tema de cores atual da IDE através de `IOTAThemeServices`
 
 ---
 

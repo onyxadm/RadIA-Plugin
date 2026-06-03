@@ -10,6 +10,7 @@ __recovery
 *.log
 *.map
 *.bpl
+*.dcp
 Output
 Win32
 Win64
@@ -32,7 +33,3 @@ node_modules/
 /Sources/*.bpi
 *.dsv
 test-results.xml
-/Sources/*.dext
-*.bpl
-*.dcp
-

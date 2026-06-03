@@ -7,6 +7,7 @@ uses
   RadIA.Core.Types, RadIA.Provider.Base;
 
 type
+  {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAGeminiProvider = class(TRadIAProviderBase)
   private
     function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
