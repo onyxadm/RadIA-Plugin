@@ -1,6 +1,6 @@
 <div align="right">
 
-[🇧🇷 Português](README.md) | [🇺🇸 English](README.en.md)
+[🇧🇷 Português](README.md) | [🇺🇸 English](README.en.md) | [🗺️ Roadmap](ROADMAP.en.md)
 
 </div>
 
