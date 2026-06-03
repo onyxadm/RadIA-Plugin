@@ -69,16 +69,7 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
 
 ## 🔲 Pendentes
 
-### 1. Automatização de DevOps (CI/CD Pipeline)
-*   **Objetivo**: Compilar e empacotar o plugin automaticamente a cada nova versão, evitando processos manuais de geração de binários.
-*   **Detalhamento**:
-    *   Criar um workflow do GitHub Actions rodando em agentes Windows (`windows-latest`).
-    *   Configurar a instalação de ferramentas de build do Delphi ou MSBuild via scripts.
-    *   Compilar o pacote `RadIA.dpk` e o projeto de testes unitários.
-    *   Executar os testes unitários (`RadIATests.exe`) de forma automatizada na pipeline e barrar o deploy se algum teste falhar.
-    *   Compactar o binário compilado `.bpl`, o arquivo de símbolos `.dcp`, a DLL `WebView2Loader.dll` e os recursos web (`Web/*`) em um pacote de distribuição `.zip`.
-
-### 2. Instalador Automatizado (Inno Setup)
+### 1. Instalador Automatizado (Inno Setup)
 *   **Objetivo**: Fornecer uma experiência de instalação fluida ("One-Click Install") para desenvolvedores que desejam apenas utilizar o plugin, sem a necessidade de compilar o código fonte.
 *   **Detalhamento**:
     *   Criar um script Inno Setup (`installer.iss`) para empacotar o plugin.
@@ -87,24 +78,24 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Registrar a BPL no Delphi adicionando uma nova entrada do tipo String no Registro sob a chave `Software\Embarcadero\BDS\<versao>\Known Packages` com o caminho completo da BPL instalada.
     *   Copiar automaticamente a DLL do WebView2 (`WebView2Loader.dll`) e os recursos web (`chat.html`, `chat.css`, etc.) para o local apropriado (pasta `%APPDATA%\RadIA\Web`).
 
-### 3. Múltiplas Sessões de Chat (Item #5)
+### 2. Múltiplas Sessões de Chat (Item #5)
 *   **Objetivo**: Permitir que o desenvolvedor organize conversas por projeto, feature ou tarefa, sem perder o contexto de sessões anteriores.
 *   **Detalhamento**:
     *   Armazenar sessões em `%APPDATA%\RadIA\sessions\<id>.json`, cada uma com nome, data e array de mensagens.
     *   Adicionar painel lateral (ou dropdown) para listar, criar, renomear e excluir sessões.
     *   Botão "Nova Sessão" salva a corrente e abre uma vazia.
 
-### 4. Provedores Nativos: DeepSeek e Groq (Item #9)
+### 3. Provedores Nativos: DeepSeek e Groq (Item #9)
 *   **Objetivo**: Adicionar provedores dedicados com suas particularidades de autenticação e endpoints para melhor UX e maior precisão de configuração.
 *   **Detalhamento**:
     *   `RadIA.Provider.DeepSeek.pas`: endpoint `https://api.deepseek.com/v1/chat/completions`, header `Authorization: Bearer`.
     *   `RadIA.Provider.Groq.pas`: endpoint `https://api.groq.com/openai/v1/chat/completions`, header `Authorization: Bearer`.
 
-### 5. Painel de Gerenciamento do Cache (Item #13)
+### 4. Painel de Gerenciamento do Cache (Item #13)
 *   **Objetivo**: Dar visibilidade e controle sobre o cache de respostas sem precisar editar o arquivo JSON manualmente.
 
-### 6. Revisão Automática de Código no Save (Item #15)
+### 5. Revisão Automática de Código no Save (Item #15)
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção.
 
-### 7. Histórico de Refatorações Aplicadas (Item #16)
+### 6. Histórico de Refatorações Aplicadas (Item #16)
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão [Aplicar Alteração] foi acionado, permitindo revisão e desfazimento manual.
