@@ -34,7 +34,7 @@ if ($compilerVersion -lt 34.0) {
 
 $delphiVer = ""
 switch ($compilerVersion) {
-    37.0 { $delphiVer = "24.0" } # Delphi 13
+    37.0 { $delphiVer = "37.0" } # Delphi 13
     36.0 { $delphiVer = "23.0" } # Delphi 12 Athens
     35.0 { $delphiVer = "22.0" } # Delphi 11 Alexandria
     34.0 { $delphiVer = "21.0" } # Delphi 10.4 Sydney
