@@ -13,7 +13,7 @@ marked.setOptions({
 const renderer = new marked.Renderer();
 renderer.code = function(code, lang) {
   const language = lang || 'pascal';
-  const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const escapedCode = code.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   const isPascal = language.toLowerCase() === 'pascal' || language.toLowerCase() === 'delphi';
   
   return `
