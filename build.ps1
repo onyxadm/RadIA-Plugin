@@ -34,30 +34,36 @@ if ($compilerVersion -lt 34.0) {
 
 $delphiVer = ""
 switch ($compilerVersion) {
-    37.0 { $delphiVer = "23.0" } # Delphi 12 Athens
-    36.0 { $delphiVer = "22.0" } # Delphi 11 Alexandria (Updates)
+    37.0 { $delphiVer = "24.0" } # Delphi 13
+    36.0 { $delphiVer = "23.0" } # Delphi 12 Athens
     35.0 { $delphiVer = "22.0" } # Delphi 11 Alexandria
     34.0 { $delphiVer = "21.0" } # Delphi 10.4 Sydney
     default {
-        # Cálculo aproximado para outras versões mais recentes
-        $calc = $compilerVersion - 14.0
-        $delphiVer = "{0:N1}" -f $calc
+        $delphiVer = "{0:N1}" -f $compilerVersion
     }
 }
 
 Write-Host "Versão do Delphi correspondente (DelphiVer): $delphiVer" -ForegroundColor Green
 
-# 3. Definir caminhos de Output
+# 3. Definir plataforma e compilador do pacote de acordo com a arquitetura da IDE
+# A partir do Delphi 11 Alexandria (compilador >= 35.0), a IDE bds.exe é de 64 bits, exigindo BPLs de 64 bits.
+$platform = "Win32"
+$compiler = "dcc32"
+if ($compilerVersion -ge 35.0) {
+    $platform = "Win64"
+    $compiler = "dcc64"
+}
+
 $configName = "Debug"
 if ($Release) {
     $configName = "Release"
 }
 
 $outputRoot = ".\Output\$delphiVer"
-$dcuPath = "$outputRoot\dcu\Win32\$configName"
-$binPath = "$outputRoot\bin\Win32\$configName"
-$bplPath = "$outputRoot\bpl"
-$dcpPath = "$outputRoot\dcp"
+$dcuPath = "$outputRoot\dcu\$platform\$configName"
+$binPath = "$outputRoot\bin\$platform\$configName"
+$bplPath = "$outputRoot\bpl\$platform"
+$dcpPath = "$outputRoot\dcp\$platform"
 
 # 4. Criar estrutura de pastas
 Write-Host "Criando diretórios de output..." -ForegroundColor Yellow
@@ -71,14 +77,14 @@ Get-ChildItem -Path . -Recurse -Include *.dcu, *.exe, *.bpl, *.dcp, *.identcache
 Write-Host "Compilando recursos RadIA.rc..." -ForegroundColor Yellow
 & brcc32 RadIA.rc
 
-Write-Host "Compilando RadIA.dpk em modo $configName..." -ForegroundColor Yellow
+Write-Host "Compilando RadIA.dpk ($platform) em modo $configName..." -ForegroundColor Yellow
 $dccParams = @("-Q", "-LUdesignide", "-LUvclie", "-NU$dcuPath", "-LE$bplPath", "-LN$dcpPath")
 if ($Release) {
     $dccParams += @('-$D-', '-$L-', '-O+', '-DRELEASE')
 } else {
     $dccParams += @('-$D+', '-$L+', '-O-', '-DDEBUG')
 }
-& dcc32 $dccParams RadIA.dpk
+& $compiler $dccParams RadIA.dpk
 
 # 7. Compilar Suite de Testes (Tests/RadIATests.dpr)
 Write-Host "Compilando suite de testes RadIATests.dpr em modo $configName..." -ForegroundColor Yellow
@@ -129,8 +135,8 @@ if ($Install) {
     $targetDcp = "$publicDcpDir\RadIA.dcp"
 
     Write-Host "Copiando binários e recursos para as pastas da IDE..." -ForegroundColor Yellow
-    Copy-Item -Path ".\Output\$delphiVer\bpl\RadIA.bpl" -Destination $targetBpl -Force
-    Copy-Item -Path ".\Output\$delphiVer\dcp\RadIA.dcp" -Destination $targetDcp -Force
+    Copy-Item -Path ".\Output\$delphiVer\bpl\$platform\RadIA.bpl" -Destination $targetBpl -Force
+    Copy-Item -Path ".\Output\$delphiVer\dcp\$platform\RadIA.dcp" -Destination $targetDcp -Force
 
     $targetWeb = "$publicBplDir\Web"
     Write-Host "Copiando pasta de recursos Web locais..." -ForegroundColor Yellow
