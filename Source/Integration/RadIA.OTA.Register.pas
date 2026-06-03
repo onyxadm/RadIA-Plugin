@@ -183,6 +183,7 @@ begin
   begin
     LThemingServices.RegisterFormClass(TFormAIDiff);
     LThemingServices.RegisterFormClass(TFormAIConfig);
+    LThemingServices.RegisterFormClass(TFormRadIADockable);
   end;
   
   FEditorHook := TRadIAEditorHook.Create(nil);

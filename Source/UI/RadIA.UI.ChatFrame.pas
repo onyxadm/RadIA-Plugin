@@ -401,9 +401,17 @@ end;
 
 procedure TFrameAIChat.UpdateVCLColors(const AThemeName: string);
 var
+  LThemingServices: IOTAIDEThemingServices;
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
 begin
+  { Se a estilização da IDE estiver ativa, deixamos que o VCL Styles gerencie a pintura }
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+      Exit;
+  end;
+
   LIsDark := SameText(AThemeName, 'dark');
   
   if LIsDark then
