@@ -139,6 +139,40 @@ Para compilar o pacote principal, executar os testes unitários de forma automat
 4. O script detectará automaticamente a versão ativa do compilador, criará os diretórios de saída isolados por versão (ex: `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), executará a limpeza de arquivos DCU temporários das pastas de fontes, compilará o pacote principal, compilará os testes unitários e rodará automaticamente a suite de validação de testes.
 5. Se o parâmetro `-Install` foi informado, o script também copiará os arquivos de saída (`RadIA.bpl` e `RadIA.dcp`) para as pastas oficiais do Delphi (`C:\Users\Public\Documents\Embarcadero\Studio\<versao>\Bpl` e `Dcp`) e registrará o plugin na chave de Registro `Known Packages` do Delphi da respectiva versão detectada.
 
+### 5.4 Guia de Obtenção de Chaves de API e Configurações por Provedor
+
+Para configurar e utilizar o RadIA com os seus respectivos provedores de inteligência artificial, você precisará gerar e inserir as chaves de API nas configurações do plugin (**Settings** no topo do painel). Abaixo estão as instruções e links para cada provedor:
+
+1. **Google Gemini (Recomendado)**
+   * **Como obter:** Acesse o console do [Google AI Studio](https://aistudio.google.com/).
+   * **Passo a passo:** Faça login com uma conta Google, clique no botão **Create API Key** no painel lateral esquerdo, selecione o seu projeto e copie a chave gerada.
+   * **Modelos Sugeridos:** `gemini-1.5-flash` ou `gemini-1.5-pro` (ou mais recentes).
+
+2. **OpenAI ChatGPT**
+   * **Como obter:** Acesse a [OpenAI Platform](https://platform.openai.com/).
+   * **Passo a passo:** Faça login, navegue até a seção **API Keys** no menu lateral, clique em **Create new secret key**, nomeie-a e copie o token gerado (iniciado em `sk-`). *Nota: É necessário possuir créditos ativos na plataforma da OpenAI.*
+   * **Modelos Sugeridos:** `gpt-4o-mini`, `gpt-4o`.
+
+3. **Anthropic Claude**
+   * **Como obter:** Acesse o [Anthropic Console](https://console.anthropic.com/).
+   * **Passo a passo:** Faça login, acesse a aba **API Keys**, clique em **Create Key** e copie a chave gerada (iniciada em `sk-ant-`). *Nota: Requer saldo de recarga pré-pago na plataforma.*
+   * **Modelos Sugeridos:** `claude-3-5-sonnet-latest`, `claude-3-haiku`.
+
+4. **DeepSeek**
+   * **Como obter:** Acesse o [DeepSeek Console](https://platform.deepseek.com/).
+   * **Passo a passo:** Crie uma conta ou faça login, acesse a seção **API Keys**, clique em **Create API Key** e copie a chave gerada.
+   * **Modelos Sugeridos:** `deepseek-chat` (para conversação e refatoração geral) ou `deepseek-reasoning` (para problemas lógicos profundos).
+
+5. **Groq Cloud (Ultrarrápido)**
+   * **Como obter:** Acesse o [Groq Console](https://console.groq.com/).
+   * **Passo a passo:** Crie sua conta, acesse a seção **API Keys**, clique em **Create API Key** e copie a chave gerada (iniciada em `gsk_`).
+   * **Modelos Sugeridos:** `llama-3.3-70b-versatile`, `mixtral-8x7b-32768`.
+
+6. **Ollama (Modelos Locais Sem Custos)**
+   * **Como obter:** Não requer chaves de API. Baixe e instale o [Ollama](https://ollama.com).
+   * **Configuração:** O plugin tenta se conectar automaticamente ao endereço de loopback padrão `http://localhost:11434`. Certifique-se de baixar o modelo que deseja usar executando no terminal de comandos do Windows (CMD/PowerShell) o comando: `ollama pull llama3` (ou o modelo de sua preferência).
+   * **Uso em Rede:** Caso o Ollama esteja rodando em outro servidor na sua rede, configure a variável de ambiente `OLLAMA_HOST=0.0.0.0` na máquina servidora para permitir conexões externas e insira o IP correspondente (exemplo: `http://192.168.1.100:11434`) no painel de configurações do RadIA.
+
 ### 6. Estrutura do Repositório
 ```
 PluginDelphiIA/

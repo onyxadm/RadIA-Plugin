@@ -139,6 +139,40 @@ To compile the main package, run the unit tests in an automated way, or perform 
 4. The script will automatically detect the active compiler version, create the version-isolated output directories (e.g., `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), clean up temporary DCU files from source folders, compile the main package, compile the unit tests, and automatically run the validation test suite.
 5. If the `-Install` switch is provided, the script will also copy the output files (`RadIA.bpl` and `RadIA.dcp`) to the official Delphi folders (`C:\Users\Public\Documents\Embarcadero\Studio\<version>\Bpl` and `Dcp`) and register the plugin under the `Known Packages` Registry key for the detected Delphi version.
 
+### 5.4 API Key Acquisition & Configuration Guide
+
+To configure and use RadIA with its supported AI providers, you need to generate and enter the API keys in the settings dialog (**Settings** at the top of the chat panel). Below are the instructions and direct links for each provider:
+
+1. **Google Gemini (Recommended)**
+   * **How to obtain:** Access the [Google AI Studio Console](https://aistudio.google.com/).
+   * **Step-by-step:** Log in with a Google account, click the **Create API Key** button on the left sidebar menu, select your project, and copy the generated key.
+   * **Suggested Models:** `gemini-1.5-flash` or `gemini-1.5-pro` (or newer).
+
+2. **OpenAI ChatGPT**
+   * **How to obtain:** Access the [OpenAI Platform](https://platform.openai.com/).
+   * **Step-by-step:** Log in, navigate to the **API Keys** section in the side menu, click **Create new secret key**, give it an optional name, and copy the generated token (starts with `sk-`). *Note: Requires active pre-paid credits on the OpenAI platform.*
+   * **Suggested Models:** `gpt-4o-mini`, `gpt-4o`.
+
+3. **Anthropic Claude**
+   * **How to obtain:** Access the [Anthropic Console](https://console.anthropic.com/).
+   * **Step-by-step:** Log in, go to the **API Keys** tab, click **Create Key**, and copy the token (starts with `sk-ant-`). *Note: Requires a pre-paid balance on the Anthropic account.*
+   * **Suggested Models:** `claude-3-5-sonnet-latest`, `claude-3-haiku`.
+
+4. **DeepSeek**
+   * **How to obtain:** Access the [DeepSeek Platform Console](https://platform.deepseek.com/).
+   * **Step-by-step:** Create an account or log in, go to the **API Keys** section, click **Create API Key**, and copy it.
+   * **Suggested Models:** `deepseek-chat` (for general coding/chat) or `deepseek-reasoning` (for deep logical thinking).
+
+5. **Groq Cloud (High-Speed Inference)**
+   * **How to obtain:** Access the [Groq Console](https://console.groq.com/).
+   * **Step-by-step:** Sign up, navigate to **API Keys**, click **Create API Key**, and copy it (starts with `gsk_`).
+   * **Suggested Models:** `llama-3.3-70b-versatile`, `mixtral-8x7b-32768`.
+
+6. **Ollama (Free Local Models)**
+   * **How to obtain:** No API key required! Simply download and install [Ollama](https://ollama.com).
+   * **Configuration:** The plugin connects automatically to the default loopback address `http://localhost:11434`. Pull the model you want to run by executing in CMD or PowerShell: `ollama pull llama3` (or any model of your choice).
+   * **Network Use:** If Ollama runs on a remote machine in your network, configure the `OLLAMA_HOST=0.0.0.0` environment variable on the server to listen on all interfaces, and enter the remote URL (e.g., `http://192.168.1.100:11434`) in the RadIA settings panel.
+
 ### 6. Repository Structure
 ```
 PluginDelphiIA/

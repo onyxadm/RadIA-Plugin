@@ -43,7 +43,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON;
+  System.IOUtils, System.JSON, ToolsAPI;
 
 procedure TFormAIDiff.FormCreate(Sender: TObject);
 begin
@@ -69,11 +69,25 @@ begin
 end;
 
 procedure TFormAIDiff.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+var
+  LThemingServices: IOTAIDEThemingServices;
+  LThemeName: string;
 begin
   if Succeeded(AResult) then
   begin
     FBrowserInitialized := True;
-    PostToWebView('set_theme', 'dark');
+    
+    LThemeName := 'light';
+    if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+    begin
+      if LThemingServices.IDEThemingEnabled then
+      begin
+        if SameText(LThemingServices.ActiveTheme, 'Dark') then
+          LThemeName := 'dark';
+      end;
+    end;
+    
+    PostToWebView('set_theme', LThemeName);
     RequestRefactoring;
   end;
 end;
@@ -122,6 +136,7 @@ end;
 procedure TFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
+  LGuard: ILifecycleGuard;
 begin
   LPrompt := 'Refactor and optimize the following Delphi Pascal code. ' +
              'Ensure it follows clean code principles, SOLID, and Delphi performance best practices. ' +
@@ -129,13 +144,13 @@ begin
              'If you wrap it in markdown code blocks, use ```pascal.' +
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
+  LGuard := FLifecycleGuard as ILifecycleGuard;
+             
   FAIService.SendPrompt(LPrompt, [],
     procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
     var
       LCleanedResponse: string;
-      LGuard: ILifecycleGuard;
     begin
-      LGuard := FLifecycleGuard as ILifecycleGuard;
       if not LGuard.IsAlive then
         Exit;
 
