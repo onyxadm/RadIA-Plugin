@@ -85,10 +85,15 @@ This option automatically compiles the plugin, runs unit tests, copies the binar
 
 1. Open the Windows PowerShell console.
 2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
-3. Run the following command in the project root directory:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
-   ```
+3. Run the command in the project root directory according to your IDE's architecture:
+   * **For the default 32-bit IDE (Recommended)**:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
+     ```
+   * **For the 64-bit IDE (Delphi 13 Florence)**:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install -IDE64
+     ```
 4. Done! The plugin will be installed and active on the next startup of the IDE.
 
 #### Option B: Manual Installation via IDE
@@ -134,6 +139,7 @@ To compile the main package, run the unit tests in an automated way, or perform 
 
 *   `-Install`: Compiles the plugin, runs the unit tests, copies the BPL/DCP to the Delphi public documents directory, and registers the package in the Windows Registry (`Known Packages`) for the detected IDE version.
 *   `-Release`: Compiles the plugin and unit tests in Release (Production) configuration, disabling debug symbols and debug information (generating a significantly smaller and faster BPL) and enabling Delphi compiler optimizations.
+*   `-IDE64`: Compiles and installs the plugin specifically for the 64-bit Delphi IDE (available from Delphi 13 Florence), generating the Win64 binary and registering it in the corresponding 64-bit `Known Packages` Registry key (`BDS\<version>_x64`). If omitted, compiles for the default 32-bit IDE (Win32).
 
 Example commands:
 
