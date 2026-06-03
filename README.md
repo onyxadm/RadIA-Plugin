@@ -37,6 +37,10 @@ A interface utiliza uma arquitetura híbrida:
 *   **API Keys:** Chaves de desenvolvedor ativas obtidas em seus respectivos consoles: [Google AI Studio](https://aistudio.google.com/) (Gemini), [OpenAI Platform](https://platform.openai.com/) (ChatGPT) e [Anthropic Console](https://console.anthropic.com/) (Claude).
 
 ### 5. Instalação
+
+> [!IMPORTANT]
+> **Modelo Bring Your Own Key (BYOK):** O RadIA exige chaves de API válidas e ativas para funcionar. Se você não configurar pelo menos uma API Key (Gemini, OpenAI ou Claude) nas configurações do plugin, as funções de chat e as ações de contexto do editor não poderão ser utilizadas e retornarão erros de credenciais.
+
 1.  Clone este repositório em sua máquina.
 2.  Abra o grupo de projetos `RadIA.groupproj` no Delphi.
 3.  Clique com o botão direito em `RadIA.bpl` no Project Manager e selecione **Build**.
@@ -112,6 +116,10 @@ The user interface uses a hybrid architecture:
 *   **API Keys:** Active developer keys obtained from their respective consoles: [Google AI Studio](https://aistudio.google.com/) (Gemini), [OpenAI Platform](https://platform.openai.com/) (ChatGPT), and [Anthropic Console](https://console.anthropic.com/) (Claude).
 
 ### 5. Installation
+
+> [!IMPORTANT]
+> **Bring Your Own Key (BYOK) Model:** RadIA requires active and valid API keys to function. If you do not configure at least one API Key (Gemini, OpenAI, or Claude) in the settings, the chat panel and context menu editor actions will not be usable and will return credential errors.
+
 1.  Clone this repository to your computer.
 2.  Open the project group `RadIA.groupproj` in Delphi.
 3.  Right-click on `RadIA.bpl` in the Project Manager and click **Build**.
