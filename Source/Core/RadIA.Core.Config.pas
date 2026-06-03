@@ -92,6 +92,27 @@ begin
   end;
 end;
 
+function CleanApiKey(const AValue: string): string;
+var
+  I: Integer;
+  C: Char;
+begin
+  Result := '';
+  for I := 1 to Length(AValue) do
+  begin
+    C := AValue[I];
+    if ((C >= 'a') and (C <= 'z')) or
+       ((C >= 'A') and (C <= 'Z')) or
+       ((C >= '0') and (C <= '9')) or
+       (C = '.') or (C = '-') or (C = '_') or
+       (C = '/') or (C = '+') or (C = '=') or
+       (C = '@') or (C = ':') then
+    begin
+      Result := Result + C;
+    end;
+  end;
+end;
+
 constructor TRadIAConfig.Create;
 begin
   inherited Create;
@@ -434,7 +455,7 @@ end;
 
 procedure TRadIAConfig.SetApiKey(const AProvider: TAIProviderType; const AKey: string);
 begin
-  FApiKeys[AProvider] := AKey;
+  FApiKeys[AProvider] := CleanApiKey(AKey);
 end;
 
 procedure TRadIAConfig.SetSystemPrompt(const AValue: string);
@@ -509,8 +530,8 @@ begin
     try
       SetLength(LBytes, LOutBlob.cbData);
       Move(LOutBlob.pbData^, LBytes[0], LOutBlob.cbData);
-      Result := TEncoding.UTF8.GetString(LBytes);
-      LogDebug('TRadIAConfig.UnprotectString: Decrypted successfully. Result length: ' + IntToStr(Length(Result)));
+      Result := CleanApiKey(TEncoding.UTF8.GetString(LBytes));
+      LogDebug('TRadIAConfig.UnprotectString: Decrypted and cleaned successfully. Result length: ' + IntToStr(Length(Result)));
     finally
       LocalFree(HLOCAL(LOutBlob.pbData));
     end;

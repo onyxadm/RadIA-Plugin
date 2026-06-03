@@ -47,6 +47,7 @@ var
   Logger: ITestLogger;
 begin
   try
+    TRadIAConfig.SetBaseRegistryPath('Software\RadIA\Tests');
     Runner := TDUnitX.CreateRunner;
     Runner.UseRTTI := True;
     
