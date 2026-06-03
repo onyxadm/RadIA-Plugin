@@ -301,15 +301,31 @@ var
   LDelta: TJSONObject;
   LContent: string;
   LIdx: Integer;
+  LStartPos: Integer;
+  LPtr: PChar;
+  LLen: Integer;
+  LLastProcessedPos: Integer;
 begin
-  while True do
+  LLen := ABuffer.Length;
+  if LLen = 0 then
+    Exit;
+
+  LPtr := PChar(ABuffer);
+  LStartPos := 0;
+  LLastProcessedPos := 0;
+  
+  while LStartPos < LLen do
   begin
-    LIdx := ABuffer.IndexOf(#10);
-    if LIdx = -1 then
+    LIdx := LStartPos;
+    while (LIdx < LLen) and (LPtr[LIdx] <> #10) do
+      Inc(LIdx);
+      
+    if LIdx >= LLen then
       Break;
       
-    LLine := ABuffer.Substring(0, LIdx);
-    ABuffer := ABuffer.Substring(LIdx + 1);
+    LLine := ABuffer.Substring(LStartPos, LIdx - LStartPos);
+    LStartPos := LIdx + 1;
+    LLastProcessedPos := LStartPos;
     
     LLine := Trim(LLine);
     if LLine.StartsWith('data:') then
@@ -322,6 +338,8 @@ begin
           begin
             ACallback('', True, '');
           end);
+        
+        ABuffer := ABuffer.Substring(LLastProcessedPos);
         Exit;
       end;
       
@@ -353,6 +371,11 @@ begin
         { Ignore JSON parse errors }
       end;
     end;
+  end;
+  
+  if LLastProcessedPos > 0 then
+  begin
+    ABuffer := ABuffer.Substring(LLastProcessedPos);
   end;
 end;
 

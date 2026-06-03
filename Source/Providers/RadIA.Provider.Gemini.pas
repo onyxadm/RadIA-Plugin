@@ -354,7 +354,6 @@ var
   LOpenBrackets: Integer;
   I: Integer;
   LInString: Boolean;
-  LChar: Char;
   LCandidateStr: string;
   LJson: TJSONObject;
   LCandidates: TJSONArray;
@@ -363,6 +362,8 @@ var
   LParts: TJSONArray;
   LPart: TJSONObject;
   LText: string;
+  LPtr: PChar;
+  LLen: Integer;
 begin
   while True do
   begin
@@ -372,20 +373,21 @@ begin
 
     LOpenBrackets := 0;
     LInString := False;
+    LLen := ABuffer.Length;
+    LPtr := PChar(ABuffer);
     I := 0;
-    while I < ABuffer.Length do
+    while I < LLen do
     begin
-      LChar := ABuffer.Chars[I];
-      if LChar = '"' then
+      if LPtr[I] = '"' then
       begin
-        if (I = 0) or (ABuffer.Chars[I - 1] <> '\') then
+        if (I = 0) or (LPtr[I - 1] <> '\') then
           LInString := not LInString;
       end
       else if not LInString then
       begin
-        if LChar = '{' then
+        if LPtr[I] = '{' then
           Inc(LOpenBrackets)
-        else if LChar = '}' then
+        else if LPtr[I] = '}' then
         begin
           Dec(LOpenBrackets);
           if LOpenBrackets = 0 then
@@ -437,7 +439,7 @@ begin
       Inc(I);
     end;
 
-    if I >= ABuffer.Length then
+    if I >= LLen then
       Break;
   end;
 end;

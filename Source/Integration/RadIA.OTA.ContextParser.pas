@@ -60,22 +60,59 @@ var
   LClassName: string;
   LClassStartLine, LClassEndLine: Integer;
   LSb: TStringBuilder;
+  LStartLine, LEndLine: Integer;
+  LStartPos, LEndPos: Integer;
+  LCharCount, LCurLine: Integer;
+  LWindowText: string;
+  LRelativeLine: Integer;
 begin
   Result := '';
   if ASourceCode.IsEmpty then
     Exit;
     
+  { Otimização de Heap: Limitar análise a uma janela de 400 linhas ao redor do cursor }
+  LStartLine := ALine - 200;
+  if LStartLine < 1 then
+    LStartLine := 1;
+  LEndLine := ALine + 200;
+
+  LStartPos := 1;
+  LEndPos := ASourceCode.Length;
+  LCharCount := ASourceCode.Length;
+  LCurLine := 1;
+  I := 1;
+  while I <= LCharCount do
+  begin
+    if ASourceCode.Chars[I - 1] = #10 then
+    begin
+      Inc(LCurLine);
+      if LCurLine = LStartLine then
+      begin
+        LStartPos := I + 1;
+      end;
+      if LCurLine = LEndLine + 1 then
+      begin
+        LEndPos := I;
+        Break;
+      end;
+    end;
+    Inc(I);
+  end;
+
+  LWindowText := ASourceCode.Substring(LStartPos - 1, LEndPos - LStartPos + 1);
+  LRelativeLine := ALine - LStartLine + 1;
+
   LLines := TStringList.Create;
   try
-    LLines.Text := ASourceCode;
-    if (ALine < 1) or (ALine > LLines.Count) then
+    LLines.Text := LWindowText;
+    if (LRelativeLine < 1) or (LRelativeLine > LLines.Count) then
       Exit;
       
     { 1. Look backwards from the cursor line to find a class declaration like "TMyClass = class" }
     LClassName := '';
     LClassStartLine := -1;
     
-    for I := ALine - 1 downto 0 do
+    for I := LRelativeLine - 1 downto 0 do
     begin
       LCurLineText := LLines[I];
       if ContainsText(LCurLineText, 'class') and ContainsText(LCurLineText, '=') then

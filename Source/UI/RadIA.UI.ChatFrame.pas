@@ -61,6 +61,7 @@ type
     procedure SavePromptHistory;
     procedure LoadTemplatesMenu;
     procedure OnTemplateMenuClick(Sender: TObject);
+    procedure ApplyIDETheme;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -73,7 +74,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, 
+  System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigFrame, 
   RadIA.Core.ConversationExporter;
 
 
@@ -340,13 +341,34 @@ begin
   PostToWebView('set_theme', '', AThemeName.ToLower);
 end;
 
+procedure TFrameAIChat.ApplyIDETheme;
+var
+  LThemingServices: IOTAIDEThemingServices;
+  LActiveTheme: string;
+begin
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LActiveTheme := LThemingServices.ActiveTheme;
+      if SameText(LActiveTheme, 'Dark') then
+        SetTheme('dark')
+      else
+        SetTheme('light');
+    end
+    else
+      SetTheme('light');
+  end
+  else
+    SetTheme('dark');
+end;
+
 procedure TFrameAIChat.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
 begin
   if Succeeded(AResult) then
   begin
     FBrowserInitialized := True;
-    // Set default dark theme to match IDE
-    SetTheme('dark');
+    ApplyIDETheme;
     LoadChatHistory;
   end;
 end;
