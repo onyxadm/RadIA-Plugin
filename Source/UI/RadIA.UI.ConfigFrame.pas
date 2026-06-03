@@ -52,6 +52,12 @@ implementation
 
 {$R *.dfm}
 
+uses
+  System.IOUtils, System.JSON;
+
+type
+  TTabSheetColorHack = class(TTabSheet);
+
 constructor TFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
@@ -79,6 +85,7 @@ procedure TFrameAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
+  I: Integer;
 begin
   LIsDark := SameText(AThemeName, 'dark');
   
@@ -98,6 +105,13 @@ begin
   Self.Color := LBgColor;
   pnlFooter.Color := LBgColor;
   pnlFooter.ParentBackground := False;
+
+  { Apply theme to all tabs in the PageControl to avoid default white backgrounds }
+  for I := 0 to pgcSettings.PageCount - 1 do
+  begin
+    TTabSheetColorHack(pgcSettings.Pages[I]).ParentBackground := False;
+    TTabSheetColorHack(pgcSettings.Pages[I]).Color := LBgColor;
+  end;
 
   // Memo do System Prompt
   memSystemPrompt.Color := LInputBgColor;
@@ -157,13 +171,13 @@ begin
 
   if not LOllamaUrl.IsEmpty and not (LOllamaUrl.StartsWith('http://', True) or LOllamaUrl.StartsWith('https://', True)) then
   begin
-    ShowMessage('A URL do Ollama deve iniciar com http:// ou https://');
+    ShowMessage('Ollama URL must start with http:// or https://');
     Exit;
   end;
 
   if not LOpenAIUrl.IsEmpty and not (LOpenAIUrl.StartsWith('http://', True) or LOpenAIUrl.StartsWith('https://', True)) then
   begin
-    ShowMessage('A Custom Base URL da OpenAI deve iniciar com http:// ou https://');
+    ShowMessage('OpenAI Custom Base URL must start with http:// or https://');
     Exit;
   end;
 

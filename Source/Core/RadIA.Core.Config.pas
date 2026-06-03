@@ -73,13 +73,24 @@ function CryptUnprotectData(pDataIn: PDataBlob; ppszDataDescr: Pointer;
 constructor TRadIAConfig.Create;
 var
   LSettings: TFormatSettings;
+  LBdsVersion: Double;
 begin
   inherited Create;
   LSettings := TFormatSettings.Create('en-US');
   if FBaseRegistryPath.IsEmpty then
-    FRegistryPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA', [CompilerVersion], LSettings)
+  begin
+    { Delphi BDS version in registry is always compiler version minus 13.0, }
+    { except from Delphi 13 (CompilerVersion 37.0) onwards where it matches CompilerVersion }
+    if CompilerVersion >= 37.0 then
+      LBdsVersion := CompilerVersion
+    else
+      LBdsVersion := CompilerVersion - 13.0;
+      
+    FRegistryPath := Format('Software\Embarcadero\BDS\%0.1f\AIPlugin', [LBdsVersion], LSettings);
+  end
   else
     FRegistryPath := FBaseRegistryPath;
+    
   FActiveProvider := ptGemini;
   FApiKeys[ptGemini] := '';
   FApiKeys[ptOpenAI] := '';
@@ -164,6 +175,7 @@ var
   LReg: TRegistry;
   LProvider: TAIProviderType;
   LProvStr: string;
+  LProvPath: string;
   LMaxHist: Integer;
   LMigratedPath: string;
   LParentPath: string;
@@ -210,39 +222,81 @@ begin
       end;
     end;
 
+    { 1. Ler chaves globais da raiz (AIPlugin) }
     if LReg.OpenKeyReadOnly(FRegistryPath) then
     begin
       FActiveProvider    := TAIProviderType(ReadRegInt(LReg, 'ActiveProvider', Integer(ptGemini)));
       FSystemPrompt      := ReadRegString(LReg, 'SystemPrompt', '');
+      
+      { Fallback temporário das chaves legadas da raiz caso o usuário ainda não as tenha salvado nas subchaves }
       FOllamaBaseUrl     := ReadRegString(LReg, 'OllamaBaseUrl', 'http://localhost:11434');
       FOpenAICustomBaseUrl := ReadRegString(LReg, 'OpenAICustomBaseUrl', '');
 
       LMaxHist := ReadRegInt(LReg, 'MaxHistoryMessages', 20);
       FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, 20);
+      LReg.CloseKey;
+    end;
 
-      for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+    { 2. Ler configurações específicas de cada provedor em suas respectivas subchaves }
+    for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+    begin
+      LProvStr := ProviderTypeToString(LProvider);
+      LProvPath := FRegistryPath + '\' + LProvStr;
+
+      if LReg.OpenKeyReadOnly(LProvPath) then
       begin
-        LProvStr := ProviderTypeToString(LProvider);
-
-        { Load API Key }
+        { Load API Key from Subkey }
         try
-          if LReg.ValueExists(LProvStr + '_ApiKey') then
-            FApiKeys[LProvider] := UnprotectString(LReg.ReadString(LProvStr + '_ApiKey'))
+          if LReg.ValueExists('ApiKey') then
+            FApiKeys[LProvider] := UnprotectString(LReg.ReadString('ApiKey'))
           else
             FApiKeys[LProvider] := '';
         except
           FApiKeys[LProvider] := '';
         end;
 
-        { Load Active Model }
+        { Load Active Model from Subkey (matching 'Model' as shown in Registry) }
         try
-          if LReg.ValueExists(LProvStr + '_ActiveModel') then
-            FActiveModels[LProvider] := LReg.ReadString(LProvStr + '_ActiveModel');
+          if LReg.ValueExists('Model') then
+            FActiveModels[LProvider] := LReg.ReadString('Model')
+          else if LReg.ValueExists('ActiveModel') then
+            FActiveModels[LProvider] := LReg.ReadString('ActiveModel');
         except
-          // Keep defaults if failed
+        end;
+
+        { Load BaseURL from Subkey (matching 'BaseURL' in Registry) }
+        if LReg.ValueExists('BaseURL') then
+        begin
+          if LProvider = ptOpenAI then
+            FOpenAICustomBaseUrl := LReg.ReadString('BaseURL')
+          else if LProvider = ptOllama then
+            FOllamaBaseUrl := LReg.ReadString('BaseURL');
+        end;
+
+        LReg.CloseKey;
+      end
+      else
+      begin
+        { Fallback: Tenta ler no formato legado prefixado diretamente na raiz }
+        if LReg.OpenKeyReadOnly(FRegistryPath) then
+        begin
+          try
+            if LReg.ValueExists(LProvStr + '_ApiKey') then
+              FApiKeys[LProvider] := UnprotectString(LReg.ReadString(LProvStr + '_ApiKey'))
+            else
+              FApiKeys[LProvider] := '';
+          except
+            FApiKeys[LProvider] := '';
+          end;
+
+          try
+            if LReg.ValueExists(LProvStr + '_ActiveModel') then
+              FActiveModels[LProvider] := LReg.ReadString(LProvStr + '_ActiveModel');
+          except
+          end;
+          LReg.CloseKey;
         end;
       end;
-      LReg.CloseKey;
     end;
   finally
     LReg.Free;
@@ -278,25 +332,40 @@ var
   LReg: TRegistry;
   LProvider: TAIProviderType;
   LProvStr: string;
+  LProvPath: string;
 begin
   LReg := TRegistry.Create;
   try
     LReg.RootKey := HKEY_CURRENT_USER;
+    
+    { 1. Salvar chaves globais na raiz }
     if LReg.OpenKey(FRegistryPath, True) then
     begin
       LReg.WriteInteger('ActiveProvider', Integer(FActiveProvider));
       LReg.WriteString('SystemPrompt', FSystemPrompt);
-      LReg.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
       LReg.WriteInteger('MaxHistoryMessages', FMaxHistoryMessages);
-      LReg.WriteString('OpenAICustomBaseUrl', FOpenAICustomBaseUrl);
-
-      for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
-      begin
-        LProvStr := ProviderTypeToString(LProvider);
-        LReg.WriteString(LProvStr + '_ApiKey', ProtectString(FApiKeys[LProvider]));
-        LReg.WriteString(LProvStr + '_ActiveModel', FActiveModels[LProvider]);
-      end;
       LReg.CloseKey;
+    end;
+
+    { 2. Salvar chaves de cada provedor em subchaves dedicadas }
+    for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+    begin
+      LProvStr := ProviderTypeToString(LProvider);
+      LProvPath := FRegistryPath + '\' + LProvStr;
+
+      if LReg.OpenKey(LProvPath, True) then
+      begin
+        LReg.WriteString('ApiKey', ProtectString(FApiKeys[LProvider]));
+        LReg.WriteString('Model', FActiveModels[LProvider]);
+
+        { Save BaseURL for OpenAI Custom and Ollama }
+        if LProvider = ptOpenAI then
+          LReg.WriteString('BaseURL', FOpenAICustomBaseUrl)
+        else if LProvider = ptOllama then
+          LReg.WriteString('BaseURL', FOllamaBaseUrl);
+
+        LReg.CloseKey;
+      end;
     end;
   finally
     LReg.Free;

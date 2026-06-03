@@ -56,24 +56,24 @@ procedure TPromptTemplateManager.CreateDefaultTemplates;
 begin
   FTemplates.Clear;
   AddTemplate(
-    'Revisar Clean Code Delphi',
-    'Revisa código Pascal aplicando Clean Code e SOLID',
-    'Revise o seguinte código Delphi Pascal aplicando princípios de Clean Code, legibilidade e otimização:'#13#10#13#10'{code}'
+    'Review Clean Code Delphi',
+    'Review Pascal code applying Clean Code and SOLID',
+    'Review the following Delphi Pascal code block applying Clean Code, readability, and optimization principles:'#13#10#13#10'{code}'
   );
   AddTemplate(
-    'Documentar unit completa',
-    'Gera documentação XML para classes e métodos',
-    'Gere a documentação no formato XML Documentation (compatível com Delphi) para a seguinte unit:'#13#10#13#10'{code}'
+    'Document Complete Unit',
+    'Generate XML documentation for classes and methods',
+    'Generate documentation in XML Documentation format (compatible with Delphi) for the following unit:'#13#10#13#10'{code}'
   );
   AddTemplate(
-    'Criar mock DUnitX',
-    'Gera unit de teste com DUnitX para a classe',
-    'Crie uma unit de teste utilizando DUnitX para testar a seguinte classe Delphi:'#13#10#13#10'{code}'
+    'Create DUnitX Mock',
+    'Generate unit tests using DUnitX for the class',
+    'Create a unit test using DUnitX to test the following Delphi class:'#13#10#13#10'{code}'
   );
   AddTemplate(
-    'Analisar performance',
-    'Identifica gargalos e memory leaks no código',
-    'Análise de performance: identifique possíveis gargalos, vazamentos de memória (memory leaks) ou redundâncias no seguinte código Delphi:'#13#10#13#10'{code}'
+    'Analyze Performance',
+    'Identify bottlenecks and memory leaks in the code',
+    'Performance analysis: identify potential bottlenecks, memory leaks, or redundancies in the following Delphi code:'#13#10#13#10'{code}'
   );
 end;
 
@@ -129,6 +129,13 @@ begin
   except
     { Fallback to defaults on corrupt file }
     CreateDefaultTemplates;
+  end;
+  
+  { Auto-migration: if legacy Portuguese templates are found, overwrite with English defaults }
+  if (FTemplates.Count > 0) and SameText(FTemplates[0].Name, 'Revisar Clean Code Delphi') then
+  begin
+    CreateDefaultTemplates;
+    Save;
   end;
 end;
 

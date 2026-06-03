@@ -147,7 +147,7 @@ begin
 
   if Supports(BorlandIDEServices, IOTAServices, LOTAServices) then
   begin
-    TRadIAConfig.SetBaseRegistryPath(LOTAServices.GetBaseRegistryKey + '\RadIA');
+    TRadIAConfig.SetBaseRegistryPath(LOTAServices.GetBaseRegistryKey + '\AIPlugin');
   end;
 
   if Supports(BorlandIDEServices, IOTAWizardServices, LWizardServices) then

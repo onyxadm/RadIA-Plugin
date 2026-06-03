@@ -299,7 +299,7 @@ var
 begin
   if Length(FHistory) = 0 then
   begin
-    ShowMessage('Não há histórico de conversa para exportar.');
+    ShowMessage('There is no conversation history to export.');
     Exit;
   end;
 
@@ -312,13 +312,13 @@ begin
       LContent := TConversationExporter.ExportToHTML(FHistory, LProviderName, LModelName)
     else
       LContent := TConversationExporter.ExportToMarkdown(FHistory, LProviderName, LModelName);
-
+      
     try
       TFile.WriteAllText(SaveDialog.FileName, LContent, TEncoding.UTF8);
-      ShowMessage('Conversa exportada com sucesso!');
+      ShowMessage('Conversation exported successfully!');
     except
       on E: Exception do
-        ShowMessage('Erro ao exportar conversa: ' + E.Message);
+        ShowMessage('Error exporting conversation: ' + E.Message);
     end;
   end;
 end;
@@ -530,7 +530,7 @@ begin
     LTemplateName := Trim(LText.Substring(10));
     if LTemplateName.IsEmpty then
     begin
-      ShowMessage('Por favor, informe o nome do template. Exemplo: /template Revisar Clean Code Delphi');
+      ShowMessage('Please specify the template name. Example: /template Review Clean Code Delphi');
       Exit;
     end;
     
@@ -540,7 +540,7 @@ begin
     LResolved := FTemplateManager.ResolveTemplate(LTemplateName, LActiveCode);
     if LResolved.IsEmpty then
     begin
-      ShowMessage(Format('Template "%s" não encontrado.', [LTemplateName]));
+      ShowMessage(Format('Template "%s" not found.', [LTemplateName]));
       Exit;
     end;
     
