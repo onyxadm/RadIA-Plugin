@@ -1,4 +1,7 @@
 # Script de Build Automatizado do RadIA para Windows PowerShell
+param(
+    [switch]$Install
+)
 $ErrorActionPreference = "Stop"
 
 Write-Host "=============================================" -ForegroundColor Cyan
@@ -80,4 +83,41 @@ if (Test-Path $testsExe) {
     Write-Host "=============================================" -ForegroundColor Green
 } else {
     Write-Error "O executável de testes não foi gerado em: $testsExe"
+}
+
+# 9. Instalação automatizada (se a flag -Install for fornecida)
+if ($Install) {
+    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host "         Instalando Plugin no Delphi         " -ForegroundColor Cyan
+    Write-Host "=============================================" -ForegroundColor Cyan
+
+    $publicStudioDir = "C:\Users\Public\Documents\Embarcadero\Studio\$delphiVer"
+    $publicBplDir = "$publicStudioDir\Bpl"
+    $publicDcpDir = "$publicStudioDir\Dcp"
+
+    Write-Host "Criando pastas públicas se não existirem..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Force -Path $publicBplDir, $publicDcpDir | Out-Null
+
+    $targetBpl = "$publicBplDir\RadIA.bpl"
+    $targetDcp = "$publicDcpDir\RadIA.dcp"
+
+    Write-Host "Copiando binários para as pastas da IDE..." -ForegroundColor Yellow
+    Copy-Item -Path ".\Output\$delphiVer\bpl\RadIA.bpl" -Destination $targetBpl -Force
+    Copy-Item -Path ".\Output\$delphiVer\dcp\RadIA.dcp" -Destination $targetDcp -Force
+
+    Write-Host "Registrando pacote no Registro do Windows..." -ForegroundColor Yellow
+    $regPath = "HKCU:\Software\Embarcadero\BDS\$delphiVer\Known Packages"
+    
+    # Garante que a chave existe no registro antes de gravar
+    if (-not (Test-Path $regPath)) {
+        New-Item -Path $regPath -Force | Out-Null
+    }
+    
+    New-ItemProperty -Path $regPath -Name $targetBpl -Value "RadIA - AI Assistant for Delphi IDE" -PropertyType String -Force | Out-Null
+
+    Write-Host "=============================================" -ForegroundColor Green
+    Write-Host " Plugin instalado com sucesso no Delphi!     " -ForegroundColor Green
+    Write-Host " O RadIA estará disponível no próximo startup" -ForegroundColor Green
+    Write-Host " da IDE.                                     " -ForegroundColor Green
+    Write-Host "=============================================" -ForegroundColor Green
 }

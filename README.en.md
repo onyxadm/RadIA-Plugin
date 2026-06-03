@@ -71,6 +71,22 @@ The user interface uses a hybrid architecture:
 > [!IMPORTANT]
 > **Bring Your Own Key (BYOK) & Local AI Model:** RadIA requires active and valid API keys to function with cloud models (Gemini, OpenAI, Claude) or a configured **Ollama** instance running on your machine or local network. If you do not configure at least one API Key or the Ollama URL in the settings, chat and context menu actions will return errors.
 
+RadIA can be installed in two ways: **Automated (Recommended)** via PowerShell, or **Manual** through the Delphi IDE.
+
+#### Option A: Automated Installation (PowerShell) - Recommended
+
+This option automatically compiles the plugin, runs unit tests, copies the binaries to the official public Delphi directories, and registers the plugin in the Windows Registry.
+
+1. Open the Windows PowerShell console.
+2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
+3. Run the following command in the project root directory:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
+   ```
+4. Done! The plugin will be installed and active on the next startup of the IDE.
+
+#### Option B: Manual Installation via IDE
+
 1.  Clone this repository to your computer.
 2.  Open the project group `RadIA.groupproj` in Delphi.
 3.  Right-click on `RadIA.bpl` in the Project Manager and click **Build**.
@@ -106,18 +122,22 @@ RadIA automatically saves the full chat history to:
 ```
 The conversation is fully restored when you reopen the IDE, preserving all previous context. To clear the history, click the **Clear** button at the top of the chat panel.
 
-### 5.3 Automated Compilation (PowerShell)
+### 5.3 Automated Compilation and Installation (PowerShell)
 
-To compile the main package and execute unit tests in an automated way without opening the Delphi IDE, you can use the integrated build script in the project root:
+To compile the main package, run the unit tests in an automated way, or perform direct installation into the Delphi IDE, you can use the integrated build script in the project root:
 
 1. Open the Windows PowerShell console.
 2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
-3. Run the following command in the project root directory:
+3. Run the following command in the project root directory to only build and test:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\build.ps1
    ```
+   Or add the `-Install` switch to compile, test, and install in the IDE:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
+   ```
 4. The script will automatically detect the active compiler version, create the version-isolated output directories (e.g., `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), clean up temporary DCU files from source folders, compile the main package, compile the unit tests, and automatically run the validation test suite.
-5. After the build, you can install the generated BPL into the IDE by pointing it to the file located at `Output\<version>\bpl\RadIA.bpl`.
+5. If the `-Install` switch is provided, the script will also copy the output files (`RadIA.bpl` and `RadIA.dcp`) to the official Delphi folders (`C:\Users\Public\Documents\Embarcadero\Studio\<version>\Bpl` and `Dcp`) and register the plugin under the `Known Packages` Registry key for the detected Delphi version.
 
 ### 6. Repository Structure
 ```

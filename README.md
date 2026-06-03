@@ -71,12 +71,28 @@ A interface utiliza uma arquitetura híbrida:
 > [!IMPORTANT]
 > **Modelo Bring Your Own Key (BYOK) & IA Local:** O RadIA exige chaves de API válidas e ativas para funcionar com nuvem (Gemini, OpenAI ou Claude) ou uma instância configurada do **Ollama** rodando na máquina ou na rede. Se você não configurar pelo menos uma API Key ou a URL do Ollama nas configurações do plugin, as funções de chat e ações de contexto não poderão ser utilizadas.
 
-1.  Clone este repositório em sua máquina.
-2.  Abra o grupo de projetos `RadIA.groupproj` no Delphi.
-3.  Clique com o botão direito em `RadIA.bpl` no Project Manager e selecione **Build**.
-4.  Clique novamente com o botão direito em `RadIA.bpl` e selecione **Install**.
-5.  A janela de confirmação de instalação da IDE será exibida, e o painel do **RadIA** aparecerá acoplado na lateral da IDE.
-6.  Acesse o menu **Tools ➔ RadIA Chat Panel** para exibir o chat, e clique no botão **Settings** no topo do painel para configurar suas chaves de API e começar.
+O RadIA pode ser instalado de duas maneiras: **Automatizada (Recomendada)** via PowerShell, ou **Manual** através da IDE do Delphi.
+
+#### Opção A: Instalação Automatizada (PowerShell) - Recomendada
+
+Esta opção compila o plugin, executa os testes unitários, copia os binários para os diretórios públicos oficiais do Delphi e registra o plugin no Registro do Windows automaticamente.
+
+1. Abra o console do Windows PowerShell.
+2. Certifique-se de que a pasta `bin` da instalação do Delphi contendo o `dcc32` está presente no PATH do sistema.
+3. Execute o seguinte comando na raiz do projeto:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
+   ```
+4. Pronto! O plugin estará instalado e ativo no próximo startup da IDE.
+
+#### Opção B: Instalação Manual via IDE
+
+1. Clone este repositório em sua máquina.
+2. Abra o grupo de projetos `RadIA.groupproj` no Delphi.
+3. Clique com o botão direito em `RadIA.bpl` no Project Manager e selecione **Build**.
+4. Clique novamente com o botão direito em `RadIA.bpl` e selecione **Install**.
+5. A janela de confirmação de instalação da IDE será exibida, e o painel do **RadIA** aparecerá acoplado na lateral da IDE.
+6. Acesse o menu **Tools ➔ RadIA Chat Panel** para exibir o chat, e clique no botão **Settings** no topo do painel para configurar suas chaves de API e começar.
 
 ### 5.1 Configurando o Ollama (Local ou em Rede)
 
@@ -106,18 +122,22 @@ O RadIA salva automaticamente o histórico do chat em:
 ```
 O histórico é restaurado integralmente ao reabrir a IDE, preservando todo o contexto da conversa anterior. Para limpar o histórico, clique no botão **Clear** no topo do painel de chat.
 
-### 5.3 Compilação Automatizada (PowerShell)
+### 5.3 Compilação e Instalação Automatizada (PowerShell)
 
-Para compilar o pacote principal e executar os testes unitários de forma automatizada sem abrir a IDE do Delphi, você pode utilizar o script de build integrado na raiz do projeto:
+Para compilar o pacote principal, executar os testes unitários de forma automatizada ou realizar a instalação direta na IDE do Delphi, você pode utilizar o script de build integrado na raiz do projeto:
 
 1. Abra o console do Windows PowerShell.
 2. Certifique-se de que a pasta `bin` da instalação do Delphi contendo o `dcc32` está presente no PATH do sistema.
-3. Execute o comando na raiz do projeto:
+3. Execute o comando na raiz do projeto para apenas compilar e testar:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\build.ps1
    ```
+   Ou adicione o parâmetro `-Install` para compilar, testar e instalar na IDE:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
+   ```
 4. O script detectará automaticamente a versão ativa do compilador, criará os diretórios de saída isolados por versão (ex: `Output\23.0\bpl`, `Output\23.0\dcp`, `Output\23.0\dcu`, etc.), executará a limpeza de arquivos DCU temporários das pastas de fontes, compilará o pacote principal, compilará os testes unitários e rodará automaticamente a suite de validação de testes.
-5. Após o build, você poderá instalar a BPL gerada na IDE apontando para o arquivo localizado em `Output\<versao>\bpl\RadIA.bpl`.
+5. Se o parâmetro `-Install` foi informado, o script também copiará os arquivos de saída (`RadIA.bpl` e `RadIA.dcp`) para as pastas oficiais do Delphi (`C:\Users\Public\Documents\Embarcadero\Studio\<versao>\Bpl` e `Dcp`) e registrará o plugin na chave de Registro `Known Packages` do Delphi da respectiva versão detectada.
 
 ### 6. Estrutura do Repositório
 ```
