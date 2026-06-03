@@ -128,7 +128,11 @@ begin
     Exit;
   end;
 
-  LUrl := 'https://api.openai.com/v1/chat/completions';
+  { Resolve base URL: use custom endpoint if configured }
+  if not FConfig.GetOpenAICustomBaseUrl.IsEmpty then
+    LUrl := FConfig.GetOpenAICustomBaseUrl.TrimRight(['/']) + '/chat/completions'
+  else
+    LUrl := 'https://api.openai.com/v1/chat/completions';
   
   SetLength(LHeaders, 1);
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
@@ -190,7 +194,11 @@ begin
     Exit;
   end;
 
-  LUrl := 'https://api.openai.com/v1/models';
+  { Resolve base URL for models discovery }
+  if not FConfig.GetOpenAICustomBaseUrl.IsEmpty then
+    LUrl := FConfig.GetOpenAICustomBaseUrl.TrimRight(['/']) + '/models'
+  else
+    LUrl := 'https://api.openai.com/v1/models';
   
   SetLength(LHeaders, 1);
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);

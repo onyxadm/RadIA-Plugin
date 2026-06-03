@@ -16,6 +16,8 @@ type
     grpOpenAI: TGroupBox;
     lblOpenAIKey: TLabel;
     edtOpenAIKey: TEdit;
+    lblOpenAICustomUrl: TLabel;
+    edtOpenAICustomUrl: TEdit;
     grpClaude: TGroupBox;
     lblClaudeKey: TLabel;
     edtClaudeKey: TEdit;
@@ -54,6 +56,7 @@ procedure TFrameAIConfig.LoadConfig;
 begin
   edtGeminiKey.Text := FConfig.GetApiKey(ptGemini);
   edtOpenAIKey.Text := FConfig.GetApiKey(ptOpenAI);
+  edtOpenAICustomUrl.Text := FConfig.OpenAICustomBaseUrl;
   edtClaudeKey.Text := FConfig.GetApiKey(ptClaude);
   memSystemPrompt.Text := FConfig.SystemPrompt;
   edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
@@ -65,13 +68,14 @@ var
 begin
   FConfig.SetApiKey(ptGemini, Trim(edtGeminiKey.Text));
   FConfig.SetApiKey(ptOpenAI, Trim(edtOpenAIKey.Text));
+  FConfig.OpenAICustomBaseUrl := Trim(edtOpenAICustomUrl.Text);
   FConfig.SetApiKey(ptClaude, Trim(edtClaudeKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := Trim(edtOllamaUrl.Text);
   FConfig.Save;
-  
+
   ShowMessage('Settings saved successfully.');
-  
+
   LForm := GetParentForm(Self);
   if LForm <> nil then
     LForm.ModalResult := mrOk;

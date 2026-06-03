@@ -2,13 +2,13 @@ object FrameAIConfig: TFrameAIConfig
   Left = 0
   Top = 0
   Width = 320
-  Height = 525
+  Height = 620
   TabOrder = 0
   object pnlMain: TPanel
     Left = 0
     Top = 0
     Width = 320
-    Height = 480
+    Height = 575
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
@@ -39,8 +39,8 @@ object FrameAIConfig: TFrameAIConfig
       Left = 10
       Top = 95
       Width = 300
-      Height = 75
-      Caption = ' OpenAI ChatGPT Settings '
+      Height = 130
+      Caption = ' OpenAI / Compatible Endpoint Settings '
       TabOrder = 1
       object lblOpenAIKey: TLabel
         Left = 10
@@ -57,10 +57,27 @@ object FrameAIConfig: TFrameAIConfig
         PasswordChar = '*'
         TabOrder = 0
       end
+      object lblOpenAICustomUrl: TLabel
+        Left = 10
+        Top = 72
+        Width = 134
+        Height = 13
+        Caption = 'Custom Base URL (optional):'
+      end
+      object edtOpenAICustomUrl: TEdit
+        Left = 10
+        Top = 91
+        Width = 280
+        Height = 21
+        Hint = 'e.g.: http://localhost:1234/v1 (LM Studio), https://api.groq.com/openai/v1 (Groq)'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+      end
     end
     object grpClaude: TGroupBox
       Left = 10
-      Top = 180
+      Top = 235
       Width = 300
       Height = 75
       Caption = ' Anthropic Claude Settings '
@@ -83,7 +100,7 @@ object FrameAIConfig: TFrameAIConfig
     end
     object grpOllama: TGroupBox
       Left = 10
-      Top = 265
+      Top = 320
       Width = 300
       Height = 75
       Caption = ' Ollama Local/Network Settings '
@@ -105,7 +122,7 @@ object FrameAIConfig: TFrameAIConfig
     end
     object grpSystemPrompt: TGroupBox
       Left = 10
-      Top = 350
+      Top = 405
       Width = 300
       Height = 130
       Caption = ' Custom System Instructions '
@@ -122,7 +139,7 @@ object FrameAIConfig: TFrameAIConfig
   end
   object pnlFooter: TPanel
     Left = 0
-    Top = 480
+    Top = 575
     Width = 320
     Height = 45
     Align = alBottom

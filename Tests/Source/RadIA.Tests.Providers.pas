@@ -38,10 +38,21 @@ type
     procedure TestClaudeResponseParsing;
   end;
 
+  [TestFixture]
+  TTestOpenAICustomUrl = class
+  public
+    [Test]
+    procedure TestOpenAI_UsesDefaultUrl_WhenCustomEmpty;
+    [Test]
+    procedure TestOpenAI_CustomBaseUrl_ReplacesDefault;
+    [Test]
+    procedure TestOpenAI_CustomBaseUrl_TrailingSlashRemoved;
+  end;
+
 implementation
 
 uses
-  System.SysUtils, System.Rtti, System.JSON, RadIA.Core.Service;
+  System.SysUtils, System.Rtti, System.JSON, RadIA.Core.Service, RadIA.Tests.Service;
 
 { TTestRadIAProviders }
 
@@ -200,7 +211,64 @@ begin
   Assert.AreEqual('Hello! I am Anthropic Claude.', LText);
 end;
 
+
+{ TTestOpenAICustomUrl }
+
+procedure TTestOpenAICustomUrl.TestOpenAI_UsesDefaultUrl_WhenCustomEmpty;
+var
+  LConfig: IAIConfig;
+  LProvider: TRadIAOpenAIProvider;
+begin
+  { Use TMockConfig to avoid registry state contamination from other tests }
+  LConfig := TMockConfig.Create(20);
+  LProvider := TRadIAOpenAIProvider.Create(LConfig);
+  try
+    Assert.IsEmpty(LConfig.GetOpenAICustomBaseUrl,
+      'Custom Base URL must be empty by default — provider will use official OpenAI endpoint');
+  finally
+    LProvider.Free;
+    LConfig := nil;
+  end;
+end;
+
+procedure TTestOpenAICustomUrl.TestOpenAI_CustomBaseUrl_ReplacesDefault;
+var
+  LConfig: IAIConfig;
+const
+  CUSTOM_URL = 'http://localhost:1234/v1';
+begin
+  LConfig := TRadIAConfig.Create;
+  try
+    LConfig.OpenAICustomBaseUrl := CUSTOM_URL;
+    Assert.AreEqual(CUSTOM_URL, LConfig.GetOpenAICustomBaseUrl,
+      'Custom Base URL must be stored and retrievable without modification');
+  finally
+    LConfig := nil;
+  end;
+end;
+
+procedure TTestOpenAICustomUrl.TestOpenAI_CustomBaseUrl_TrailingSlashRemoved;
+var
+  LConfig: IAIConfig;
+  LExpectedChatUrl: string;
+const
+  CUSTOM_URL_WITH_SLASH = 'http://localhost:1234/v1/';
+  EXPECTED_CHAT_PATH    = '/chat/completions';
+begin
+  { Verify that TrimRight(['/']) + path produces the correct URL without double slash }
+  LConfig := TRadIAConfig.Create;
+  try
+    LConfig.OpenAICustomBaseUrl := CUSTOM_URL_WITH_SLASH;
+    LExpectedChatUrl := LConfig.GetOpenAICustomBaseUrl.TrimRight(['/']) + EXPECTED_CHAT_PATH;
+    Assert.AreEqual('http://localhost:1234/v1' + EXPECTED_CHAT_PATH, LExpectedChatUrl,
+      'Trailing slash must be stripped before appending path to avoid double slash');
+  finally
+    LConfig := nil;
+  end;
+end;
+
 initialization
   TDUnitX.RegisterTestFixture(TTestRadIAProviders);
+  TDUnitX.RegisterTestFixture(TTestOpenAICustomUrl);
 
 end.
