@@ -86,7 +86,7 @@ begin
     else
       LBdsVersion := CompilerVersion - 13.0;
       
-    FRegistryPath := Format('Software\Embarcadero\BDS\%0.1f\AIPlugin', [LBdsVersion], LSettings);
+    FRegistryPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA', [LBdsVersion], LSettings);
   end
   else
     FRegistryPath := FBaseRegistryPath;
