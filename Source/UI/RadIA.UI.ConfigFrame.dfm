@@ -162,6 +162,133 @@ object FormAIConfig: TFormAIConfig
         ExplicitHeight = 260
       end
     end
+    object tsTemplates: TTabSheet
+      Caption = 'Templates'
+      object pnlTemplatesLeft: TPanel
+        Left = 0
+        Top = 0
+        Width = 180
+        Height = 414
+        Align = alLeft
+        BevelOuter = bvNone
+        ShowCaption = False
+        TabOrder = 0
+        object lstTemplates: TListBox
+          AlignWithMargins = True
+          Left = 3
+          Top = 3
+          Width = 174
+          Height = 368
+          Align = alClient
+          ItemHeight = 15
+          TabOrder = 0
+          OnClick = lstTemplatesClick
+        end
+        object pnlTemplatesLeftButtons: TPanel
+          Left = 0
+          Top = 374
+          Width = 180
+          Height = 40
+          Align = alBottom
+          BevelOuter = bvNone
+          ShowCaption = False
+          TabOrder = 1
+          object btnNewTemplate: TButton
+            AlignWithMargins = True
+            Left = 3
+            Top = 3
+            Width = 84
+            Height = 34
+            Align = alLeft
+            Caption = 'New'
+            TabOrder = 0
+            OnClick = btnNewTemplateClick
+          end
+          object btnDeleteTemplate: TButton
+            AlignWithMargins = True
+            Left = 93
+            Top = 3
+            Width = 84
+            Height = 34
+            Align = alClient
+            Caption = 'Delete'
+            TabOrder = 1
+            OnClick = btnDeleteTemplateClick
+          end
+        end
+      end
+      object pnlTemplatesClient: TPanel
+        Left = 180
+        Top = 0
+        Width = 455
+        Height = 414
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
+        TabOrder = 1
+        object lblTemplateName: TLabel
+          Left = 14
+          Top = 6
+          Width = 84
+          Height = 15
+          Caption = 'Template Name:'
+        end
+        object lblTemplateDesc: TLabel
+          Left = 14
+          Top = 56
+          Width = 63
+          Height = 15
+          Caption = 'Description:'
+        end
+        object lblTemplateBody: TLabel
+          Left = 14
+          Top = 106
+          Width = 51
+          Height = 15
+          Caption = 'Template:'
+        end
+        object edtTemplateName: TEdit
+          Left = 14
+          Top = 24
+          Width = 425
+          Height = 23
+          TabOrder = 0
+        end
+        object edtTemplateDesc: TEdit
+          Left = 14
+          Top = 74
+          Width = 425
+          Height = 23
+          TabOrder = 1
+        end
+        object memTemplateBody: TMemo
+          Left = 14
+          Top = 124
+          Width = 425
+          Height = 235
+          ScrollBars = ssVertical
+          TabOrder = 2
+        end
+        object btnSaveTemplate: TButton
+          Left = 14
+          Top = 377
+          Width = 110
+          Height = 28
+          Caption = 'Save Template'
+          TabOrder = 3
+          OnClick = btnSaveTemplateClick
+        end
+        object btnRestoreDefaults: TButton
+          Left = 319
+          Top = 377
+          Width = 120
+          Height = 28
+          Caption = 'Restore Defaults'
+          TabOrder = 4
+          OnClick = btnRestoreDefaultsClick
+        end
+      end
+    end
   end
   object pnlFooter: TPanel
     Left = 0

@@ -351,11 +351,16 @@ begin
       end;
     end;
     
-    LForm.ShowModal;
-    
-    { Refresh config settings }
-    FConfig.Load;
-    LoadConfig;
+    if LForm.ShowModal = mrOk then
+    begin
+      { Refresh config settings }
+      FConfig.Load;
+      LoadConfig;
+      
+      { Refresh templates }
+      FTemplateManager.Load;
+      LoadTemplatesMenu;
+    end;
   finally
     LForm.Free;
   end;

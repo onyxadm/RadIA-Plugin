@@ -27,6 +27,9 @@ type
     procedure Load;
     procedure Save;
     procedure AddTemplate(const AName, ADescription, ATemplate: string);
+    procedure DeleteTemplate(const AName: string);
+    procedure ClearTemplates;
+    procedure RestoreDefaultTemplates;
     function GetTemplates: TArray<TPromptTemplate>;
     function FindTemplate(const AName: string; out ATemplate: TPromptTemplate): Boolean;
     function ResolveTemplate(const AName: string; const AActiveCode: string): string;
@@ -97,6 +100,13 @@ begin
 
   try
     LJsonContent := TFile.ReadAllText(FFilePath, TEncoding.UTF8);
+    if LJsonContent.Trim.IsEmpty then
+    begin
+      CreateDefaultTemplates;
+      Save;
+      Exit;
+    end;
+    
     LParsedVal := TJSONObject.ParseJSONValue(LJsonContent);
     if Assigned(LParsedVal) then
     begin
@@ -125,12 +135,22 @@ begin
       finally
         LParsedVal.Free;
       end;
+    end
+    else
+    begin
+      CreateDefaultTemplates;
     end;
   except
     { Fallback to defaults on corrupt file }
     CreateDefaultTemplates;
   end;
   
+  if FTemplates.Count = 0 then
+  begin
+    CreateDefaultTemplates;
+    Save;
+  end;
+
   { Auto-migration: if legacy Portuguese templates are found, overwrite with English defaults }
   if (FTemplates.Count > 0) and SameText(FTemplates[0].Name, 'Revisar Clean Code Delphi') then
   begin
@@ -186,6 +206,31 @@ begin
   LTemplate.Description := ADescription;
   LTemplate.Template := ATemplate;
   FTemplates.Add(LTemplate);
+end;
+
+procedure TPromptTemplateManager.DeleteTemplate(const AName: string);
+var
+  I: Integer;
+begin
+  for I := 0 to FTemplates.Count - 1 do
+  begin
+    if SameText(FTemplates[I].Name, AName) then
+    begin
+      FTemplates.Delete(I);
+      Break;
+    end;
+  end;
+end;
+
+procedure TPromptTemplateManager.ClearTemplates;
+begin
+  FTemplates.Clear;
+end;
+
+procedure TPromptTemplateManager.RestoreDefaultTemplates;
+begin
+  CreateDefaultTemplates;
+  Save;
 end;
 
 function TPromptTemplateManager.GetTemplates: TArray<TPromptTemplate>;
