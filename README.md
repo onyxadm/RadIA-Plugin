@@ -49,6 +49,34 @@ A interface utiliza uma arquitetura híbrida:
 5.  A janela de confirmação de instalação da IDE será exibida, e o painel do **RadIA** aparecerá acoplado na lateral da IDE.
 6.  Acesse o menu **Tools ➔ RadIA Chat Panel** para exibir o chat, e clique no botão **Settings** no topo do painel para configurar suas chaves de API e começar.
 
+### 5.1 Configurando o Ollama (Local ou em Rede)
+
+O **Ollama** permite executar LLMs de código aberto (Llama 3, Mistral, Phi-3, CodeLlama etc.) diretamente na sua máquina ou em um servidor na rede local — sem dependência de APIs pagas.
+
+**Pré-requisito:** Instale o Ollama a partir de [https://ollama.com](https://ollama.com) e baixe pelo menos um modelo com `ollama pull llama3`.
+
+**Para uso local (mesma máquina):**
+1.  Inicie o servidor Ollama (o serviço é iniciado automaticamente após a instalação no Windows).
+2.  A URL padrão já está configurada como `http://localhost:11434` — **nenhuma alteração é necessária**.
+3.  Nas configurações do plugin (**Settings → Ollama Local/Network Settings**), confirme que a URL está como `http://localhost:11434`.
+4.  Selecione **Ollama** no combo de provedores do chat.
+
+**Para uso em rede (servidor remoto):**
+1.  Certifique-se que o Ollama está rodando no servidor remoto com escuta em todos os endereços. Defina a variável de ambiente `OLLAMA_HOST=0.0.0.0` no servidor antes de iniciar o serviço.
+2.  Nas configurações do plugin (**Settings → Ollama Local/Network Settings**), defina a URL para o endereço IP ou hostname do servidor. Exemplo: `http://192.168.1.100:11434`.
+3.  Certifique-se de que a porta `11434` está acessível no firewall da rede.
+4.  Selecione **Ollama** no combo de provedores do chat.
+
+> **Nota:** O plugin descobre automaticamente os modelos disponíveis no servidor Ollama via `/api/tags`. Se a conexão falhar, exibirá modelos padrão conhecidos como fallback.
+
+### 5.2 Histórico de Conversas Persistente
+
+O RadIA salva automaticamente o histórico do chat em:
+```
+%APPDATA%\RadIA\history.json
+```
+O histórico é restaurado integralmente ao reabrir a IDE, preservando todo o contexto da conversa anterior. Para limpar o histórico, clique no botão **Clear** no topo do painel de chat.
+
 ### 6. Estrutura do Repositório
 ```
 PluginDelphiIA/
@@ -128,6 +156,34 @@ The user interface uses a hybrid architecture:
 4.  Right-click on `RadIA.bpl` again and click **Install**.
 5.  A confirmation dialog will appear, and the **RadIA** panel will dock on the right side of your IDE.
 6.  Go to **Tools ➔ RadIA Chat Panel** to display the chat, and click the **Settings** button at the top of the panel to configure your API keys.
+
+### 5.1 Configuring Ollama (Local or Network)
+
+**Ollama** lets you run open-source LLMs (Llama 3, Mistral, Phi-3, CodeLlama, etc.) directly on your machine or on a server in your local network — with no paid API dependency.
+
+**Prerequisite:** Install Ollama from [https://ollama.com](https://ollama.com) and pull at least one model with `ollama pull llama3`.
+
+**For local use (same machine):**
+1.  Start the Ollama server (on Windows, the service starts automatically after installation).
+2.  The default URL `http://localhost:11434` is already pre-configured — **no changes required**.
+3.  In the plugin settings (**Settings → Ollama Local/Network Settings**), confirm the URL reads `http://localhost:11434`.
+4.  Select **Ollama** in the provider dropdown in the chat panel.
+
+**For network use (remote server):**
+1.  Make sure Ollama is running on the remote server and listening on all interfaces. Set the environment variable `OLLAMA_HOST=0.0.0.0` on the server before starting the service.
+2.  In the plugin settings (**Settings → Ollama Local/Network Settings**), set the URL to the server's IP address or hostname. Example: `http://192.168.1.100:11434`.
+3.  Make sure port `11434` is reachable through the network's firewall.
+4.  Select **Ollama** in the provider dropdown in the chat panel.
+
+> **Note:** The plugin automatically discovers available models from the Ollama server via `/api/tags`. If the connection fails, it falls back to a built-in list of well-known model names.
+
+### 5.2 Persistent Chat History
+
+RadIA automatically saves the full chat history to:
+```
+%APPDATA%\RadIA\history.json
+```
+The conversation is fully restored when you reopen the IDE, preserving all previous context. To clear the history, click the **Clear** button at the top of the chat panel.
 
 ### 6. Repository Structure
 ```

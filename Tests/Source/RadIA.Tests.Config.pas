@@ -31,7 +31,7 @@ type
 implementation
 
 uses
-  System.SysUtils, Registry, Winapi.Windows;
+  System.SysUtils, System.Win.Registry, Winapi.Windows;
 
 { TTestRadIAConfig }
 
