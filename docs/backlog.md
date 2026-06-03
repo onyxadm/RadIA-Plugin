@@ -92,3 +92,10 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
 
 ### 4. Histórico de Refatorações Aplicadas (Item #16)
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão [Aplicar Alteração] foi acionado, permitindo revisão e desfazimento manual.
+
+### 5. Controle de Cota e Orçamento de Tokens Local
+*   **Objetivo**: Permitir que o desenvolvedor estabeleça um limite de consumo de tokens mensal local para evitar surpresas no faturamento de suas chaves de API.
+*   **Detalhamento**:
+    *   Adicionar campo nas configurações de limite de tokens (ex: cota mensal de 1.000.000 de tokens).
+    *   Armazenar e acumular o consumo de forma persistente localmente.
+    *   Exibir percentual de consumo na barra de status do chat lateral e alertar/bloquear chamadas ao atingir 100% da cota definida.
