@@ -29,8 +29,8 @@ type
     function GetActiveModel: string;
     function DoPostRequest(const AUrl: string; const AHeaders: TNetHeaders;
       const ARequestBody: string): string;
-    function DoPostRequestStream(const AUrl: string; const AHeaders: TNetHeaders;
-      const ARequestBody: string; const AOnWrite: TProc<TBytes>): Boolean;
+    procedure DoPostRequestStream(const AUrl: string; const AHeaders: TNetHeaders;
+      const ARequestBody: string; const AOnWrite: TProc<TBytes>);
     function DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders): string;
 
     { OpenAI-compatible helpers (shared by OpenAI, DeepSeek, Groq providers) }
@@ -139,15 +139,14 @@ begin
   end;
 end;
 
-function TRadIAProviderBase.DoPostRequestStream(const AUrl: string; const AHeaders: TNetHeaders;
-  const ARequestBody: string; const AOnWrite: TProc<TBytes>): Boolean;
+procedure TRadIAProviderBase.DoPostRequestStream(const AUrl: string; const AHeaders: TNetHeaders;
+  const ARequestBody: string; const AOnWrite: TProc<TBytes>);
 var
   LHTTPClient: THTTPClient;
   LSourceStream: TStringStream;
   LTargetStream: TStreamingTargetStream;
   LResponse: IHTTPResponse;
 begin
-  Result := False;
   LHTTPClient := THTTPClient.Create;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   LTargetStream := TStreamingTargetStream.Create(AOnWrite);
@@ -164,7 +163,6 @@ begin
       raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
         [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
 
-    Result := True;
   finally
     LTargetStream.Free;
     LSourceStream.Free;

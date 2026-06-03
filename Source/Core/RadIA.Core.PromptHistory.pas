@@ -181,21 +181,17 @@ begin
     LParsedVal := TJSONObject.ParseJSONValue(LContent);
     if Assigned(LParsedVal) then
     begin
-      if LParsedVal is TJSONArray then
-      begin
-        LJsonArr := LParsedVal as TJSONArray;
-        try
+      try
+        if LParsedVal is TJSONArray then
+        begin
+          LJsonArr := LParsedVal as TJSONArray;
           for LVal in LJsonArr do
           begin
             if FHistory.Count < FMaxSize then
               FHistory.Add(LVal.Value);
           end;
-        finally
-          LJsonArr.Free;
         end;
-      end
-      else
-      begin
+      finally
         LParsedVal.Free;
       end;
     end;

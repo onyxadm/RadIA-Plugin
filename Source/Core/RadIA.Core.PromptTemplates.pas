@@ -100,10 +100,10 @@ begin
     LParsedVal := TJSONObject.ParseJSONValue(LJsonContent);
     if Assigned(LParsedVal) then
     begin
-      if LParsedVal is TJSONArray then
-      begin
-        LJsonArr := LParsedVal as TJSONArray;
-        try
+      try
+        if LParsedVal is TJSONArray then
+        begin
+          LJsonArr := LParsedVal as TJSONArray;
           for LVal in LJsonArr do
           begin
             if LVal is TJSONObject then
@@ -117,14 +117,13 @@ begin
                 FTemplates.Add(LTemplate);
             end;
           end;
-        finally
-          LJsonArr.Free;
+        end
+        else
+        begin
+          CreateDefaultTemplates;
         end;
-      end
-      else
-      begin
+      finally
         LParsedVal.Free;
-        CreateDefaultTemplates;
       end;
     end;
   except
