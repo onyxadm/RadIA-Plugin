@@ -1,236 +1,263 @@
 # Plano de Implementação: RadIA - Assistente de IA para Delphi IDE
 
-Este documento descreve o planejamento técnico e a arquitetura para o desenvolvimento do plugin de IDE para o Embarcadero Delphi, permitindo chat integrado e comandos rápidos no editor de código com suporte a múltiplos provedores de IA (Google Gemini, OpenAI ChatGPT, Anthropic Claude).
+Este documento descreve a arquitetura técnica e os componentes implementados no plugin **RadIA** para o Embarcadero Delphi. Reflete o estado atual da implementação real do código.
+
+---
 
 ## Arquitetura de Alto Nível
 
-O plugin será desenvolvido como um **Design-time Package (.bpl)** do Delphi, integrando-se à IDE através da **Open Tools API (OTA)**. 
+O plugin é um **Design-time Package (.bpl)** do Delphi integrado à IDE através da **Open Tools API (OTA)**.
 
 ### Visão Geral dos Componentes
 
 ```mermaid
 graph TD
-    IDE[Delphi IDE / ToolsAPI] -->|Registra Wizard/Dockable| WizardManager[TAIWizardManager]
-    IDE -->|Acesso ao Editor| EditorIntegration[TEditorIntegrationManager]
-    
-    WizardManager -->|Gerencia| DockableForm[TFormAIDockable]
-    DockableForm -->|Apresenta Chat| ChatFrame[TFrameAIChat]
-    DockableForm -->|Apresenta Configs| ConfigFrame[TFrameAIConfig]
-    
-    ChatFrame -->|Usa| AIService[TAIService]
-    EditorIntegration -->|Usa| AIService
-    
-    AIService -->|Lê/Grava| ConfigManager[TAIConfigManager]
-    AIService -->|Usa| IAProviderFactory[TIAProviderFactory]
-    
-    IAProviderFactory -->|Instancia| IIAProvider
-    IIAProvider <|.. GoogleGeminiProvider[TGoogleGeminiProvider]
-    IIAProvider <|.. OpenAIProvider[TOpenAIProvider]
-    IIAProvider <|.. AnthropicClaudeProvider[TAnthropicClaudeProvider]
-    
-    IIAProvider -->|HTTP Request Assíncrona| HTTPClient[System.Net.HttpClient]
+    IDE[Delphi IDE / ToolsAPI] -->|Registra Wizard/Dockable| OTARegister[RadIA.OTA.Register]
+    IDE -->|Acesso ao Editor| EditorHook[RadIA.OTA.EditorHook]
+    IDE -->|Messages View| MsgHook[RadIA.OTA.MessageViewHook]
+
+    OTARegister --> DockableForm[RadIA.OTA.DockableForm]
+    DockableForm --> ChatFrame[RadIA.UI.ChatFrame]
+    DockableForm --> ConfigFrame[RadIA.UI.ConfigFrame]
+
+    ChatFrame -->|Usa| AIService[TRadIAService]
+    EditorHook -->|Usa| AIService
+    MsgHook -->|Usa| AIService
+
+    AIService -->|Lê/Grava| Config[TRadIAConfig]
+    AIService -->|Consulta/Grava| Cache[TRadIACacheManager]
+    AIService -->|Cria| ProviderFactory{Factory switch}
+
+    ProviderFactory -->|ptGemini| Gemini[TRadIAGeminiProvider]
+    ProviderFactory -->|ptOpenAI| OpenAI[TRadIAOpenAIProvider]
+    ProviderFactory -->|ptClaude| Claude[TRadIAClaudeProvider]
+    ProviderFactory -->|ptOllama| Ollama[TRadIAOllamaProvider]
+
+    Gemini --> Base[TRadIAProviderBase]
+    OpenAI --> Base
+    Claude --> Base
+    Ollama --> Base
+
+    Base -->|HTTP REST async TTask| HTTPClient[System.Net.HttpClient]
+
+    ChatFrame -->|Histórico JSON| HistoryFile["%APPDATA%\RadIA\history.json"]
+    Cache -->|Cache JSON LRU| CacheFile["%APPDATA%\RadIA\cache.json"]
+    Config -->|DPAPI criptografado| Registry["HKCU\Software\RadIA"]
 ```
 
 ---
 
-## User Review Required
+## Camadas Arquiteturais
 
-> [!IMPORTANT]
-> **1. Versão Alvo do Delphi: Delphi 10.4 Sydney em diante**
-> O plugin focará no suporte a partir do **Delphi 10.4 Sydney**, estendendo-se até o **Delphi 11 Alexandria** e **Delphi 12 Athens**. Ao remover o suporte para versões anteriores (10.3 Rio e inferiores), evitamos a necessidade de lidar com o motor de renderização legado do Internet Explorer (MSHTML), simplificamos a compatibilidade de High DPI na IDE e facilitamos o uso de sintaxes mais modernas do Delphi.
-> *A compilação do pacote (.dpk) e registro na IDE serão projetados exclusivamente para a IDE BDS 21.0 (10.4) e superiores.*
+### 1. Core (`Source/Core/`)
 
-> [!TIP]
-> **2. Renderização do Chat via Edge WebView2 Nativamente**
-> Como o alvo mínimo é o Delphi 10.4 Sydney:
-> *   Utilizaremos o componente nativo `TEdgeBrowser` (ou `TWebBrowser` configurado obrigatoriamente com `WindowsEngine = EdgeOnly`).
-> *   Isso garante suporte nativo a HTML5, CSS3 moderno e Javascript ES6+, necessários para renderizar o Chat com visual premium, Markdown completo, blocos de código com botões de cópia rápida e syntax highlighting via Prism.js.
-> *   **Requisito de Runtime:** O desenvolvedor precisará ter o *Microsoft Edge WebView2 Runtime* instalado no Windows (hoje pré-instalado por padrão no Windows 10/11 atualizados). Na inicialização do plugin, caso o runtime WebView2 não esteja disponível, exibiremos uma mensagem amigável no lugar do chat orientando o download.
+| Unit | Responsabilidade |
+|---|---|
+| `RadIA.Core.Types.pas` | Enum `TAIProviderType` (Gemini, OpenAI, Claude, Ollama), `TAIMessageRole`, constantes de modelos, funções de conversão string/enum |
+| `RadIA.Core.Interfaces.pas` | Contratos `IIAProvider`, `IAIConfig`, `IChatMessage`, tipo `TCompletionCallback` |
+| `RadIA.Core.Config.pas` | `TRadIAConfig`: leitura/escrita no Registro do Windows (`HKEY_CURRENT_USER\Software\RadIA`), criptografia de API Keys via DPAPI (`CryptProtectData`/`CryptUnprotectData`) |
+| `RadIA.Core.Service.pas` | `TRadIAService`: orquestrador que cria o provedor ativo, injeta system prompt, consulta cache antes de enviar, salva no cache após resposta. `TRadIAChatMessage` concreto de `IChatMessage` |
+| `RadIA.Core.Cache.pas` | `TRadIACacheManager`: cache LRU em JSON (`cache.json`), limite de 500 entradas, expiração de 24h, hash SHA-1 por `provider+model+systemprompt+prompt+history` |
 
-> [!WARNING]
-> **3. Segurança das API Keys no Registro do Windows**
-> Conforme definido, as configurações do plugin serão salvas no Registro do Windows no caminho:
-> `HKEY_CURRENT_USER\Software\RadIA`
-> Desta forma, as configurações e chaves de API persistirão globalmente, mesmo quando o desenvolvedor alternar entre diferentes versões do Delphi instaladas na mesma máquina (ex: trabalhando no 10.4 e 12 na mesma máquina). As chaves de API (`API Keys`) de cada provedor serão **criptografadas** localmente antes de serem persistidas, utilizando a Windows Data Protection API (DPAPI via `CryptProtectData`), garantindo que apenas o usuário logado no Windows possa decifrá-las.
+#### Configurações persistidas no Registro
+
+| Chave do Registro | Tipo | Descrição |
+|---|---|---|
+| `ActiveProvider` | Integer | Enum `TAIProviderType` do provedor ativo |
+| `Gemini_ApiKey` | String | API Key do Gemini (Base64 criptografado com DPAPI) |
+| `OpenAI_ApiKey` | String | API Key da OpenAI (Base64 criptografado com DPAPI) |
+| `Claude_ApiKey` | String | API Key do Claude (Base64 criptografado com DPAPI) |
+| `Ollama_ApiKey` | String | Não utilizado (Ollama não requer key) |
+| `Gemini_ActiveModel` | String | Modelo ativo do Gemini (ex: `gemini-1.5-flash`) |
+| `OpenAI_ActiveModel` | String | Modelo ativo da OpenAI (ex: `gpt-4o-mini`) |
+| `Claude_ActiveModel` | String | Modelo ativo do Claude (ex: `claude-3-haiku-20240307`) |
+| `Ollama_ActiveModel` | String | Modelo ativo do Ollama (ex: `llama3:latest`) |
+| `SystemPrompt` | String | Instrução de sistema customizada (plain text) |
+| `OllamaBaseUrl` | String | URL base do servidor Ollama (padrão: `http://localhost:11434`) |
 
 ---
 
-## Open Questions
+### 2. Provedores (`Source/Providers/`)
 
-As perguntas iniciais de planejamento foram resolvidas e alinhadas:
-*   **Versão do Delphi:** Delphi 10.4 Sydney em diante (suportando 10.4, 11 e 12).
-*   **Mecanismo de Renderização:** `TEdgeBrowser` / `TWebBrowser` (Edge Chromium nativo via WebView2).
-*   **Persistência:** Registro do Windows (`HKEY_CURRENT_USER\Software\RadIA`), utilizando DPAPI para criptografar as chaves.
+Todos herdam de `TRadIAProviderBase` e implementam `IIAProvider`.
+
+| Unit | Endpoint | Autenticação |
+|---|---|---|
+| `RadIA.Provider.Base.pas` | — | Classe base: `DoPostRequest`, `DoGetRequest` via `THTTPClient`. `FetchAvailableModelsAsync` padrão (usa `TThread.Queue`). |
+| `RadIA.Provider.Gemini.pas` | `POST /v1beta/models/{model}:generateContent` | Header `x-goog-api-key` |
+| `RadIA.Provider.OpenAI.pas` | `POST /v1/chat/completions` | Header `Authorization: Bearer {key}` |
+| `RadIA.Provider.Claude.pas` | `POST /v1/messages` | Header `x-api-key` + `anthropic-version: 2023-06-01` |
+| `RadIA.Provider.Ollama.pas` | `POST /api/chat` (stream=false) / `GET /api/tags` | Sem autenticação |
+
+#### Ollama — Comportamentos específicos
+- **Descoberta de modelos:** `GET <OllamaBaseUrl>/api/tags` → extrai campo `name` de cada objeto em `models[]`. Fallback estático: `llama3:latest`, `codellama:latest`, `mistral:latest`, `phi3:latest`.
+- **Envio:** `POST <OllamaBaseUrl>/api/chat` com payload `{ model, stream: false, messages: [...history, currentPrompt] }`.
+- **Resposta:** extrai `message.content` do JSON retornado.
 
 ---
 
-## Proposed Changes
+### 3. Integração com a IDE (`Source/Integration/`)
 
-### Estrutura de Diretórios Proposta
+| Unit | Responsabilidade |
+|---|---|
+| `RadIA.OTA.Register.pas` | Registra o Wizard/package na IDE, cria ações no menu `Tools` e no menu de contexto do editor |
+| `RadIA.OTA.Helper.pas` | `ReplaceActiveEditorText`: lê seleção e substitui texto no buffer do editor ativo via `IOTAEditBlock` |
+| `RadIA.OTA.ContextParser.pas` | Extrai a cláusula `interface` da unit ativa e os atributos da classe onde está o cursor |
+| `RadIA.OTA.EditorHook.pas` | Gerencia atalhos de teclado e customizações dos menus de contexto do editor |
+| `RadIA.OTA.MessageViewHook.pas` | Monitora a Messages View da IDE e extrai dados do erro compilado para acionar análise pela IA |
+| `RadIA.OTA.DockableForm.pas` | Implementa `INTADockableForm`, encapsula o `TFrameAIChat` e ajusta o tema via `IOTAThemeServices` |
 
-Propomos a seguinte organização do repositório para manter separação clara de responsabilidades (SOLID):
+---
+
+### 4. Interface do Usuário (`Source/UI/`)
+
+#### `RadIA.UI.ChatFrame` — Frame Principal do Chat
+
+**Componentes VCL:**
+- `cbProvider`: seleciona o provedor ativo; ao mudar, salva no config e recarrega modelos.
+- `cbModel`: modelos disponíveis carregados via `FetchAvailableModelsAsync`.
+- `btnSettings`: abre a janela de configurações (modal 340×585).
+- `btnClear`: limpa `FHistory`, envia `clear_chat` para WebView e apaga `history.json`.
+- `memPrompt + btnSend`: entrada de texto, envio para IA.
+- `EdgeBrowser`: renderiza o chat via `TEdgeBrowser` usando `chat.html` local.
+
+**Comunicação Delphi ↔ WebView2:**
+- **Delphi → Web:** `PostWebMessageAsJson` com JSON `{ action, role, text }`.
+  - `action: 'add_message'` — exibe mensagem no chat.
+  - `action: 'clear_chat'` — limpa toda a conversa na tela.
+  - `action: 'set_theme'` — aplica tema `dark` ou `light`.
+- **Web → Delphi:** `EdgeBrowserWebMessageReceived` com JSON `{ action: 'apply_code', code }` → chama `TRadIAOTAHelper.ReplaceActiveEditorText`.
+
+**Histórico Persistente:**
+- `LoadChatHistory`: ao inicializar o WebView, lê `%APPDATA%\RadIA\history.json`, recria `FHistory: TArray<IChatMessage>` e renderiza na WebView.
+- `SaveChatHistory`: após cada par user/assistant, serializa `FHistory` para JSON e grava no arquivo.
+- Mensagens `mrSystem` são excluídas do arquivo de histórico.
+
+#### `RadIA.UI.ConfigFrame` — Tela de Configurações
+
+Campos presentes (DFM, 320×525):
+- `edtGeminiKey`: API Key do Gemini (campo senha `*`).
+- `edtOpenAIKey`: API Key da OpenAI (campo senha `*`).
+- `edtClaudeKey`: API Key do Anthropic Claude (campo senha `*`).
+- `edtOllamaUrl`: URL base do servidor Ollama (texto livre, padrão `http://localhost:11434`).
+- `memSystemPrompt`: instrução de sistema customizada (TMemo).
+- `btnSave` / `btnCancel`.
+
+#### `RadIA.UI.DiffForm` — Visualizador de Diff
+
+Tela modal com visualização lado a lado (Original vs. Sugerido) usando `diff2html` via WebView2, com botão **[Aplicar Alteração]** que chama `TRadIAOTAHelper.ReplaceActiveEditorText`.
+
+#### `Source/UI/Web/` — Arquivos da Interface Web
+
+| Arquivo | Função |
+|---|---|
+| `chat.html` | Estrutura HTML do chat. Recebe mensagens via `window.chrome.webview.addEventListener('message', ...)`. |
+| `chat.css` | Estilos modernos com suporte a temas Dark/Light. |
+| `chat.js` | Lógica JS: Marked.js (Markdown), Prism.js (syntax highlighting Pascal), botão "Apply Code". |
+| `diff.html` | Interface do Smart Diff com `diff2html`. |
+
+Os arquivos web são copiados de `Source/UI/Web/` para `%APPDATA%\RadIA\Web\` no início de cada sessão da IDE via `CopyWebFiles`.
+
+---
+
+### 5. Cache de Respostas (`TRadIACacheManager`)
+
+- **Algoritmo:** LRU (Least Recently Used), limite padrão de **500 entradas**.
+- **Expiração:** Entradas com mais de **24 horas** são descartadas automaticamente no próximo acesso.
+- **Hash:** SHA-1 sobre a concatenação de `provider || model || systemPrompt || prompt || historyJSON`.
+- **Persistência:** JSON em `%APPDATA%\RadIA\cache.json`, campos `hash`, `response`, `timestamp`, `last_accessed` (formato ISO 8601).
+- **Fluxo no `SendPrompt`:**
+  1. Gera hash.
+  2. Consulta cache → se acerto, retorna com `AFromCache = True`.
+  3. Se erro, chama `SendPromptAsync` no provedor.
+  4. Sucesso → salva no cache. Callback com `AFromCache = False`.
+
+---
+
+## Estrutura de Diretórios Real
 
 ```
 PluginDelphiIA/
 │
-├── README.md                           # Documentação básica do projeto
-│
-├── RadIA.groupproj                     # Project Group do Delphi
-├── RadIA.dpk                           # Pacote de Design-time principal
-├── RadIA.dproj                         # Projeto do pacote Delphi
+├── README.md
+├── RadIA.groupproj
+├── RadIA.dpk
+├── RadIA.dproj
 │
 ├── Source/
 │   ├── Core/
-│   │   ├── RadIA.Core.Interfaces.pas    # Definição de IIAProvider, IAIConfig, etc.
-│   │   ├── RadIA.Core.Config.pas        # Implementação do Gerenciador de Configurações
-│   │   ├── RadIA.Core.Service.pas       # Orquestrador de requisições às IAs (Thread-safe)
-│   │   └── RadIA.Core.Types.pas         # Tipos comuns, Enums, DTOs
+│   │   ├── RadIA.Core.Types.pas
+│   │   ├── RadIA.Core.Interfaces.pas
+│   │   ├── RadIA.Core.Config.pas
+│   │   ├── RadIA.Core.Cache.pas
+│   │   └── RadIA.Core.Service.pas
 │   │
 │   ├── Providers/
-│   │   ├── RadIA.Provider.Base.pas      # Classe base para os provedores (HTTP Client comum)
-│   │   ├── RadIA.Provider.Gemini.pas    # Integração com API do Google Gemini
-│   │   ├── RadIA.Provider.OpenAI.pas    # Integração com API da OpenAI
-│   │   └── RadIA.Provider.Claude.pas    # Integração com API do Anthropic Claude
+│   │   ├── RadIA.Provider.Base.pas
+│   │   ├── RadIA.Provider.Gemini.pas
+│   │   ├── RadIA.Provider.OpenAI.pas
+│   │   ├── RadIA.Provider.Claude.pas
+│   │   └── RadIA.Provider.Ollama.pas
 │   │
 │   ├── Integration/
-│   │   ├── RadIA.OTA.Register.pas       # Registro do Wizard e pacotes na IDE
-│   │   ├── RadIA.OTA.Helper.pas         # Utilitários para interagir com a Open Tools API
-│   │   ├── RadIA.OTA.EditorHook.pas     # Captura de eventos do editor de código
-│   │   └── RadIA.OTA.DockableForm.pas   # Form dockable que encapsula a UI
+│   │   ├── RadIA.OTA.Register.pas
+│   │   ├── RadIA.OTA.Helper.pas
+│   │   ├── RadIA.OTA.ContextParser.pas
+│   │   ├── RadIA.OTA.EditorHook.pas
+│   │   ├── RadIA.OTA.MessageViewHook.pas
+│   │   └── RadIA.OTA.DockableForm.pas
 │   │
 │   └── UI/
-│       ├── RadIA.UI.ChatFrame.pas       # Frame principal de conversa (VCL)
-│       ├── RadIA.UI.ChatFrame.dfm
-│       ├── RadIA.UI.ConfigFrame.pas     # Frame de configurações de modelos e chaves (VCL)
-│       ├── RadIA.UI.ConfigFrame.dfm
-│       ├── RadIA.UI.Resources.pas       # Recursos visuais, ícones (SVG/PNG) e scripts
+│       ├── RadIA.UI.ChatFrame.pas / .dfm
+│       ├── RadIA.UI.ConfigFrame.pas / .dfm
+│       ├── RadIA.UI.DiffForm.pas / .dfm
+│       ├── RadIA.UI.Resources.pas
 │       └── Web/
-│           ├── chat.html                # Template HTML para renderização no EdgeBrowser
-│           ├── chat.css                 # Estilos modernos (Glassmorphism / Dark Mode adaptivo)
-│           └── chat.js                  # Lógica JS de interação (Prism.js para realce de código)
+│           ├── chat.html
+│           ├── chat.css
+│           ├── chat.js
+│           └── diff.html
 │
 └── Tests/
-    ├── RadIATests.dproj                 # Projeto de Testes Unitários
-    ├── Source/
-    │   ├── RadIA.Tests.Providers.pas    # Testes de parse JSON e envio de payloads
-    │   └── RadIA.Tests.Config.pas       # Testes de criptografia e leitura/escrita de configs
-    └── RadIATests.dpr                   # Ponto de entrada DUnitX
+    ├── RadIATests.dpr
+    └── Source/
+        ├── RadIA.Tests.Config.pas
+        ├── RadIA.Tests.Providers.pas
+        ├── RadIA.Tests.Cache.pas
+        └── RadIA.Tests.Ollama.pas
 ```
 
 ---
 
-### Detalhamento dos Componentes Técnicos
+## Arquivos de Dados em Runtime
 
-#### 1. Core e Interfaces (`DelphiAI.Core.Interfaces.pas`)
-
-Definição de contratos para permitir a troca fácil de provedores de IA sem impacto no resto do plugin.
-
-```pascal
-unit RadIA.Core.Interfaces;
-
-interface
-
-uses
-  System.SysUtils, System.Classes;
-
-type
-  // Callback para chamadas assíncronas de IA
-  TIACompletionCallback = reference to procedure(const AResponse: string; const AError: string);
-
-  // Interface para representação do histórico do chat
-  IChatMessage = interface
-    ['{69A8A5DC-0F88-46E1-AD7A-8A46101EA97D}']
-    function GetRole: string; // 'user', 'assistant', 'system'
-    function GetContent: string;
-    procedure SetContent(const AValue: string);
-  end;
-
-  // Interface comum que todos os provedores de IA devem implementar
-  IIAProvider = interface
-    ['{A2833F49-9A0B-432D-8B8D-20DFF15FF25D}']
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TIACompletionCallback);
-    function GetAvailableModels: TArray<string>;
-    function GetName: string;
-  end;
-
-  // Interface para gerenciar configurações
-  IAIConfig = interface
-    ['{88A9678F-520E-4BF5-BFB4-5C04A5826A6F}']
-    function GetApiKey(const AProvider: string): string;
-    procedure SetApiKey(const AProvider: string; const AKey: string);
-    function GetActiveProvider: string;
-    procedure SetActiveProvider(const AProvider: string);
-    function GetActiveModel(const AProvider: string): string;
-    procedure SetActiveModel(const AProvider: string; const AModel: string);
-    procedure Save;
-    procedure Load;
-  end;
-
-implementation
-
-end.
-```
-
-#### 2. Provedores de IA (`DelphiAI.Provider.*`)
-
-Cada provedor herdará de uma classe base comum `TAIProviderBase` que gerencia requisições HTTP assíncronas usando `System.Net.HttpClient.THTTPClient` em background tasks (`System.Threading.TTask`), garantindo que a IDE do Delphi continue responsiva durante a geração da resposta.
-
-*   **Google Gemini:** Utilizará o endpoint `/v1beta/models/{model}:generateContent` (ou versão v1 se disponível).
-*   **OpenAI:** Utilizará o endpoint `/v1/chat/completions`.
-*   **Claude:** Utilizará o endpoint `/v1/messages`.
-
-#### 3. Integração com a IDE (Open Tools API)
-
-Para acoplar a janela na lateral da IDE:
-1. Registraremos uma classe herdada de `TDockableForm` (ou formulário VCL padrão configurado via API de Dock do Delphi).
-2. Usaremos `INTAServices` para obter acesso aos menus e criar ações na IDE.
-3. Usaremos `IOTAEditorServices` para ler/escrever no editor ativo:
-
-```pascal
-function GetActiveEditorText(out ASelectedText: string): Boolean;
-var
-  LEditorServices: IOTAEditorServices;
-  LEditBuffer: IOTAEditBuffer;
-  LEditView: IOTAEditView;
-  LEditBlock: IOTAEditBlock;
-begin
-  Result := False;
-  ASelectedText := '';
-  if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
-  begin
-    LEditBuffer := LEditorServices.TopBuffer;
-    if Assigned(LEditBuffer) and (LEditBuffer.EditViewsCount > 0) then
-    begin
-      LEditView := LEditBuffer.EditViews[0];
-      LEditBlock := LEditBuffer.EditBlock;
-      if Assigned(LEditBlock) and (LEditBlock.Size > 0) then
-      begin
-        ASelectedText := LEditBlock.Text;
-        Result := True;
-      end;
-    end;
-  end;
-end;
-```
-
-#### 4. Interface Gráfica com Tema da IDE
-
-A interface de chat utilizará VCL nativa integrada ao tema atual do Delphi (Light, Dark, Mountain Mist, etc.) monitorado através de `IOTAThemeServices`. 
-Para a renderização premium do chat, faremos a ponte Delphi -> JavaScript via `TEdgeBrowser` ou `TWebBrowser` usando passagem de mensagens JSON (ex: `PostMessage` ou executando scripts via JS).
+| Arquivo | Caminho | Conteúdo |
+|---|---|---|
+| Histórico de Chat | `%APPDATA%\RadIA\history.json` | Array JSON de `{ role, content }` (sem mensagens system) |
+| Cache de Respostas | `%APPDATA%\RadIA\cache.json` | Array JSON de `{ hash, response, timestamp, last_accessed }` |
+| Arquivos Web | `%APPDATA%\RadIA\Web\` | `chat.html`, `chat.css`, `chat.js`, `diff.html` |
 
 ---
 
-## Verification Plan
+## Testes Unitários (DUnitX)
 
-### Testes Automatizados
-*   **DUnitX Test Suite:**
-    *   Testes de integração com as APIs reais (usando chaves mockadas / mocks HTTP para testar tratamento de erros como Rate Limit, 401 Unauthorized e respostas malformadas).
-    *   Testes de criptografia de API keys.
-    *   Testes de geração de payloads JSON para Gemini, OpenAI e Claude.
+| Suite | Testes | O que cobre |
+|---|---|---|
+| `TTestRadIAConfig` | 5 | Persistência de provider, API key (DPAPI encrypt/decrypt), model, system prompt, **OllamaBaseUrl** |
+| `TTestRadIAProviders` | 8 | Parse de JSON Gemini/OpenAI/Claude, formatação de payloads, tratamento de erro HTTP |
+| `TTestRadIACacheManager` | 2 | Put/Get, expiração LRU |
+| `TTestRadIAOllama` | 2 | `BuildRequestBody` (RTTI), `ParseResponseBody` (RTTI) |
+| **Total** | **17** | **17/17 passando** |
 
-### Testes Manuais de Integração com a IDE
-1.  **Instalação do Pacote:** Compilar e instalar o `.bpl` na IDE ativa (componente Wizard registrado).
-2.  **Docking Test:** Mover a janela de chat e fixá-la na lateral (Dock à direita/esquerda) e validar persistência do layout ao reabrir a IDE.
-3.  **Teste de Threading:** Enviar uma pergunta longa no chat e rolar o código no editor do Delphi simultaneamente, garantindo ausência de congelamentos (Lag ou UI blocking).
-4.  **Teste do Context Menu:** Selecionar código no editor, clicar com botão direito, selecionar "AI: Explicar Código" e verificar se o texto selecionado é transferido para o prompt e a resposta renderiza corretamente.
+---
+
+## Decisões de Design
+
+| Decisão | Justificativa |
+|---|---|
+| DPAPI para API Keys | Criptografia nativa do Windows, sem dependência extra, vinculada ao usuário logado |
+| Registro do Windows para config | Persiste entre versões do Delphi instaladas na mesma máquina |
+| JSON para cache e histórico | Legível, sem dependência de banco de dados, trivial de debugar/editar manualmente |
+| `TTask.Run` + `TThread.Queue` | Chamadas de rede em background sem bloquear a thread da IDE; callback retorna na thread principal |
+| LRU com SHA-1 | SHA-1 é suficientemente único para hashing de prompts, rápido e disponível nativamente no Delphi |
+| `stream: false` no Ollama | Simplicidade: aguarda resposta completa, sem complexidade de parsing de stream SSE |

@@ -1,78 +1,110 @@
 # Lista de Tarefas: Desenvolvimento do RadIA
 
-Esta é a checklist de desenvolvimento para a implementação do plugin **RadIA**. As tarefas estão divididas por componentes arquiteturais e organizadas de forma sequencial, prontas para execução via comando `/goal`.
+Esta é a checklist de desenvolvimento consolidada do plugin **RadIA**, refletindo todas as fases entregues até o momento.
 
 ---
 
-## Fase 1: Estrutura do Projeto & Configurações
+## Fase 1: Estrutura do Projeto & Configurações ✅
 - [x] **Configuração da Solução Delphi**
-  - [x] Criar a árvore de pastas física sob `d:\Projetos\PluginDelphiIA\` (`Source/Core`, `Source/Providers`, `Source/Integration`, `Source/UI`, `Source/UI/Web`, `Tests/Source`)
-  - [x] Criar o arquivo de grupo de projetos `RadIA.groupproj`
-  - [x] Criar o projeto de pacote `RadIA.dpk` e o descritor de projeto `RadIA.dproj` pré-configurado para Delphi 10.4+ (BDS 21.0+)
+  - [x] Criar a árvore de pastas física (`Source/Core`, `Source/Providers`, `Source/Integration`, `Source/UI`, `Source/UI/Web`, `Tests/Source`)
+  - [x] Criar `RadIA.groupproj`, `RadIA.dpk` e `RadIA.dproj` para Delphi 10.4+
 - [x] **Interfaces e Tipos do Core**
-  - [x] Criar `RadIA.Core.Types.pas` contendo enums dos provedores, modelos suportados e tipos de dados comuns (DTOs de mensagens)
-  - [x] Criar `RadIA.Core.Interfaces.pas` com a declaração dos contratos das interfaces de serviço (`IIAProvider`, `IAIConfig`, `IChatMessage`)
+  - [x] `RadIA.Core.Types.pas`: enum `TAIProviderType` (Gemini, OpenAI, Claude, **Ollama**), `TAIMessageRole`, modelos padrão, conversão string/enum
+  - [x] `RadIA.Core.Interfaces.pas`: `IIAProvider`, `IAIConfig` (incl. `OllamaBaseUrl`, `SystemPrompt`), `IChatMessage`, `TCompletionCallback`
 - [x] **Gerenciador de Configurações**
-  - [x] Criar `RadIA.Core.Config.pas` implementando o salvamento no Registro do Windows (`HKEY_CURRENT_USER\Software\RadIA`)
-  - [x] Implementar criptografia de API keys usando a DPAPI do Windows (`CryptProtectData` e `CryptUnprotectData` via Unit `Winapi.Crypt`)
+  - [x] `RadIA.Core.Config.pas`: leitura/escrita no Registro `HKEY_CURRENT_USER\Software\RadIA`
+  - [x] Criptografia de API Keys via DPAPI (`CryptProtectData`/`CryptUnprotectData`)
+  - [x] Persistência de `OllamaBaseUrl` (padrão `http://localhost:11434`)
+  - [x] Persistência de `SystemPrompt`
 
 ---
 
-## Fase 2: Integração com as APIs de IA (Providers)
+## Fase 2: Integração com as APIs de IA (Providers) ✅
 - [x] **Provedor Base**
-  - [x] Criar `RadIA.Provider.Base.pas` com as funções comuns de requisições HTTP REST usando o componente nativo `System.Net.HttpClient.THTTPClient`
-- [x] **Implementação das APIs**
-  - [x] Criar `RadIA.Provider.Gemini.pas` integrando com a API do Google Gemini (geração de conteúdo)
-  - [x] Criar `RadIA.Provider.OpenAI.pas` integrando com a API do ChatGPT (chat completion)
-  - [x] Criar `RadIA.Provider.Claude.pas` integrando com a API do Anthropic Claude (messages API)
+  - [x] `RadIA.Provider.Base.pas`: `TRadIAProviderBase` com `DoPostRequest`, `DoGetRequest` (via `THTTPClient`), `FetchAvailableModelsAsync` padrão
+- [x] **Provedores de Nuvem**
+  - [x] `RadIA.Provider.Gemini.pas`: `POST /v1beta/models/{model}:generateContent`, header `x-goog-api-key`, descoberta via API
+  - [x] `RadIA.Provider.OpenAI.pas`: `POST /v1/chat/completions`, header `Authorization: Bearer`, descoberta via API
+  - [x] `RadIA.Provider.Claude.pas`: `POST /v1/messages`, headers `x-api-key` + `anthropic-version`
+- [x] **Provedor Local/Rede (Ollama)**
+  - [x] `RadIA.Provider.Ollama.pas`: `POST /api/chat` (`stream: false`), `GET /api/tags` para descoberta de modelos, fallback estático
 - [x] **Orquestrador de IA**
-  - [x] Criar `RadIA.Core.Service.pas` contendo o orquestrador `TRadIAService` que seleciona a IA ativa e executa as chamadas em threads assíncronas (`System.Threading.TTask`), implementando isolamento rigoroso de exceções globais para estabilidade da IDE
+  - [x] `RadIA.Core.Service.pas`: `TRadIAService` seleciona o provedor ativo via factory, executa em `TTask.Run`, callback retorna via `TThread.Queue`
 
 ---
 
-## Fase 3: Integração com a IDE Delphi (Open Tools API)
-- [x] **Utilitários da IDE**
-  - [x] Criar `RadIA.OTA.Helper.pas` com métodos auxiliares para ler o texto selecionado, obter o buffer do editor de código ativo e substituir blocos de texto
-- [x] **Extração de Contexto do Código**
-  - [x] Criar `RadIA.OTA.ContextParser.pas` com o analisador de contexto capaz de extrair a cláusula `interface` da Unit ativa e os atributos da classe onde está o cursor do desenvolvedor
-- [x] **Hook de Erros de Build**
-  - [x] Criar `RadIA.OTA.MessageViewHook.pas` que monitora a Messages View da IDE e extrai dados do erro compilado ao disparar a ação do menu de contexto
-- [x] **Menus e Registro do Plugin**
-  - [x] Criar `RadIA.OTA.EditorHook.pas` para gerenciar atalhos de teclado e customizações de menus
-  - [x] Criar `RadIA.OTA.Register.pas` para registrar o Wizard na IDE e criar as opções do menu no menu `Tools` e no menu de contexto do botão direito do editor de código
+## Fase 3: Integração com a IDE Delphi (Open Tools API) ✅
+- [x] `RadIA.OTA.Helper.pas`: `ReplaceActiveEditorText` via `IOTAEditBlock`
+- [x] `RadIA.OTA.ContextParser.pas`: extrai cláusula `interface` e contexto da classe ativa
+- [x] `RadIA.OTA.MessageViewHook.pas`: monitora Messages View e extrai erros de compilação
+- [x] `RadIA.OTA.EditorHook.pas`: atalhos de teclado e menus de contexto do editor
+- [x] `RadIA.OTA.Register.pas`: registra Wizard na IDE, cria itens no menu `Tools` e menu de contexto
+- [x] `RadIA.OTA.DockableForm.pas`: `INTADockableForm`, encapsula `TFrameAIChat`, ajusta tema via `IOTAThemeServices`
 
 ---
 
-## Fase 4: Interface do Usuário (VCL + Edge/WebView2)
-- [x] **Páginas e Estilos do Chat (Web)**
-  - [x] Criar `Source/UI/Web/chat.html` com estrutura de mensagens (balões) e suporte a temas Light/Dark
-  - [x] Criar `Source/UI/Web/chat.css` com estilos limpos e modernos (fontes profissionais, design de caixa de código)
-  - [x] Criar `Source/UI/Web/chat.js` incluindo Marked.js (Markdown parser) e Prism.js (Syntax Highlighting) e listeners de recebimento de dados do Delphi
-- [x] **Frames VCL do Chat e Configurações**
-  - [x] Criar `RadIA.UI.ChatFrame.pas` / `.dfm` gerenciando o `TEdgeBrowser`/`TWebBrowser` e a área de entrada de texto
-  - [x] Criar `RadIA.UI.ConfigFrame.pas` / `.dfm` contendo a UI VCL para configuração das chaves de API e seleção do modelo ativo de cada IA
-- [x] **Visualizador de Diff (Smart Diff Form)**
-  - [x] Criar `RadIA.UI.DiffForm.pas` / `.dfm` implementando a tela modal lado a lado para aceitar ou descartar as refatorações sugeridas via interface web local baseada em `diff2html`
-- [x] **Formulário Acoplável (Dockable Form)**
-  - [x] Criar `RadIA.OTA.DockableForm.pas` que implementa `INTADockableForm`, encapsula o frame do chat e se ajusta automaticamente ao tema de cores atual da IDE através de `IOTAThemeServices`
+## Fase 4: Interface do Usuário (VCL + Edge/WebView2) ✅
+- [x] **Páginas Web do Chat**
+  - [x] `chat.html`: estrutura de mensagens, listener de `webview.message`
+  - [x] `chat.css`: temas Dark/Light, design moderno
+  - [x] `chat.js`: Marked.js (Markdown), Prism.js (syntax highlighting Pascal), botão "Apply Code"
+  - [x] `diff.html`: visualização Smart Diff com `diff2html`
+- [x] **Chat Frame** (`RadIA.UI.ChatFrame`)
+  - [x] Combo de provedores e modelos (carregamento assíncrono via `FetchAvailableModelsAsync`)
+  - [x] `TEdgeBrowser` com comunicação bidirecional JSON
+  - [x] **Histórico persistente:** `LoadChatHistory` / `SaveChatHistory` em `%APPDATA%\RadIA\history.json`
+  - [x] Botão Clear apaga histórico na tela e o arquivo físico
+- [x] **Config Frame** (`RadIA.UI.ConfigFrame`)
+  - [x] Campos de API Key para Gemini, OpenAI e Claude (mascarados)
+  - [x] **Campo `edtOllamaUrl`:** URL do servidor Ollama (local ou rede)
+  - [x] Campo de System Prompt customizado (`memSystemPrompt`)
+- [x] **Diff Form** (`RadIA.UI.DiffForm`): modal lado a lado com botão [Aplicar Alteração]
 
 ---
 
-## Fase 5: Testes Unitários e Validação
-- [x] **Criação do Projeto de Testes**
-  - [x] Criar o projeto de console DUnitX `Tests/RadIATests.dproj` e o ponto de entrada `RadIATests.dpr`
-- [x] **Escrita das Suítes de Teste**
-  - [x] Criar `RadIA.Tests.Config.pas` para testar persistência e criptografia das credenciais no registro do Windows
-  - [x] Criar `RadIA.Tests.Providers.pas` com testes de parser de JSON, formatação de payloads e simulação de erro de HTTP
-- [x] **Validação Final da IDE**
-  - [x] Compilar, instalar o pacote e testar a usabilidade de docking, atalhos rápidos e o fluxo completo de "Otimizar Código" com a tela de Diff
+## Fase 5: Testes Unitários (DUnitX) ✅
+- [x] `RadIA.Tests.Config.pas`: 5 testes — persistência de provider, API key (DPAPI), model, system prompt, **OllamaBaseUrl**
+- [x] `RadIA.Tests.Providers.pas`: 8 testes — parse de JSON (Gemini/OpenAI/Claude), payloads, erros HTTP
+- [x] `RadIA.Tests.Cache.pas`: 2 testes — Put/Get, expiração LRU
+- [x] `RadIA.Tests.Ollama.pas`: 2 testes — `BuildRequestBody` (RTTI), `ParseResponseBody` (RTTI)
+- [x] **Resultado: 17/17 testes passando** ✅
 
 ---
 
-## Critérios de Aceitação para Entrega
-- [x] **Compilação Sem Erros (Zero Errors/Warnings)**
-  - [x] Compilar com sucesso o pacote principal (`RadIA.dpk`) pelo compilador do Delphi no terminal (MSBuild / DCC32 / DCC64) ou na IDE.
-  - [x] Compilar com sucesso o projeto de testes unitários (`RadIATests.dproj`).
-- [x] **Suíte de Testes Unitários Aprovada**
-  - [x] Executar a suíte de testes do DUnitX (`RadIATests.exe`) e garantir que 100% dos testes unitários passem sem falhas.
+## Fase 6: Cache, System Prompts e Descoberta Dinâmica de Modelos ✅
+- [x] **Cache LRU local** (`RadIA.Core.Cache.pas`)
+  - [x] 500 entradas, expiração de 24h, descarte LRU (Least Recently Used)
+  - [x] Hash SHA-1 por `provider+model+systemPrompt+prompt+history`
+  - [x] Persistência em `%APPDATA%\RadIA\cache.json` (JSON, formato ISO 8601)
+  - [x] Resposta de cache indicada com nota no chat
+- [x] **System Prompt customizado**
+  - [x] Campo na tela de configurações
+  - [x] Injetado como `mrSystem` no início de cada requisição
+  - [x] Persistido no Registro do Windows
+- [x] **Descoberta dinâmica de modelos** (Gemini, OpenAI, Ollama)
+  - [x] Chamada assíncrona em `FetchAvailableModelsAsync` ao trocar o provedor
+  - [x] Exibe `Loading...` durante carregamento
+  - [x] Fallback para lista estática em caso de falha
 
+---
+
+## Fase 7: Suporte ao Ollama e Histórico Persistente ✅
+- [x] `ptOllama` adicionado ao enum `TAIProviderType`
+- [x] `OllamaBaseUrl` na interface `IAIConfig` e implementação em `TRadIAConfig`
+- [x] `TRadIAOllamaProvider` implementado e registrado na factory
+- [x] Campo `edtOllamaUrl` adicionado ao ConfigFrame (DFM e PAS)
+- [x] Modal de configurações redimensionada (altura 585 px)
+- [x] `LoadChatHistory` / `SaveChatHistory` no ChatFrame
+- [x] Botão Clear apaga arquivo físico `history.json`
+- [x] Testes unitários do Ollama criados e passando
+- [x] README.md atualizado com seções 5.1 (Ollama) e 5.2 (Histórico)
+- [x] `docs/backlog.md` atualizado — item concluído
+
+---
+
+## Critérios de Aceitação ✅
+
+- [x] Compilação do pacote principal `RadIA.dpk` — **sucesso**
+- [x] Compilação do projeto de testes `RadIATests.dpr` — **sucesso** (apenas hints)
+- [x] 100% dos testes unitários passando — **17/17** ✅
+- [x] Documentação (`README.md`, `docs/`) refletindo o estado real da implementação ✅
