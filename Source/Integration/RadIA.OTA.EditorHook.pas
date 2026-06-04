@@ -52,31 +52,31 @@ begin
   if not Assigned(AContextMenu) then
     Exit;
     
-  LRadIASubMenu := TMenuItem.Create(AContextMenu);
+  LRadIASubMenu := TMenuItem.Create(nil);
   LRadIASubMenu.Caption := 'RadIA';
   AContextMenu.Items.Add(LRadIASubMenu);
   
-  LItem := TMenuItem.Create(LRadIASubMenu);
+  LItem := TMenuItem.Create(nil);
   LItem.Caption := 'Explain Selected Code';
   LItem.OnClick := OnExplainExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(LRadIASubMenu);
+  LItem := TMenuItem.Create(nil);
   LItem.Caption := 'Optimize/Refactor Code';
   LItem.OnClick := OnOptimizeExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(LRadIASubMenu);
+  LItem := TMenuItem.Create(nil);
   LItem.Caption := 'Generate Unit Tests (DUnitX)';
   LItem.OnClick := OnTestsExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(LRadIASubMenu);
+  LItem := TMenuItem.Create(nil);
   LItem.Caption := 'Locate Bugs/Memory Leaks';
   LItem.OnClick := OnBugsExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(LRadIASubMenu);
+  LItem := TMenuItem.Create(nil);
   LItem.Caption := 'Document Method (XML)';
   LItem.OnClick := OnDocExecute;
   LRadIASubMenu.Add(LItem);
@@ -89,12 +89,12 @@ begin
   if not Assigned(AMenuItem) then
     Exit;
     
-  LItem := TMenuItem.Create(AMenuItem);
+  LItem := TMenuItem.Create(nil);
   LItem.Caption := 'RadIA Chat Panel';
   LItem.OnClick := OnShowChatExecute;
   AMenuItem.Add(LItem);
   
-  LItem := TMenuItem.Create(AMenuItem);
+  LItem := TMenuItem.Create(nil);
   LItem.Caption := 'Fix Last Compiler Error';
   LItem.OnClick := OnFixErrorExecute;
   AMenuItem.Add(LItem);

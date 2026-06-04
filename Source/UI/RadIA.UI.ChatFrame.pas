@@ -55,6 +55,7 @@ type
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
     procedure InitializeWebView;
     procedure CopyWebFiles;
+    function IsProviderConfigured(const AProvider: TAIProviderType): Boolean;
     procedure LoadConfig;
     procedure UpdateModelsCombo;
     procedure SendPromptToAI(const APromptText: string);
@@ -220,17 +221,60 @@ begin
   EdgeBrowser.Navigate('file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/'));
 end;
 
+function TFrameAIChat.IsProviderConfigured(const AProvider: TAIProviderType): Boolean;
+begin
+  if AProvider = ptOllama then
+    Result := not FConfig.GetOllamaBaseUrl.Trim.IsEmpty
+  else
+    Result := not FConfig.GetApiKey(AProvider).Trim.IsEmpty;
+end;
+
 procedure TFrameAIChat.LoadConfig;
 var
   LProv: TAIProviderType;
+  LActiveProvider: TAIProviderType;
+  LFoundIndex: Integer;
+  I: Integer;
 begin
   cbProvider.Items.Clear;
   for LProv := Low(TAIProviderType) to High(TAIProviderType) do
   begin
-    cbProvider.Items.Add(ProviderTypeToString(LProv));
+    if IsProviderConfigured(LProv) then
+    begin
+      cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
+    end;
   end;
-  
-  cbProvider.ItemIndex := Integer(FConfig.GetActiveProvider);
+
+  if cbProvider.Items.Count = 0 then
+  begin
+    for LProv := Low(TAIProviderType) to High(TAIProviderType) do
+    begin
+      cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
+    end;
+  end;
+
+  LActiveProvider := FConfig.GetActiveProvider;
+  LFoundIndex := -1;
+  for I := 0 to cbProvider.Items.Count - 1 do
+  begin
+    if TAIProviderType(cbProvider.Items.Objects[I]) = LActiveProvider then
+    begin
+      LFoundIndex := I;
+      Break;
+    end;
+  end;
+
+  if LFoundIndex <> -1 then
+  begin
+    cbProvider.ItemIndex := LFoundIndex;
+  end
+  else if cbProvider.Items.Count > 0 then
+  begin
+    cbProvider.ItemIndex := 0;
+    FConfig.SetActiveProvider(TAIProviderType(cbProvider.Items.Objects[0]));
+    FConfig.Save;
+  end;
+
   UpdateModelsCombo;
 end;
 
@@ -281,16 +325,28 @@ begin
 end;
 
 procedure TFrameAIChat.cbProviderChange(Sender: TObject);
+var
+  LSelectedProvider: TAIProviderType;
 begin
-  FConfig.SetActiveProvider(TAIProviderType(cbProvider.ItemIndex));
-  FConfig.Save;
-  UpdateModelsCombo;
+  if cbProvider.ItemIndex <> -1 then
+  begin
+    LSelectedProvider := TAIProviderType(cbProvider.Items.Objects[cbProvider.ItemIndex]);
+    FConfig.SetActiveProvider(LSelectedProvider);
+    FConfig.Save;
+    UpdateModelsCombo;
+  end;
 end;
 
 procedure TFrameAIChat.cbModelChange(Sender: TObject);
+var
+  LSelectedProvider: TAIProviderType;
 begin
-  FConfig.SetActiveModel(TAIProviderType(cbProvider.ItemIndex), cbModel.Text);
-  FConfig.Save;
+  if cbProvider.ItemIndex <> -1 then
+  begin
+    LSelectedProvider := TAIProviderType(cbProvider.Items.Objects[cbProvider.ItemIndex]);
+    FConfig.SetActiveModel(LSelectedProvider, cbModel.Text);
+    FConfig.Save;
+  end;
 end;
 
 procedure TFrameAIChat.btnClearClick(Sender: TObject);
