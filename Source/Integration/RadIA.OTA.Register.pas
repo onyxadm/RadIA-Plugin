@@ -381,12 +381,6 @@ begin
       end;
     end;
 
-    // Fallbacks para encontrar o menu de contexto
-    if not Assigned(LPopupMenu) then
-      LPopupMenu := Application.FindComponent('EditorLocalMenu');
-    if not Assigned(LPopupMenu) then
-      LPopupMenu := Application.FindComponent('EditorContextMenu');
-
     if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
     begin
       for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
@@ -464,12 +458,6 @@ begin
       end;
     end;
 
-    // Fallbacks para encontrar o menu de contexto
-    if not Assigned(LPopupMenu) then
-      LPopupMenu := Application.FindComponent('EditorLocalMenu');
-    if not Assigned(LPopupMenu) then
-      LPopupMenu := Application.FindComponent('EditorContextMenu');
-
     if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
     begin
       for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
@@ -538,12 +526,6 @@ begin
         LPopupMenu := LEditWindow.Form.FindComponent('EditorLocalMenu');
       end;
     end;
-
-    // Fallbacks para encontrar o menu de contexto
-    if not Assigned(LPopupMenu) then
-      LPopupMenu := Application.FindComponent('EditorLocalMenu');
-    if not Assigned(LPopupMenu) then
-      LPopupMenu := Application.FindComponent('EditorContextMenu');
 
     if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
     begin

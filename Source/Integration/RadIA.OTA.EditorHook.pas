@@ -56,27 +56,27 @@ begin
   LRadIASubMenu.Caption := 'RadIA';
   AContextMenu.Items.Add(LRadIASubMenu);
   
-  LItem := TMenuItem.Create(AContextMenu);
+  LItem := TMenuItem.Create(LRadIASubMenu);
   LItem.Caption := 'Explain Selected Code';
   LItem.OnClick := OnExplainExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(AContextMenu);
+  LItem := TMenuItem.Create(LRadIASubMenu);
   LItem.Caption := 'Optimize/Refactor Code';
   LItem.OnClick := OnOptimizeExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(AContextMenu);
+  LItem := TMenuItem.Create(LRadIASubMenu);
   LItem.Caption := 'Generate Unit Tests (DUnitX)';
   LItem.OnClick := OnTestsExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(AContextMenu);
+  LItem := TMenuItem.Create(LRadIASubMenu);
   LItem.Caption := 'Locate Bugs/Memory Leaks';
   LItem.OnClick := OnBugsExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(AContextMenu);
+  LItem := TMenuItem.Create(LRadIASubMenu);
   LItem.Caption := 'Document Method (XML)';
   LItem.OnClick := OnDocExecute;
   LRadIASubMenu.Add(LItem);
