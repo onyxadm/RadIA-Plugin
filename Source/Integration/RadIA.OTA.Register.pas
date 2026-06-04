@@ -230,11 +230,6 @@ begin
   TRadIAEditorHook(FEditorHook).Uninstall;
   FEditorHook.Free;
   
-  if Assigned(FormRadIADockable) then
-  begin
-    FreeAndNil(FormRadIADockable);
-  end;
-  
   inherited Destroy;
 end;
 
