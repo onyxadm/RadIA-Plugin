@@ -142,13 +142,21 @@ begin
 end;
 
 destructor TFrameAIChat.Destroy;
+var
+  I: Integer;
 begin
   if Assigned(FLifecycleGuard) then
     (FLifecycleGuard as ILifecycleGuard).Invalidate;
   TRadIAMediator.Instance.UnregisterPromptHandler;
+  
+  if Assigned(FPopupMenuTemplates) then
+  begin
+    for I := 0 to FPopupMenuTemplates.Items.Count - 1 do
+      FPopupMenuTemplates.Items[I].OnClick := nil;
+  end;
+  
   FPromptHistoryManager.Free;
-  FTemplateManager.Free;
-  FAIService.Free;
+  FreeAndNil(FTemplateManager);
   inherited Destroy;
 end;
 
@@ -664,6 +672,9 @@ var
   LActiveCode: string;
   LResolved: string;
 begin
+  if not Assigned(FTemplateManager) then
+    Exit;
+    
   if not (Sender is TMenuItem) then
     Exit;
     

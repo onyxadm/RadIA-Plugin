@@ -391,7 +391,7 @@ begin
     begin
       for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
       begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, #$D83E#$DD16' RadIA') then
+        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, 'RadIA') then
         begin
           LContextAlreadyPopulated := True;
           Break;
@@ -474,7 +474,7 @@ begin
     begin
       for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
       begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, #$D83E#$DD16' RadIA') then
+        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, 'RadIA') then
         begin
           LContextPopulated := True;
           Break;
@@ -549,7 +549,7 @@ begin
     begin
       for I := TPopupMenu(LPopupMenu).Items.Count - 1 downto 0 do
       begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, #$D83E#$DD16' RadIA') then
+        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, 'RadIA') then
         begin
           TPopupMenu(LPopupMenu).Items[I].Free;
         end;

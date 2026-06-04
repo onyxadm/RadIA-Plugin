@@ -53,7 +53,7 @@ begin
     Exit;
     
   LRadIASubMenu := TMenuItem.Create(AContextMenu);
-  LRadIASubMenu.Caption := #$D83E#$DD16' RadIA';
+  LRadIASubMenu.Caption := 'RadIA';
   AContextMenu.Items.Add(LRadIASubMenu);
   
   LItem := TMenuItem.Create(LRadIASubMenu);
