@@ -38,11 +38,7 @@ begin
     FormRadIADockable := TFormRadIADockable.Create(nil);
   end;
   
-  if not FormRadIADockable.Visible then
-  begin
-    FormRadIADockable.Show;
-  end;
-  FormRadIADockable.BringToFront;
+  ShowDockableForm(FormRadIADockable);
 end;
 
 procedure RegisterDockableForm;

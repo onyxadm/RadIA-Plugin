@@ -204,19 +204,6 @@ object FrameAIChat: TFrameAIChat
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 2
-    object EdgeBrowser: TEdgeBrowser
-      AlignWithMargins = True
-      Left = 3
-      Top = 3
-      Width = 984
-      Height = 492
-      Align = alClient
-      TabOrder = 0
-      AllowSingleSignOnUsingOSPrimaryAccount = False
-      TargetCompatibleBrowserVersion = '137.0.3296.44'
-      UserDataFolder = '%LOCALAPPDATA%\bds.exe.WebView2'
-      OnCreateWebViewCompleted = EdgeBrowserCreateWebViewCompleted
-    end
   end
   object SaveDialog: TSaveDialog
     DefaultExt = 'md'

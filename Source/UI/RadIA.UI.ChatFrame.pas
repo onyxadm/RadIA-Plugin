@@ -24,7 +24,6 @@ type
     btnSend: TSpeedButton;
     lblContext: TLabel;
     pnlBrowser: TPanel;
-    EdgeBrowser: TEdgeBrowser;
     procedure btnSendClick(Sender: TObject);
     procedure cbProviderChange(Sender: TObject);
     procedure cbModelChange(Sender: TObject);
@@ -51,6 +50,9 @@ type
     FTemplateManager: TPromptTemplateManager;
     FPopupMenuTemplates: TPopupMenu;
     FLifecycleGuard: IInterface;
+    EdgeBrowser: TEdgeBrowser;
+    
+    procedure CreateEdgeBrowser;
     
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
     procedure InitializeWebView;
@@ -71,6 +73,9 @@ type
     procedure ApplyIDETheme;
     procedure UpdateVCLColors(const AThemeName: string);
     procedure ProcessWebMessage(const AMessage: string);
+  protected
+    procedure CreateWnd; override;
+    procedure DestroyWnd; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -104,12 +109,6 @@ begin
       LThemingServices.ApplyTheme(Self);
     end;
   end;
-
-  {$IF CompilerVersion >= 35.0}
-  EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
-  {$ELSE}
-  EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceivedLegacy;
-  {$ENDIF}
   
   FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.Create;
@@ -167,12 +166,54 @@ begin
   if Showing and not FWebViewInitialized then
   begin
     FWebViewInitialized := True;
+    CreateEdgeBrowser;
     TThread.ForceQueue(nil,
       procedure
       begin
         InitializeWebView;
       end);
   end;
+end;
+
+procedure TFrameAIChat.CreateEdgeBrowser;
+begin
+  if not Assigned(EdgeBrowser) then
+  begin
+    EdgeBrowser := TEdgeBrowser.Create(Self);
+    EdgeBrowser.Parent := pnlBrowser;
+    EdgeBrowser.Align := alClient;
+    EdgeBrowser.AlignWithMargins := True;
+    EdgeBrowser.OnCreateWebViewCompleted := EdgeBrowserCreateWebViewCompleted;
+    {$IF CompilerVersion >= 35.0}
+    EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
+    {$ELSE}
+    EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceivedLegacy;
+    {$ENDIF}
+  end;
+end;
+
+procedure TFrameAIChat.CreateWnd;
+begin
+  inherited CreateWnd;
+  if not FWebViewInitialized and Showing then
+  begin
+    FWebViewInitialized := True;
+    CreateEdgeBrowser;
+    TThread.ForceQueue(nil,
+      procedure
+      begin
+        InitializeWebView;
+      end);
+  end;
+end;
+
+procedure TFrameAIChat.DestroyWnd;
+begin
+  FBrowserInitialized := False;
+  FWebViewInitialized := False;
+  if Assigned(EdgeBrowser) then
+    FreeAndNil(EdgeBrowser);
+  inherited DestroyWnd;
 end;
 
 procedure TFrameAIChat.CopyWebFiles;
@@ -939,6 +980,14 @@ procedure TFrameAIChat.memPromptKeyDown(Sender: TObject; var Key: Word; Shift: T
 var
   LPrompt: string;
 begin
+  { Send prompt with Ctrl + Enter }
+  if (Key = VK_RETURN) and (Shift = [ssCtrl]) then
+  begin
+    btnSendClick(nil);
+    Key := 0;
+    Exit;
+  end;
+
   { Navigate history with ↑ and ↓ arrows (no modifier keys) }
   if Shift <> [] then
     Exit;
