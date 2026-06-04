@@ -63,6 +63,7 @@ constructor TFormRadIADockable.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
 begin
+  FormRadIADockable := Self;
   inherited Create(AOwner);
   Caption := 'RadIA Chat';
   Name := 'FormRadIADockable';
@@ -135,7 +136,8 @@ begin
     end;
   end;
 
-  FormRadIADockable := nil;
+  if FormRadIADockable = Self then
+    FormRadIADockable := nil;
   inherited Destroy;
 end;
 
