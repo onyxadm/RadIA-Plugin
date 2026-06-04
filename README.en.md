@@ -40,6 +40,8 @@
 | Feature | Category | Description | Status |
 | :--- | :--- | :--- | :--- |
 | **Dockable Sidebar Chat** | Chat UX | IDE-integrated panel running WebView2 with Markdown and Pascal highlighting. | ✅ Completed |
+| **Keyboard Shortcuts** | Chat UX | Shortcut `Ctrl + Enter` to send prompts and simple `Enter` for line breaks. | ✅ Completed |
+| **Layout Persistence** | Chat UX | Automatic saving and restoration of floating window size/position and visibility at startup. | ✅ Completed |
 | **Streaming Responses** | Chat UX | Real-time incremental token rendering (SSE) for OpenAI, Gemini, Claude, and Ollama. | ✅ Completed |
 | **Persistent Chat History** | Chat UX | Automatic local JSON storage and reload of conversation history. | ✅ Completed |
 | **Prompt Navigation (↑/↓)** | Chat UX | Terminal-like keyboard arrow history lookup in prompt input. | ✅ Completed |
@@ -67,7 +69,7 @@ The user interface uses a hybrid architecture:
 2.  **Edge WebView2 Engine:** Displays the message history using local HTML5, CSS (incorporating glassmorphism/modern dark UI that adapts to the IDE theme), and JavaScript libraries (Prism.js and Marked.js) to render rich markdown and copyable code blocks without freezing the main IDE thread.
 
 ### 4. Prerequisites
-*   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria, or 12 Athens (or newer).
+*   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria, 12 Athens, or 13 Florence (or newer).
 *   **OS:** Windows 10 / 11 (64-bit).
 *   **Web Engine:** *Microsoft Edge WebView2 Runtime* installed on the Windows system (pre-installed on modern Windows versions). **Important:** The `WebView2Loader.dll` matching the IDE's architecture (32-bit for Delphi 10.4, 64-bit for Delphi 11 and 12) must be present in Delphi's `bin` installation directory (e.g., `C:\Program Files (x86)\Embarcadero\Studio\<version>\bin`) or in the Windows system PATH.
 *   **API Keys:** Active developer keys obtained from their respective consoles: [Google AI Studio](https://aistudio.google.com/) (Gemini), [OpenAI Platform](https://platform.openai.com/) (ChatGPT), [Anthropic Console](https://console.anthropic.com/) (Claude), [DeepSeek Console](https://platform.deepseek.com/), and [Groq Console](https://console.groq.com/). For local/network use with **Ollama**, ensure the Ollama server instance is active at the configured address (e.g., `http://localhost:11434`).
