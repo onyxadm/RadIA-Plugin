@@ -49,6 +49,7 @@ type
     FAccumulatedUsage: TTokenUsage;
     FTemplateManager: TPromptTemplateManager;
     FPopupMenuTemplates: TPopupMenu;
+    FLoadingConfig: Boolean;  { Guard: prevents OnChange events from saving during LoadConfig }
     FLifecycleGuard: IInterface;
     EdgeBrowser: TEdgeBrowser;
     
@@ -288,46 +289,48 @@ var
   LFoundIndex: Integer;
   I: Integer;
 begin
-  cbProvider.Items.Clear;
-  for LProv := Low(TAIProviderType) to High(TAIProviderType) do
-  begin
-    if IsProviderConfigured(LProv) then
-    begin
-      cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
-    end;
-  end;
-
-  if cbProvider.Items.Count = 0 then
-  begin
+  { Disable OnChange handlers to prevent premature FConfig.Save during
+    programmatic combo updates — e.g. cbProvider.ItemIndex assignment
+    fires cbProviderChange which calls FConfig.Save with partial data. }
+  FLoadingConfig := True;
+  try
+    cbProvider.Items.Clear;
     for LProv := Low(TAIProviderType) to High(TAIProviderType) do
     begin
-      cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
+      if IsProviderConfigured(LProv) then
+        cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
     end;
-  end;
 
-  LActiveProvider := FConfig.GetActiveProvider;
-  LFoundIndex := -1;
-  for I := 0 to cbProvider.Items.Count - 1 do
-  begin
-    if TAIProviderType(cbProvider.Items.Objects[I]) = LActiveProvider then
+    if cbProvider.Items.Count = 0 then
     begin
-      LFoundIndex := I;
-      Break;
+      for LProv := Low(TAIProviderType) to High(TAIProviderType) do
+        cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
     end;
-  end;
 
-  if LFoundIndex <> -1 then
-  begin
-    cbProvider.ItemIndex := LFoundIndex;
-  end
-  else if cbProvider.Items.Count > 0 then
-  begin
-    cbProvider.ItemIndex := 0;
-    FConfig.SetActiveProvider(TAIProviderType(cbProvider.Items.Objects[0]));
-    FConfig.Save;
-  end;
+    LActiveProvider := FConfig.GetActiveProvider;
+    LFoundIndex := -1;
+    for I := 0 to cbProvider.Items.Count - 1 do
+    begin
+      if TAIProviderType(cbProvider.Items.Objects[I]) = LActiveProvider then
+      begin
+        LFoundIndex := I;
+        Break;
+      end;
+    end;
 
-  UpdateModelsCombo;
+    if LFoundIndex <> -1 then
+      cbProvider.ItemIndex := LFoundIndex
+    else if cbProvider.Items.Count > 0 then
+    begin
+      cbProvider.ItemIndex := 0;
+      { Only update FActiveProvider in memory — Save will happen below if needed }
+      FConfig.SetActiveProvider(TAIProviderType(cbProvider.Items.Objects[0]));
+    end;
+
+    UpdateModelsCombo;
+  finally
+    FLoadingConfig := False;
+  end;
 end;
 
 procedure TFrameAIChat.UpdateModelsCombo;
@@ -361,7 +364,14 @@ begin
         LActiveModel := FConfig.GetActiveModel(LProvider.GetProviderType);
         cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
         if cbModel.ItemIndex = -1 then
+        begin
           cbModel.ItemIndex := 0;
+          if cbModel.Items.Count > 0 then
+          begin
+            FConfig.SetActiveModel(LProvider.GetProviderType, cbModel.Items[0]);
+            FConfig.Save;
+          end;
+        end;
           
         cbModel.Enabled := True;
       end);
@@ -380,6 +390,10 @@ procedure TFrameAIChat.cbProviderChange(Sender: TObject);
 var
   LSelectedProvider: TAIProviderType;
 begin
+  { Ignore programmatic changes during LoadConfig to prevent premature Save }
+  if FLoadingConfig then
+    Exit;
+
   if cbProvider.ItemIndex <> -1 then
   begin
     LSelectedProvider := TAIProviderType(cbProvider.Items.Objects[cbProvider.ItemIndex]);
@@ -393,6 +407,10 @@ procedure TFrameAIChat.cbModelChange(Sender: TObject);
 var
   LSelectedProvider: TAIProviderType;
 begin
+  { Ignore programmatic changes during LoadConfig to prevent premature Save }
+  if FLoadingConfig then
+    Exit;
+
   if cbProvider.ItemIndex <> -1 then
   begin
     LSelectedProvider := TAIProviderType(cbProvider.Items.Objects[cbProvider.ItemIndex]);
