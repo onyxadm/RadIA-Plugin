@@ -211,6 +211,11 @@ begin
   FTimer.Enabled := True;
   
   TRadIAMediator.Instance.RegisterDiffHandler(OnRequestDiff);
+
+  if not Assigned(FormRadIADockable) then
+  begin
+    FormRadIADockable := TFormRadIADockable.Create(nil);
+  end;
 end;
 
 destructor TRadIAWizard.Destroy;
@@ -224,6 +229,12 @@ begin
   UnregisterMenus;
   TRadIAEditorHook(FEditorHook).Uninstall;
   FEditorHook.Free;
+  
+  if Assigned(FormRadIADockable) then
+  begin
+    FreeAndNil(FormRadIADockable);
+  end;
+  
   inherited Destroy;
 end;
 

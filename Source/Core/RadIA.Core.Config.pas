@@ -17,7 +17,6 @@ type
     FMaxHistoryMessages: Integer;
     FOpenAICustomBaseUrl: string;
 
-    function GetRegistryPath: string;
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
     function ProtectString(const AValue: string): string;
@@ -27,6 +26,7 @@ type
   public
     constructor Create;
     class procedure SetBaseRegistryPath(const APath: string);
+    class function GetRegistryPath: string;
 
     { IAIConfig implementation }
     function GetApiKey(const AProvider: TAIProviderType): string;
@@ -213,7 +213,7 @@ begin
   end;
 end;
 
-function TRadIAConfig.GetRegistryPath: string;
+class function TRadIAConfig.GetRegistryPath: string;
 var
   LOTAServices: IOTAServices;
   LSettings: TFormatSettings;

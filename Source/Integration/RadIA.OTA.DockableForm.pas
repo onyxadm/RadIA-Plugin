@@ -4,7 +4,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, DockForm, ToolsAPI,
+  System.Win.Registry, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, DockForm, ToolsAPI,
   RadIA.UI.ChatFrame;
 
 type
@@ -12,6 +12,7 @@ type
   private
     FChatFrame: TFrameAIChat;
     procedure ApplyIDETheme;
+    procedure LoadWindowSize;
   protected
     procedure DoShow; override;
   public
@@ -29,7 +30,7 @@ var
 implementation
 
 uses
-  DeskUtil;
+  DeskUtil, RadIA.Core.Config;
 
 procedure ShowRadIAChat;
 begin
@@ -73,6 +74,7 @@ begin
   Width := 990;
   Height := 650;
   Position := poScreenCenter;
+  LoadWindowSize;
   
   FChatFrame := TFrameAIChat.Create(Self);
   FChatFrame.Parent := Self;
@@ -89,8 +91,50 @@ begin
   ApplyIDETheme;
 end;
 
-destructor TFormRadIADockable.Destroy;
+procedure TFormRadIADockable.LoadWindowSize;
+var
+  LReg: TRegistry;
+  LRegPath: string;
 begin
+  LReg := TRegistry.Create;
+  try
+    LReg.RootKey := HKEY_CURRENT_USER;
+    LRegPath := TRadIAConfig.GetRegistryPath;
+    if LReg.OpenKeyReadOnly(LRegPath) then
+    begin
+      if LReg.ValueExists('WindowWidth') then
+        Width := LReg.ReadInteger('WindowWidth');
+      if LReg.ValueExists('WindowHeight') then
+        Height := LReg.ReadInteger('WindowHeight');
+      LReg.CloseKey;
+    end;
+  finally
+    LReg.Free;
+  end;
+end;
+
+destructor TFormRadIADockable.Destroy;
+var
+  LReg: TRegistry;
+  LRegPath: string;
+begin
+  if Floating then
+  begin
+    LReg := TRegistry.Create;
+    try
+      LReg.RootKey := HKEY_CURRENT_USER;
+      LRegPath := TRadIAConfig.GetRegistryPath;
+      if LReg.OpenKey(LRegPath, True) then
+      begin
+        LReg.WriteInteger('WindowWidth', Width);
+        LReg.WriteInteger('WindowHeight', Height);
+        LReg.CloseKey;
+      end;
+    finally
+      LReg.Free;
+    end;
+  end;
+
   FormRadIADockable := nil;
   inherited Destroy;
 end;
