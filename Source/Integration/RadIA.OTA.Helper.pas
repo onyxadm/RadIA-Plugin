@@ -8,6 +8,8 @@ uses
 type
   { Helper class for interacting with Delphi Open Tools API (OTA) }
   TRadIAOTAHelper = class
+  private
+    class function FormatTextWithIndent(const AText: string; const APosition: IOTAEditPosition): string;
   public
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     class function ReplaceActiveEditorText(const ANewText: string): Boolean;
@@ -92,6 +94,64 @@ begin
   end;
 end;
 
+class function TRadIAOTAHelper.FormatTextWithIndent(const AText: string; const APosition: IOTAEditPosition): string;
+var
+  LOriginalCol, LOriginalRow: Integer;
+  LPrefix: string;
+  LCol: Integer;
+  LLines: TStringList;
+  I: Integer;
+begin
+  Result := AText;
+  if not Assigned(APosition) then
+    Exit;
+
+  LOriginalCol := APosition.GetColumn;
+  LOriginalRow := APosition.GetRow;
+  LPrefix := '';
+
+  APosition.Save;
+  try
+    APosition.Move(LOriginalRow, 1);
+    for LCol := 1 to LOriginalCol - 1 do
+    begin
+      if APosition.Character = #9 then
+        LPrefix := LPrefix + #9
+      else if APosition.Character = ' ' then
+        LPrefix := LPrefix + ' '
+      else
+        LPrefix := LPrefix + ' ';
+      APosition.Move(LOriginalRow, LCol + 1);
+    end;
+  finally
+    APosition.Restore;
+  end;
+
+  if LPrefix = '' then
+    Exit;
+
+  LLines := TStringList.Create;
+  try
+    LLines.Text := AText;
+    if LLines.Count > 1 then
+    begin
+      for I := 1 to LLines.Count - 1 do
+      begin
+        if LLines[I] <> '' then
+          LLines[I] := LPrefix + LLines[I];
+      end;
+      Result := LLines.Text;
+      if (Length(AText) > 0) and (AText[Length(AText)] <> #10) and
+         (Length(Result) >= 2) and (Result[Length(Result) - 1] = #13) and (Result[Length(Result)] = #10) then
+      begin
+        SetLength(Result, Length(Result) - 2);
+      end;
+    end;
+  finally
+    LLines.Free;
+  end;
+end;
+
 class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string): Boolean;
 var
   LEditBuffer: IOTAEditBuffer;
@@ -100,6 +160,7 @@ var
   LPosition: IOTAEditPosition;
   LOptions: IOTABufferOptions;
   LSaveAutoIndent: Boolean;
+  LFormattedText: string;
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
@@ -116,13 +177,15 @@ begin
   end;
 
   LPosition := LView.Position;
+  LFormattedText := FormatTextWithIndent(ANewText, LPosition);
+
   LOptions := LEditBuffer.BufferOptions;
   if Assigned(LOptions) then
   begin
     LSaveAutoIndent := LOptions.AutoIndent;
     LOptions.AutoIndent := False;
     try
-      LPosition.InsertText(ANewText);
+      LPosition.InsertText(LFormattedText);
       Result := True;
     finally
       LOptions.AutoIndent := LSaveAutoIndent;
@@ -130,7 +193,7 @@ begin
   end
   else
   begin
-    LPosition.InsertText(ANewText);
+    LPosition.InsertText(LFormattedText);
     Result := True;
   end;
 end;
@@ -142,6 +205,7 @@ var
   LPosition: IOTAEditPosition;
   LOptions: IOTABufferOptions;
   LSaveAutoIndent: Boolean;
+  LFormattedText: string;
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
@@ -149,13 +213,15 @@ begin
   if Assigned(LEditBuffer) and Assigned(LView) and Assigned(LView.Position) then
   begin
     LPosition := LView.Position;
+    LFormattedText := FormatTextWithIndent(AText, LPosition);
+
     LOptions := LEditBuffer.BufferOptions;
     if Assigned(LOptions) then
     begin
       LSaveAutoIndent := LOptions.AutoIndent;
       LOptions.AutoIndent := False;
       try
-        LPosition.InsertText(AText);
+        LPosition.InsertText(LFormattedText);
         Result := True;
       finally
         LOptions.AutoIndent := LSaveAutoIndent;
@@ -163,7 +229,7 @@ begin
     end
     else
     begin
-      LPosition.InsertText(AText);
+      LPosition.InsertText(LFormattedText);
       Result := True;
     end;
   end;
