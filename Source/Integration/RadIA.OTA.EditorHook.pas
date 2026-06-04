@@ -3,12 +3,16 @@ unit RadIA.OTA.EditorHook;
 interface
 
 uses
-  System.SysUtils, System.Classes, Vcl.ActnList, Vcl.Menus, Vcl.Dialogs;
+  System.Classes, System.SysUtils, Vcl.ActnList, Vcl.Menus, Vcl.Dialogs, ToolsAPI;
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
   TRadIAEditorHook = class(TComponent)
   private
+    FActionList: TActionList;
+    procedure AddAction(const AName, ACaption, ACategory: string; AExecute: TNotifyEvent);
+    procedure ActionUpdate(Sender: TObject);
+
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
     procedure OnTestsExecute(Sender: TObject);
@@ -22,7 +26,8 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     
-    procedure PopulateContextMenu(const AContextMenu: TPopupMenu);
+    procedure Install;
+    procedure Uninstall;
     procedure PopulateToolsMenu(const AMenuItem: TMenuItem);
   end;
 
@@ -37,49 +42,104 @@ uses
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  FActionList := nil;
 end;
 
 destructor TRadIAEditorHook.Destroy;
 begin
+  Uninstall;
   inherited Destroy;
 end;
 
-procedure TRadIAEditorHook.PopulateContextMenu(const AContextMenu: TPopupMenu);
+procedure TRadIAEditorHook.AddAction(const AName, ACaption, ACategory: string; AExecute: TNotifyEvent);
 var
-  LRadIASubMenu: TMenuItem;
-  LItem: TMenuItem;
+  LAct: TAction;
 begin
-  if not Assigned(AContextMenu) then
-    Exit;
-    
-  LRadIASubMenu := TMenuItem.Create(AContextMenu);
-  LRadIASubMenu.Caption := 'RadIA';
-  AContextMenu.Items.Add(LRadIASubMenu);
-  
-  LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Caption := 'Explain Selected Code';
-  LItem.OnClick := OnExplainExecute;
-  LRadIASubMenu.Add(LItem);
-  
-  LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Caption := 'Optimize/Refactor Code';
-  LItem.OnClick := OnOptimizeExecute;
-  LRadIASubMenu.Add(LItem);
-  
-  LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Caption := 'Generate Unit Tests (DUnitX)';
-  LItem.OnClick := OnTestsExecute;
-  LRadIASubMenu.Add(LItem);
-  
-  LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Caption := 'Locate Bugs/Memory Leaks';
-  LItem.OnClick := OnBugsExecute;
-  LRadIASubMenu.Add(LItem);
-  
-  LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Caption := 'Document Method (XML)';
-  LItem.OnClick := OnDocExecute;
-  LRadIASubMenu.Add(LItem);
+  LAct := TAction.Create(FActionList);
+  LAct.Name := AName;
+  LAct.Caption := ACaption;
+  LAct.Category := ACategory;
+  LAct.ActionList := FActionList;
+  LAct.OnExecute := AExecute;
+  LAct.OnUpdate := ActionUpdate;
+end;
+
+procedure TRadIAEditorHook.ActionUpdate(Sender: TObject);
+begin
+  if Sender is TAction then
+    TAction(Sender).Enabled := True;
+end;
+
+procedure TRadIAEditorHook.Install;
+var
+  LEditorLocalMenu: INTAEditorLocalMenu;
+begin
+  if Supports(BorlandIDEServices, INTAEditorLocalMenu, LEditorLocalMenu) then
+  begin
+    FActionList := TActionList.Create(Self);
+    FActionList.Name := 'RadIAEditorActionList';
+
+    // 1. Action Pai (Submenu)
+    AddAction(
+      'actRadIARoot',
+      'RadIA',
+      'RadIA',
+      nil
+    );
+
+    // 2. Actions Filhas (Subitens)
+    AddAction(
+      'actRadIAExplain',
+      'Explain Selected Code',
+      'RadIA.Code',
+      OnExplainExecute
+    );
+
+    AddAction(
+      'actRadIAOptimize',
+      'Optimize/Refactor Code',
+      'RadIA.Code',
+      OnOptimizeExecute
+    );
+
+    AddAction(
+      'actRadIATests',
+      'Generate Unit Tests (DUnitX)',
+      'RadIA.Code',
+      OnTestsExecute
+    );
+
+    AddAction(
+      'actRadIABugs',
+      'Locate Bugs/Memory Leaks',
+      'RadIA.Code',
+      OnBugsExecute
+    );
+
+    AddAction(
+      'actRadIADoc',
+      'Document Method (XML)',
+      'RadIA.Code',
+      OnDocExecute
+    );
+
+    LEditorLocalMenu.RegisterActionList(
+      FActionList,
+      cEdMenuCatBase
+    );
+  end;
+end;
+
+procedure TRadIAEditorHook.Uninstall;
+var
+  LEditorLocalMenu: INTAEditorLocalMenu;
+begin
+  if Assigned(FActionList) then
+  begin
+    if Supports(BorlandIDEServices, INTAEditorLocalMenu, LEditorLocalMenu) then
+      LEditorLocalMenu.UnregisterActionList(cEdMenuCatBase);
+    FreeAndNil(FActionList);
+  end;
 end;
 
 procedure TRadIAEditorHook.PopulateToolsMenu(const AMenuItem: TMenuItem);

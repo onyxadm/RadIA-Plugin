@@ -202,6 +202,7 @@ begin
   end;
   
   FEditorHook := TRadIAEditorHook.Create(nil);
+  TRadIAEditorHook(FEditorHook).Install;
   RegisterMenus;
   
   FTimer := TTimer.Create(nil);
@@ -221,6 +222,7 @@ begin
     FTimer.Free;
   end;
   UnregisterMenus;
+  TRadIAEditorHook(FEditorHook).Uninstall;
   FEditorHook.Free;
   inherited Destroy;
 end;
@@ -326,17 +328,12 @@ procedure TRadIAWizard.RegisterMenus;
 var
   LNTAServices: INTAServices;
   LToolsMenu: TMenuItem;
-  LPopupMenu: TComponent;
   I: Integer;
   LToolsAlreadyPopulated: Boolean;
-  LContextAlreadyPopulated: Boolean;
   LHook: TRadIAEditorHook;
-  LEditServices: IOTAEditorServices;
-  LEditWindow: INTAEditWindow;
 begin
   LogDebug('RegisterMenus called');
   LToolsAlreadyPopulated := False;
-  LContextAlreadyPopulated := False;
   LHook := TRadIAEditorHook(FEditorHook);
 
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
@@ -368,41 +365,6 @@ begin
     begin
       LogDebug('Error: Tools/Ferramentas menu NOT found');
     end;
-    
-    { Register editor context menu }
-    LPopupMenu := nil;
-    if Supports(BorlandIDEServices, IOTAEditorServices, LEditServices) and 
-       Assigned(LEditServices.TopView) then
-    begin
-      LEditWindow := LEditServices.TopView.GetEditWindow;
-      if Assigned(LEditWindow) and Assigned(LEditWindow.Form) then
-      begin
-        LPopupMenu := LEditWindow.Form.FindComponent('EditorLocalMenu');
-      end;
-    end;
-
-    if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
-    begin
-      for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
-      begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, 'RadIA') then
-        begin
-          LContextAlreadyPopulated := True;
-          Break;
-        end;
-      end;
-
-      if not LContextAlreadyPopulated then
-      begin
-        LogDebug('EditorContextMenu found and populating...');
-        LHook.PopulateContextMenu(TPopupMenu(LPopupMenu));
-        LogDebug('Editor context menu populated');
-      end;
-    end
-    else
-    begin
-      LogDebug('Warning: EditorContextMenu/EditorLocalMenu NOT found in RegisterMenus');
-    end;
   end;
 end;
 
@@ -410,15 +372,11 @@ procedure TRadIAWizard.OnTimerEvent(Sender: TObject);
 var
   LNTAServices: INTAServices;
   LToolsMenu: TMenuItem;
-  LPopupMenu: TComponent;
-  LToolsPopulated, LContextPopulated: Boolean;
+  LToolsPopulated: Boolean;
   I: Integer;
   LHook: TRadIAEditorHook;
-  LEditServices: IOTAEditorServices;
-  LEditWindow: INTAEditWindow;
 begin
   LToolsPopulated := False;
-  LContextPopulated := False;
   LHook := TRadIAEditorHook(FEditorHook);
 
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
@@ -445,44 +403,12 @@ begin
         LogDebug('Tools menu populated successfully');
       end;
     end;
-    
-    // 2. Verificar e popular o menu de contexto do Editor
-    LPopupMenu := nil;
-    if Supports(BorlandIDEServices, IOTAEditorServices, LEditServices) and 
-       Assigned(LEditServices.TopView) then
-    begin
-      LEditWindow := LEditServices.TopView.GetEditWindow;
-      if Assigned(LEditWindow) and Assigned(LEditWindow.Form) then
-      begin
-        LPopupMenu := LEditWindow.Form.FindComponent('EditorLocalMenu');
-      end;
-    end;
-
-    if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
-    begin
-      for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
-      begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, 'RadIA') then
-        begin
-          LContextPopulated := True;
-          Break;
-        end;
-      end;
-
-      if not LContextPopulated then
-      begin
-        LogDebug('EditorContextMenu not populated. Populating now...');
-        LHook.PopulateContextMenu(TPopupMenu(LPopupMenu));
-        LContextPopulated := True;
-        LogDebug('EditorContextMenu populated successfully');
-      end;
-    end;
   end;
 
-  // Desliga o timer assim que ambos estiverem populados
-  if LToolsPopulated and LContextPopulated then
+  // Desliga o timer assim que o menu Tools estiver populado
+  if LToolsPopulated then
   begin
-    LogDebug('Both menus populated. Disabling timer.');
+    LogDebug('Tools menu populated. Disabling timer.');
     FTimer.Enabled := False;
   end;
 end;
@@ -491,10 +417,7 @@ procedure TRadIAWizard.UnregisterMenus;
 var
   LNTAServices: INTAServices;
   LToolsMenu: TMenuItem;
-  LPopupMenu: TComponent;
   I: Integer;
-  LEditServices: IOTAEditorServices;
-  LEditWindow: INTAEditWindow;
 begin
   LogDebug('UnregisterMenus called');
   if not Assigned(FEditorHook) then
@@ -511,29 +434,6 @@ begin
            SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsMenu.Items[I].Free;
-        end;
-      end;
-    end;
-    
-    { Unregister editor context menu }
-    LPopupMenu := nil;
-    if Supports(BorlandIDEServices, IOTAEditorServices, LEditServices) and 
-       Assigned(LEditServices.TopView) then
-    begin
-      LEditWindow := LEditServices.TopView.GetEditWindow;
-      if Assigned(LEditWindow) and Assigned(LEditWindow.Form) then
-      begin
-        LPopupMenu := LEditWindow.Form.FindComponent('EditorLocalMenu');
-      end;
-    end;
-
-    if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
-    begin
-      for I := TPopupMenu(LPopupMenu).Items.Count - 1 downto 0 do
-      begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, 'RadIA') then
-        begin
-          TPopupMenu(LPopupMenu).Items[I].Free;
         end;
       end;
     end;
