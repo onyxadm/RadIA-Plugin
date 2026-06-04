@@ -331,6 +331,8 @@ var
   LToolsAlreadyPopulated: Boolean;
   LContextAlreadyPopulated: Boolean;
   LHook: TRadIAEditorHook;
+  LEditServices: IOTAEditorServices;
+  LEditWindow: INTAEditWindow;
 begin
   LogDebug('RegisterMenus called');
   LToolsAlreadyPopulated := False;
@@ -368,7 +370,23 @@ begin
     end;
     
     { Register editor context menu }
-    LPopupMenu := Application.FindComponent('EditorContextMenu');
+    LPopupMenu := nil;
+    if Supports(BorlandIDEServices, IOTAEditorServices, LEditServices) and 
+       Assigned(LEditServices.TopView) then
+    begin
+      LEditWindow := LEditServices.TopView.GetEditWindow;
+      if Assigned(LEditWindow) and Assigned(LEditWindow.Form) then
+      begin
+        LPopupMenu := LEditWindow.Form.FindComponent('EditorLocalMenu');
+      end;
+    end;
+
+    // Fallbacks para encontrar o menu de contexto
+    if not Assigned(LPopupMenu) then
+      LPopupMenu := Application.FindComponent('EditorLocalMenu');
+    if not Assigned(LPopupMenu) then
+      LPopupMenu := Application.FindComponent('EditorContextMenu');
+
     if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
     begin
       for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
@@ -382,19 +400,15 @@ begin
 
       if not LContextAlreadyPopulated then
       begin
-        LogDebug('EditorContextMenu found');
+        LogDebug('EditorContextMenu found and populating...');
         LHook.PopulateContextMenu(TPopupMenu(LPopupMenu));
         LogDebug('Editor context menu populated');
       end;
     end
     else
     begin
-      LogDebug('Warning: EditorContextMenu NOT found');
+      LogDebug('Warning: EditorContextMenu/EditorLocalMenu NOT found in RegisterMenus');
     end;
-  end
-  else
-  begin
-    LogDebug('Error: INTAServices NOT supported');
   end;
 end;
 
@@ -406,6 +420,8 @@ var
   LToolsPopulated, LContextPopulated: Boolean;
   I: Integer;
   LHook: TRadIAEditorHook;
+  LEditServices: IOTAEditorServices;
+  LEditWindow: INTAEditWindow;
 begin
   LToolsPopulated := False;
   LContextPopulated := False;
@@ -437,7 +453,23 @@ begin
     end;
     
     // 2. Verificar e popular o menu de contexto do Editor
-    LPopupMenu := Application.FindComponent('EditorContextMenu');
+    LPopupMenu := nil;
+    if Supports(BorlandIDEServices, IOTAEditorServices, LEditServices) and 
+       Assigned(LEditServices.TopView) then
+    begin
+      LEditWindow := LEditServices.TopView.GetEditWindow;
+      if Assigned(LEditWindow) and Assigned(LEditWindow.Form) then
+      begin
+        LPopupMenu := LEditWindow.Form.FindComponent('EditorLocalMenu');
+      end;
+    end;
+
+    // Fallbacks para encontrar o menu de contexto
+    if not Assigned(LPopupMenu) then
+      LPopupMenu := Application.FindComponent('EditorLocalMenu');
+    if not Assigned(LPopupMenu) then
+      LPopupMenu := Application.FindComponent('EditorContextMenu');
+
     if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
     begin
       for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
@@ -474,6 +506,8 @@ var
   LPopupMenu: TComponent;
   I: Integer;
   LHook: TRadIAEditorHook;
+  LEditServices: IOTAEditorServices;
+  LEditWindow: INTAEditWindow;
 begin
   LogDebug('UnregisterMenus called');
   if not Assigned(FEditorHook) then
@@ -496,7 +530,23 @@ begin
     end;
     
     { Unregister editor context menu }
-    LPopupMenu := Application.FindComponent('EditorContextMenu');
+    LPopupMenu := nil;
+    if Supports(BorlandIDEServices, IOTAEditorServices, LEditServices) and 
+       Assigned(LEditServices.TopView) then
+    begin
+      LEditWindow := LEditServices.TopView.GetEditWindow;
+      if Assigned(LEditWindow) and Assigned(LEditWindow.Form) then
+      begin
+        LPopupMenu := LEditWindow.Form.FindComponent('EditorLocalMenu');
+      end;
+    end;
+
+    // Fallbacks para encontrar o menu de contexto
+    if not Assigned(LPopupMenu) then
+      LPopupMenu := Application.FindComponent('EditorLocalMenu');
+    if not Assigned(LPopupMenu) then
+      LPopupMenu := Application.FindComponent('EditorContextMenu');
+
     if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
     begin
       for I := TPopupMenu(LPopupMenu).Items.Count - 1 downto 0 do
