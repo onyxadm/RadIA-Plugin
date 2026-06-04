@@ -13,8 +13,10 @@ type
     FChatFrame: TFrameAIChat;
     procedure ApplyIDETheme;
     procedure LoadWindowSize;
+    procedure SaveVisibilityState(const AVisible: Boolean);
   protected
     procedure DoShow; override;
+    procedure DoHide; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -74,7 +76,6 @@ begin
   { Default dimensions for the first run or when floating }
   Width := 990;
   Height := 650;
-  Position := poScreenCenter;
   LoadWindowSize;
   
   FChatFrame := TFrameAIChat.Create(Self);
@@ -96,7 +97,9 @@ procedure TFormRadIADockable.LoadWindowSize;
 var
   LReg: TRegistry;
   LRegPath: string;
+  LPositionLoaded: Boolean;
 begin
+  LPositionLoaded := False;
   LReg := TRegistry.Create;
   try
     LReg.RootKey := HKEY_CURRENT_USER;
@@ -107,11 +110,22 @@ begin
         Width := LReg.ReadInteger('WindowWidth');
       if LReg.ValueExists('WindowHeight') then
         Height := LReg.ReadInteger('WindowHeight');
+      if LReg.ValueExists('WindowLeft') and LReg.ValueExists('WindowTop') then
+      begin
+        Left := LReg.ReadInteger('WindowLeft');
+        Top := LReg.ReadInteger('WindowTop');
+        LPositionLoaded := True;
+      end;
       LReg.CloseKey;
     end;
   finally
     LReg.Free;
   end;
+
+  if LPositionLoaded then
+    Position := poDesigned
+  else
+    Position := poScreenCenter;
 end;
 
 destructor TFormRadIADockable.Destroy;
@@ -129,6 +143,8 @@ begin
       begin
         LReg.WriteInteger('WindowWidth', Width);
         LReg.WriteInteger('WindowHeight', Height);
+        LReg.WriteInteger('WindowLeft', Left);
+        LReg.WriteInteger('WindowTop', Top);
         LReg.CloseKey;
       end;
     finally
@@ -141,11 +157,31 @@ begin
   inherited Destroy;
 end;
 
+procedure TFormRadIADockable.SaveVisibilityState(const AVisible: Boolean);
+var
+  LReg: TRegistry;
+  LRegPath: string;
+begin
+  LReg := TRegistry.Create;
+  try
+    LReg.RootKey := HKEY_CURRENT_USER;
+    LRegPath := TRadIAConfig.GetRegistryPath;
+    if LReg.OpenKey(LRegPath, True) then
+    begin
+      LReg.WriteBool('WindowVisible', AVisible);
+      LReg.CloseKey;
+    end;
+  finally
+    LReg.Free;
+  end;
+end;
+
 procedure TFormRadIADockable.DoShow;
 var
   LThemingServices: IOTAIDEThemingServices;
 begin
   inherited DoShow;
+  SaveVisibilityState(True);
   
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -157,6 +193,12 @@ begin
   end;
   
   ApplyIDETheme;
+end;
+
+procedure TFormRadIADockable.DoHide;
+begin
+  inherited DoHide;
+  SaveVisibilityState(False);
 end;
 
 procedure TFormRadIADockable.ApplyIDETheme;

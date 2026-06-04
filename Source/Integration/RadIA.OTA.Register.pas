@@ -15,6 +15,7 @@ type
     procedure UnregisterMenus;
     procedure OnRequestDiff(const AOriginalCode: string);
     procedure OnTimerEvent(Sender: TObject);
+    procedure RestoreWindowVisibility;
   public
     constructor Create;
     destructor Destroy; override;
@@ -37,7 +38,7 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
+  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
   RadIA.UI.ConfigFrame, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm;
 
 var
@@ -82,9 +83,9 @@ end;
 
 procedure RegisterSplashAndAbout;
 var
-  LBitmap: TBitmap;
+  LBitmap: Vcl.Graphics.TBitmap;
 begin
-  LBitmap := TBitmap.Create;
+  LBitmap := Vcl.Graphics.TBitmap.Create;
   try
     LBitmap.PixelFormat := pf24bit;
     LBitmap.Width := 24;
@@ -211,11 +212,6 @@ begin
   FTimer.Enabled := True;
   
   TRadIAMediator.Instance.RegisterDiffHandler(OnRequestDiff);
-
-  if not Assigned(FormRadIADockable) then
-  begin
-    FormRadIADockable := TFormRadIADockable.Create(nil);
-  end;
 end;
 
 destructor TRadIAWizard.Destroy;
@@ -416,6 +412,7 @@ begin
   begin
     LogDebug('Tools menu populated. Disabling timer.');
     FTimer.Enabled := False;
+    RestoreWindowVisibility;
   end;
 end;
 
@@ -443,6 +440,34 @@ begin
         end;
       end;
     end;
+  end;
+end;
+
+procedure TRadIAWizard.RestoreWindowVisibility;
+var
+  LReg: TRegistry;
+  LRegPath: string;
+  LVisible: Boolean;
+begin
+  LVisible := False;
+  LReg := TRegistry.Create;
+  try
+    LReg.RootKey := HKEY_CURRENT_USER;
+    LRegPath := TRadIAConfig.GetRegistryPath;
+    if LReg.OpenKeyReadOnly(LRegPath) then
+    begin
+      if LReg.ValueExists('WindowVisible') then
+        LVisible := LReg.ReadBool('WindowVisible');
+      LReg.CloseKey;
+    end;
+  finally
+    LReg.Free;
+  end;
+
+  if LVisible then
+  begin
+    LogDebug('Restoring window visibility from registry');
+    ShowRadIAChat;
   end;
 end;
 
