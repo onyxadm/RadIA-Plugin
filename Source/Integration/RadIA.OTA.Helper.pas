@@ -98,9 +98,8 @@ var
   LEditBlock: IOTAEditBlock;
   LView: IOTAEditView;
   LPosition: IOTAEditPosition;
-  LWriter: IOTAEditWriter;
-  LCharPos: TOTACharPos;
-  LStartPos: Longint;
+  LOptions: IOTABufferOptions;
+  LSaveAutoIndent: Boolean;
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
@@ -114,23 +113,25 @@ begin
     LPosition := LView.Position;
     LPosition.Move(LEditBlock.StartingRow, LEditBlock.StartingColumn);
     LEditBlock.Delete;
-    
-    LCharPos.Line := LPosition.GetRow;
-    LCharPos.CharIndex := LPosition.GetColumn - 1;
-    LStartPos := LView.CharPosToPos(LCharPos);
-    
-    LWriter := LEditBuffer.CreateWriter;
-    if Assigned(LWriter) then
-    begin
-      LWriter.CopyTo(LStartPos);
-      LWriter.Insert(PAnsiChar(UTF8String(ANewText)));
+  end;
+
+  LPosition := LView.Position;
+  LOptions := LEditBuffer.BufferOptions;
+  if Assigned(LOptions) then
+  begin
+    LSaveAutoIndent := LOptions.AutoIndent;
+    LOptions.AutoIndent := False;
+    try
+      LPosition.InsertText(ANewText);
       Result := True;
+    finally
+      LOptions.AutoIndent := LSaveAutoIndent;
     end;
   end
   else
   begin
-    { Fallback to insertion if no selection }
-    Result := InsertTextAtCursor(ANewText);
+    LPosition.InsertText(ANewText);
+    Result := True;
   end;
 end;
 
@@ -138,24 +139,31 @@ class function TRadIAOTAHelper.InsertTextAtCursor(const AText: string): Boolean;
 var
   LEditBuffer: IOTAEditBuffer;
   LView: IOTAEditView;
-  LWriter: IOTAEditWriter;
-  LCharPos: TOTACharPos;
-  LPos: Longint;
+  LPosition: IOTAEditPosition;
+  LOptions: IOTABufferOptions;
+  LSaveAutoIndent: Boolean;
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
   LView := GetCurrentEditView;
   if Assigned(LEditBuffer) and Assigned(LView) and Assigned(LView.Position) then
   begin
-    LCharPos.Line := LView.Position.GetRow;
-    LCharPos.CharIndex := LView.Position.GetColumn - 1;
-    LPos := LView.CharPosToPos(LCharPos);
-    
-    LWriter := LEditBuffer.CreateWriter;
-    if Assigned(LWriter) then
+    LPosition := LView.Position;
+    LOptions := LEditBuffer.BufferOptions;
+    if Assigned(LOptions) then
     begin
-      LWriter.CopyTo(LPos);
-      LWriter.Insert(PAnsiChar(UTF8String(AText)));
+      LSaveAutoIndent := LOptions.AutoIndent;
+      LOptions.AutoIndent := False;
+      try
+        LPosition.InsertText(AText);
+        Result := True;
+      finally
+        LOptions.AutoIndent := LSaveAutoIndent;
+      end;
+    end
+    else
+    begin
+      LPosition.InsertText(AText);
       Result := True;
     end;
   end;
