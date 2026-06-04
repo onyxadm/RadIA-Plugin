@@ -813,7 +813,9 @@ var
   LFullResponse: string;
   LGuard: ILifecycleGuard;
   LProfile: TAIRequestProfile;
+  LDoneHandled: Boolean;
 begin
+  LDoneHandled := False;
   btnSend.Enabled := False;
 
   { Infer request profile from slash commands }
@@ -843,16 +845,23 @@ begin
           LStats: string;
           LUsage: TTokenUsage;
         begin
+          { Guard: discard duplicate done/error signals emitted by providers
+            that call ACallback(done) both in ProcessStreamBuffer AND after
+            DoPostRequestStream returns. }
+          if LDoneHandled then
+            Exit;
+
           if not LGuard.IsAlive then
             Exit;
-            
+
           if not AError.IsEmpty then
           begin
+            LDoneHandled := True;
             btnSend.Enabled := True;
             PostToWebView('add_message', 'assistant', '**Error:** ' + AError);
             Exit;
           end;
-          
+
           if not AIsDone then
           begin
             LFullResponse := LFullResponse + AChunk;
@@ -860,39 +869,40 @@ begin
           end
           else
           begin
+            LDoneHandled := True;
             btnSend.Enabled := True;
             if not AChunk.IsEmpty then
             begin
               LFullResponse := LFullResponse + AChunk;
               PostToWebView('append_message', 'assistant', AChunk, False);
             end;
-            
+
             if LFullResponse.IsEmpty and AError.IsEmpty then
             begin
               PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.');
               PostToWebView('append_message', 'assistant', '', True);
               Exit;
             end;
-            
+
             PostToWebView('append_message', 'assistant', '', True);
-            
+
             { Save history }
             FHistory := FHistory + [LUserMsg];
             LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse);
             FHistory := FHistory + [LAssistantMsg];
             SaveChatHistory;
-            
+
             { Estimate and update token usage stats }
             LUsage.PromptTokens := Length(APromptText) div 4;
             LUsage.CompletionTokens := Length(LFullResponse) div 4;
             LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
-            
+
             if LUsage.TotalTokens > 0 then
             begin
               FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
               FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
               FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
-              
+
               LStats := FAccumulatedUsage.FormatStats;
               PostToWebView('update_tokens', '', LStats);
             end;
