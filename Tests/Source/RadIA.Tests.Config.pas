@@ -30,6 +30,8 @@ type
     procedure TestOllamaBaseUrlPersistence;
     [Test]
     procedure TestJsonNewlineHandling;
+    [Test]
+    procedure TestAdvancedSettingsPersistence;
   end;
 
 implementation
@@ -156,6 +158,21 @@ begin
   finally
     LParsed.Free;
   end;
+end;
+
+procedure TTestRadIAConfig.TestAdvancedSettingsPersistence;
+begin
+  FConfig.SetTemperature(ptGemini, 0.4);
+  FConfig.SetMaxTokens(ptGemini, 1024);
+  FConfig.SetTimeout(ptGemini, 30);
+  FConfig.SmartConfigEnabled := False;
+  FConfig.Save;
+
+  FConfig.Load;
+  Assert.AreEqual(0.4, FConfig.GetTemperature(ptGemini), 0.01);
+  Assert.AreEqual(1024, FConfig.GetMaxTokens(ptGemini));
+  Assert.AreEqual(30, FConfig.GetTimeout(ptGemini));
+  Assert.IsFalse(FConfig.SmartConfigEnabled);
 end;
 
 initialization

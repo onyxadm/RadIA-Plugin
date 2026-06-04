@@ -10,15 +10,16 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAOllamaProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback); override;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); override;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -48,17 +49,30 @@ begin
   Result := 'Ollama Local/Network';
 end;
 
-function TRadIAOllamaProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
+function TRadIAOllamaProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
   LMsgObj: TJSONObject;
   LMsg: IChatMessage;
+  LOptionsObj: TJSONObject;
 begin
   LRootObj := TJSONObject.Create;
   try
     LRootObj.AddPair('model', GetActiveModel);
     LRootObj.AddPair('stream', TJSONBool.Create(AStream));
+
+    LOptionsObj := TJSONObject.Create;
+    if ATemperature >= 0.0 then
+      LOptionsObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
+    if AMaxTokens > 0 then
+      LOptionsObj.AddPair('num_predict', TJSONNumber.Create(AMaxTokens));
+
+    if LOptionsObj.Count > 0 then
+      LRootObj.AddPair('options', LOptionsObj)
+    else
+      LOptionsObj.Free;
     
     LMessagesArr := TJSONArray.Create;
     LRootObj.AddPair('messages', LMessagesArr);
@@ -119,7 +133,7 @@ begin
 end;
 
 procedure TRadIAOllamaProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-  const ACallback: TCompletionCallback);
+  const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
   LTaskProc: TProc;
@@ -127,7 +141,7 @@ begin
   LUrl := FConfig.OllamaBaseUrl + '/api/chat';
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -329,7 +343,7 @@ begin
 end;
 
 procedure TRadIAOllamaProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TStreamChunkCallback);
+  const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
   LTaskProc: TProc;
@@ -337,7 +351,7 @@ begin
   LUrl := FConfig.OllamaBaseUrl + '/api/chat';
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory, True);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin

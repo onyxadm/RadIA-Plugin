@@ -35,7 +35,8 @@ type
 
     { OpenAI-compatible helpers (shared by OpenAI, DeepSeek, Groq providers) }
     function BuildOpenAICompatibleRequestBody(const APrompt: string;
-      const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
+      const AHistory: TArray<IChatMessage>; const AStream: Boolean;
+      const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseOpenAICompatibleResponse(const AResponseJson: string;
       out AUsage: TTokenUsage): string;
     procedure ProcessOpenAICompatibleStreamBuffer(var ABuffer: string;
@@ -51,9 +52,9 @@ type
 
     { IIAProvider implementation }
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TCompletionCallback); virtual; abstract;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); virtual; abstract;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); virtual;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); virtual;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); virtual;
     function GetAvailableModels: TArray<string>; virtual; abstract;
     function GetName: string; virtual; abstract;
@@ -90,12 +91,16 @@ function TRadIAProviderBase.DoGetRequest(const AUrl: string; const AHeaders: TNe
 var
   LHTTPClient: THTTPClient;
   LResponse: IHTTPResponse;
+  LTimeoutMs: Integer;
 begin
   LHTTPClient := THTTPClient.Create;
   try
-    LHTTPClient.ConnectionTimeout := 10000;
-    LHTTPClient.SendTimeout := 10000;
-    LHTTPClient.ResponseTimeout := 60000;
+    LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
+    if LTimeoutMs <= 0 then LTimeoutMs := 60000;
+
+    LHTTPClient.ConnectionTimeout := LTimeoutMs;
+    LHTTPClient.SendTimeout := LTimeoutMs;
+    LHTTPClient.ResponseTimeout := LTimeoutMs;
     LHTTPClient.AcceptCharSet := 'utf-8';
 
     LResponse := LHTTPClient.Get(AUrl, nil, AHeaders);
@@ -116,13 +121,17 @@ var
   LHTTPClient: THTTPClient;
   LSourceStream: TStringStream;
   LResponse: IHTTPResponse;
+  LTimeoutMs: Integer;
 begin
   LHTTPClient := THTTPClient.Create;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   try
-    LHTTPClient.ConnectionTimeout := 10000;
-    LHTTPClient.SendTimeout := 10000;
-    LHTTPClient.ResponseTimeout := 60000;
+    LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
+    if LTimeoutMs <= 0 then LTimeoutMs := 60000;
+
+    LHTTPClient.ConnectionTimeout := LTimeoutMs;
+    LHTTPClient.SendTimeout := LTimeoutMs;
+    LHTTPClient.ResponseTimeout := LTimeoutMs;
     LHTTPClient.ContentType := 'application/json';
     LHTTPClient.AcceptCharSet := 'utf-8';
 
@@ -146,14 +155,18 @@ var
   LSourceStream: TStringStream;
   LTargetStream: TStreamingTargetStream;
   LResponse: IHTTPResponse;
+  LTimeoutMs: Integer;
 begin
   LHTTPClient := THTTPClient.Create;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   LTargetStream := TStreamingTargetStream.Create(AOnWrite);
   try
-    LHTTPClient.ConnectionTimeout := 10000;
-    LHTTPClient.SendTimeout := 10000;
-    LHTTPClient.ResponseTimeout := 60000;
+    LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
+    if LTimeoutMs <= 0 then LTimeoutMs := 60000;
+
+    LHTTPClient.ConnectionTimeout := LTimeoutMs;
+    LHTTPClient.SendTimeout := LTimeoutMs;
+    LHTTPClient.ResponseTimeout := LTimeoutMs;
     LHTTPClient.ContentType := 'application/json';
     LHTTPClient.AcceptCharSet := 'utf-8';
 
@@ -171,7 +184,8 @@ begin
 end;
 
 procedure TRadIAProviderBase.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback);
+  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const ATemperature: Double; const AMaxTokens: Integer);
 begin
   { Default fallback simulating streaming }
   SendPromptAsync(APrompt, AHistory,
@@ -182,13 +196,14 @@ begin
         begin
           ACallback(AResponse, True, AError);
         end);
-    end);
+    end, ATemperature, AMaxTokens);
 end;
 
 { --- OpenAI-Compatible Shared Helpers --- }
 
 function TRadIAProviderBase.BuildOpenAICompatibleRequestBody(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
+  const AHistory: TArray<IChatMessage>; const AStream: Boolean;
+  const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
@@ -200,6 +215,11 @@ begin
     LRootObj.AddPair('model', GetActiveModel);
     if AStream then
       LRootObj.AddPair('stream', TJSONBool.Create(True));
+
+    if ATemperature >= 0.0 then
+      LRootObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
+    if AMaxTokens > 0 then
+      LRootObj.AddPair('max_tokens', TJSONNumber.Create(AMaxTokens));
 
     LMessagesArr := TJSONArray.Create;
     LRootObj.AddPair('messages', LMessagesArr);

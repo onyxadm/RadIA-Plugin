@@ -10,15 +10,16 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAGeminiProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback); override;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); override;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -48,7 +49,8 @@ begin
   Result := 'Google Gemini';
 end;
 
-function TRadIAGeminiProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+function TRadIAGeminiProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LContentsArr: TJSONArray;
@@ -61,6 +63,7 @@ var
   LSystemObj: TJSONObject;
   LSystemPartsArr: TJSONArray;
   LSystemPartObj: TJSONObject;
+  LGenConfigObj: TJSONObject;
 begin
   LRootObj := TJSONObject.Create;
   try
@@ -123,6 +126,18 @@ begin
       LSystemPartObj.AddPair('text', LSystemPrompt.Trim);
     end;
 
+    { Add Generation Config if present }
+    LGenConfigObj := TJSONObject.Create;
+    if ATemperature >= 0.0 then
+      LGenConfigObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
+    if AMaxTokens > 0 then
+      LGenConfigObj.AddPair('maxOutputTokens', TJSONNumber.Create(AMaxTokens));
+
+    if LGenConfigObj.Count > 0 then
+      LRootObj.AddPair('generationConfig', LGenConfigObj)
+    else
+      LGenConfigObj.Free;
+
     Result := LRootObj.ToJSON;
   finally
     LRootObj.Free;
@@ -183,7 +198,7 @@ begin
 end;
 
 procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TCompletionCallback);
+  const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
   LTaskProc: TProc;
@@ -201,7 +216,7 @@ begin
     [LModel, TNetEncoding.URL.Encode(LApiKey)]);
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -467,7 +482,7 @@ begin
 end;
 
 procedure TRadIAGeminiProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TStreamChunkCallback);
+  const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
   LTaskProc: TProc;
@@ -485,7 +500,7 @@ begin
     [LModel, TNetEncoding.URL.Encode(LApiKey)]);
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin

@@ -10,15 +10,16 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAClaudeProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback); override;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); override;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
     procedure ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
@@ -47,7 +48,8 @@ begin
   Result := 'Anthropic Claude';
 end;
 
-function TRadIAClaudeProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
+function TRadIAClaudeProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
@@ -58,7 +60,13 @@ begin
   LRootObj := TJSONObject.Create;
   try
     LRootObj.AddPair('model', GetActiveModel);
-    LRootObj.AddPair('max_tokens', TJSONNumber.Create(4096));
+    if AMaxTokens > 0 then
+      LRootObj.AddPair('max_tokens', TJSONNumber.Create(AMaxTokens))
+    else
+      LRootObj.AddPair('max_tokens', TJSONNumber.Create(4096));
+
+    if ATemperature >= 0.0 then
+      LRootObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
     if AStream then
       LRootObj.AddPair('stream', TJSONBool.Create(True));
     
@@ -145,7 +153,7 @@ begin
 end;
 
 procedure TRadIAClaudeProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-  const ACallback: TCompletionCallback);
+  const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
@@ -165,7 +173,7 @@ begin
   LHeaders[1] := TNetHeader.Create('anthropic-version', '2023-06-01');
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -293,7 +301,7 @@ begin
 end;
 
 procedure TRadIAClaudeProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TStreamChunkCallback);
+  const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
@@ -313,7 +321,7 @@ begin
   LHeaders[1] := TNetHeader.Create('anthropic-version', '2023-06-01');
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory, True);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin

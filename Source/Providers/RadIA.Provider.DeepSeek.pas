@@ -15,9 +15,9 @@ type
     constructor Create(const AConfig: IAIConfig); override;
 
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TCompletionCallback); override;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); override;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -54,7 +54,8 @@ end;
 { FilterModelId uses the default base implementation (accept all non-empty IDs) }
 
 procedure TRadIADeepSeekProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback);
+  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
@@ -72,7 +73,7 @@ begin
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
 
   try
-    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False);
+    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -119,7 +120,8 @@ begin
 end;
 
 procedure TRadIADeepSeekProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback);
+  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
@@ -137,7 +139,7 @@ begin
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
 
   try
-    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True);
+    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin

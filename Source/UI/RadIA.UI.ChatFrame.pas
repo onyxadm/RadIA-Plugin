@@ -812,8 +812,20 @@ var
   LUserMsg: IChatMessage;
   LFullResponse: string;
   LGuard: ILifecycleGuard;
+  LProfile: TAIRequestProfile;
 begin
   btnSend.Enabled := False;
+
+  { Infer request profile from slash commands }
+  LProfile := rpGeneralChat;
+  if APromptText.StartsWith('/refactor', True) or APromptText.StartsWith('/optimize', True) then
+    LProfile := rpRefactorCode
+  else if APromptText.StartsWith('/bugs', True) then
+    LProfile := rpFindBugs
+  else if APromptText.StartsWith('/test', True) then
+    LProfile := rpGenerateTests
+  else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) then
+    LProfile := rpExplainCode;
   
   LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText);
   LFullResponse := '';
@@ -886,7 +898,7 @@ begin
             end;
           end;
         end);
-    end);
+    end, LProfile);
 end;
 
 procedure TFrameAIChat.OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);

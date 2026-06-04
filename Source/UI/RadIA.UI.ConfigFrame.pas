@@ -64,6 +64,13 @@ type
     FConfig: IAIConfig;
     FTemplateManager: TPromptTemplateManager;
     FOnClose: TNotifyEvent;
+    
+    FEdtTemperatures: array[TAIProviderType] of TEdit;
+    FEdtMaxTokens: array[TAIProviderType] of TEdit;
+    FEdtTimeouts: array[TAIProviderType] of TEdit;
+    FChkSmartConfig: TCheckBox;
+    
+    procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
     procedure UpdateVCLColors(const AThemeName: string);
     procedure PopulateTemplatesList;
   public
@@ -116,6 +123,22 @@ begin
   FTemplateManager := TPromptTemplateManager.Create;
   FTemplateManager.Load;
 
+  { Create CheckBox in Footer }
+  FChkSmartConfig := TCheckBox.Create(Self);
+  FChkSmartConfig.Parent := pnlFooter;
+  FChkSmartConfig.Align := alLeft;
+  FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
+  FChkSmartConfig.Margins.Left := 16;
+  FChkSmartConfig.AlignWithMargins := True;
+
+  { Create advanced settings groupbox for each provider tab }
+  CreateProviderAdvancedControls(tsGemini, ptGemini);
+  CreateProviderAdvancedControls(tsOpenAI, ptOpenAI);
+  CreateProviderAdvancedControls(tsClaude, ptClaude);
+  CreateProviderAdvancedControls(tsDeepSeek, ptDeepSeek);
+  CreateProviderAdvancedControls(tsGroq, ptGroq);
+  CreateProviderAdvancedControls(tsOllama, ptOllama);
+
   LActiveTheme := 'light';
   { Apply IDE theme so this form matches the current Delphi skin }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
@@ -140,11 +163,69 @@ begin
   inherited Destroy;
 end;
 
+procedure TFormAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
+var
+  LGroupBox: TGroupBox;
+  LLabel: TLabel;
+begin
+  LGroupBox := TGroupBox.Create(Self);
+  LGroupBox.Parent := ATabSheet;
+  LGroupBox.Align := alBottom;
+  LGroupBox.Height := 90;
+  LGroupBox.Caption := ' Advanced Settings ';
+  LGroupBox.Margins.Left := 8;
+  LGroupBox.Margins.Right := 8;
+  LGroupBox.Margins.Bottom := 8;
+  LGroupBox.AlignWithMargins := True;
+
+  // Temperature
+  LLabel := TLabel.Create(Self);
+  LLabel.Parent := LGroupBox;
+  LLabel.Left := 16;
+  LLabel.Top := 24;
+  LLabel.Caption := 'Temperature (0.0 - 1.0):';
+
+  FEdtTemperatures[AProvider] := TEdit.Create(Self);
+  FEdtTemperatures[AProvider].Parent := LGroupBox;
+  FEdtTemperatures[AProvider].Left := 16;
+  FEdtTemperatures[AProvider].Top := 42;
+  FEdtTemperatures[AProvider].Width := 100;
+
+  // Max Tokens
+  LLabel := TLabel.Create(Self);
+  LLabel.Parent := LGroupBox;
+  LLabel.Left := 140;
+  LLabel.Top := 24;
+  LLabel.Caption := 'Max Output Tokens:';
+
+  FEdtMaxTokens[AProvider] := TEdit.Create(Self);
+  FEdtMaxTokens[AProvider].Parent := LGroupBox;
+  FEdtMaxTokens[AProvider].Left := 140;
+  FEdtMaxTokens[AProvider].Top := 42;
+  FEdtMaxTokens[AProvider].Width := 100;
+  FEdtMaxTokens[AProvider].NumbersOnly := True;
+
+  // Timeout
+  LLabel := TLabel.Create(Self);
+  LLabel.Parent := LGroupBox;
+  LLabel.Left := 264;
+  LLabel.Top := 24;
+  LLabel.Caption := 'Timeout (seconds):';
+
+  FEdtTimeouts[AProvider] := TEdit.Create(Self);
+  FEdtTimeouts[AProvider].Parent := LGroupBox;
+  FEdtTimeouts[AProvider].Left := 264;
+  FEdtTimeouts[AProvider].Top := 42;
+  FEdtTimeouts[AProvider].Width := 100;
+  FEdtTimeouts[AProvider].NumbersOnly := True;
+end;
+
 procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
   I: Integer;
+  LProvider: TAIProviderType;
 begin
   LIsDark := SameText(AThemeName, 'dark');
   
@@ -226,10 +307,38 @@ begin
   lblTemplateName.Font.Color := LTextColor;
   lblTemplateDesc.Font.Color := LTextColor;
   lblTemplateBody.Font.Color := LTextColor;
+
+  { Paint Advanced Controls }
+  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  begin
+    if Assigned(FEdtTemperatures[LProvider]) then
+    begin
+      FEdtTemperatures[LProvider].Color := LInputBgColor;
+      FEdtTemperatures[LProvider].Font.Color := LTextColor;
+    end;
+    if Assigned(FEdtMaxTokens[LProvider]) then
+    begin
+      FEdtMaxTokens[LProvider].Color := LInputBgColor;
+      FEdtMaxTokens[LProvider].Font.Color := LTextColor;
+    end;
+    if Assigned(FEdtTimeouts[LProvider]) then
+    begin
+      FEdtTimeouts[LProvider].Color := LInputBgColor;
+      FEdtTimeouts[LProvider].Font.Color := LTextColor;
+    end;
+  end;
+
+  if Assigned(FChkSmartConfig) then
+    FChkSmartConfig.Font.Color := LTextColor;
 end;
 
 procedure TFormAIConfig.LoadConfig;
+var
+  LProvider: TAIProviderType;
+  LFormatSettings: TFormatSettings;
 begin
+  LFormatSettings := TFormatSettings.Invariant;
+  
   edtGeminiKey.Text := FConfig.GetApiKey(ptGemini);
   edtOpenAIKey.Text := FConfig.GetApiKey(ptOpenAI);
   edtOpenAICustomUrl.Text := FConfig.OpenAICustomBaseUrl;
@@ -238,6 +347,19 @@ begin
   edtGroqKey.Text := FConfig.GetApiKey(ptGroq);
   memSystemPrompt.Text := FConfig.SystemPrompt;
   edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
+
+  if Assigned(FChkSmartConfig) then
+    FChkSmartConfig.Checked := FConfig.SmartConfigEnabled;
+
+  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  begin
+    if Assigned(FEdtTemperatures[LProvider]) then
+      FEdtTemperatures[LProvider].Text := FormatFloat('0.0', FConfig.GetTemperature(LProvider), LFormatSettings);
+    if Assigned(FEdtMaxTokens[LProvider]) then
+      FEdtMaxTokens[LProvider].Text := IntToStr(FConfig.GetMaxTokens(LProvider));
+    if Assigned(FEdtTimeouts[LProvider]) then
+      FEdtTimeouts[LProvider].Text := IntToStr(FConfig.GetTimeout(LProvider));
+  end;
 
   PopulateTemplatesList;
   if lstTemplates.Count > 0 then
@@ -252,9 +374,13 @@ var
   LForm: TCustomForm;
   LOllamaUrl: string;
   LOpenAIUrl: string;
+  LProvider: TAIProviderType;
+  LFormatSettings: TFormatSettings;
+  LTemp: Double;
 begin
   LOllamaUrl := Trim(edtOllamaUrl.Text);
   LOpenAIUrl := Trim(edtOpenAICustomUrl.Text);
+  LFormatSettings := TFormatSettings.Invariant;
 
   if not LOllamaUrl.IsEmpty and not (LOllamaUrl.StartsWith('http://', True) or LOllamaUrl.StartsWith('https://', True)) then
   begin
@@ -276,6 +402,26 @@ begin
   FConfig.SetApiKey(ptGroq, Trim(edtGroqKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := LOllamaUrl;
+
+  if Assigned(FChkSmartConfig) then
+    FConfig.SmartConfigEnabled := FChkSmartConfig.Checked;
+
+  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  begin
+    if Assigned(FEdtTemperatures[LProvider]) then
+    begin
+      if TryStrToFloat(FEdtTemperatures[LProvider].Text, LTemp, LFormatSettings) then
+      begin
+        if (LTemp >= 0.0) and (LTemp <= 2.0) then
+          FConfig.SetTemperature(LProvider, LTemp);
+      end;
+    end;
+    if Assigned(FEdtMaxTokens[LProvider]) then
+      FConfig.SetMaxTokens(LProvider, StrToIntDef(FEdtMaxTokens[LProvider].Text, 2048));
+    if Assigned(FEdtTimeouts[LProvider]) then
+      FConfig.SetTimeout(LProvider, StrToIntDef(FEdtTimeouts[LProvider].Text, 60));
+  end;
+
   FConfig.Save;
 
   { Save templates too }

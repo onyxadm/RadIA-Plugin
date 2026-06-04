@@ -16,6 +16,10 @@ type
     FOllamaBaseUrl: string;
     FMaxHistoryMessages: Integer;
     FOpenAICustomBaseUrl: string;
+    FTemperatures: array[TAIProviderType] of Double;
+    FMaxTokens: array[TAIProviderType] of Integer;
+    FTimeouts: array[TAIProviderType] of Integer;
+    FSmartConfigEnabled: Boolean;
 
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
@@ -23,6 +27,7 @@ type
     function UnprotectString(const AValue: string): string;
     function ReadRegString(const AReg: TObject; const AKey: string; const ADefault: string): string;
     function ReadRegInt(const AReg: TObject; const AKey: string; const ADefault: Integer): Integer;
+    function ReadRegDouble(const AReg: TObject; const AKey: string; const ADefault: Double): Double;
   public
     constructor Create;
     class procedure SetBaseRegistryPath(const APath: string);
@@ -43,6 +48,14 @@ type
     procedure SetMaxHistoryMessages(const AValue: Integer);
     function GetOpenAICustomBaseUrl: string;
     procedure SetOpenAICustomBaseUrl(const AValue: string);
+    function GetTemperature(const AProvider: TAIProviderType): Double;
+    procedure SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
+    function GetMaxTokens(const AProvider: TAIProviderType): Integer;
+    procedure SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
+    function GetTimeout(const AProvider: TAIProviderType): Integer;
+    procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
+    function GetSmartConfigEnabled: Boolean;
+    procedure SetSmartConfigEnabled(const AValue: Boolean);
     procedure Save;
     procedure Load;
   end;
@@ -129,6 +142,8 @@ begin
 end;
 
 constructor TRadIAConfig.Create;
+var
+  LProvider: TAIProviderType;
 begin
   inherited Create;
   
@@ -151,6 +166,15 @@ begin
   FOllamaBaseUrl := 'http://localhost:11434';
   FMaxHistoryMessages := 20;
   FOpenAICustomBaseUrl := '';
+  
+  FSmartConfigEnabled := True;
+  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  begin
+    FTemperatures[LProvider] := 0.7;
+    FMaxTokens[LProvider] := 2048;
+    FTimeouts[LProvider] := 60;
+  end;
+  
   Load;
 end;
 
@@ -206,6 +230,22 @@ begin
   try
     if LReg.ValueExists(AKey) then
       Result := LReg.ReadInteger(AKey)
+    else
+      Result := ADefault;
+  except
+    Result := ADefault;
+  end;
+end;
+
+function TRadIAConfig.ReadRegDouble(const AReg: TObject; const AKey: string;
+  const ADefault: Double): Double;
+var
+  LReg: TRegistry;
+begin
+  LReg := AReg as TRegistry;
+  try
+    if LReg.ValueExists(AKey) then
+      Result := LReg.ReadFloat(AKey)
     else
       Result := ADefault;
   except
@@ -307,6 +347,7 @@ begin
 
       LMaxHist := ReadRegInt(LReg, 'MaxHistoryMessages', 20);
       FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, 20);
+      FSmartConfigEnabled := ReadRegInt(LReg, 'SmartConfigEnabled', 1) <> 0;
       LReg.CloseKey;
     end
     else
@@ -374,6 +415,10 @@ begin
           end;
         end;
 
+        FTemperatures[LProvider] := ReadRegDouble(LReg, 'Temperature', 0.7);
+        FMaxTokens[LProvider] := ReadRegInt(LReg, 'MaxTokens', 2048);
+        FTimeouts[LProvider] := ReadRegInt(LReg, 'Timeout', 60);
+
         LReg.CloseKey;
       end;
     end;
@@ -429,6 +474,7 @@ begin
       LReg.WriteInteger('ActiveProvider', Integer(FActiveProvider));
       LReg.WriteString('SystemPrompt', FSystemPrompt);
       LReg.WriteInteger('MaxHistoryMessages', FMaxHistoryMessages);
+      LReg.WriteInteger('SmartConfigEnabled', IfThen(FSmartConfigEnabled, 1, 0));
       LReg.CloseKey;
     end;
 
@@ -448,6 +494,10 @@ begin
           LReg.WriteString('BaseURL', FOpenAICustomBaseUrl)
         else if LProvider = ptOllama then
           LReg.WriteString('BaseURL', FOllamaBaseUrl);
+
+        LReg.WriteFloat('Temperature', FTemperatures[LProvider]);
+        LReg.WriteInteger('MaxTokens', FMaxTokens[LProvider]);
+        LReg.WriteInteger('Timeout', FTimeouts[LProvider]);
 
         LReg.CloseKey;
         LogDebug('TRadIAConfig.Save: Saved ApiKey and Model (' + FActiveModels[LProvider] + ') for ' + LProvStr);
@@ -509,6 +559,46 @@ end;
 procedure TRadIAConfig.SetOpenAICustomBaseUrl(const AValue: string);
 begin
   FOpenAICustomBaseUrl := AValue;
+end;
+
+function TRadIAConfig.GetTemperature(const AProvider: TAIProviderType): Double;
+begin
+  Result := FTemperatures[AProvider];
+end;
+
+procedure TRadIAConfig.SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
+begin
+  FTemperatures[AProvider] := AValue;
+end;
+
+function TRadIAConfig.GetMaxTokens(const AProvider: TAIProviderType): Integer;
+begin
+  Result := FMaxTokens[AProvider];
+end;
+
+procedure TRadIAConfig.SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
+begin
+  FMaxTokens[AProvider] := AValue;
+end;
+
+function TRadIAConfig.GetTimeout(const AProvider: TAIProviderType): Integer;
+begin
+  Result := FTimeouts[AProvider];
+end;
+
+procedure TRadIAConfig.SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
+begin
+  FTimeouts[AProvider] := AValue;
+end;
+
+function TRadIAConfig.GetSmartConfigEnabled: Boolean;
+begin
+  Result := FSmartConfigEnabled;
+end;
+
+procedure TRadIAConfig.SetSmartConfigEnabled(const AValue: Boolean);
+begin
+  FSmartConfigEnabled := AValue;
 end;
 
 function TRadIAConfig.UnprotectString(const AValue: string): string;

@@ -8,6 +8,9 @@ type
 
   { Enum representing the message role in chat conversations }
   TAIMessageRole = (mrUser, mrAssistant, mrSystem);
+  
+  { Enum representing the AI request profiles for dynamic configuration }
+  TAIRequestProfile = (rpGeneralChat, rpExplainCode, rpRefactorCode, rpFindBugs, rpGenerateTests);
 
 const
   { Standard models for Google Gemini }

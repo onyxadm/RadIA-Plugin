@@ -18,6 +18,10 @@ type
     FOpenAICustomBaseUrl: string;
     FOllamaBaseUrl: string;
     FActiveProvider: TAIProviderType;
+    FTemperatures: array[TAIProviderType] of Double;
+    FMaxTokens: array[TAIProviderType] of Integer;
+    FTimeouts: array[TAIProviderType] of Integer;
+    FSmartConfigEnabled: Boolean;
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
 
@@ -35,6 +39,14 @@ type
     procedure SetMaxHistoryMessages(const AValue: Integer);
     function GetOpenAICustomBaseUrl: string;
     procedure SetOpenAICustomBaseUrl(const AValue: string);
+    function GetTemperature(const AProvider: TAIProviderType): Double;
+    procedure SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
+    function GetMaxTokens(const AProvider: TAIProviderType): Integer;
+    procedure SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
+    function GetTimeout(const AProvider: TAIProviderType): Integer;
+    procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
+    function GetSmartConfigEnabled: Boolean;
+    procedure SetSmartConfigEnabled(const AValue: Boolean);
     procedure Save;
     procedure Load;
   end;
@@ -55,6 +67,8 @@ type
     procedure TestTrimming_AlwaysPreservesNewestMessages;
     [Test]
     procedure TestTrimming_SystemMessagesIgnoredInCount;
+    [Test]
+    procedure TestSmartConfigResolution;
   end;
 
   [TestFixture]
@@ -87,6 +101,8 @@ uses
 { TMockConfig }
 
 constructor TMockConfig.Create(const AMaxHistory: Integer; const ASystemPrompt: string);
+var
+  LProvider: TAIProviderType;
 begin
   inherited Create;
   FMaxHistoryMessages := AMaxHistory;
@@ -94,6 +110,13 @@ begin
   FOpenAICustomBaseUrl := '';
   FOllamaBaseUrl := 'http://localhost:11434';
   FActiveProvider := ptGemini;
+  FSmartConfigEnabled := True;
+  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  begin
+    FTemperatures[LProvider] := 0.7;
+    FMaxTokens[LProvider] := 2048;
+    FTimeouts[LProvider] := 60;
+  end;
 end;
 
 function TMockConfig.GetApiKey(const AProvider: TAIProviderType): string;
@@ -173,6 +196,46 @@ end;
 
 procedure TMockConfig.Load;
 begin
+end;
+
+function TMockConfig.GetTemperature(const AProvider: TAIProviderType): Double;
+begin
+  Result := FTemperatures[AProvider];
+end;
+
+procedure TMockConfig.SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
+begin
+  FTemperatures[AProvider] := AValue;
+end;
+
+function TMockConfig.GetMaxTokens(const AProvider: TAIProviderType): Integer;
+begin
+  Result := FMaxTokens[AProvider];
+end;
+
+procedure TMockConfig.SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
+begin
+  FMaxTokens[AProvider] := AValue;
+end;
+
+function TMockConfig.GetTimeout(const AProvider: TAIProviderType): Integer;
+begin
+  Result := FTimeouts[AProvider];
+end;
+
+procedure TMockConfig.SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
+begin
+  FTimeouts[AProvider] := AValue;
+end;
+
+function TMockConfig.GetSmartConfigEnabled: Boolean;
+begin
+  Result := FSmartConfigEnabled;
+end;
+
+procedure TMockConfig.SetSmartConfigEnabled(const AValue: Boolean);
+begin
+  FSmartConfigEnabled := AValue;
 end;
 
 { TTestRadIAService helpers }
@@ -308,6 +371,42 @@ begin
     { TrimHistory strips system messages from count; 4 user/assistant < 6 limit → no trim }
     Assert.AreEqual(4, Length(LTrimmed), 'System messages must not be counted toward trim limit');
     Assert.AreNotEqual(mrSystem, LTrimmed[0].Role, 'System messages should be stripped from trimmed result');
+  finally
+    LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestSmartConfigResolution;
+var
+  LConfig: IAIConfig;
+  LService: TRadIAService;
+  LTemp: Double;
+  LMaxTokens: Integer;
+begin
+  LConfig := TMockConfig.Create(5);
+  LService := TRadIAService.Create(LConfig);
+  try
+    { 1. Com Smart Config Enabled (Padrão) }
+    LConfig.SmartConfigEnabled := True;
+    
+    // Refatorar
+    LService.ResolveParameters(ptGemini, rpRefactorCode, LTemp, LMaxTokens);
+    Assert.AreEqual(0.1, LTemp, 0.01);
+    Assert.AreEqual(4096, LMaxTokens);
+    
+    // Chat Geral
+    LService.ResolveParameters(ptGemini, rpGeneralChat, LTemp, LMaxTokens);
+    Assert.AreEqual(0.7, LTemp, 0.01);
+    Assert.AreEqual(2048, LMaxTokens);
+    
+    { 2. Com Smart Config Disabled (Usa valores da config) }
+    LConfig.SmartConfigEnabled := False;
+    LConfig.SetTemperature(ptGemini, 0.4);
+    LConfig.SetMaxTokens(ptGemini, 1024);
+    
+    LService.ResolveParameters(ptGemini, rpRefactorCode, LTemp, LMaxTokens);
+    Assert.AreEqual(0.4, LTemp, 0.01);
+    Assert.AreEqual(1024, LMaxTokens);
   finally
     LService.Free;
   end;

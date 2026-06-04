@@ -53,9 +53,9 @@ type
   IIAProvider = interface
     ['{A2833F49-9A0B-432D-8B8D-20DFF15FF25D}']
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback);
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback);
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
     function GetAvailableModels: TArray<string>;
     function GetName: string;
@@ -79,12 +79,21 @@ type
     procedure SetMaxHistoryMessages(const AValue: Integer);
     function GetOpenAICustomBaseUrl: string;
     procedure SetOpenAICustomBaseUrl(const AValue: string);
+    function GetTemperature(const AProvider: TAIProviderType): Double;
+    procedure SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
+    function GetMaxTokens(const AProvider: TAIProviderType): Integer;
+    procedure SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
+    function GetTimeout(const AProvider: TAIProviderType): Integer;
+    procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
+    function GetSmartConfigEnabled: Boolean;
+    procedure SetSmartConfigEnabled(const AValue: Boolean);
     procedure Save;
     procedure Load;
     property SystemPrompt: string read GetSystemPrompt write SetSystemPrompt;
     property OllamaBaseUrl: string read GetOllamaBaseUrl write SetOllamaBaseUrl;
     property MaxHistoryMessages: Integer read GetMaxHistoryMessages write SetMaxHistoryMessages;
     property OpenAICustomBaseUrl: string read GetOpenAICustomBaseUrl write SetOpenAICustomBaseUrl;
+    property SmartConfigEnabled: Boolean read GetSmartConfigEnabled write SetSmartConfigEnabled;
   end;
 
 implementation

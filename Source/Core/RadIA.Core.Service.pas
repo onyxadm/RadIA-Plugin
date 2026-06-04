@@ -38,12 +38,15 @@ type
     constructor Create(const AConfig: IAIConfig);
     destructor Destroy; override;
 
+    procedure ResolveParameters(const AProvider: TAIProviderType; const AProfile: TAIRequestProfile;
+      out ATemperature: Double; out AMaxTokens: Integer);
+
     function CreateActiveProvider: IIAProvider;
     function TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
     procedure SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TCompletionCallback);
+      const ACallback: TCompletionCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
     procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback);
+      const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
     procedure ClearCache;
 
     class function CreateMessage(const ARole: TAIMessageRole; const AContent: string): IChatMessage;
@@ -224,7 +227,7 @@ begin
 end;
 
 procedure TRadIAService.SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TCompletionCallback);
+  const ACallback: TCompletionCallback; const AProfile: TAIRequestProfile);
 var
   LProvider: IIAProvider;
   LHash: string;
@@ -232,6 +235,8 @@ var
   LSystemPrompt: string;
   LHistory: TArray<IChatMessage>;
   LTrimmedHistory: TArray<IChatMessage>;
+  LTemperature: Double;
+  LMaxTokens: Integer;
 begin
   try
     LProvider := CreateActiveProvider;
@@ -249,6 +254,9 @@ begin
     { Build effective history with system instructions }
     LHistory := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
 
+    { Resolve parameters based on config and profile }
+    ResolveParameters(LProvider.GetProviderType, AProfile, LTemperature, LMaxTokens);
+
     { Perform the actual async prompt request }
     LProvider.SendPromptAsync(APrompt, LHistory,
       procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
@@ -256,7 +264,7 @@ begin
         if AError.IsEmpty and not AResponse.IsEmpty then
           FCacheManager.Put(LHash, AResponse);
         ACallback(AResponse, AError, False, AUsage);
-      end);
+      end, LTemperature, LMaxTokens);
   except
     on E: Exception do
     begin
@@ -266,7 +274,7 @@ begin
 end;
 
 procedure TRadIAService.SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TStreamChunkCallback);
+  const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile);
 var
   LProvider: IIAProvider;
   LSystemPrompt: string;
@@ -275,6 +283,8 @@ var
   LHash: string;
   LCachedResponse: string;
   LAccumulator: string;
+  LTemperature: Double;
+  LMaxTokens: Integer;
 begin
   try
     LProvider       := CreateActiveProvider;
@@ -296,6 +306,9 @@ begin
     LHistory     := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
     LAccumulator := '';
 
+    { Resolve parameters based on config and profile }
+    ResolveParameters(LProvider.GetProviderType, AProfile, LTemperature, LMaxTokens);
+
     { R2 FIX: Wrap callback to accumulate chunks and persist to cache on completion }
     LProvider.SendPromptStreamAsync(APrompt, LHistory,
       procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
@@ -308,12 +321,50 @@ begin
             FCacheManager.Put(LHash, LAccumulator);
         end;
         ACallback(AChunk, AIsDone, AError);
-      end);
+      end, LTemperature, LMaxTokens);
   except
     on E: Exception do
     begin
       ACallback('', True, 'Failed to initialize AI Provider: ' + E.Message);
     end;
+  end;
+end;
+
+procedure TRadIAService.ResolveParameters(const AProvider: TAIProviderType; const AProfile: TAIRequestProfile;
+  out ATemperature: Double; out AMaxTokens: Integer);
+begin
+  if FConfig.SmartConfigEnabled then
+  begin
+    case AProfile of
+      rpRefactorCode:
+      begin
+        ATemperature := 0.1;
+        AMaxTokens := 4096;
+      end;
+      rpFindBugs:
+      begin
+        ATemperature := 0.1;
+        AMaxTokens := 2048;
+      end;
+      rpGenerateTests:
+      begin
+        ATemperature := 0.2;
+        AMaxTokens := 4096;
+      end;
+      rpExplainCode:
+      begin
+        ATemperature := 0.3;
+        AMaxTokens := 2048;
+      end;
+    else
+      ATemperature := 0.7;
+      AMaxTokens := 2048;
+    end;
+  end
+  else
+  begin
+    ATemperature := FConfig.GetTemperature(AProvider);
+    AMaxTokens := FConfig.GetMaxTokens(AProvider);
   end;
 end;
 
