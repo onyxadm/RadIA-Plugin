@@ -483,7 +483,7 @@ begin
   FOnWrite := AOnWrite;
 end;
 
-function TStreamingTargetStream.Write(const Buffer; Count: Integer): Longint;
+function TStreamingTargetStream.Write(const Buffer; Count: Longint): Longint;
 var
   LBytes: TBytes;
 begin
@@ -496,7 +496,7 @@ begin
   end;
 end;
 
-function TStreamingTargetStream.Read(var Buffer; Count: Integer): Longint;
+function TStreamingTargetStream.Read(var Buffer; Count: Longint): Longint;
 begin
   Result := 0;
 end;

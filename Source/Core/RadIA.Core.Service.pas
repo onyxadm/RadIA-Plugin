@@ -44,6 +44,7 @@ type
       const ACallback: TCompletionCallback);
     procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TStreamChunkCallback);
+    procedure ClearCache;
 
     class function CreateMessage(const ARole: TAIMessageRole; const AContent: string): IChatMessage;
   end;
@@ -252,7 +253,7 @@ begin
     LProvider.SendPromptAsync(APrompt, LHistory,
       procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
       begin
-        if AError.IsEmpty then
+        if AError.IsEmpty and not AResponse.IsEmpty then
           FCacheManager.Put(LHash, AResponse);
         ACallback(AResponse, AError, False, AUsage);
       end);
@@ -314,6 +315,12 @@ begin
       ACallback('', True, 'Failed to initialize AI Provider: ' + E.Message);
     end;
   end;
+end;
+
+procedure TRadIAService.ClearCache;
+begin
+  if Assigned(FCacheManager) then
+    FCacheManager.Clear;
 end;
 
 class function TRadIAService.CreateMessage(const ARole: TAIMessageRole; const AContent: string): IChatMessage;

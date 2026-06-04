@@ -183,7 +183,7 @@ begin
 
   ShowRadIAChat;
 
-  LPrompt := Format('%s'#13#10'```pascal'#13#10'%s'#13#10'```', [ACommand, LSelectedText]);
+  LPrompt := Format('%s %s'#13#10'```pascal'#13#10'%s'#13#10'```', [ACommand, APromptPrefix, LSelectedText]);
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 

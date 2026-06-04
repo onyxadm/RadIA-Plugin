@@ -358,6 +358,9 @@ begin
   PostToWebView('clear_chat', '', '');
   PostToWebView('update_tokens', '', '');
   
+  if Assigned(FAIService) then
+    FAIService.ClearCache;
+  
   { Clear physical file }
   LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
   if TFile.Exists(LHistoryFile) then
@@ -799,6 +802,14 @@ begin
               LFullResponse := LFullResponse + AChunk;
               PostToWebView('append_message', 'assistant', AChunk, False);
             end;
+            
+            if LFullResponse.IsEmpty and AError.IsEmpty then
+            begin
+              PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.');
+              PostToWebView('append_message', 'assistant', '', True);
+              Exit;
+            end;
+            
             PostToWebView('append_message', 'assistant', '', True);
             
             { Save history }
