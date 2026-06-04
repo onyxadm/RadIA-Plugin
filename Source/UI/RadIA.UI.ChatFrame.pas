@@ -208,11 +208,22 @@ begin
 end;
 
 procedure TFrameAIChat.DestroyWnd;
+var
+  LEdgeToFree: TEdgeBrowser;
 begin
   FBrowserInitialized := False;
   FWebViewInitialized := False;
   if Assigned(EdgeBrowser) then
-    FreeAndNil(EdgeBrowser);
+  begin
+    LEdgeToFree := EdgeBrowser;
+    EdgeBrowser := nil;
+    LEdgeToFree.Parent := nil; // Desvincula visualmente de forma síncrona
+    TThread.Queue(nil,
+      procedure
+      begin
+        LEdgeToFree.Free; // Libera da memória de forma assíncrona (thread-safe/layout-safe)
+      end);
+  end;
   inherited DestroyWnd;
 end;
 
