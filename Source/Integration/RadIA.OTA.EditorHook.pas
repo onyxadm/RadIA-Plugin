@@ -9,18 +9,6 @@ type
   { Manager to create and handle RadIA IDE contextual actions }
   TRadIAEditorHook = class
   private
-    FActionList: TActionList;
-    FExplainAction: TAction;
-    FOptimizeAction: TAction;
-    FTestsAction: TAction;
-    FBugsAction: TAction;
-    FDocAction: TAction;
-    FFixErrorAction: TAction;
-    FShowChatAction: TAction;
-
-    function CreateAction(const ACaption: string;
-      const AHandler: TNotifyEvent): TAction;
-
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
     procedure OnTestsExecute(Sender: TObject);
@@ -36,15 +24,6 @@ type
 
     procedure PopulateContextMenu(const AContextMenu: TPopupMenu);
     procedure PopulateToolsMenu(const AMenuItem: TMenuItem);
-
-    property ActionList: TActionList read FActionList;
-    property ExplainAction: TAction read FExplainAction;
-    property OptimizeAction: TAction read FOptimizeAction;
-    property TestsAction: TAction read FTestsAction;
-    property BugsAction: TAction read FBugsAction;
-    property DocAction: TAction read FDocAction;
-    property FixErrorAction: TAction read FFixErrorAction;
-    property ShowChatAction: TAction read FShowChatAction;
   end;
 
 implementation
@@ -55,31 +34,13 @@ uses
 
 { TRadIAEditorHook }
 
-function TRadIAEditorHook.CreateAction(const ACaption: string;
-  const AHandler: TNotifyEvent): TAction;
-begin
-  Result := TAction.Create(FActionList);
-  Result.ActionList := FActionList;
-  Result.Caption    := ACaption;
-  Result.OnExecute  := AHandler;
-end;
-
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
-  FActionList := TActionList.Create(AOwner);
-
-  FExplainAction   := CreateAction('RadIA: Explain Selected Code',          OnExplainExecute);
-  FOptimizeAction  := CreateAction('RadIA: Optimize/Refactor Code',         OnOptimizeExecute);
-  FTestsAction     := CreateAction('RadIA: Generate Unit Tests (DUnitX)',    OnTestsExecute);
-  FBugsAction      := CreateAction('RadIA: Locate Bugs/Memory Leaks',        OnBugsExecute);
-  FDocAction       := CreateAction('RadIA: Document Method (XML)',           OnDocExecute);
-  FFixErrorAction  := CreateAction('RadIA: Fix Last Compiler Error',         OnFixErrorExecute);
-  FShowChatAction  := CreateAction('RadIA Chat Panel',                       OnShowChatExecute);
+  // No ActionList or dynamic Action creation needed
 end;
 
 destructor TRadIAEditorHook.Destroy;
 begin
-  FActionList.Free;
   inherited Destroy;
 end;
 
@@ -92,27 +53,32 @@ begin
     Exit;
     
   LRadIASubMenu := TMenuItem.Create(AContextMenu);
-  LRadIASubMenu.Caption := '🤖 RadIA';
+  LRadIASubMenu.Caption := #$D83E#$DD16' RadIA';
   AContextMenu.Items.Add(LRadIASubMenu);
   
   LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Action := FExplainAction;
+  LItem.Caption := 'Explain Selected Code';
+  LItem.OnClick := OnExplainExecute;
   LRadIASubMenu.Add(LItem);
   
   LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Action := FOptimizeAction;
+  LItem.Caption := 'Optimize/Refactor Code';
+  LItem.OnClick := OnOptimizeExecute;
   LRadIASubMenu.Add(LItem);
   
   LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Action := FTestsAction;
+  LItem.Caption := 'Generate Unit Tests (DUnitX)';
+  LItem.OnClick := OnTestsExecute;
   LRadIASubMenu.Add(LItem);
   
   LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Action := FBugsAction;
+  LItem.Caption := 'Locate Bugs/Memory Leaks';
+  LItem.OnClick := OnBugsExecute;
   LRadIASubMenu.Add(LItem);
   
   LItem := TMenuItem.Create(LRadIASubMenu);
-  LItem.Action := FDocAction;
+  LItem.Caption := 'Document Method (XML)';
+  LItem.OnClick := OnDocExecute;
   LRadIASubMenu.Add(LItem);
 end;
 
@@ -124,11 +90,13 @@ begin
     Exit;
     
   LItem := TMenuItem.Create(AMenuItem);
-  LItem.Action := FShowChatAction;
+  LItem.Caption := 'RadIA Chat Panel';
+  LItem.OnClick := OnShowChatExecute;
   AMenuItem.Add(LItem);
   
   LItem := TMenuItem.Create(AMenuItem);
-  LItem.Action := FFixErrorAction;
+  LItem.Caption := 'Fix Last Compiler Error';
+  LItem.OnClick := OnFixErrorExecute;
   AMenuItem.Add(LItem);
 end;
 

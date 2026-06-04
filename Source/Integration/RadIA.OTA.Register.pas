@@ -349,8 +349,8 @@ begin
     begin
       for I := 0 to LToolsMenu.Count - 1 do
       begin
-        if (LToolsMenu.Items[I].Action = LHook.ShowChatAction) or 
-           (LToolsMenu.Items[I].Action = LHook.FixErrorAction) then
+        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or 
+           SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsAlreadyPopulated := True;
           Break;
@@ -391,7 +391,7 @@ begin
     begin
       for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
       begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, '🤖 RadIA') then
+        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, #$D83E#$DD16' RadIA') then
         begin
           LContextAlreadyPopulated := True;
           Break;
@@ -435,8 +435,8 @@ begin
     begin
       for I := 0 to LToolsMenu.Count - 1 do
       begin
-        if (LToolsMenu.Items[I].Action = LHook.ShowChatAction) or 
-           (LToolsMenu.Items[I].Action = LHook.FixErrorAction) then
+        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or 
+           SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsPopulated := True;
           Break;
@@ -474,7 +474,7 @@ begin
     begin
       for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
       begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, '🤖 RadIA') then
+        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, #$D83E#$DD16' RadIA') then
         begin
           LContextPopulated := True;
           Break;
@@ -505,7 +505,6 @@ var
   LToolsMenu: TMenuItem;
   LPopupMenu: TComponent;
   I: Integer;
-  LHook: TRadIAEditorHook;
   LEditServices: IOTAEditorServices;
   LEditWindow: INTAEditWindow;
 begin
@@ -513,7 +512,6 @@ begin
   if not Assigned(FEditorHook) then
     Exit;
     
-  LHook := TRadIAEditorHook(FEditorHook);
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
   begin
     LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
@@ -521,8 +519,8 @@ begin
     begin
       for I := LToolsMenu.Count - 1 downto 0 do
       begin
-        if (LToolsMenu.Items[I].Action = LHook.ShowChatAction) or
-           (LToolsMenu.Items[I].Action = LHook.FixErrorAction) then
+        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
+           SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsMenu.Items[I].Free;
         end;
@@ -551,7 +549,7 @@ begin
     begin
       for I := TPopupMenu(LPopupMenu).Items.Count - 1 downto 0 do
       begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, '🤖 RadIA') then
+        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, #$D83E#$DD16' RadIA') then
         begin
           TPopupMenu(LPopupMenu).Items[I].Free;
         end;
