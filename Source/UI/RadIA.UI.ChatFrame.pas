@@ -580,7 +580,6 @@ begin
     end;
     
     ApplyIDETheme;
-    LoadChatHistory;
   end;
 end;
 
@@ -611,6 +610,14 @@ begin
         procedure
         begin
           TRadIAOTAHelper.ReplaceActiveEditorText(LCode);
+        end);
+    end
+    else if LAction = 'ready' then
+    begin
+      TThread.Queue(nil,
+        procedure
+        begin
+          LoadChatHistory;
         end);
     end;
   finally
@@ -761,57 +768,61 @@ begin
   
   FAIService.SendPromptStream(APromptText, FHistory,
     procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    var
-      LAssistantMsg: IChatMessage;
-      LStats: string;
-      LUsage: TTokenUsage;
     begin
-      if not LGuard.IsAlive then
-        Exit;
-        
-      if not AError.IsEmpty then
-      begin
-        btnSend.Enabled := True;
-        PostToWebView('add_message', 'assistant', '**Error:** ' + AError);
-        Exit;
-      end;
-      
-      if not AIsDone then
-      begin
-        LFullResponse := LFullResponse + AChunk;
-        PostToWebView('append_message', 'assistant', AChunk, False);
-      end
-      else
-      begin
-        btnSend.Enabled := True;
-        if not AChunk.IsEmpty then
+      TThread.Queue(nil,
+        procedure
+        var
+          LAssistantMsg: IChatMessage;
+          LStats: string;
+          LUsage: TTokenUsage;
         begin
-          LFullResponse := LFullResponse + AChunk;
-          PostToWebView('append_message', 'assistant', AChunk, False);
-        end;
-        PostToWebView('append_message', 'assistant', '', True);
-        
-        { Save history }
-        FHistory := FHistory + [LUserMsg];
-        LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse);
-        FHistory := FHistory + [LAssistantMsg];
-        SaveChatHistory;
-        
-        { Estimate and update token usage stats }
-        LUsage.PromptTokens := Length(APromptText) div 4;
-        LUsage.CompletionTokens := Length(LFullResponse) div 4;
-        LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
-        
-        if LUsage.TotalTokens > 0 then
-        begin
-          FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
-          FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
-          FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
+          if not LGuard.IsAlive then
+            Exit;
+            
+          if not AError.IsEmpty then
+          begin
+            btnSend.Enabled := True;
+            PostToWebView('add_message', 'assistant', '**Error:** ' + AError);
+            Exit;
+          end;
           
-          LStats := FAccumulatedUsage.FormatStats;
-          PostToWebView('update_tokens', '', LStats);
-        end;
-      end;
+          if not AIsDone then
+          begin
+            LFullResponse := LFullResponse + AChunk;
+            PostToWebView('append_message', 'assistant', AChunk, False);
+          end
+          else
+          begin
+            btnSend.Enabled := True;
+            if not AChunk.IsEmpty then
+            begin
+              LFullResponse := LFullResponse + AChunk;
+              PostToWebView('append_message', 'assistant', AChunk, False);
+            end;
+            PostToWebView('append_message', 'assistant', '', True);
+            
+            { Save history }
+            FHistory := FHistory + [LUserMsg];
+            LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse);
+            FHistory := FHistory + [LAssistantMsg];
+            SaveChatHistory;
+            
+            { Estimate and update token usage stats }
+            LUsage.PromptTokens := Length(APromptText) div 4;
+            LUsage.CompletionTokens := Length(LFullResponse) div 4;
+            LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
+            
+            if LUsage.TotalTokens > 0 then
+            begin
+              FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
+              FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
+              FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
+              
+              LStats := FAccumulatedUsage.FormatStats;
+              PostToWebView('update_tokens', '', LStats);
+            end;
+          end;
+        end);
     end);
 end;
 

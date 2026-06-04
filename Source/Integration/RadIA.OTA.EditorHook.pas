@@ -7,7 +7,7 @@ uses
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
-  TRadIAEditorHook = class
+  TRadIAEditorHook = class(TComponent)
   private
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
@@ -19,9 +19,9 @@ type
 
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
   public
-    constructor Create(AOwner: TComponent);
+    constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-
+    
     procedure PopulateContextMenu(const AContextMenu: TPopupMenu);
     procedure PopulateToolsMenu(const AMenuItem: TMenuItem);
   end;
@@ -36,7 +36,7 @@ uses
 
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
-  // No ActionList or dynamic Action creation needed
+  inherited Create(AOwner);
 end;
 
 destructor TRadIAEditorHook.Destroy;
@@ -52,31 +52,31 @@ begin
   if not Assigned(AContextMenu) then
     Exit;
     
-  LRadIASubMenu := TMenuItem.Create(nil);
+  LRadIASubMenu := TMenuItem.Create(Self);
   LRadIASubMenu.Caption := 'RadIA';
   AContextMenu.Items.Add(LRadIASubMenu);
   
-  LItem := TMenuItem.Create(nil);
+  LItem := TMenuItem.Create(Self);
   LItem.Caption := 'Explain Selected Code';
   LItem.OnClick := OnExplainExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(nil);
+  LItem := TMenuItem.Create(Self);
   LItem.Caption := 'Optimize/Refactor Code';
   LItem.OnClick := OnOptimizeExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(nil);
+  LItem := TMenuItem.Create(Self);
   LItem.Caption := 'Generate Unit Tests (DUnitX)';
   LItem.OnClick := OnTestsExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(nil);
+  LItem := TMenuItem.Create(Self);
   LItem.Caption := 'Locate Bugs/Memory Leaks';
   LItem.OnClick := OnBugsExecute;
   LRadIASubMenu.Add(LItem);
   
-  LItem := TMenuItem.Create(nil);
+  LItem := TMenuItem.Create(Self);
   LItem.Caption := 'Document Method (XML)';
   LItem.OnClick := OnDocExecute;
   LRadIASubMenu.Add(LItem);
@@ -89,12 +89,12 @@ begin
   if not Assigned(AMenuItem) then
     Exit;
     
-  LItem := TMenuItem.Create(nil);
+  LItem := TMenuItem.Create(Self);
   LItem.Caption := 'RadIA Chat Panel';
   LItem.OnClick := OnShowChatExecute;
   AMenuItem.Add(LItem);
   
-  LItem := TMenuItem.Create(nil);
+  LItem := TMenuItem.Create(Self);
   LItem.Caption := 'Fix Last Compiler Error';
   LItem.OnClick := OnFixErrorExecute;
   AMenuItem.Add(LItem);

@@ -285,4 +285,5 @@ if (window.chrome && window.chrome.webview) {
       case 'append_message': appendMessage(data.text, data.isDone);    break;
     }
   });
+  window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));
 }
