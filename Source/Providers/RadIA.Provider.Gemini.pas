@@ -428,11 +428,7 @@ begin
                     if LText.IsEmpty then
                       LText := LJson.GetValue('error').ToString;
 
-                    TThread.Queue(nil,
-                      procedure
-                      begin
-                        ACallback('', True, LText);
-                      end);
+                    ACallback('', True, LText);
                     Exit;
                   end;
 
@@ -456,11 +452,7 @@ begin
 
                   if not LText.IsEmpty then
                   begin
-                    TThread.Queue(nil,
-                      procedure
-                      begin
-                        ACallback(LText, False, '');
-                      end);
+                    ACallback(LText, False, '');
                   end;
                 finally
                   LJson.Free;

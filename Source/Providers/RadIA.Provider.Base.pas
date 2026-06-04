@@ -332,11 +332,7 @@ begin
       LJsonLine := Trim(LLine.Substring(5));
       if LJsonLine = '[DONE]' then
       begin
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback('', True, '');
-          end);
+        ACallback('', True, '');
 
         ABuffer := ABuffer.Substring(LLastProcessedPos);
         Exit;
@@ -356,11 +352,7 @@ begin
               begin
                 LContent := LDelta.GetValue<string>('content', '');
                 if not LContent.IsEmpty then
-                TThread.Queue(nil,
-                  procedure
-                  begin
-                    ACallback(LContent, False, '');
-                  end);
+                  ACallback(LContent, False, '');
               end;
             end;
           finally

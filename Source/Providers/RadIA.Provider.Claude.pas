@@ -266,20 +266,12 @@ begin
               begin
                 LText := LDeltaObj.GetValue<string>('text', '');
                 if not LText.IsEmpty then
-                TThread.Queue(nil,
-                  procedure
-                  begin
-                    ACallback(LText, False, '');
-                  end);
+                  ACallback(LText, False, '');
               end;
             end
             else if LTypeStr = 'message_stop' then
             begin
-              TThread.Queue(nil,
-                procedure
-                begin
-                  ACallback('', True, '');
-                end);
+              ACallback('', True, '');
               
               ABuffer := ABuffer.Substring(LLastProcessedPos);
               Exit;

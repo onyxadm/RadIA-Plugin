@@ -309,20 +309,12 @@ begin
 
           if not LContent.IsEmpty then
           begin
-            TThread.Queue(nil,
-              procedure
-              begin
-                ACallback(LContent, False, '');
-              end);
+            ACallback(LContent, False, '');
           end;
 
           if LDone then
           begin
-            TThread.Queue(nil,
-              procedure
-              begin
-                ACallback('', True, '');
-              end);
+            ACallback('', True, '');
             
             ABuffer := ABuffer.Substring(LLastProcessedPos);
             Exit;
