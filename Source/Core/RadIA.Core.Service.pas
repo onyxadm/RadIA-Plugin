@@ -59,6 +59,38 @@ uses
   RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama,
   RadIA.Provider.DeepSeek, RadIA.Provider.Groq;
 
+procedure LogService(const AMsg: string);
+var
+  LFolder, LFile, LText: string;
+  LStream: TFileStream;
+  LWriter: TStreamWriter;
+begin
+  try
+    LFolder := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA';
+    ForceDirectories(LFolder);
+    LFile := LFolder + '\log.txt';
+    if FileExists(LFile) then
+      LStream := TFileStream.Create(LFile, fmOpenWrite or fmShareDenyNone)
+    else
+      LStream := TFileStream.Create(LFile, fmCreate or fmShareDenyNone);
+    try
+      LStream.Seek(0, soEnd);
+      LWriter := TStreamWriter.Create(LStream, TEncoding.UTF8);
+      try
+        LText := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - [Service] ' + AMsg;
+        LWriter.WriteLine(LText);
+      finally
+        LWriter.Free;
+      end;
+    finally
+      LStream.Free;
+    end;
+  except
+    // Silently ignore
+  end;
+end;
+
+
 { TRadIAChatMessage }
 
 constructor TRadIAChatMessage.Create(const ARole: TAIMessageRole; const AContent: string);
@@ -288,6 +320,9 @@ var
 begin
   try
     LProvider       := CreateActiveProvider;
+    LogService('SendPromptStream: ActiveProvider=' + ProviderTypeToString(FConfig.GetActiveProvider) +
+      ' Model=' + FConfig.GetActiveModel(FConfig.GetActiveProvider) +
+      ' SmartConfig=' + BoolToStr(FConfig.SmartConfigEnabled, True));
     LSystemPrompt   := GetEffectiveSystemPrompt;
     LTrimmedHistory := TrimHistory(AHistory);
     LHash           := ComputePromptHash(APrompt, LTrimmedHistory, LSystemPrompt);
