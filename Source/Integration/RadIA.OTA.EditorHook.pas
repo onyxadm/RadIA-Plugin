@@ -72,72 +72,82 @@ end;
 
 procedure TRadIAEditorHook.Install;
 var
+  LEditorServices: IOTAEditorServices;
   LEditorLocalMenu: INTAEditorLocalMenu;
 begin
-  if Supports(BorlandIDEServices, INTAEditorLocalMenu, LEditorLocalMenu) then
+  if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
   begin
-    FActionList := TActionList.Create(Self);
-    FActionList.Name := 'RadIAEditorActionList';
+    LEditorLocalMenu := LEditorServices.GetEditorLocalMenu;
+    if Assigned(LEditorLocalMenu) then
+    begin
+      FActionList := TActionList.Create(Self);
+      FActionList.Name := 'RadIAEditorActionList';
 
-    // 1. Action Pai (Submenu)
-    AddAction(
-      'actRadIARoot',
-      'RadIA',
-      'RadIA',
-      nil
-    );
+      // 1. Action Pai (Submenu)
+      AddAction(
+        'actRadIARoot',
+        'RadIA',
+        'RadIA',
+        nil
+      );
 
-    // 2. Actions Filhas (Subitens)
-    AddAction(
-      'actRadIAExplain',
-      'Explain Selected Code',
-      'RadIA.Code',
-      OnExplainExecute
-    );
+      // 2. Actions Filhas (Subitens)
+      AddAction(
+        'actRadIAExplain',
+        'Explain Selected Code',
+        'RadIA.Code',
+        OnExplainExecute
+      );
 
-    AddAction(
-      'actRadIAOptimize',
-      'Optimize/Refactor Code',
-      'RadIA.Code',
-      OnOptimizeExecute
-    );
+      AddAction(
+        'actRadIAOptimize',
+        'Optimize/Refactor Code',
+        'RadIA.Code',
+        OnOptimizeExecute
+      );
 
-    AddAction(
-      'actRadIATests',
-      'Generate Unit Tests (DUnitX)',
-      'RadIA.Code',
-      OnTestsExecute
-    );
+      AddAction(
+        'actRadIATests',
+        'Generate Unit Tests (DUnitX)',
+        'RadIA.Code',
+        OnTestsExecute
+      );
 
-    AddAction(
-      'actRadIABugs',
-      'Locate Bugs/Memory Leaks',
-      'RadIA.Code',
-      OnBugsExecute
-    );
+      AddAction(
+        'actRadIABugs',
+        'Locate Bugs/Memory Leaks',
+        'RadIA.Code',
+        OnBugsExecute
+      );
 
-    AddAction(
-      'actRadIADoc',
-      'Document Method (XML)',
-      'RadIA.Code',
-      OnDocExecute
-    );
+      AddAction(
+        'actRadIADoc',
+        'Document Method (XML)',
+        'RadIA.Code',
+        OnDocExecute
+      );
 
-    LEditorLocalMenu.RegisterActionList(
-      FActionList,
-      cEdMenuCatBase
-    );
+      LEditorLocalMenu.RegisterActionList(
+        FActionList,
+        cEdMenuCatBase
+      );
+    end;
   end;
 end;
 
 procedure TRadIAEditorHook.Uninstall;
 var
+  LEditorServices: IOTAEditorServices;
   LEditorLocalMenu: INTAEditorLocalMenu;
 begin
   if Assigned(FActionList) then
   begin
-    if Supports(BorlandIDEServices, INTAEditorLocalMenu, LEditorLocalMenu) then
-      LEditorLocalMenu.UnregisterActionList(cEdMenuCatBase);
+    if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
+    begin
+      LEditorLocalMenu := LEditorServices.GetEditorLocalMenu;
+      if Assigned(LEditorLocalMenu) then
+        LEditorLocalMenu.UnregisterActionList(cEdMenuCatBase);
+    end;
     FreeAndNil(FActionList);
   end;
 end;
