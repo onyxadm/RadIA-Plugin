@@ -368,14 +368,11 @@ procedure TRadIAWizard.OnTimerEvent(Sender: TObject);
 var
   LNTAServices: INTAServices;
   LToolsMenu: TMenuItem;
-  LPopupMenu: TComponent;
   LToolsPopulated: Boolean;
-  LContextPopulated: Boolean;
   I: Integer;
   LHook: TRadIAEditorHook;
 begin
   LToolsPopulated := False;
-  LContextPopulated := False;
   LHook := TRadIAEditorHook(FEditorHook);
 
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
@@ -402,33 +399,12 @@ begin
         LogDebug('Tools menu populated successfully');
       end;
     end;
-
-    // 2. Verificar e popular o menu de contexto do editor
-    LPopupMenu := Application.FindComponent('EditorContextMenu');
-    if (LPopupMenu <> nil) and (LPopupMenu is TPopupMenu) then
-    begin
-      for I := 0 to TPopupMenu(LPopupMenu).Items.Count - 1 do
-      begin
-        if SameText(TPopupMenu(LPopupMenu).Items[I].Caption, '🤖 RadIA') then
-        begin
-          LContextPopulated := True;
-          Break;
-        end;
-      end;
-
-      if not LContextPopulated then
-      begin
-        LogDebug('Editor context menu found. Populating now...');
-        LHook.PopulateContextMenu(TPopupMenu(LPopupMenu));
-        LContextPopulated := True;
-        LogDebug('Editor context menu populated successfully');
-      end;
-    end;
   end;
 
-  if LToolsPopulated and LContextPopulated then
+  // Desliga o timer assim que o menu Tools estiver populado
+  if LToolsPopulated then
   begin
-    LogDebug('All menus populated. Disabling timer.');
+    LogDebug('Tools menu populated. Disabling timer.');
     FTimer.Enabled := False;
   end;
 end;

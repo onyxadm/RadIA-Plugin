@@ -28,12 +28,14 @@ type
     procedure TestSystemPromptPersistence;
     [Test]
     procedure TestOllamaBaseUrlPersistence;
+    [Test]
+    procedure TestJsonNewlineHandling;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.Win.Registry, Winapi.Windows;
+  System.SysUtils, System.Win.Registry, Winapi.Windows, System.JSON;
 
 { TTestRadIAConfig }
 
@@ -132,6 +134,28 @@ begin
   
   FConfig.Load;
   Assert.AreEqual(TEST_URL, FConfig.OllamaBaseUrl);
+end;
+
+procedure TTestRadIAConfig.TestJsonNewlineHandling;
+var
+  LJsonStr: string;
+  LParsed: TJSONValue;
+  LJson: TJSONObject;
+  LCode: string;
+begin
+  LJsonStr := '{"action":"apply_code","code":"line1\nline2"}';
+  LParsed := TJSONObject.ParseJSONValue(LJsonStr);
+  try
+    Assert.IsNotNull(LParsed);
+    Assert.IsTrue(LParsed is TJSONObject);
+    LJson := LParsed as TJSONObject;
+    LCode := LJson.GetValue<string>('code', '');
+    
+    Assert.AreEqual(11, LCode.Length);
+    Assert.AreEqual(Char(#10), LCode[6]);
+  finally
+    LParsed.Free;
+  end;
 end;
 
 initialization

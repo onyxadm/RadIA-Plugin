@@ -16,6 +16,7 @@ type
     class function GetActiveProjectName: string;
     class function GetActiveProjectFolder: string;
     class function GetCurrentEditBuffer: IOTAEditBuffer;
+    class function GetCurrentEditView: IOTAEditView;
   end;
 
 implementation
@@ -30,6 +31,17 @@ begin
   if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
   begin
     Result := LEditorServices.TopBuffer;
+  end;
+end;
+
+class function TRadIAOTAHelper.GetCurrentEditView: IOTAEditView;
+var
+  LEditorServices: IOTAEditorServices;
+begin
+  Result := nil;
+  if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
+  begin
+    Result := LEditorServices.TopView;
   end;
 end;
 
@@ -84,21 +96,36 @@ class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string): 
 var
   LEditBuffer: IOTAEditBuffer;
   LEditBlock: IOTAEditBlock;
+  LView: IOTAEditView;
   LPosition: IOTAEditPosition;
+  LWriter: IOTAEditWriter;
+  LCharPos: TOTACharPos;
+  LStartPos: Longint;
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
-  if not Assigned(LEditBuffer) then
+  LView := GetCurrentEditView;
+  if not Assigned(LEditBuffer) or not Assigned(LView) then
     Exit;
 
   LEditBlock := LEditBuffer.EditBlock;
-  if Assigned(LEditBlock) and (LEditBlock.Size > 0) and (LEditBuffer.EditViewCount > 0) then
+  if Assigned(LEditBlock) and (LEditBlock.Size > 0) then
   begin
-    LPosition := LEditBuffer.EditViews[0].Position;
+    LPosition := LView.Position;
     LPosition.Move(LEditBlock.StartingRow, LEditBlock.StartingColumn);
     LEditBlock.Delete;
-    LEditBuffer.EditViews[0].Position.InsertText(ANewText);
-    Result := True;
+    
+    LCharPos.Line := LPosition.GetRow;
+    LCharPos.CharIndex := LPosition.GetColumn - 1;
+    LStartPos := LView.CharPosToPos(LCharPos);
+    
+    LWriter := LEditBuffer.CreateWriter;
+    if Assigned(LWriter) then
+    begin
+      LWriter.CopyTo(LStartPos);
+      LWriter.Insert(PAnsiChar(UTF8String(ANewText)));
+      Result := True;
+    end;
   end
   else
   begin
@@ -111,15 +138,24 @@ class function TRadIAOTAHelper.InsertTextAtCursor(const AText: string): Boolean;
 var
   LEditBuffer: IOTAEditBuffer;
   LView: IOTAEditView;
+  LWriter: IOTAEditWriter;
+  LCharPos: TOTACharPos;
+  LPos: Longint;
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
-  if Assigned(LEditBuffer) and (LEditBuffer.EditViewCount > 0) then
+  LView := GetCurrentEditView;
+  if Assigned(LEditBuffer) and Assigned(LView) and Assigned(LView.Position) then
   begin
-    LView := LEditBuffer.EditViews[0];
-    if Assigned(LView) and Assigned(LView.Position) then
+    LCharPos.Line := LView.Position.GetRow;
+    LCharPos.CharIndex := LView.Position.GetColumn - 1;
+    LPos := LView.CharPosToPos(LCharPos);
+    
+    LWriter := LEditBuffer.CreateWriter;
+    if Assigned(LWriter) then
     begin
-      LView.Position.InsertText(AText);
+      LWriter.CopyTo(LPos);
+      LWriter.Insert(PAnsiChar(UTF8String(AText)));
       Result := True;
     end;
   end;

@@ -158,7 +158,11 @@ begin
   if Showing and not FWebViewInitialized then
   begin
     FWebViewInitialized := True;
-    InitializeWebView;
+    TThread.ForceQueue(nil,
+      procedure
+      begin
+        InitializeWebView;
+      end);
   end;
 end;
 
@@ -535,11 +539,10 @@ begin
     if LAction = 'apply_code' then
     begin
       LCode := LJson.GetValue<string>('code', '');
-      { Normalize line endings to LF only (#10).
-        The Delphi OTA editor's InsertText works with LF internally.
-        Collapse any CRLF or bare CR to a single LF. }
+      { Normalize line endings to CRLF (#13#10) for Windows OTA editor compatibility. }
       LCode := StringReplace(LCode, #13#10, #10, [rfReplaceAll]);
       LCode := StringReplace(LCode, #13,    #10, [rfReplaceAll]);
+      LCode := StringReplace(LCode, #10,    #13#10, [rfReplaceAll]);
       TThread.Queue(nil,
         procedure
         begin
