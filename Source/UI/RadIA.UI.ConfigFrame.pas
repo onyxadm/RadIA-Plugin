@@ -130,6 +130,7 @@ begin
   FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
   FChkSmartConfig.Margins.Left := 16;
   FChkSmartConfig.AlignWithMargins := True;
+  FChkSmartConfig.Width := 200;
 
   { Create advanced settings groupbox for each provider tab }
   CreateProviderAdvancedControls(tsGemini, ptGemini);
