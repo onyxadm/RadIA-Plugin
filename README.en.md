@@ -39,33 +39,9 @@
 
 ### 2.1 Complete Feature Checklist
 
-| Feature | Category | Description | Status |
-| :--- | :--- | :--- | :--- |
-| **Dockable Sidebar Chat** | Chat UX | IDE-integrated panel running WebView2 with Markdown and Pascal highlighting. | ✅ Completed |
-| **Keyboard Shortcuts** | Chat UX | Shortcut `Ctrl + Enter` to send prompts and simple `Enter` for line breaks. | ✅ Completed |
-| **Layout Persistence** | Chat UX | Automatic saving and restoration of floating window size/position and visibility at startup. | ✅ Completed |
-| **Streaming Responses** | Chat UX | Real-time incremental token rendering (SSE) for OpenAI, Gemini, Claude, and Ollama. | ✅ Completed |
-| **Multiple Chat Sessions** | Chat UX | Create, rename, delete, and isolate conversations in a collapsible sidebar. | ✅ Completed |
-| **Persistent Chat History** | Chat UX | Automatic local JSON storage and reload of conversation history. | ✅ Completed |
-| **Prompt Navigation (↑/↓)** | Chat UX | Terminal-like keyboard arrow history lookup in prompt input. | ✅ Completed |
-| **Request Cancellation** | Chat UX | Abort active AI HTTP requests asynchronously using a dynamic stop button interface. | ✅ Completed |
-| **Export Conversation** | Chat UX | Save current active chats to Markdown (.md) or standalone rich HTML formats. | ✅ Completed |
-| **Prompt Templates** | Chat UX | Custom quick-access prompt library with `{code}` token and `/template` command. | ✅ Completed |
-| **Google Gemini** | Provider | Native BYOK integration for Gemini 1.5 Pro and Gemini 1.5 Flash models. | ✅ Completed |
-| **OpenAI ChatGPT** | Provider | Native BYOK integration for GPT-4o, GPT-4o-mini, and others. | ✅ Completed |
-| **Anthropic Claude** | Provider | Native BYOK integration for Claude 3 Haiku and Claude 3.5 Sonnet. | ✅ Completed |
-| **DeepSeek** | Provider | Native BYOK integration for DeepSeek Chat and Reasoning models. | ✅ Completed |
-| **Groq** | Provider | Native BYOK integration for Llama, Mixtral, and Gemma models via Groq's high-speed cloud. | ✅ Completed |
-| **Ollama Local/Network** | Provider | Connects to local open-source models with no paid API keys and dynamic tags discovery. | ✅ Completed |
-| **Custom Base URL** | Provider | Route OpenAI API payload to other endpoints like Groq, DeepSeek, or LM Studio. | ✅ Completed |
-| **Project Context** | Intelligence | Automatic project context loading (system prompts/custom files) via `.radia`. | ✅ Completed |
-| **Tokens & Cost Tracking** | Control | Status bar counter for session token usage and USD estimated cost. | ✅ Completed |
-| **Local Quota Control** | Control | Define a monthly token limit with request blocking and a manual reset button. | ✅ Completed |
-| **Editor Context Actions** | Integration | Right-click code selection to Explain, Optimize/Refactor, Test, or Scan for Bugs. | ✅ Completed |
-| **Interactive Smart Diff** | Integration | Side-by-side original/suggested diff view with instant editor replacement. | ✅ Completed |
-| **Smart Build Debugger** | Integration | Message tab integration to resolve compiler issues with one-click fixes. | ✅ Completed |
-| **Auto XML Documentation** | Generation | Write Delphi-compliant XML help comments above methods automatically. | ✅ Completed |
-| **Secure Credentials** | Security | API Keys saved securely inside the Windows Registry using DPAPI. | ✅ Completed |
+To check the development status, keyboard shortcuts, categories, and all integrated providers in detail, please refer to our:
+
+👉 [**Complete Feature Checklist (docs/features.en.md)**](docs/features.en.md)
 
 ### 3. How It Works & Architecture
 RadIA is built entirely in Object Pascal (Delphi) using the **Open Tools API (OTA)** to interface with the IDE's editor services, message services, and theme services.
@@ -121,11 +97,8 @@ This project strictly enforces:
 *   **DRY (Don't Repeat Yourself)** & **KISS (Keep It Simple, Stupid)**.
 *   Strictly using **English** for all programming artifacts.
 
-*   **Mandatory Code Review**: RadIA is a productivity assistant that generates code suggestions leveraging third-party AI models. Any generated suggestions (including refactorings, bug fixes, and unit tests) may contain inaccuracies, logic errors, or vulnerabilities. The user is **solely responsible** for reviewing, validating, testing, and approving any code suggested by the AI before integrating it into production environments.
-*   **Limitation of Liabilities**: The creators and contributors of RadIA shall not be held liable for any damages, data loss, loss of profits, security breaches, or service interruptions resulting from the use of AI-suggested code or the execution of this plugin within the IDE.
-*   **API Key Security (BYOK)**: RadIA stores API Keys locally and encrypted using the Windows Data Protection API (DPAPI) inside the Windows Registry. Keys are sent directly and securely to the official servers of each respective provider (Google, OpenAI, Anthropic, DeepSeek, Groq, or Ollama). The project authors do not collect, remotely store, or share your API keys. Billing, quotas, and budget control of the keys are the user's sole responsibility.
+### 8. Terms of Use and Corporate Compliance
 
-### 8.2 Data Privacy & Corporate Compliance
-When using cloud providers (Google Gemini, OpenAI, Anthropic, DeepSeek, or Groq), snippets of your selected source code and project context will be sent to their respective remote servers for processing.
+For guidelines on corporate compliance (GDPR/LGPD), data privacy, API key encryption using Windows DPAPI, and legal disclaimers regarding AI-generated code, please refer to our:
 
-*   **Confidential Corporate Use**: If you work on projects with restricted proprietary code or under strict corporate compliance regulations (such as GDPR or LGPD), **we strongly recommend using Ollama** configured locally. By running local models offline, RadIA processes your prompts entirely within your machine or internal network, ensuring that no proprietary source code ever leaves your company's secure environment.
+👉 [**Terms of Use, Compliance, and Privacy Guide (docs/compliance.en.md)**](docs/compliance.en.md)
