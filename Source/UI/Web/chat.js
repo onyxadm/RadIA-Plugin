@@ -1,6 +1,5 @@
 // ============================================================
-//  RadIA Chat — JavaScript
-//  Redesign para alinhar com mockup oficial
+//  RadIA Chat — JavaScript (Redesign Premium Integrado)
 // ============================================================
 
 // -- Configuração do Marked com Prism para highlight de código --
@@ -14,7 +13,6 @@ marked.setOptions({
   }
 });
 
-// -- Code block registry — stores code by ID to avoid newline/escaping issues in onclick attrs --
 const _codeRegistry = {};
 let _codeRegistryCounter = 0;
 
@@ -36,7 +34,7 @@ renderer.code = function(codeOrToken, lang) {
   }
 
   const id = 'cb_' + (++_codeRegistryCounter);
-  _codeRegistry[id] = code; // Store original code with proper newlines
+  _codeRegistry[id] = code;
 
   const isPascal = ['pascal', 'delphi', 'objectpascal'].includes(language.toLowerCase());
   const highlighted = Prism.languages[language]
@@ -58,20 +56,109 @@ renderer.code = function(codeOrToken, lang) {
 };
 marked.use({ renderer });
 
-// -- Container principal --
-const chatContainer = document.getElementById('chat-container');
+// ============================================================
+//  Elementos do DOM
+// ============================================================
+const chatContainer   = document.getElementById('chat-container');
+const btnNewChat      = document.getElementById('btn-new-chat');
+const btnHistory      = document.getElementById('btn-history');
+const btnSettings     = document.getElementById('btn-settings');
+const promptTextarea  = document.getElementById('prompt-textarea');
+const btnSendPrompt   = document.getElementById('btn-send-prompt');
+const selectProvider  = document.getElementById('select-provider');
+const selectModel     = document.getElementById('select-model');
+const statusBar       = document.getElementById('status-bar');
+const statusText      = document.getElementById('status-text');
+const contextBar      = document.getElementById('context-bar');
+const contextText     = document.getElementById('context-text');
 
 // ============================================================
-//  Nomes e ícones dos remetentes
+//  Nomes e ícones dos remetentes (SVG Premium)
 // ============================================================
 const SENDER_INFO = {
-  user:      { name: 'User',     icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4E4E52"/><path d="M12 11C13.6569 11 15 9.65685 15 8C15 6.34315 13.6569 5 12 5C10.3431 5 9 6.34315 9 8C9 9.65685 10.3431 11 12 11Z" fill="#F1F1F1"/><path d="M12 12.5C9.33 12.5 4 13.84 4 16.5V18H20V16.5C20 13.84 14.67 12.5 12 12.5Z" fill="#F1F1F1"/></svg>`, avatarClass: 'user-avatar', headerClass: 'user-header' },
-  assistant: { name: 'Codex AI', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, avatarClass: 'ai-avatar',   headerClass: 'ai-header'   },
-  system:    { name: 'System',   icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, avatarClass: 'ai-avatar',   headerClass: 'ai-header'   }
+  user: { 
+    name: 'User', 
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4E4E52"/><path d="M12 11C13.6569 11 15 9.65685 15 8C15 6.34315 13.6569 5 12 5C10.3431 5 9 6.34315 9 8C9 9.65685 10.3431 11 12 11Z" fill="#F1F1F1"/><path d="M12 12.5C9.33 12.5 4 13.84 4 16.5V18H20V16.5C20 13.84 14.67 12.5 12 12.5Z" fill="#F1F1F1"/></svg>`, 
+    avatarClass: 'user-avatar', 
+    headerClass: 'user-header' 
+  },
+  assistant: { 
+    name: 'Codex AI', 
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, 
+    avatarClass: 'ai-avatar',   
+    headerClass: 'ai-header'   
+  },
+  system: { 
+    name: 'System',   
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, 
+    avatarClass: 'ai-avatar',   
+    headerClass: 'ai-header'   
+  }
 };
 
+let requestInProgress = false;
+
 // ============================================================
-//  addMessage — gera HTML com avatar + cabeçalho + conteúdo
+//  Ponte de Comunicação (PostMessage)
+// ============================================================
+function postMessageToDelphi(payload) {
+  if (window.chrome && window.chrome.webview) {
+    window.chrome.webview.postMessage(JSON.stringify(payload));
+  }
+}
+
+// ============================================================
+//  Lógica de Interface
+// ============================================================
+
+// Auto-expand do textarea ao digitar
+promptTextarea.addEventListener('input', () => {
+  promptTextarea.style.height = 'auto';
+  promptTextarea.style.height = promptTextarea.scrollHeight + 'px';
+});
+
+// Envio por Ctrl+Enter ou Click
+promptTextarea.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.ctrlKey) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+
+btnSendPrompt.addEventListener('click', handleSend);
+
+function handleSend() {
+  if (requestInProgress) {
+    // Ação de cancelar requisição ativa
+    postMessageToDelphi({ action: 'cancel_request' });
+    return;
+  }
+
+  const text = promptTextarea.value.trim();
+  if (!text) return;
+
+  // Enviar prompt ao Delphi
+  postMessageToDelphi({ action: 'send_prompt', text: text });
+  promptTextarea.value = '';
+  promptTextarea.style.height = 'auto';
+}
+
+// Eventos dos botões do topo
+btnNewChat.addEventListener('click', () => postMessageToDelphi({ action: 'new_chat' }));
+btnHistory.addEventListener('click', () => postMessageToDelphi({ action: 'toggle_history' }));
+btnSettings.addEventListener('click', () => postMessageToDelphi({ action: 'open_settings' }));
+
+// Mudança de Provedores e Modelos
+selectProvider.addEventListener('change', () => {
+  postMessageToDelphi({ action: 'change_provider', provider: selectProvider.value });
+});
+
+selectModel.addEventListener('change', () => {
+  postMessageToDelphi({ action: 'change_model', model: selectModel.value });
+});
+
+// ============================================================
+//  Lógica do Chat (Add, Clear, Theme, etc.)
 // ============================================================
 function addMessage(role, text, provider, model) {
   hideTypingIndicator();
@@ -83,12 +170,10 @@ function addMessage(role, text, provider, model) {
   const wrapper = document.createElement('div');
   wrapper.classList.add('message-wrapper');
 
-  // Avatar
   const avatar = document.createElement('div');
   avatar.classList.add('message-avatar', info.avatarClass);
   avatar.innerHTML = info.icon;
 
-  // Corpo (header + conteúdo)
   const body = document.createElement('div');
   body.classList.add('message-body');
 
@@ -106,7 +191,6 @@ function addMessage(role, text, provider, model) {
   if (role === 'assistant' || role === 'system') {
     content.innerHTML = marked.parse(text);
   } else {
-    // Escape HTML para mensagens do usuário
     const p = document.createElement('p');
     p.textContent = text;
     content.appendChild(p);
@@ -114,7 +198,6 @@ function addMessage(role, text, provider, model) {
 
   body.appendChild(header);
   body.appendChild(content);
-
   wrapper.appendChild(avatar);
   wrapper.appendChild(body);
 
@@ -124,9 +207,6 @@ function addMessage(role, text, provider, model) {
   return wrapper;
 }
 
-// ============================================================
-//  clearChat
-// ============================================================
 function clearChat() {
   chatContainer.innerHTML = '';
   currentAssistantWrapper = null;
@@ -134,9 +214,6 @@ function clearChat() {
   currentAssistantText = '';
 }
 
-// ============================================================
-//  setTheme
-// ============================================================
 function setTheme(themeInfo) {
   if (!themeInfo) return;
 
@@ -161,9 +238,6 @@ function setTheme(themeInfo) {
   if (themeInfo.greenApply) root.style.setProperty('--green-apply', themeInfo.greenApply);
 }
 
-// ============================================================
-//  copyCode / applyCode
-// ============================================================
 function copyCode(btn, id) {
   const code = _codeRegistry[id] || '';
   navigator.clipboard.writeText(code).then(() => {
@@ -175,19 +249,8 @@ function copyCode(btn, id) {
 
 function applyCode(id) {
   const code = _codeRegistry[id] || '';
-  if (window.chrome && window.chrome.webview) {
-    window.chrome.webview.postMessage(JSON.stringify({
-      action: 'apply_code',
-      code: code
-    }));
-  }
+  postMessageToDelphi({ action: 'apply_code', code: code });
 }
-
-// ============================================================
-//  Barra de status (token usage)
-// ============================================================
-const statusBar  = document.getElementById('status-bar');
-const statusText = document.getElementById('status-text');
 
 function updateTokens(text) {
   if (text) {
@@ -198,16 +261,12 @@ function updateTokens(text) {
   }
 }
 
-// ============================================================
-//  Typing indicator
-// ============================================================
+// Typing Indicator
 let typingIndicatorEl = null;
-
 function showTypingIndicator() {
   if (typingIndicatorEl) return;
 
   const info = SENDER_INFO.assistant;
-
   const wrapper = document.createElement('div');
   wrapper.classList.add('typing-wrapper');
 
@@ -225,7 +284,6 @@ function showTypingIndicator() {
 
   wrapper.appendChild(avatar);
   wrapper.appendChild(indicator);
-
   chatContainer.appendChild(wrapper);
   chatContainer.scrollTop = chatContainer.scrollHeight;
   typingIndicatorEl = wrapper;
@@ -238,9 +296,7 @@ function hideTypingIndicator() {
   }
 }
 
-// ============================================================
-//  Streaming — appendMessage (constrói mensagem incrementalmente)
-// ============================================================
+// Streaming
 let currentAssistantWrapper = null;
 let currentAssistantContent = null;
 let currentAssistantText    = '';
@@ -253,13 +309,11 @@ function appendMessage(text, isDone, provider, model) {
   }
 
   if (!currentAssistantWrapper) {
-    // Se terminou e não tem texto, não cria a bolha
     if (isDone && text === '') {
       return;
     }
 
     const info = SENDER_INFO.assistant;
-
     currentAssistantWrapper = document.createElement('div');
     currentAssistantWrapper.classList.add('message-wrapper');
 
@@ -300,18 +354,90 @@ function appendMessage(text, isDone, provider, model) {
 }
 
 // ============================================================
+//  Controle de Seleção Dinâmica (Providers & Models)
+// ============================================================
+function initializeConfig(data) {
+  // Preencher provedores
+  selectProvider.innerHTML = '';
+  data.providers.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.value;
+    opt.textContent = p.name;
+    if (p.value === data.activeProvider) {
+      opt.selected = true;
+    }
+    selectProvider.appendChild(opt);
+  });
+
+  // Preencher modelos
+  updateModelsList(data.models, data.activeModel);
+}
+
+function updateModelsList(models, activeModel) {
+  selectModel.innerHTML = '';
+  
+  if (!models || models.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'No models available';
+    selectModel.appendChild(opt);
+    return;
+  }
+
+  models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    if (m === activeModel) {
+      opt.selected = true;
+    }
+    selectModel.appendChild(opt);
+  });
+}
+
+function setRequestState(inProgress) {
+  requestInProgress = inProgress;
+  if (inProgress) {
+    btnSendPrompt.classList.add('stop-btn');
+    btnSendPrompt.title = 'Cancel request';
+    // Opcional: desabilitar selects enquanto carrega
+    selectProvider.disabled = true;
+    selectModel.disabled = true;
+  } else {
+    btnSendPrompt.classList.remove('stop-btn');
+    btnSendPrompt.title = 'Send message';
+    selectProvider.disabled = false;
+    selectModel.disabled = false;
+  }
+}
+
+function setContextText(text) {
+  if (text && text.trim()) {
+    contextText.innerText = text;
+    contextBar.classList.remove('hidden');
+  } else {
+    contextBar.classList.add('hidden');
+  }
+}
+
+// ============================================================
 //  Listener de mensagens do Delphi (WebView2)
 // ============================================================
 if (window.chrome && window.chrome.webview) {
   window.chrome.webview.addEventListener('message', event => {
     const data = event.data;
     switch (data.action) {
-      case 'add_message':    addMessage(data.role, data.text, data.provider, data.model); break;
-      case 'clear_chat':     clearChat();                                                 break;
-      case 'set_theme':      setTheme(data);                                              break;
-      case 'update_tokens':  updateTokens(data.text);                                     break;
-      case 'show_typing':    showTypingIndicator();                                       break;
-      case 'append_message': appendMessage(data.text, data.isDone, data.provider, data.model); break;
+      case 'add_message':       addMessage(data.role, data.text, data.provider, data.model); break;
+      case 'clear_chat':        clearChat();                                                 break;
+      case 'set_theme':         setTheme(data);                                              break;
+      case 'update_tokens':     updateTokens(data.text);                                     break;
+      case 'show_typing':       showTypingIndicator();                                       break;
+      case 'hide_typing':       hideTypingIndicator();                                       break;
+      case 'append_message':    appendMessage(data.text, data.isDone, data.provider, data.model); break;
+      case 'initialize_config': initializeConfig(data);                                      break;
+      case 'update_models':     updateModelsList(data.models, data.activeModel);             break;
+      case 'set_request_state': setRequestState(data.inProgress);                            break;
+      case 'set_context':       setContextText(data.text);                                   break;
     }
   });
   window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));

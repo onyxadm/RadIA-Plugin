@@ -12,6 +12,7 @@ object FrameAIChat: TFrameAIChat
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
+    Visible = False
     object lblTitle: TLabel
       Left = 40
       Top = 11
@@ -157,6 +158,7 @@ object FrameAIChat: TFrameAIChat
     BevelOuter = bvNone
     StyleElements = [seFont]
     TabOrder = 1
+    Visible = False
     object lblContext: TLabel
       Left = 0
       Top = 0

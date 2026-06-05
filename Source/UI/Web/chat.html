@@ -6,7 +6,7 @@
   <title>RadIA Chat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="prism-tomorrow.min.css">
   <link rel="stylesheet" href="chat.css">
   <script src="marked.min.js"></script>
@@ -14,13 +14,87 @@
   <script src="prism-pascal.min.js"></script>
 </head>
 <body class="dark-theme">
-  <div id="chat-container">
+  <!-- Header do Assistente (Alinhamento 1:1 com o Mockup) -->
+  <header id="chat-header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="12" fill="#007ACC"/>
+          <path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/>
+        </svg>
+      </div>
+      <span class="header-title">AI ASSISTANT</span>
+    </div>
+    <div class="header-right">
+      <button class="header-action-btn" id="btn-new-chat" title="New Chat">
+        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <span class="btn-label">New Chat</span>
+      </button>
+      <button class="header-action-btn" id="btn-history" title="History">
+        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span class="btn-label">History</span>
+      </button>
+      <button class="header-action-btn" id="btn-settings" title="Settings">
+        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span class="btn-label">Settings</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Histórico de Mensagens -->
+  <main id="chat-container">
     <!-- Messages will be appended here -->
-  </div>
+  </main>
   
-  <div id="status-bar" class="hidden">
-    <span id="status-text"></span>
-  </div>
+  <!-- Área de Input e Configurações de Modelos (Base) -->
+  <footer id="chat-footer">
+    <div id="context-bar" class="hidden">
+      <span id="context-text"></span>
+    </div>
+
+    <!-- Contêiner do Input em formato Cápsula (Pill Shape) -->
+    <div id="prompt-wrapper">
+      <div id="prompt-capsule">
+        <textarea id="prompt-textarea" placeholder="Ask Codex AI about Delphi coding..." rows="1"></textarea>
+        <button id="btn-send-prompt" title="Send message">
+          <!-- Ícone do aviãozinho do mockup -->
+          <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Seletores de Provider e Model Planos (Flat Style) -->
+    <div id="model-selectors">
+      <div class="selector-wrapper">
+        <select id="select-provider">
+          <option value="">Provider...</option>
+        </select>
+      </div>
+      <div class="selector-wrapper">
+        <select id="select-model">
+          <option value="">Model...</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Barra de Tokens / Uso -->
+    <div id="status-bar" class="hidden">
+      <span id="status-text"></span>
+    </div>
+  </footer>
   
   <script src="chat.js"></script>
 </body>
