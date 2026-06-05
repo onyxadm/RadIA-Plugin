@@ -69,7 +69,7 @@ object FrameAIConfig: TFrameAIConfig
         object edtOpenAIKey: TEdit
           Left = 16
           Top = 43
-          Width = 575
+          Width = 580
           Height = 23
           TabOrder = 0
         end
@@ -109,7 +109,7 @@ object FrameAIConfig: TFrameAIConfig
         object edtClaudeKey: TEdit
           Left = 16
           Top = 43
-          Width = 585
+          Width = 580
           Height = 23
           TabOrder = 0
         end
@@ -137,7 +137,7 @@ object FrameAIConfig: TFrameAIConfig
         object edtDeepSeekKey: TEdit
           Left = 16
           Top = 43
-          Width = 585
+          Width = 580
           Height = 23
           TabOrder = 0
         end
@@ -165,7 +165,7 @@ object FrameAIConfig: TFrameAIConfig
         object edtGroqKey: TEdit
           Left = 16
           Top = 43
-          Width = 575
+          Width = 580
           Height = 23
           TabOrder = 0
         end
