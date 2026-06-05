@@ -28,6 +28,7 @@ type
 
   TFrameAIChat = class(TFrame)
     pnlToolbar: TPanel;
+    lblTitle: TLabel;
     btnToggleSessions: TSpeedButton;
     cbProvider: TComboBox;
     cbModel: TComboBox;

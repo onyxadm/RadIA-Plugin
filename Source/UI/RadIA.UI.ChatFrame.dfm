@@ -12,94 +12,19 @@ object FrameAIChat: TFrameAIChat
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
-    object btnToggleSessions: TSpeedButton
-      AlignWithMargins = True
-      Left = 3
-      Top = 3
-      Width = 32
-      Height = 38
-      Hint = 'Exibir/Ocultar Conversas'
-      Align = alLeft
-      Caption = #9776
-      Flat = True
+    object lblTitle: TLabel
+      Left = 40
+      Top = 11
+      Width = 120
+      Height = 20
+      Caption = 'AI ASSISTANT'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -18
-      Font.Name = 'Segoe UI Symbol'
-      Font.Style = []
+      Font.Height = -15
+      Font.Name = 'Segoe UI'
+      Font.Style = [fsBold]
       ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      OnClick = btnToggleSessionsClick
-    end
-    object btnTemplates: TSpeedButton
-      AlignWithMargins = True
-      Left = 841
-      Top = 3
-      Width = 32
-      Height = 38
-      Hint = 'Templates de Prompt'
-      Align = alRight
-      Caption = #9889
-      Flat = True
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -18
-      Font.Name = 'Segoe UI Symbol'
-      Font.Style = []
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      OnClick = btnTemplatesClick
-      ExplicitLeft = 178
-      ExplicitTop = 6
-      ExplicitHeight = 32
-    end
-    object btnExport: TSpeedButton
-      AlignWithMargins = True
-      Left = 879
-      Top = 3
-      Width = 32
-      Height = 38
-      Hint = 'Exportar Conversa'
-      Align = alRight
-      Caption = #10515
-      Flat = True
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -18
-      Font.Name = 'Segoe UI Symbol'
-      Font.Style = []
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      OnClick = btnExportClick
-      ExplicitLeft = 214
-      ExplicitTop = 6
-      ExplicitHeight = 32
-    end
-    object btnClear: TSpeedButton
-      AlignWithMargins = True
-      Left = 917
-      Top = 3
-      Width = 32
-      Height = 38
-      Hint = 'Limpar Hist'#243'rico'
-      Align = alRight
-      Caption = #9851
-      Flat = True
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -18
-      Font.Name = 'Segoe UI Symbol'
-      Font.Style = []
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      OnClick = btnClearClick
-      ExplicitLeft = 250
-      ExplicitTop = 6
-      ExplicitHeight = 32
+      Transparent = True
     end
     object btnSettings: TSpeedButton
       AlignWithMargins = True
@@ -120,47 +45,114 @@ object FrameAIChat: TFrameAIChat
       ParentShowHint = False
       ShowHint = True
       OnClick = btnSettingsClick
-      ExplicitLeft = 286
-      ExplicitTop = 6
-      ExplicitHeight = 32
     end
-    object cbProvider: TComboBox
-      Left = 40
-      Top = 10
-      Width = 105
-      Height = 21
-      Style = csDropDownList
+    object btnToggleSessions: TSpeedButton
+      AlignWithMargins = True
+      Left = 917
+      Top = 3
+      Width = 32
+      Height = 38
+      Hint = 'Hist'#243'rico'
+      Align = alRight
+      Caption = #128340
+      Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'Segoe UI'
+      Font.Height = -18
+      Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       ParentFont = False
-      TabOrder = 0
-      OnChange = cbProviderChange
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnToggleSessionsClick
     end
-    object cbModel: TComboBox
-      Left = 151
-      Top = 10
-      Width = 289
-      Height = 21
-      Style = csDropDownList
+    object btnNewSession: TSpeedButton
+      AlignWithMargins = True
+      Left = 879
+      Top = 3
+      Width = 32
+      Height = 38
+      Hint = 'Nova Conversa'
+      Align = alRight
+      Caption = '+'
+      Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'Segoe UI'
+      Font.Height = -18
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = [fsBold]
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnNewSessionClick
+    end
+    object btnClear: TSpeedButton
+      AlignWithMargins = True
+      Left = 841
+      Top = 3
+      Width = 32
+      Height = 38
+      Hint = 'Limpar Hist'#243'rico'
+      Align = alRight
+      Caption = #9851
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -18
+      Font.Name = 'Segoe UI Symbol'
       Font.Style = []
       ParentFont = False
-      TabOrder = 1
-      OnChange = cbModelChange
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnClearClick
+    end
+    object btnExport: TSpeedButton
+      AlignWithMargins = True
+      Left = 803
+      Top = 3
+      Width = 32
+      Height = 38
+      Hint = 'Exportar Conversa'
+      Align = alRight
+      Caption = #10515
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -18
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnExportClick
+    end
+    object btnTemplates: TSpeedButton
+      AlignWithMargins = True
+      Left = 765
+      Top = 3
+      Width = 32
+      Height = 38
+      Hint = 'Templates de Prompt'
+      Align = alRight
+      Caption = #9889
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -18
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnTemplatesClick
     end
   end
   object pnlInput: TPanel
     AlignWithMargins = True
     Left = 3
-    Top = 537
+    Top = 507
     Width = 984
-    Height = 110
+    Height = 140
     Align = alBottom
     BevelOuter = bvNone
     StyleElements = [seFont]
@@ -182,7 +174,7 @@ object FrameAIChat: TFrameAIChat
     end
     object shpInputBg: TShape
       Left = 10
-      Top = 18
+      Top = 46
       Width = 964
       Height = 84
       Anchors = [akLeft, akTop, akRight, akBottom]
@@ -190,7 +182,7 @@ object FrameAIChat: TFrameAIChat
     end
     object shpSendBg: TShape
       Left = 944
-      Top = 68
+      Top = 94
       Width = 28
       Height = 28
       Anchors = [akRight, akBottom]
@@ -198,7 +190,7 @@ object FrameAIChat: TFrameAIChat
     end
     object btnSend: TSpeedButton
       Left = 944
-      Top = 68
+      Top = 94
       Width = 28
       Height = 28
       Cursor = crHandPoint
@@ -216,9 +208,9 @@ object FrameAIChat: TFrameAIChat
     end
     object memPrompt: TMemo
       Left = 20
-      Top = 26
+      Top = 54
       Width = 910
-      Height = 66
+      Height = 68
       Anchors = [akLeft, akTop, akRight, akBottom]
       BorderStyle = bsNone
       Font.Charset = DEFAULT_CHARSET
@@ -229,6 +221,36 @@ object FrameAIChat: TFrameAIChat
       ParentFont = False
       ScrollBars = ssNone
       TabOrder = 0
+    end
+    object cbProvider: TComboBox
+      Left = 10
+      Top = 18
+      Width = 120
+      Height = 21
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Segoe UI'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 1
+      OnChange = cbProviderChange
+    end
+    object cbModel: TComboBox
+      Left = 138
+      Top = 18
+      Width = 200
+      Height = 21
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Segoe UI'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 2
+      OnChange = cbModelChange
     end
   end
   object pnlSessions: TPanel
@@ -247,29 +269,9 @@ object FrameAIChat: TFrameAIChat
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
-      object btnNewSession: TSpeedButton
-        AlignWithMargins = True
-        Left = 3
-        Top = 3
-        Width = 24
-        Height = 24
-        Hint = 'Nova Conversa'
-        Align = alLeft
-        Caption = '+'
-        Flat = True
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -16
-        Font.Name = 'Segoe UI'
-        Font.Style = [fsBold]
-        ParentFont = False
-        ParentShowHint = False
-        ShowHint = True
-        OnClick = btnNewSessionClick
-      end
       object btnRenameSession: TSpeedButton
         AlignWithMargins = True
-        Left = 33
+        Left = 3
         Top = 3
         Width = 24
         Height = 24
