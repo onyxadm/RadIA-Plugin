@@ -241,6 +241,11 @@ begin
 
   memPrompt.OnKeyDown := Self.memPromptKeyDown;
   TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
+
+  { Oculta a UI de múltiplas sessões de chat para manter apenas um chat único e direto }
+  pnlSessions.Visible := False;
+  splitterSessions.Visible := False;
+  btnToggleSessions.Visible := False;
 end;
 
 destructor TFrameAIChat.Destroy;
