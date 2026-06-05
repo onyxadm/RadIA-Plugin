@@ -1,4 +1,4 @@
-﻿param(
+param(
     [switch]$Install,
     [switch]$Uninstall,
     [switch]$Release,
@@ -225,19 +225,19 @@ if ($Install) {
 
     if (-not (Test-Path "$ideBinDir\$dllName")) {
         Write-Host "WebView2Loader.dll (32-bit) não encontrada em $ideBinDir." -ForegroundColor Yellow
-        $mormotDll = "D:\Delphi\mORMot2\ex\ThirdPartyDemos\tbo\05-WebMustache\$dllName"
-        if (Test-Path $mormotDll) {
+        $redist32 = ".\Redist\Win32\$dllName"
+        if (Test-Path $redist32) {
             Write-Host "Solicitando privilégios para copiar WebView2Loader.dll (32-bit) para a pasta bin da IDE..." -ForegroundColor Yellow
-            Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$mormotDll' -Destination '$ideBinDir\$dllName' -Force" -Wait
+            Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$redist32' -Destination '$ideBinDir\$dllName' -Force" -Wait
         }
     }
 
     if (-not (Test-Path "$ideBin64Dir\$dllName")) {
         Write-Host "WebView2Loader.dll (64-bit) não encontrada em $ideBin64Dir." -ForegroundColor Yellow
-        $officeDll = "C:\Program Files\Microsoft Office\root\Office16\$dllName"
-        if (Test-Path $officeDll) {
+        $redist64 = ".\Redist\Win64\$dllName"
+        if (Test-Path $redist64) {
             Write-Host "Solicitando privilégios para copiar WebView2Loader.dll (64-bit) para a pasta bin64 da IDE..." -ForegroundColor Yellow
-            Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$officeDll' -Destination '$ideBin64Dir\$dllName' -Force" -Wait
+            Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$redist64' -Destination '$ideBin64Dir\$dllName' -Force" -Wait
         }
     }
 

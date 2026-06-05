@@ -37,6 +37,14 @@
         </svg>
         <span class="btn-label">New Chat</span>
       </button>
+      <button class="header-action-btn" id="btn-clear-chat" title="Clear Chat">
+        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+        </svg>
+        <span class="btn-label">Clear</span>
+      </button>
       <button class="header-action-btn" id="btn-history" title="History">
         <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -102,9 +110,24 @@
             </select>
           </div>
           <div class="selector-wrapper">
-            <select id="select-model">
+            <!-- Native select kept hidden for event compatibility -->
+            <select id="select-model" style="display: none;">
               <option value="">Model...</option>
             </select>
+            <!-- Custom dropdown with search field -->
+            <div class="custom-dropdown-wrapper" id="model-dropdown-wrapper">
+              <div class="custom-dropdown-trigger" id="model-dropdown-trigger">
+                <span id="model-dropdown-value">Model...</span>
+              </div>
+              <div class="custom-dropdown-content" id="model-dropdown-content">
+                <div class="custom-dropdown-search">
+                  <input type="text" id="model-search-input" placeholder="Search model..." autocomplete="off">
+                </div>
+                <div class="custom-dropdown-options" id="model-options-list">
+                  <!-- Options inserted dynamically -->
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

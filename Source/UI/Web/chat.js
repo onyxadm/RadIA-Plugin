@@ -67,12 +67,18 @@ marked.use({ renderer });
 // ============================================================
 const chatContainer   = document.getElementById('chat-container');
 const btnNewChat      = document.getElementById('btn-new-chat');
+const btnClearChat    = document.getElementById('btn-clear-chat');
 const btnHistory      = document.getElementById('btn-history');
 const btnSettings     = document.getElementById('btn-settings');
 const promptTextarea  = document.getElementById('prompt-textarea');
 const btnSendPrompt   = document.getElementById('btn-send-prompt');
 const selectProvider  = document.getElementById('select-provider');
 const selectModel     = document.getElementById('select-model');
+const modelDropdownWrapper = document.getElementById('model-dropdown-wrapper');
+const modelDropdownTrigger = document.getElementById('model-dropdown-trigger');
+const modelDropdownValue   = document.getElementById('model-dropdown-value');
+const modelSearchInput     = document.getElementById('model-search-input');
+const modelOptionsList     = document.getElementById('model-options-list');
 const statusBar       = document.getElementById('status-bar');
 const statusText      = document.getElementById('status-text');
 const contextBar      = document.getElementById('context-bar');
@@ -205,6 +211,11 @@ function handleSend() {
 
 // Eventos dos botões do topo
 btnNewChat.addEventListener('click', () => postMessageToDelphi({ action: 'new_chat' }));
+btnClearChat.addEventListener('click', () => {
+  if (confirm('Limpar o histórico da conversa atual?')) {
+    postMessageToDelphi({ action: 'clear_chat' });
+  }
+});
 btnHistory.addEventListener('click', () => {
   // Alterna o estado recolhido da sidebar HTML
   sessionsSidebar.classList.toggle('collapsed');
@@ -221,6 +232,43 @@ selectProvider.addEventListener('change', () => {
 
 selectModel.addEventListener('change', () => {
   postMessageToDelphi({ action: 'change_model', model: selectModel.value });
+});
+
+// Dropdown de Modelos Customizado (Busca)
+modelDropdownTrigger.addEventListener('click', (e) => {
+  if (modelDropdownWrapper.classList.contains('disabled')) return;
+  e.stopPropagation();
+  modelDropdownWrapper.classList.toggle('open');
+  if (modelDropdownWrapper.classList.contains('open')) {
+    modelSearchInput.value = '';
+    filterModels('');
+    modelSearchInput.focus();
+  }
+});
+
+modelSearchInput.addEventListener('click', (e) => {
+  e.stopPropagation(); // Impede fechar ao clicar no input de busca
+});
+
+modelSearchInput.addEventListener('input', () => {
+  filterModels(modelSearchInput.value.trim().toLowerCase());
+});
+
+function filterModels(query) {
+  const options = modelOptionsList.getElementsByClassName('custom-dropdown-option');
+  for (let opt of options) {
+    const text = opt.textContent.toLowerCase();
+    if (text.includes(query)) {
+      opt.style.display = '';
+    } else {
+      opt.style.display = 'none';
+    }
+  }
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', () => {
+  modelDropdownWrapper.classList.remove('open');
 });
 
 // ============================================================
@@ -455,9 +503,14 @@ function updateModelsList(models, activeModel) {
     opt.value = '';
     opt.textContent = 'No models available';
     selectModel.appendChild(opt);
+    
+    modelDropdownValue.textContent = 'No models available';
+    modelOptionsList.innerHTML = '<div class="no-sessions">No models available</div>';
     return;
   }
 
+  modelOptionsList.innerHTML = '';
+  
   models.forEach(m => {
     const opt = document.createElement('option');
     opt.value = m;
@@ -466,7 +519,35 @@ function updateModelsList(models, activeModel) {
       opt.selected = true;
     }
     selectModel.appendChild(opt);
+
+    const div = document.createElement('div');
+    div.classList.add('custom-dropdown-option');
+    if (m === activeModel) {
+      div.classList.add('selected');
+      modelDropdownValue.textContent = m;
+    }
+    div.textContent = m;
+    
+    div.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      const selectedOpt = modelOptionsList.querySelector('.custom-dropdown-option.selected');
+      if (selectedOpt) selectedOpt.classList.remove('selected');
+      div.classList.add('selected');
+      
+      modelDropdownValue.textContent = m;
+      selectModel.value = m;
+      modelDropdownWrapper.classList.remove('open');
+      
+      selectModel.dispatchEvent(new Event('change'));
+    });
+
+    modelOptionsList.appendChild(div);
   });
+
+  if (!activeModel && models.length > 0) {
+    modelDropdownValue.textContent = 'Select model...';
+  }
 }
 
 function setRequestState(inProgress) {
@@ -476,11 +557,13 @@ function setRequestState(inProgress) {
     btnSendPrompt.title = 'Cancel request';
     selectProvider.disabled = true;
     selectModel.disabled = true;
+    modelDropdownWrapper.classList.add('disabled');
   } else {
     btnSendPrompt.classList.remove('stop-btn');
     btnSendPrompt.title = 'Send message';
     selectProvider.disabled = false;
     selectModel.disabled = false;
+    modelDropdownWrapper.classList.remove('disabled');
   }
 }
 
