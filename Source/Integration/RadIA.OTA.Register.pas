@@ -11,8 +11,11 @@ type
   private
     FEditorHook: TObject;
     FTimer: TTimer;
+    FOptionsPages: TInterfaceList;
     procedure RegisterMenus;
     procedure UnregisterMenus;
+    procedure RegisterOptions;
+    procedure UnregisterOptions;
     procedure OnRequestDiff(const AOriginalCode: string);
     procedure OnTimerEvent(Sender: TObject);
     procedure RestoreWindowVisibility;
@@ -39,8 +42,8 @@ implementation
 
 uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
-  RadIA.UI.ConfigFrame, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
-  RadIA.Core.Logger;
+  RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
+  RadIA.Core.Logger, RadIA.OTA.Options;
 
 var
   GWizardIndex: Integer = -1;
@@ -165,6 +168,8 @@ begin
   LogDebug('TRadIAWizard.Create called');
   inherited Create;
   
+  FOptionsPages := TInterfaceList.Create;
+  
   { Register custom forms in IDE Theming Services }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -176,6 +181,7 @@ begin
   FEditorHook := TRadIAEditorHook.Create(nil);
   TRadIAEditorHook(FEditorHook).Install;
   RegisterMenus;
+  RegisterOptions;
   
   FTimer := TTimer.Create(nil);
   FTimer.Interval := 1000;
@@ -193,11 +199,56 @@ begin
     FTimer.Enabled := False;
     FTimer.Free;
   end;
+  UnregisterOptions;
   UnregisterMenus;
   TRadIAEditorHook(FEditorHook).Uninstall;
   FEditorHook.Free;
+  FOptionsPages.Free;
   
   inherited Destroy;
+end;
+
+procedure TRadIAWizard.RegisterOptions;
+var
+  LOptionsServices: INTAEnvironmentOptionsServices;
+  
+  procedure AddPage(const ATitle: string; ATag: TRadIAPageTag);
+  var
+    LOptions: INTAAddInOptions;
+  begin
+    LOptions := TRadIAAddInOptions.Create(ATitle, ATag);
+    FOptionsPages.Add(LOptions);
+    LOptionsServices.RegisterAddInOptions(LOptions);
+  end;
+
+begin
+  if Supports(BorlandIDEServices, INTAEnvironmentOptionsServices, LOptionsServices) then
+  begin
+    AddPage('General', ptNone);
+    AddPage('Gemini', ptGemini);
+    AddPage('OpenAI', ptOpenAI);
+    AddPage('Claude', ptClaude);
+    AddPage('DeepSeek', ptDeepSeek);
+    AddPage('Groq', ptGroq);
+    AddPage('Ollama', ptOllama);
+    AddPage('System Prompt', ptSystem);
+    AddPage('Templates', ptTemplates);
+  end;
+end;
+
+procedure TRadIAWizard.UnregisterOptions;
+var
+  LOptionsServices: INTAEnvironmentOptionsServices;
+  I: Integer;
+begin
+  if Supports(BorlandIDEServices, INTAEnvironmentOptionsServices, LOptionsServices) then
+  begin
+    for I := FOptionsPages.Count - 1 downto 0 do
+    begin
+      LOptionsServices.UnregisterAddInOptions(FOptionsPages[I] as INTAAddInOptions);
+    end;
+    FOptionsPages.Clear;
+  end;
 end;
 
 procedure TRadIAWizard.AfterSave;

@@ -102,10 +102,19 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
 ### 14. Local Token Budget and Quota Control - Item #19
 *   **Description**: Allows developers to set a monthly local token usage limit in settings to avoid surprise charges on their API keys, accumulating the consumption locally and blocking new requests if exceeded.
 *   **Details**:
-    *   Windows Registry integration with automatic monthly token quota resets.
-    *   Dynamic settings controls generated on the panel's configuration page.
-    *   HTML-based quota consumption percentage display inside the WebView's status bar.
-    *   Full test coverage in `RadIA.Tests.Quota.pas` checking blocking logic and reset cycles.
+        *   Windows Registry integration with automatic monthly token quota resets.
+        *   Dynamic settings controls generated on the panel's configuration page.
+        *   HTML-based quota consumption percentage display inside the WebView's status bar.
+        *   Full test coverage in `RadIA.Tests.Quota.pas` checking blocking logic and reset cycles.
+
+### 15. New Configuration Layout (Delphi-like) and Tools -> Options Integration - Item #2
+*   **Description**: Refactoring the settings screen into a reusable frame integrated natively inside the IDE's global configuration (`Tools -> Options`), with a styled tree view dynamic mapping.
+*   **Details**:
+    *   Implementation of the `TFrameAIConfig` frame containing the PageControl and options controls.
+    *   Implementation of the `TFormAIConfig` standalone wrapper form containing a sidebar with `TTreeView` and footer buttons to preserve the original standalone popup behavior.
+    *   Integration of the Open Tools API bridge via `TRadIAAddInOptions` (`INTAAddInOptions`) registering the category tree under **Third Party > RadIA** (with subnodes for Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama).
+    *   Automated theming and styling following the native IDE theme using individual panel wrappers for style inheritance and preventing inappropriate color contrast in the IDE dark theme.
+    *   Automated silent saving when clicking "OK" inside the IDE's options, and explicit success messages shown only on the standalone popup form.
 
 ---
 

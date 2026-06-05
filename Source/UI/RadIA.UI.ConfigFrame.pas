@@ -9,18 +9,23 @@ uses
   RadIA.Core.PromptTemplates;
 
 type
-  TFormAIConfig = class(TForm)
-    pnlSidebar: TPanel;
-    tvCategories: TTreeView;
-    splSidebar: TSplitter;
+  TFrameAIConfig = class(TFrame)
+  published
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
+    pnlGemini: TPanel;
     tsOpenAI: TTabSheet;
+    pnlOpenAI: TPanel;
     tsClaude: TTabSheet;
+    pnlClaude: TPanel;
     tsDeepSeek: TTabSheet;
+    pnlDeepSeek: TPanel;
     tsGroq: TTabSheet;
+    pnlGroq: TPanel;
     tsOllama: TTabSheet;
+    pnlOllama: TPanel;
     tsSystemPrompt: TTabSheet;
+    pnlSystemPrompt: TPanel;
     lblGeminiKey: TLabel;
     edtGeminiKey: TEdit;
     lblOpenAIKey: TLabel;
@@ -36,9 +41,6 @@ type
     lblGroqKey: TLabel;
     edtGroqKey: TEdit;
     memSystemPrompt: TMemo;
-    pnlFooter: TPanel;
-    btnSave: TButton;
-    btnCancel: TButton;
     tsTemplates: TTabSheet;
     pnlTemplatesLeft: TPanel;
     lstTemplates: TListBox;
@@ -54,16 +56,11 @@ type
     memTemplateBody: TMemo;
     btnSaveTemplate: TButton;
     btnRestoreDefaults: TButton;
-    procedure btnSaveClick(Sender: TObject);
-    procedure btnCancelClick(Sender: TObject);
     procedure lstTemplatesClick(Sender: TObject);
     procedure btnNewTemplateClick(Sender: TObject);
     procedure btnDeleteTemplateClick(Sender: TObject);
     procedure btnSaveTemplateClick(Sender: TObject);
     procedure btnRestoreDefaultsClick(Sender: TObject);
-    procedure tvCategoriesChange(Sender: TObject; Node: TTreeNode);
-  protected
-    procedure CreateWnd; override;
   private
     FConfig: IAIConfig;
     FTemplateManager: TPromptTemplateManager;
@@ -75,6 +72,7 @@ type
     FChkSmartConfig: TCheckBox;
     
     tsGeneral: TTabSheet;
+    pnlGeneral: TPanel;
     chkLogEnabled: TCheckBox;
     lblLogPath: TLabel;
     edtLogPath: TEdit;
@@ -93,12 +91,16 @@ type
     procedure btnResetQuotaClick(Sender: TObject);
     
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
-    procedure UpdateVCLColors(const AThemeName: string);
     procedure PopulateTemplatesList;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure LoadConfig;
+    procedure UpdateVCLColors(const AThemeName: string);
+    procedure tvCategoriesChange(Sender: TObject; Node: TTreeNode);
+    procedure SelectCategoryByName(const ACategoryName: string);
+    procedure btnSaveClick(Sender: TObject);
+    procedure btnCancelClick(Sender: TObject);
     
     property OnClose: TNotifyEvent read FOnClose write FOnClose;
   end;
@@ -108,38 +110,17 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger;
+  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger, Vcl.Themes;
 
 type
   TTabSheetColorHack = class(TTabSheet);
+  TWinControlHack = class(TWinControl);
 
-procedure TFormAIConfig.CreateWnd;
+constructor TFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
-begin
-  inherited CreateWnd;
-  
-  LActiveTheme := 'light';
-  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
-  begin
-    if LThemingServices.IDEThemingEnabled then
-    begin
-      LActiveTheme := LThemingServices.ActiveTheme;
-    end;
-  end;
-  
-  if SameText(LActiveTheme, 'dark') then
-  begin
-    TUIHelper.ApplyDarkTitleBar(Self, True);
-  end;
-end;
-
-constructor TFormAIConfig.Create(AOwner: TComponent);
-var
-  LThemingServices: IOTAIDEThemingServices;
-  LActiveTheme: string;
-  LNodeGeneral, LNodeProviders: TTreeNode;
+  LUseIDETheme: Boolean;
 begin
   inherited Create(AOwner);
   FConfig := TRadIAConfig.Create;
@@ -160,8 +141,14 @@ begin
   tsGeneral.Caption := 'General / Logs';
   tsGeneral.TabVisible := False;
 
+  pnlGeneral := TPanel.Create(Self);
+  pnlGeneral.Parent := tsGeneral;
+  pnlGeneral.Align := alClient;
+  pnlGeneral.BevelOuter := bvNone;
+  pnlGeneral.ShowCaption := False;
+
   FChkSmartConfig := TCheckBox.Create(Self);
-  FChkSmartConfig.Parent := tsGeneral;
+  FChkSmartConfig.Parent := pnlGeneral;
   FChkSmartConfig.Left := 16;
   FChkSmartConfig.Top := 16;
   FChkSmartConfig.Width := 300;
@@ -169,26 +156,26 @@ begin
   FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
 
   chkLogEnabled := TCheckBox.Create(Self);
-  chkLogEnabled.Parent := tsGeneral;
+  chkLogEnabled.Parent := pnlGeneral;
   chkLogEnabled.Left := 16;
   chkLogEnabled.Top := 48;
   chkLogEnabled.Width := 200;
   chkLogEnabled.Caption := 'Enable logging';
 
   lblLogPath := TLabel.Create(Self);
-  lblLogPath.Parent := tsGeneral;
+  lblLogPath.Parent := pnlGeneral;
   lblLogPath.Left := 16;
   lblLogPath.Top := 80;
   lblLogPath.Caption := 'Log Folder Path:';
 
   edtLogPath := TEdit.Create(Self);
-  edtLogPath.Parent := tsGeneral;
+  edtLogPath.Parent := pnlGeneral;
   edtLogPath.Left := 16;
   edtLogPath.Top := 98;
   edtLogPath.Width := 320;
 
   btnBrowseLogPath := TButton.Create(Self);
-  btnBrowseLogPath.Parent := tsGeneral;
+  btnBrowseLogPath.Parent := pnlGeneral;
   btnBrowseLogPath.Left := 342;
   btnBrowseLogPath.Top := 96;
   btnBrowseLogPath.Width := 30;
@@ -197,20 +184,20 @@ begin
   btnBrowseLogPath.OnClick := btnBrowseLogPathClick;
 
   lblLogMaxSize := TLabel.Create(Self);
-  lblLogMaxSize.Parent := tsGeneral;
+  lblLogMaxSize.Parent := pnlGeneral;
   lblLogMaxSize.Left := 16;
   lblLogMaxSize.Top := 136;
   lblLogMaxSize.Caption := 'Max Log File Size (KB):';
 
   edtLogMaxSize := TEdit.Create(Self);
-  edtLogMaxSize.Parent := tsGeneral;
+  edtLogMaxSize.Parent := pnlGeneral;
   edtLogMaxSize.Left := 16;
   edtLogMaxSize.Top := 154;
   edtLogMaxSize.Width := 100;
   edtLogMaxSize.NumbersOnly := True;
 
   grpQuota := TGroupBox.Create(Self);
-  grpQuota.Parent := tsGeneral;
+  grpQuota.Parent := pnlGeneral;
   grpQuota.Left := 16;
   grpQuota.Top := 192;
   grpQuota.Width := 356;
@@ -253,54 +240,47 @@ begin
   btnResetQuota.OnClick := btnResetQuotaClick;
 
   LActiveTheme := 'light';
-  { Apply IDE theme so this form matches the current Delphi skin }
+  LUseIDETheme := False;
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
     begin
       LThemingServices.ApplyTheme(Self);
       LActiveTheme := LThemingServices.ActiveTheme;
+      LUseIDETheme := True;
     end;
   end;
 
-  // Configure TreeView and populate categories
-  tvCategories.OnChange := tvCategoriesChange;
-  
-  LNodeGeneral := tvCategories.Items.Add(nil, 'General / Logs');
-  tvCategories.Items.Add(nil, 'System Prompt');
-  tvCategories.Items.Add(nil, 'Templates');
-  LNodeProviders := tvCategories.Items.Add(nil, 'AI Providers');
-  
-  tvCategories.Items.AddChild(LNodeProviders, 'Gemini');
-  tvCategories.Items.AddChild(LNodeProviders, 'OpenAI');
-  tvCategories.Items.AddChild(LNodeProviders, 'Claude');
-  tvCategories.Items.AddChild(LNodeProviders, 'DeepSeek');
-  tvCategories.Items.AddChild(LNodeProviders, 'Groq');
-  tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
-  
-  tvCategories.FullExpand;
-  tvCategories.Selected := LNodeGeneral;
-
-  if not (Assigned(LThemingServices) and LThemingServices.IDEThemingEnabled) then
-  begin
+  if not LUseIDETheme then
     UpdateVCLColors(LActiveTheme);
-  end;
   LoadConfig;
 end;
 
-destructor TFormAIConfig.Destroy;
+destructor TFrameAIConfig.Destroy;
 begin
   FTemplateManager.Free;
   inherited Destroy;
 end;
 
-procedure TFormAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
+procedure TFrameAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
 var
   LGroupBox: TGroupBox;
   LLabel: TLabel;
+  LParent: TWinControl;
+  I: Integer;
 begin
+  LParent := ATabSheet;
+  for I := 0 to ATabSheet.ControlCount - 1 do
+  begin
+    if ATabSheet.Controls[I] is TPanel then
+    begin
+      LParent := TWinControl(ATabSheet.Controls[I]);
+      Break;
+    end;
+  end;
+
   LGroupBox := TGroupBox.Create(Self);
-  LGroupBox.Parent := ATabSheet;
+  LGroupBox.Parent := LParent;
   LGroupBox.Align := alBottom;
   LGroupBox.Height := 90;
   LGroupBox.Caption := ' Advanced Settings ';
@@ -351,15 +331,15 @@ begin
   FEdtTimeouts[AProvider].NumbersOnly := True;
 end;
 
-procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
+procedure TFrameAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
   I: Integer;
   LProvider: TAIProviderType;
 begin
-  LIsDark := SameText(AThemeName, 'dark');
-  
+  LIsDark := SameText(AThemeName, 'dark') or AThemeName.ToLower.Contains('dark');
+
   if LIsDark then
   begin
     LBgColor := $00252526;
@@ -373,70 +353,127 @@ begin
     LInputBgColor := clWindow;
   end;
 
-  Self.Color := LBgColor;
-  pnlFooter.Color := LBgColor;
-  pnlFooter.ParentBackground := False;
+  Self.StyleElements := Self.StyleElements - [seClient, seBorder];
+  TWinControlHack(Self).Color := LBgColor;
+  pgcSettings.StyleElements := pgcSettings.StyleElements - [seClient, seBorder];
+  TWinControlHack(pgcSettings).Color := LBgColor;
 
-  { Apply theme to all tabs in the PageControl to avoid default white backgrounds }
+  TWinControlHack(Self).ParentBackground := False;
+  TWinControlHack(pgcSettings).ParentBackground := False;
   for I := 0 to pgcSettings.PageCount - 1 do
   begin
+    pgcSettings.Pages[I].StyleElements := pgcSettings.Pages[I].StyleElements - [seClient, seBorder];
     TTabSheetColorHack(pgcSettings.Pages[I]).ParentBackground := False;
     TTabSheetColorHack(pgcSettings.Pages[I]).Color := LBgColor;
   end;
 
+  pnlGemini.StyleElements := pnlGemini.StyleElements - [seClient, seBorder];
+  pnlGemini.Color := LBgColor;
+  pnlGemini.ParentBackground := False;
+  pnlOpenAI.StyleElements := pnlOpenAI.StyleElements - [seClient, seBorder];
+  pnlOpenAI.Color := LBgColor;
+  pnlOpenAI.ParentBackground := False;
+  pnlClaude.StyleElements := pnlClaude.StyleElements - [seClient, seBorder];
+  pnlClaude.Color := LBgColor;
+  pnlClaude.ParentBackground := False;
+  pnlDeepSeek.StyleElements := pnlDeepSeek.StyleElements - [seClient, seBorder];
+  pnlDeepSeek.Color := LBgColor;
+  pnlDeepSeek.ParentBackground := False;
+  pnlGroq.StyleElements := pnlGroq.StyleElements - [seClient, seBorder];
+  pnlGroq.Color := LBgColor;
+  pnlGroq.ParentBackground := False;
+  pnlOllama.StyleElements := pnlOllama.StyleElements - [seClient, seBorder];
+  pnlOllama.Color := LBgColor;
+  pnlOllama.ParentBackground := False;
+  pnlSystemPrompt.StyleElements := pnlSystemPrompt.StyleElements - [seClient, seBorder];
+  pnlSystemPrompt.Color := LBgColor;
+  pnlSystemPrompt.ParentBackground := False;
+
+  if Assigned(pnlGeneral) then
+  begin
+    pnlGeneral.StyleElements := pnlGeneral.StyleElements - [seClient, seBorder];
+    pnlGeneral.Color := LBgColor;
+    pnlGeneral.ParentBackground := False;
+  end;
+
   // Memo do System Prompt
+  memSystemPrompt.StyleElements := memSystemPrompt.StyleElements - [seClient, seBorder];
   memSystemPrompt.Color := LInputBgColor;
   memSystemPrompt.Font.Color := LTextColor;
 
   // Inputs
+  edtGeminiKey.StyleElements := edtGeminiKey.StyleElements - [seClient, seBorder];
   edtGeminiKey.Color := LInputBgColor;
   edtGeminiKey.Font.Color := LTextColor;
   
+  edtOpenAIKey.StyleElements := edtOpenAIKey.StyleElements - [seClient, seBorder];
   edtOpenAIKey.Color := LInputBgColor;
   edtOpenAIKey.Font.Color := LTextColor;
+  edtOpenAICustomUrl.StyleElements := edtOpenAICustomUrl.StyleElements - [seClient, seBorder];
   edtOpenAICustomUrl.Color := LInputBgColor;
   edtOpenAICustomUrl.Font.Color := LTextColor;
   
+  edtClaudeKey.StyleElements := edtClaudeKey.StyleElements - [seClient, seBorder];
   edtClaudeKey.Color := LInputBgColor;
   edtClaudeKey.Font.Color := LTextColor;
   
+  edtDeepSeekKey.StyleElements := edtDeepSeekKey.StyleElements - [seClient, seBorder];
   edtDeepSeekKey.Color := LInputBgColor;
   edtDeepSeekKey.Font.Color := LTextColor;
   
+  edtGroqKey.StyleElements := edtGroqKey.StyleElements - [seClient, seBorder];
   edtGroqKey.Color := LInputBgColor;
   edtGroqKey.Font.Color := LTextColor;
   
+  edtOllamaUrl.StyleElements := edtOllamaUrl.StyleElements - [seClient, seBorder];
   edtOllamaUrl.Color := LInputBgColor;
   edtOllamaUrl.Font.Color := LTextColor;
 
   // Labels
+  lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
   lblGeminiKey.Font.Color := LTextColor;
+  lblOpenAIKey.StyleElements := lblOpenAIKey.StyleElements - [seClient, seBorder];
   lblOpenAIKey.Font.Color := LTextColor;
+  lblOpenAICustomUrl.StyleElements := lblOpenAICustomUrl.StyleElements - [seClient, seBorder];
   lblOpenAICustomUrl.Font.Color := LTextColor;
+  lblClaudeKey.StyleElements := lblClaudeKey.StyleElements - [seClient, seBorder];
   lblClaudeKey.Font.Color := LTextColor;
+  lblDeepSeekKey.StyleElements := lblDeepSeekKey.StyleElements - [seClient, seBorder];
   lblDeepSeekKey.Font.Color := LTextColor;
+  lblGroqKey.StyleElements := lblGroqKey.StyleElements - [seClient, seBorder];
   lblGroqKey.Font.Color := LTextColor;
+  lblOllamaUrl.StyleElements := lblOllamaUrl.StyleElements - [seClient, seBorder];
   lblOllamaUrl.Font.Color := LTextColor;
 
   // Aba de Templates
+  pnlTemplatesLeft.StyleElements := pnlTemplatesLeft.StyleElements - [seClient, seBorder];
   pnlTemplatesLeft.Color := LBgColor;
   pnlTemplatesLeft.ParentBackground := False;
+  pnlTemplatesLeftButtons.StyleElements := pnlTemplatesLeftButtons.StyleElements - [seClient, seBorder];
   pnlTemplatesLeftButtons.Color := LBgColor;
   pnlTemplatesLeftButtons.ParentBackground := False;
+  pnlTemplatesClient.StyleElements := pnlTemplatesClient.StyleElements - [seClient, seBorder];
   pnlTemplatesClient.Color := LBgColor;
   pnlTemplatesClient.ParentBackground := False;
   
+  lstTemplates.StyleElements := lstTemplates.StyleElements - [seClient, seBorder];
   lstTemplates.Color := LInputBgColor;
   lstTemplates.Font.Color := LTextColor;
+  edtTemplateName.StyleElements := edtTemplateName.StyleElements - [seClient, seBorder];
   edtTemplateName.Color := LInputBgColor;
   edtTemplateName.Font.Color := LTextColor;
+  edtTemplateDesc.StyleElements := edtTemplateDesc.StyleElements - [seClient, seBorder];
   edtTemplateDesc.Color := LInputBgColor;
   edtTemplateDesc.Font.Color := LTextColor;
+  memTemplateBody.StyleElements := memTemplateBody.StyleElements - [seClient, seBorder];
   memTemplateBody.Color := LInputBgColor;
   memTemplateBody.Font.Color := LTextColor;
   
+  lblTemplateName.StyleElements := lblTemplateName.StyleElements - [seClient, seBorder];
   lblTemplateName.Font.Color := LTextColor;
+  lblTemplateDesc.StyleElements := lblTemplateDesc.StyleElements - [seClient, seBorder];
   lblTemplateDesc.Font.Color := LTextColor;
+  lblTemplateBody.StyleElements := lblTemplateBody.StyleElements - [seClient, seBorder];
   lblTemplateBody.Font.Color := LTextColor;
 
   { Paint Advanced Controls }
@@ -444,67 +481,76 @@ begin
   begin
     if Assigned(FEdtTemperatures[LProvider]) then
     begin
+      FEdtTemperatures[LProvider].StyleElements := FEdtTemperatures[LProvider].StyleElements - [seClient, seBorder];
       FEdtTemperatures[LProvider].Color := LInputBgColor;
       FEdtTemperatures[LProvider].Font.Color := LTextColor;
     end;
     if Assigned(FEdtMaxTokens[LProvider]) then
     begin
+      FEdtMaxTokens[LProvider].StyleElements := FEdtMaxTokens[LProvider].StyleElements - [seClient, seBorder];
       FEdtMaxTokens[LProvider].Color := LInputBgColor;
       FEdtMaxTokens[LProvider].Font.Color := LTextColor;
     end;
     if Assigned(FEdtTimeouts[LProvider]) then
     begin
+      FEdtTimeouts[LProvider].StyleElements := FEdtTimeouts[LProvider].StyleElements - [seClient, seBorder];
       FEdtTimeouts[LProvider].Color := LInputBgColor;
       FEdtTimeouts[LProvider].Font.Color := LTextColor;
     end;
   end;
 
   if Assigned(FChkSmartConfig) then
+  begin
+    FChkSmartConfig.StyleElements := FChkSmartConfig.StyleElements - [seClient, seBorder];
     FChkSmartConfig.Font.Color := LTextColor;
+  end;
 
   if Assigned(tsGeneral) then
   begin
+    tsGeneral.StyleElements := tsGeneral.StyleElements - [seClient, seBorder];
     TTabSheetColorHack(tsGeneral).ParentBackground := False;
     TTabSheetColorHack(tsGeneral).Color := LBgColor;
   end;
   if Assigned(chkLogEnabled) then
+  begin
+    chkLogEnabled.StyleElements := chkLogEnabled.StyleElements - [seClient, seBorder];
     chkLogEnabled.Font.Color := LTextColor;
+  end;
   if Assigned(lblLogPath) then
+  begin
+    lblLogPath.StyleElements := lblLogPath.StyleElements - [seClient, seBorder];
     lblLogPath.Font.Color := LTextColor;
+  end;
   if Assigned(edtLogPath) then
   begin
+    edtLogPath.StyleElements := edtLogPath.StyleElements - [seClient, seBorder];
     edtLogPath.Color := LInputBgColor;
     edtLogPath.Font.Color := LTextColor;
   end;
   if Assigned(edtLogMaxSize) then
   begin
+    edtLogMaxSize.StyleElements := edtLogMaxSize.StyleElements - [seClient, seBorder];
     edtLogMaxSize.Color := LInputBgColor;
     edtLogMaxSize.Font.Color := LTextColor;
   end;
   
   if Assigned(grpQuota) then
   begin
+    grpQuota.StyleElements := grpQuota.StyleElements - [seClient, seBorder];
     grpQuota.Font.Color := LTextColor;
+    chkQuotaEnabled.StyleElements := chkQuotaEnabled.StyleElements - [seClient, seBorder];
     chkQuotaEnabled.Font.Color := LTextColor;
+    lblQuotaLimit.StyleElements := lblQuotaLimit.StyleElements - [seClient, seBorder];
     lblQuotaLimit.Font.Color := LTextColor;
+    edtQuotaLimit.StyleElements := edtQuotaLimit.StyleElements - [seClient, seBorder];
     edtQuotaLimit.Color := LInputBgColor;
     edtQuotaLimit.Font.Color := LTextColor;
+    lblQuotaUsed.StyleElements := lblQuotaUsed.StyleElements - [seClient, seBorder];
     lblQuotaUsed.Font.Color := LTextColor;
-  end;
-
-  if Assigned(tvCategories) then
-  begin
-    tvCategories.Color := LInputBgColor;
-    tvCategories.Font.Color := LTextColor;
-  end;
-  if Assigned(pnlSidebar) then
-  begin
-    pnlSidebar.Color := LBgColor;
-    pnlSidebar.ParentBackground := False;
   end;
 end;
 
-procedure TFormAIConfig.LoadConfig;
+procedure TFrameAIConfig.LoadConfig;
 var
   LProvider: TAIProviderType;
   LFormatSettings: TFormatSettings;
@@ -555,7 +601,7 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.btnSaveClick(Sender: TObject);
+procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
 var
   LForm: TCustomForm;
   LOllamaUrl: string;
@@ -625,14 +671,15 @@ begin
   { Save templates too }
   FTemplateManager.Save;
 
-  ShowMessage('Settings saved successfully.');
+  if Sender <> nil then
+    ShowMessage('Settings saved successfully.');
 
   LForm := GetParentForm(Self);
   if LForm <> nil then
     LForm.ModalResult := mrOk;
 end;
 
-procedure TFormAIConfig.btnCancelClick(Sender: TObject);
+procedure TFrameAIConfig.btnCancelClick(Sender: TObject);
 var
   LForm: TCustomForm;
 begin
@@ -642,7 +689,7 @@ begin
     LForm.ModalResult := mrCancel;
 end;
 
-procedure TFormAIConfig.PopulateTemplatesList;
+procedure TFrameAIConfig.PopulateTemplatesList;
 var
   LTemplate: TPromptTemplate;
   LSelectedIndex: Integer;
@@ -667,7 +714,7 @@ begin
     lstTemplates.ItemIndex := -1;
 end;
 
-procedure TFormAIConfig.lstTemplatesClick(Sender: TObject);
+procedure TFrameAIConfig.lstTemplatesClick(Sender: TObject);
 var
   LName: string;
   LTemplate: TPromptTemplate;
@@ -689,7 +736,7 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.btnNewTemplateClick(Sender: TObject);
+procedure TFrameAIConfig.btnNewTemplateClick(Sender: TObject);
 begin
   lstTemplates.ItemIndex := -1;
   edtTemplateName.Text := '';
@@ -698,7 +745,7 @@ begin
   edtTemplateName.SetFocus;
 end;
 
-procedure TFormAIConfig.btnDeleteTemplateClick(Sender: TObject);
+procedure TFrameAIConfig.btnDeleteTemplateClick(Sender: TObject);
 var
   LName: string;
 begin
@@ -718,7 +765,7 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.btnSaveTemplateClick(Sender: TObject);
+procedure TFrameAIConfig.btnSaveTemplateClick(Sender: TObject);
 var
   LName, LDesc, LBody: string;
   LIndex: Integer;
@@ -746,7 +793,7 @@ begin
   ShowMessage('Template saved successfully.');
 end;
 
-procedure TFormAIConfig.btnRestoreDefaultsClick(Sender: TObject);
+procedure TFrameAIConfig.btnRestoreDefaultsClick(Sender: TObject);
 begin
   if MessageDlg('Are you sure you want to restore default templates? This will overwrite your changes.',
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
@@ -762,7 +809,7 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.btnBrowseLogPathClick(Sender: TObject);
+procedure TFrameAIConfig.btnBrowseLogPathClick(Sender: TObject);
 var
   LFolder: string;
 begin
@@ -770,7 +817,7 @@ begin
     edtLogPath.Text := LFolder;
 end;
 
-procedure TFormAIConfig.btnResetQuotaClick(Sender: TObject);
+procedure TFrameAIConfig.btnResetQuotaClick(Sender: TObject);
 begin
   if MessageDlg('Are you sure you want to reset the monthly token usage counter to zero?',
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
@@ -784,27 +831,31 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
+procedure TFrameAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
 begin
-  if Node = nil then Exit;
-  
-  if SameText(Node.Text, 'General / Logs') then
+  if Node <> nil then
+    SelectCategoryByName(Node.Text);
+end;
+
+procedure TFrameAIConfig.SelectCategoryByName(const ACategoryName: string);
+begin
+  if SameText(ACategoryName, 'General / Logs') then
     pgcSettings.ActivePage := tsGeneral
-  else if SameText(Node.Text, 'System Prompt') then
+  else if SameText(ACategoryName, 'System Prompt') then
     pgcSettings.ActivePage := tsSystemPrompt
-  else if SameText(Node.Text, 'Templates') then
+  else if SameText(ACategoryName, 'Templates') then
     pgcSettings.ActivePage := tsTemplates
-  else if SameText(Node.Text, 'Gemini') then
+  else if SameText(ACategoryName, 'Gemini') then
     pgcSettings.ActivePage := tsGemini
-  else if SameText(Node.Text, 'OpenAI') then
+  else if SameText(ACategoryName, 'OpenAI') then
     pgcSettings.ActivePage := tsOpenAI
-  else if SameText(Node.Text, 'Claude') then
+  else if SameText(ACategoryName, 'Claude') then
     pgcSettings.ActivePage := tsClaude
-  else if SameText(Node.Text, 'DeepSeek') then
+  else if SameText(ACategoryName, 'DeepSeek') then
     pgcSettings.ActivePage := tsDeepSeek
-  else if SameText(Node.Text, 'Groq') then
+  else if SameText(ACategoryName, 'Groq') then
     pgcSettings.ActivePage := tsGroq
-  else if SameText(Node.Text, 'Ollama') then
+  else if SameText(ACategoryName, 'Ollama') then
     pgcSettings.ActivePage := tsOllama;
 end;
 

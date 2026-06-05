@@ -63,8 +63,10 @@ contains
   RadIA.OTA.MessageViewHook in 'Source\Integration\RadIA.OTA.MessageViewHook.pas',
   RadIA.OTA.ContextParser in 'Source\Integration\RadIA.OTA.ContextParser.pas',
   RadIA.OTA.DockableForm in 'Source\Integration\RadIA.OTA.DockableForm.pas',
+  RadIA.OTA.Options in 'Source\Integration\RadIA.OTA.Options.pas',
   RadIA.UI.ChatFrame in 'Source\UI\RadIA.UI.ChatFrame.pas' {FrameAIChat: TFrame},
-  RadIA.UI.ConfigFrame in 'Source\UI\RadIA.UI.ConfigFrame.pas' {FormAIConfig},
+  RadIA.UI.ConfigFrame in 'Source\UI\RadIA.UI.ConfigFrame.pas' {FrameAIConfig: TFrame},
+  RadIA.UI.ConfigForm in 'Source\UI\RadIA.UI.ConfigForm.pas' {FormAIConfig},
   RadIA.UI.DiffForm in 'Source\UI\RadIA.UI.DiffForm.pas' {FormAIDiff},
   RadIA.UI.Resources in 'Source\UI\RadIA.UI.Resources.pas';
 

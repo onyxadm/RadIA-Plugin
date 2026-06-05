@@ -135,7 +135,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigFrame,
+  System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
   RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes;
 
 function IsThemeDark(const AThemeName: string): Boolean;
