@@ -153,12 +153,14 @@ begin
   FApiKeys[ptOllama] := '';
   FApiKeys[ptDeepSeek] := '';
   FApiKeys[ptGroq] := '';
+  FApiKeys[ptOpenRouter] := '';
   FActiveModels[ptGemini] := MODEL_GEMINI_15_FLASH;
   FActiveModels[ptOpenAI] := MODEL_OPENAI_GPT4O_MINI;
   FActiveModels[ptClaude] := MODEL_CLAUDE_3_HAIKU;
   FActiveModels[ptOllama] := 'llama3:latest';
   FActiveModels[ptDeepSeek] := MODEL_DEEPSEEK_CHAT;
   FActiveModels[ptGroq] := MODEL_GROQ_LLAMA33;
+  FActiveModels[ptOpenRouter] := MODEL_OPENROUTER_GEMINI25_PRO;
   FSystemPrompt := '';
   FOllamaBaseUrl := 'http://localhost:11434';
   FMaxHistoryMessages := 20;
@@ -589,8 +591,13 @@ begin
 end;
 
 procedure TRadIAConfig.SetOpenAICustomBaseUrl(const AValue: string);
+var
+  LVal: string;
 begin
-  FOpenAICustomBaseUrl := AValue;
+  LVal := AValue.Trim;
+  if LVal.EndsWith('/') then
+    LVal := LVal.Substring(0, LVal.Length - 1);
+  FOpenAICustomBaseUrl := LVal;
 end;
 
 function TRadIAConfig.GetTemperature(const AProvider: TAIProviderType): Double;
