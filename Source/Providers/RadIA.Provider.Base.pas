@@ -729,7 +729,6 @@ end;
 procedure TRadIAProviderBase.ProcessOpenAICompatibleStreamBuffer(var ABuffer: string;
   const ACallback: TStreamChunkCallback);
 var
-  LLine: string;
   LJsonLine: string;
   LJson: TJSONObject;
   LChoices: TJSONArray;
@@ -741,6 +740,7 @@ var
   LPtr: PChar;
   LLen: Integer;
   LLastProcessedPos: Integer;
+  LLineLen: Integer;
 begin
   LLen := ABuffer.Length;
   if LLen = 0 then
@@ -759,47 +759,53 @@ begin
     if LIdx >= LLen then
       Break;
 
-    LLine := ABuffer.Substring(LStartPos, LIdx - LStartPos);
-    LStartPos := LIdx + 1;
-    LLastProcessedPos := LStartPos;
-
-    LLine := Trim(LLine);
-    if LLine.StartsWith('data:') then
+    LLineLen := LIdx - LStartPos;
+    // Skip empty or trivial lines quickly using pointer checks to avoid creating substring
+    if LLineLen > 5 then
     begin
-      LJsonLine := Trim(LLine.Substring(5));
-      if LJsonLine = '[DONE]' then
+      // Look for "data:" prefix without substring allocation first
+      if (LPtr[LStartPos] = 'd') and (LPtr[LStartPos+1] = 'a') and (LPtr[LStartPos+2] = 't') and (LPtr[LStartPos+3] = 'a') and (LPtr[LStartPos+4] = ':') then
       begin
-        ACallback('', True, '');
-
-        ABuffer := ABuffer.Substring(LLastProcessedPos);
-        Exit;
-      end;
-
-      try
-        LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
-        if Assigned(LJson) then
+        var LLine := ABuffer.Substring(LStartPos, LLineLen).Trim;
+        LJsonLine := Trim(LLine.Substring(5));
+        if LJsonLine = '[DONE]' then
         begin
-          try
-            LChoices := LJson.GetValue('choices') as TJSONArray;
-            if Assigned(LChoices) and (LChoices.Count > 0) then
-            begin
-              LChoice := LChoices.Items[0] as TJSONObject;
-              LDelta := LChoice.GetValue('delta') as TJSONObject;
-              if Assigned(LDelta) then
-              begin
-                LContent := LDelta.GetValue<string>('content', '');
-                if not LContent.IsEmpty then
-                  ACallback(LContent, False, '');
-              end;
-            end;
-          finally
-            LJson.Free;
-          end;
+          ACallback('', True, '');
+          LStartPos := LIdx + 1;
+          LLastProcessedPos := LStartPos;
+          ABuffer := ABuffer.Substring(LLastProcessedPos);
+          Exit;
         end;
-      except
-        { Ignore JSON parse errors in stream chunks }
+
+        try
+          LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
+          if Assigned(LJson) then
+          begin
+            try
+              LChoices := LJson.GetValue('choices') as TJSONArray;
+              if Assigned(LChoices) and (LChoices.Count > 0) then
+              begin
+                LChoice := LChoices.Items[0] as TJSONObject;
+                LDelta := LChoice.GetValue('delta') as TJSONObject;
+                if Assigned(LDelta) then
+                begin
+                  LContent := LDelta.GetValue<string>('content', '');
+                  if not LContent.IsEmpty then
+                    ACallback(LContent, False, '');
+                end;
+              end;
+            finally
+              LJson.Free;
+            end;
+          end;
+        except
+          { Ignore JSON parse errors in stream chunks }
+        end;
       end;
     end;
+
+    LStartPos := LIdx + 1;
+    LLastProcessedPos := LStartPos;
   end;
 
   if LLastProcessedPos > 0 then
