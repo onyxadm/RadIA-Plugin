@@ -86,6 +86,12 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   O botão de envio muda de função e ícone dinamicamente para stop (`■`) durante a chamada, e a UI exibe uma mensagem amigável sem erros de encoding.
     *   Fundo do painel de input configurado para transparência nativa (`ParentBackground := True`), com a cápsula (`shpInputBg`) e o memo (`memPrompt`) exibidos de forma destacada e contrastante.
 
+### 12. Configurações Avançadas por Provedor de IA - Item #18
+*   **Descrição**: Permite parametrizar valores de geração de IA como Temperatura e Max Tokens individualmente para cada provedor a partir de abas organizadas na tela de configurações.
+*   **Detalhes**:
+    *   Campos de edição e persistência dinâmica de parâmetros no Registro do Windows pela classe `TRadIAConfig`.
+    *   Mapeamento e integração no payload de requisição HTTP JSON de todos os provedores suportados (Ollama, Gemini, OpenAI, Claude, Groq e DeepSeek).
+
 ---
 
 ## 🔲 Pendentes
@@ -112,10 +118,3 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Adicionar campo nas configurações de limite de tokens (ex: cota mensal de 1.000.000 de tokens).
     *   Armazenar e acumular o consumo de forma persistente localmente.
     *   Exibir percentual de consumo na barra de status do chat lateral e alertar/bloquear chamadas ao atingir 100% da cota definida.
-
-### 6. Configurações Avançadas por Provedor de IA
-*   **Objetivo**: Permitir que o desenvolvedor parametrize valores como Temperatura, Max Tokens, TopK, TopP e Timeouts de requisição individualmente por provedor na tela de configurações.
-*   **Detalhamento**:
-    *   Expandir a tela de configurações (abrangendo o `TPageControl` por abas) para incluir controles adicionais específicos por aba de provedor (ex: trackbar ou edit numérico para Temperatura, edit numérico para Max Tokens, e timeouts).
-    *   Adicionar campos correspondentes na classe `TRadIAConfig` e salvar as propriedades no Registro do Windows sob `Software\Embarcadero\BDS\<versao>\RadIA`.
-    *   Repassar esses parâmetros de geração nos payloads das requisições HTTP REST de cada provedor correspondente.
