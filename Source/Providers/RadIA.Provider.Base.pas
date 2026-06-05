@@ -24,6 +24,11 @@ type
   protected
     FConfig: IAIConfig;
     FProviderType: TAIProviderType;
+    FHTTPClient: THTTPClient;
+    FCancelled: Boolean;
+
+    procedure HTTPClientReceiveData(const Sender: TObject;
+      AContentLength, AReadCount: Int64; var AAbort: Boolean);
 
     function GetApiKey: string;
     function GetActiveModel: string;
@@ -49,6 +54,7 @@ type
     function FilterModelId(const AId: string): Boolean; virtual;
   public
     constructor Create(const AConfig: IAIConfig); virtual;
+    destructor Destroy; override;
 
     { IIAProvider implementation }
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
@@ -59,6 +65,7 @@ type
     function GetAvailableModels: TArray<string>; virtual; abstract;
     function GetName: string; virtual; abstract;
     function GetProviderType: TAIProviderType;
+    procedure CancelCurrentRequest; virtual;
   end;
 
 implementation
@@ -98,6 +105,24 @@ constructor TRadIAProviderBase.Create(const AConfig: IAIConfig);
 begin
   inherited Create;
   FConfig := AConfig;
+  FHTTPClient := THTTPClient.Create;
+  FHTTPClient.OnReceiveData := HTTPClientReceiveData;
+end;
+
+destructor TRadIAProviderBase.Destroy;
+begin
+  FHTTPClient.Free;
+  inherited Destroy;
+end;
+
+procedure TRadIAProviderBase.HTTPClientReceiveData(const Sender: TObject;
+  AContentLength, AReadCount: Int64; var AAbort: Boolean);
+begin
+  if FCancelled then
+  begin
+    TLogger.Log('HTTPClientReceiveData: Aborting request because FCancelled is True', 'Provider');
+    AAbort := True;
+  end;
 end;
 
 function TRadIAProviderBase.GetApiKey: string;
@@ -115,55 +140,55 @@ begin
   Result := FProviderType;
 end;
 
+procedure TRadIAProviderBase.CancelCurrentRequest;
+begin
+  TLogger.Log('CancelCurrentRequest: Requesting cancellation (FCancelled := True)', 'Provider');
+  FCancelled := True;
+end;
+
 function TRadIAProviderBase.DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders): string;
 var
-  LHTTPClient: THTTPClient;
   LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
 begin
   TLogger.Log(Format('DoGetRequest: URL=%s', [AUrl]), 'Provider');
   TLogger.Log(Format('DoGetRequest: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
   
-  LHTTPClient := THTTPClient.Create;
+  FCancelled := False;
+  LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
+  if LTimeoutMs <= 0 then LTimeoutMs := 60000;
+
+  FHTTPClient.ConnectionTimeout := LTimeoutMs;
+  FHTTPClient.SendTimeout := LTimeoutMs;
+  FHTTPClient.ResponseTimeout := LTimeoutMs;
+  FHTTPClient.AcceptCharSet := 'utf-8';
+  FHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
+
   try
-    LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
-    if LTimeoutMs <= 0 then LTimeoutMs := 60000;
-
-    LHTTPClient.ConnectionTimeout := LTimeoutMs;
-    LHTTPClient.SendTimeout := LTimeoutMs;
-    LHTTPClient.ResponseTimeout := LTimeoutMs;
-    LHTTPClient.AcceptCharSet := 'utf-8';
-    LHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
-
-    try
-      LResponse := LHTTPClient.Get(AUrl, nil, AHeaders);
-      TLogger.Log(Format('DoGetRequest: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
-      
-      if LResponse.StatusCode <> 200 then
-      begin
-        TLogger.Log(Format('DoGetRequest: Error Response content=%s', [LResponse.ContentAsString(TEncoding.UTF8)]), 'Provider');
-        raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
-          [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
-      end;
-
-      Result := LResponse.ContentAsString(TEncoding.UTF8);
-      TLogger.Log(Format('DoGetRequest: Response length=%d', [Length(Result)]), 'Provider');
-    except
-      on E: Exception do
-      begin
-        TLogger.Log(Format('DoGetRequest: Exception occurred: %s', [E.Message]), 'Provider');
-        raise;
-      end;
+    LResponse := FHTTPClient.Get(AUrl, nil, AHeaders);
+    TLogger.Log(Format('DoGetRequest: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
+    
+    if LResponse.StatusCode <> 200 then
+    begin
+      TLogger.Log(Format('DoGetRequest: Error Response content=%s', [LResponse.ContentAsString(TEncoding.UTF8)]), 'Provider');
+      raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
+        [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
     end;
-  finally
-    LHTTPClient.Free;
+
+    Result := LResponse.ContentAsString(TEncoding.UTF8);
+    TLogger.Log(Format('DoGetRequest: Response length=%d', [Length(Result)]), 'Provider');
+  except
+    on E: Exception do
+    begin
+      TLogger.Log(Format('DoGetRequest: Exception occurred: %s', [E.Message]), 'Provider');
+      raise;
+    end;
   end;
 end;
 
 function TRadIAProviderBase.DoPostRequest(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string): string;
 var
-  LHTTPClient: THTTPClient;
   LSourceStream: TStringStream;
   LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
@@ -172,21 +197,21 @@ begin
   TLogger.Log(Format('DoPostRequest: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
   TLogger.Log(Format('DoPostRequest: Body=%s', [ARequestBody]), 'Provider');
 
-  LHTTPClient := THTTPClient.Create;
+  FCancelled := False;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   try
     LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
     if LTimeoutMs <= 0 then LTimeoutMs := 60000;
 
-    LHTTPClient.ConnectionTimeout := LTimeoutMs;
-    LHTTPClient.SendTimeout := LTimeoutMs;
-    LHTTPClient.ResponseTimeout := LTimeoutMs;
-    LHTTPClient.ContentType := 'application/json';
-    LHTTPClient.AcceptCharSet := 'utf-8';
-    LHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
+    FHTTPClient.ConnectionTimeout := LTimeoutMs;
+    FHTTPClient.SendTimeout := LTimeoutMs;
+    FHTTPClient.ResponseTimeout := LTimeoutMs;
+    FHTTPClient.ContentType := 'application/json';
+    FHTTPClient.AcceptCharSet := 'utf-8';
+    FHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
 
     try
-      LResponse := LHTTPClient.Post(AUrl, LSourceStream, nil, AHeaders);
+      LResponse := FHTTPClient.Post(AUrl, LSourceStream, nil, AHeaders);
       TLogger.Log(Format('DoPostRequest: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
       
       if LResponse.StatusCode <> 200 then
@@ -207,14 +232,12 @@ begin
     end;
   finally
     LSourceStream.Free;
-    LHTTPClient.Free;
   end;
 end;
 
 procedure TRadIAProviderBase.DoPostRequestStream(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string; const AOnWrite: TProc<TBytes>);
 var
-  LHTTPClient: THTTPClient;
   LSourceStream: TStringStream;
   LTargetStream: TStreamingTargetStream;
   LResponse: IHTTPResponse;
@@ -224,22 +247,22 @@ begin
   TLogger.Log(Format('DoPostRequestStream: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
   TLogger.Log(Format('DoPostRequestStream: Body=%s', [ARequestBody]), 'Provider');
 
-  LHTTPClient := THTTPClient.Create;
+  FCancelled := False;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   LTargetStream := TStreamingTargetStream.Create(AOnWrite);
   try
     LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
     if LTimeoutMs <= 0 then LTimeoutMs := 60000;
 
-    LHTTPClient.ConnectionTimeout := LTimeoutMs;
-    LHTTPClient.SendTimeout := LTimeoutMs;
-    LHTTPClient.ResponseTimeout := LTimeoutMs;
-    LHTTPClient.ContentType := 'application/json';
-    LHTTPClient.AcceptCharSet := 'utf-8';
-    LHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
+    FHTTPClient.ConnectionTimeout := LTimeoutMs;
+    FHTTPClient.SendTimeout := LTimeoutMs;
+    FHTTPClient.ResponseTimeout := LTimeoutMs;
+    FHTTPClient.ContentType := 'application/json';
+    FHTTPClient.AcceptCharSet := 'utf-8';
+    FHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
 
     try
-      LResponse := LHTTPClient.Post(AUrl, LSourceStream, LTargetStream, AHeaders);
+      LResponse := FHTTPClient.Post(AUrl, LSourceStream, LTargetStream, AHeaders);
       TLogger.Log(Format('DoPostRequestStream: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
       
       if LResponse.StatusCode <> 200 then
@@ -251,14 +274,13 @@ begin
     except
       on E: Exception do
       begin
-        TLogger.Log(Format('DoPostRequestStream: Exception occurred (%s): %s', [E.ClassName, E.Message]), 'Provider');
+        TLogger.Log(Format('DoPostRequestStream: Exception occurred: %s', [E.Message]), 'Provider');
         raise;
       end;
     end;
   finally
     LTargetStream.Free;
     LSourceStream.Free;
-    LHTTPClient.Free;
   end;
 end;
 
@@ -269,12 +291,20 @@ begin
   { Default fallback simulating streaming }
   SendPromptAsync(APrompt, AHistory,
     procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    var
+      LResCopy: string;
+      LErrCopy: string;
     begin
+      LResCopy := AResponse;
+      LErrCopy := AError;
       TThread.Queue(nil,
-        procedure
-        begin
-          ACallback(AResponse, True, AError);
-        end);
+        TThreadProcedure(
+          procedure
+          begin
+            ACallback(LResCopy, True, LErrCopy);
+          end
+        )
+      );
     end, ATemperature, AMaxTokens);
 end;
 
@@ -476,10 +506,16 @@ begin
   if LUrl.IsEmpty then
   begin
     TThread.Queue(nil,
-      procedure
-      begin
-        ACallback(GetAvailableModels, '');
-      end);
+      TThreadProcedure(
+        procedure
+        var
+          LModels: TArray<string>;
+        begin
+          LModels := GetAvailableModels;
+          ACallback(LModels, '');
+        end
+      )
+    );
     Exit;
   end;
 
@@ -487,11 +523,18 @@ begin
   if LApiKey.IsEmpty then
   begin
     TThread.Queue(nil,
-      procedure
-      begin
-        ACallback(GetAvailableModels,
-          Format('API Key is missing for %s. Using fallback models.', [GetName]));
-      end);
+      TThreadProcedure(
+        procedure
+        var
+          LModels: TArray<string>;
+          LMsg: string;
+        begin
+          LModels := GetAvailableModels;
+          LMsg := Format('API Key is missing for %s. Using fallback models.', [GetName]);
+          ACallback(LModels, LMsg);
+        end
+      )
+    );
     Exit;
   end;
 
@@ -503,16 +546,15 @@ begin
     var
       LResponseText: string;
       LJson: TJSONObject;
-      LDataArr: TJSONArray;
+      LData: TJSONArray;
       LVal: TJSONValue;
-      LModelObj: TJSONObject;
       LId: string;
       LModelsList: TList<string>;
       LModelsArray: TArray<string>;
       LErrorMsg: string;
+      I: Integer;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType; { Force compiler to capture the interface reference }
+      LProviderRef.GetProviderType;
       LModelsList := TList<string>.Create;
       try
         try
@@ -521,15 +563,14 @@ begin
           if Assigned(LJson) then
           begin
             try
-              LDataArr := LJson.GetValue('data') as TJSONArray;
-              if Assigned(LDataArr) then
+              LData := LJson.GetValue('data') as TJSONArray;
+              if Assigned(LData) then
               begin
-                for LVal in LDataArr do
+                for I := 0 to LData.Count - 1 do
                 begin
-                  if LVal is TJSONObject then
+                  LVal := LData.Items[I];
+                  if LVal.TryGetValue<string>('id', LId) then
                   begin
-                    LModelObj := LVal as TJSONObject;
-                    LId := LModelObj.GetValue<string>('id', '');
                     if FilterModelId(LId) then
                       LModelsList.Add(LId);
                   end;
@@ -548,20 +589,34 @@ begin
             LModelsArray := LModelsList.ToArray;
 
           TThread.Queue(nil,
-            procedure
-            begin
-              ACallback(LModelsArray, '');
-            end);
+            TThreadProcedure(
+              procedure
+              var
+                LModelsCopy: TArray<string>;
+              begin
+                LModelsCopy := LModelsArray;
+                ACallback(LModelsCopy, '');
+              end
+            )
+          );
         except
           on E: Exception do
           begin
             LErrorMsg := E.ClassName + ': ' + E.Message;
             LModelsArray := GetAvailableModels;
             TThread.Queue(nil,
-              procedure
-              begin
-                ACallback(LModelsArray, LErrorMsg);
-              end);
+              TThreadProcedure(
+                procedure
+                var
+                  LModelsCopy: TArray<string>;
+                  LErrCopy: string;
+                begin
+                  LModelsCopy := LModelsArray;
+                  LErrCopy := LErrorMsg;
+                  ACallback(LModelsCopy, LErrCopy);
+                end
+              )
+            );
           end;
         end;
       finally

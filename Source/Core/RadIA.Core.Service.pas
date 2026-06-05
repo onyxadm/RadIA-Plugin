@@ -36,6 +36,7 @@ type
   private
     FConfig: IAIConfig;
     FCacheManager: TRadIACacheManager;
+    FActiveProvider: IIAProvider;
 
     function GetEffectiveSystemPrompt: string;
     function BuildEffectiveHistory(const ASystemPrompt: string;
@@ -56,6 +57,7 @@ type
       const ACallback: TCompletionCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
     procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
+    procedure CancelCurrentRequest;
     procedure ClearCache;
 
     class function CreateMessage(const ARole: TAIMessageRole; const AContent: string;
@@ -279,6 +281,13 @@ var
 begin
   try
     LProvider := CreateActiveProvider;
+    TMonitor.Enter(Self);
+    try
+      FActiveProvider := LProvider;
+    finally
+      TMonitor.Exit(Self);
+    end;
+
     LSystemPrompt    := GetEffectiveSystemPrompt;
     LTrimmedHistory  := TrimHistory(AHistory);
     LHash            := ComputePromptHash(APrompt, LTrimmedHistory, LSystemPrompt);
@@ -286,6 +295,13 @@ begin
     { Query Cache }
     if FCacheManager.Get(LHash, LCachedResponse) then
     begin
+      TMonitor.Enter(Self);
+      try
+        if FActiveProvider = LProvider then
+          FActiveProvider := nil;
+      finally
+        TMonitor.Exit(Self);
+      end;
       ACallback(LCachedResponse, '', True, TTokenUsage.Empty);
       Exit;
     end;
@@ -300,6 +316,14 @@ begin
     LProvider.SendPromptAsync(APrompt, LHistory,
       procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
       begin
+        TMonitor.Enter(Self);
+        try
+          if FActiveProvider = LProvider then
+            FActiveProvider := nil;
+        finally
+          TMonitor.Exit(Self);
+        end;
+
         if AError.IsEmpty and not AResponse.IsEmpty then
           FCacheManager.Put(LHash, AResponse);
         ACallback(AResponse, AError, False, AUsage);
@@ -307,6 +331,12 @@ begin
   except
     on E: Exception do
     begin
+      TMonitor.Enter(Self);
+      try
+        FActiveProvider := nil;
+      finally
+        TMonitor.Exit(Self);
+      end;
       ACallback('', 'Failed to initialize AI Provider: ' + E.Message, False, TTokenUsage.Empty);
     end;
   end;
@@ -327,6 +357,13 @@ var
 begin
   try
     LProvider       := CreateActiveProvider;
+    TMonitor.Enter(Self);
+    try
+      FActiveProvider := LProvider;
+    finally
+      TMonitor.Exit(Self);
+    end;
+
     LogService('SendPromptStream: ActiveProvider=' + ProviderTypeToString(FConfig.GetActiveProvider) +
       ' Model=' + FConfig.GetActiveModel(FConfig.GetActiveProvider) +
       ' SmartConfig=' + BoolToStr(FConfig.SmartConfigEnabled, True));
@@ -337,6 +374,14 @@ begin
     { R2 FIX: Check cache before streaming }
     if FCacheManager.Get(LHash, LCachedResponse) then
     begin
+      TMonitor.Enter(Self);
+      try
+        if FActiveProvider = LProvider then
+          FActiveProvider := nil;
+      finally
+        TMonitor.Exit(Self);
+      end;
+
       LogService('SendPromptStream: Cache hit for hash ' + LHash + '. Response length: ' + IntToStr(Length(LCachedResponse)));
       TThread.Queue(nil,
         procedure
@@ -370,15 +415,53 @@ begin
             FCacheManager.Put(LHash, LAccumulator);
           end;
         end;
+
+        if AIsDone or (not AError.IsEmpty) then
+        begin
+          TMonitor.Enter(Self);
+          try
+            if FActiveProvider = LProvider then
+              FActiveProvider := nil;
+          finally
+            TMonitor.Exit(Self);
+          end;
+        end;
+
         ACallback(AChunk, AIsDone, AError);
       end, LTemperature, LMaxTokens);
   except
     on E: Exception do
     begin
+      TMonitor.Enter(Self);
+      try
+        FActiveProvider := nil;
+      finally
+        TMonitor.Exit(Self);
+      end;
       LogService('SendPromptStream: Exception in initialization: ' + E.Message);
       ACallback('', True, 'Failed to initialize AI Provider: ' + E.Message);
     end;
   end;
+end;
+
+procedure TRadIAService.CancelCurrentRequest;
+var
+  LProvider: IIAProvider;
+begin
+  TMonitor.Enter(Self);
+  try
+    LProvider := FActiveProvider;
+  finally
+    TMonitor.Exit(Self);
+  end;
+
+  if LProvider <> nil then
+  begin
+    LogService('CancelCurrentRequest: Cancelling active provider request.');
+    LProvider.CancelCurrentRequest;
+  end
+  else
+    LogService('CancelCurrentRequest: No active provider request to cancel.');
 end;
 
 procedure TRadIAService.ResolveParameters(const AProvider: TAIProviderType; const AProfile: TAIRequestProfile;

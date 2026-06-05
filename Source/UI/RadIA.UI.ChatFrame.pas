@@ -20,6 +20,8 @@ type
     btnTemplates: TSpeedButton;
     SaveDialog: TSaveDialog;
     pnlInput: TPanel;
+    shpInputBg: TShape;
+    shpSendBg: TShape;
     memPrompt: TMemo;
     btnSend: TSpeedButton;
     lblContext: TLabel;
@@ -51,8 +53,11 @@ type
     FPopupMenuTemplates: TPopupMenu;
     FLoadingConfig: Boolean;  { Guard: prevents OnChange events from saving during LoadConfig }
     FLifecycleGuard: IInterface;
+    FRequestInProgress: Boolean;
+    FCancelledByUser: Boolean;
     EdgeBrowser: TEdgeBrowser;
     
+    procedure UpdateSendButtonVisual;
     procedure CreateEdgeBrowser;
     
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
@@ -90,7 +95,15 @@ implementation
 
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigFrame,
-  RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger;
+  RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes;
+
+function IsThemeDark(const AThemeName: string): Boolean;
+begin
+  Result := AThemeName.ToLower.Contains('dark') or 
+            SameText(AThemeName, 'carbon') or 
+            SameText(AThemeName, 'glow') or 
+            SameText(AThemeName, 'onyx');
+end;
 
 
 
@@ -563,26 +576,66 @@ begin
   end;
 end;
 
+procedure TFrameAIChat.UpdateSendButtonVisual;
+var
+  LIsDark: Boolean;
+  LThemingServices: IOTAIDEThemingServices;
+  LActiveTheme: string;
+begin
+  LIsDark := False;
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LActiveTheme := LThemingServices.ActiveTheme;
+      LIsDark := IsThemeDark(LActiveTheme);
+    end;
+  end;
+
+  if FRequestInProgress then
+  begin
+    { Estado de Parar / Cancelar }
+    shpSendBg.Brush.Color := $003B3BFC; // Vermelho moderno (BGR)
+    shpSendBg.Pen.Color := $003B3BFC;
+    shpSendBg.Pen.Style := psSolid;
+    btnSend.Caption := #9632; // quadrado ■
+    btnSend.Font.Color := clWhite;
+  end
+  else
+  begin
+    { Estado de Enviar }
+    if LIsDark then
+    begin
+      shpSendBg.Brush.Color := $00E5E5E5; // Branco/Cinza claro
+      shpSendBg.Pen.Color := $00E5E5E5;
+      shpSendBg.Pen.Style := psSolid;
+      btnSend.Caption := #11014; // Seta para cima ⬆
+      btnSend.Font.Color := $001E1E1E; // Cinza escuro
+    end
+    else
+    begin
+      shpSendBg.Brush.Color := $001F1F1F; // Preto/Cinza escuro
+      shpSendBg.Pen.Color := $001F1F1F;
+      shpSendBg.Pen.Style := psSolid;
+      btnSend.Caption := #11014; // Seta para cima ⬆
+      btnSend.Font.Color := clWhite;
+    end;
+  end;
+end;
+
 procedure TFrameAIChat.UpdateVCLColors(const AThemeName: string);
 var
   LThemingServices: IOTAIDEThemingServices;
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
 begin
-  { Se a estilização da IDE estiver ativa, deixamos que o VCL Styles gerencie a pintura }
-  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
-  begin
-    if LThemingServices.IDEThemingEnabled then
-      Exit;
-  end;
-
-  LIsDark := SameText(AThemeName, 'dark');
+  LIsDark := IsThemeDark(AThemeName);
   
   if LIsDark then
   begin
-    LBgColor := $00252526;      // Cinza escuro da IDE do Delphi
+    LBgColor := $00252526;      // Cinza escuro da IDE
     LTextColor := $00D4D4D4;    // Texto cinza claro
-    LInputBgColor := $001E1E1E; // Fundo dos edits/memos
+    LInputBgColor := $001E1E1E; // Fundo escuro do prompt
   end
   else
   begin
@@ -591,33 +644,51 @@ begin
     LInputBgColor := clWindow;
   end;
 
-  Self.Color := LBgColor;
-  pnlToolbar.Color := LBgColor;
-  pnlToolbar.ParentBackground := False;
-  pnlInput.Color := LBgColor;
-  pnlInput.ParentBackground := False;
-  pnlBrowser.Color := LBgColor;
-  pnlBrowser.ParentBackground := False;
+  { Se a estilização da IDE não estiver ativa, pintamos o Frame e Toolbar manualmente }
+  if not Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) or not LThemingServices.IDEThemingEnabled then
+  begin
+    Self.Color := LBgColor;
+    pnlToolbar.Color := LBgColor;
+    pnlToolbar.ParentBackground := False;
+    pnlBrowser.Color := LBgColor;
+    pnlBrowser.ParentBackground := False;
 
-  // Labels
-  lblContext.Font.Color := if LIsDark then $009CA3AF else clGrayText;
+    // Labels
+    lblContext.Font.Color := if LIsDark then $009CA3AF else clGrayText;
 
-  // ComboBoxes
-  cbProvider.Color := LInputBgColor;
-  cbProvider.Font.Color := LTextColor;
-  cbModel.Color := LInputBgColor;
-  cbModel.Font.Color := LTextColor;
+    // ComboBoxes
+    cbProvider.Color := LInputBgColor;
+    cbProvider.Font.Color := LTextColor;
+    cbModel.Color := LInputBgColor;
+    cbModel.Font.Color := LTextColor;
 
-  // Input Memo
+    // SpeedButtons da Toolbar
+    btnTemplates.Font.Color := LTextColor;
+    btnExport.Font.Color := LTextColor;
+    btnClear.Font.Color := LTextColor;
+    btnSettings.Font.Color := LTextColor;
+  end;
+
+  { Componentes da Cápsula do Prompt e Botão de Enviar:
+    Tornamos o pnlInput transparente para assumir a cor nativa da IDE/Frame (mesma cor do topo e do fundo) }
+  pnlInput.ParentBackground := True;
+  pnlInput.StyleElements := pnlInput.StyleElements + [seClient, seBorder];
+  
+  { A cápsula em si (shpInputBg) e o memo (memPrompt) usam a cor do edit (LInputBgColor) }
+  shpInputBg.Brush.Color := LInputBgColor;
+  if LIsDark then
+    shpInputBg.Pen.Color := $003E3E42
+  else
+    shpInputBg.Pen.Color := $00D1D5DB;
+  shpInputBg.Pen.Style := psSolid;
+
+  memPrompt.StyleElements := memPrompt.StyleElements - [seClient, seBorder];
   memPrompt.Color := LInputBgColor;
   memPrompt.Font.Color := LTextColor;
 
-  // SpeedButtons (Toolbar e Send)
-  btnTemplates.Font.Color := LTextColor;
-  btnExport.Font.Color := LTextColor;
-  btnClear.Font.Color := LTextColor;
-  btnSettings.Font.Color := LTextColor;
-  btnSend.Font.Color := LTextColor;
+  btnSend.StyleElements := btnSend.StyleElements - [seFont, seClient, seBorder];
+  
+  UpdateSendButtonVisual;
 end;
 
 procedure TFrameAIChat.ApplyIDETheme;
@@ -630,7 +701,7 @@ begin
     if LThemingServices.IDEThemingEnabled then
     begin
       LActiveTheme := LThemingServices.ActiveTheme;
-      if SameText(LActiveTheme, 'Dark') then
+      if IsThemeDark(LActiveTheme) then
         SetTheme('dark')
       else
         SetTheme('light');
@@ -749,6 +820,16 @@ var
   LTemplateName: string;
   LResolved: string;
 begin
+  if FRequestInProgress then
+  begin
+    FCancelledByUser := True;
+    TLogger.Log('btnSendClick: User requested cancellation of active request.', 'UI');
+    btnSend.Enabled := False;
+    UpdateSendButtonVisual;
+    FAIService.CancelCurrentRequest;
+    Exit;
+  end;
+
   if not btnSend.Enabled then
     Exit;
 
@@ -846,7 +927,10 @@ var
   LActiveModel: string;
 begin
   LDoneHandled := False;
-  btnSend.Enabled := False;
+  FRequestInProgress := True;
+  FCancelledByUser := False;
+  UpdateSendButtonVisual;
+  btnSend.Enabled := True;
 
   LActiveProvider := ProviderTypeToString(FConfig.GetActiveProvider);
   LActiveModel := FConfig.GetActiveModel(FConfig.GetActiveProvider);
@@ -897,12 +981,36 @@ begin
           if not LGuard.IsAlive then
             Exit;
 
+          if FCancelledByUser then
+          begin
+            LDoneHandled := True;
+            FRequestInProgress := False;
+            UpdateSendButtonVisual;
+            btnSend.Enabled := True;
+            TLogger.Log('SendPromptToAI: Handling user cancellation in UI callback.', 'UI');
+            PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*', False, LActiveProvider, LActiveModel);
+            PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+            Exit;
+          end;
+
           if not LErrorCopy.IsEmpty then
           begin
             LDoneHandled := True;
+            FRequestInProgress := False;
+            UpdateSendButtonVisual;
             btnSend.Enabled := True;
             TLogger.Log(Format('SendPromptToAI error callback: %s', [LErrorCopy]), 'UI');
-            PostToWebView('add_message', 'assistant', '**Error:** ' + LErrorCopy, False, LActiveProvider, LActiveModel);
+            
+            if FCancelledByUser then
+            begin
+              PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*', False, LActiveProvider, LActiveModel);
+              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+            end
+            else
+            begin
+              PostToWebView('add_message', 'assistant', '**Error:** ' + LErrorCopy, False, LActiveProvider, LActiveModel);
+              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+            end;
             Exit;
           end;
 
@@ -914,6 +1022,8 @@ begin
           else
           begin
             LDoneHandled := True;
+            FRequestInProgress := False;
+            UpdateSendButtonVisual;
             btnSend.Enabled := True;
             TLogger.Log(Format('SendPromptToAI done callback. ResponseLength=%d', [Length(LFullResponse)]), 'UI');
             if not LChunkCopy.IsEmpty then

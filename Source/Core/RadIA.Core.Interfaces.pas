@@ -57,7 +57,7 @@ type
 
   { Interface representing an AI Provider }
   IIAProvider = interface
-    ['{A2833F49-9A0B-432D-8B8D-20DFF15FF25D}']
+    ['{A2833F50-9A0B-432D-8B8D-20DFF15FF25D}']
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
@@ -66,6 +66,7 @@ type
     function GetAvailableModels: TArray<string>;
     function GetName: string;
     function GetProviderType: TAIProviderType;
+    procedure CancelCurrentRequest;
   end;
 
   { Interface representing Configuration Management }
