@@ -512,12 +512,12 @@ begin
     // Refatorar
     LService.ResolveParameters(ptGemini, rpRefactorCode, LTemp, LMaxTokens);
     Assert.AreEqual(0.1, LTemp, 0.01);
-    Assert.AreEqual(4096, LMaxTokens);
+    Assert.AreEqual(16384, LMaxTokens);
     
     // Chat Geral
     LService.ResolveParameters(ptGemini, rpGeneralChat, LTemp, LMaxTokens);
     Assert.AreEqual(0.7, LTemp, 0.01);
-    Assert.AreEqual(2048, LMaxTokens);
+    Assert.AreEqual(8192, LMaxTokens);
     
     { 2. Com Smart Config Disabled (Usa valores da config) }
     LConfig.SmartConfigEnabled := False;
