@@ -8,17 +8,14 @@ uses
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
-  TRadIAGroqProvider = class(TRadIAProviderBase)
+  TRadIAGroqProvider = class(TRadIAOpenAICompatibleProvider)
   protected
+    function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
     function FilterModelId(const AId: string): Boolean; override;
   public
     constructor Create(const AConfig: IAIConfig); override;
 
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -37,6 +34,11 @@ begin
   FProviderType := ptGroq;
 end;
 
+function TRadIAGroqProvider.GetBaseUrl: string;
+begin
+  Result := 'https://api.groq.com/openai/v1';
+end;
+
 function TRadIAGroqProvider.GetAvailableModels: TArray<string>;
 begin
   Result := TArray<string>.Create(MODEL_GROQ_LLAMA33, MODEL_GROQ_MIXTRAL, MODEL_GROQ_GEMMA2);
@@ -49,7 +51,7 @@ end;
 
 function TRadIAGroqProvider.GetModelsDiscoveryUrl: string;
 begin
-  Result := 'https://api.groq.com/openai/v1/models';
+  Result := GetBaseUrl.TrimRight(['/']) + '/models';
 end;
 
 function TRadIAGroqProvider.FilterModelId(const AId: string): Boolean;
@@ -59,139 +61,10 @@ begin
     (AId.Contains('llama') or AId.Contains('mixtral') or AId.Contains('gemma'));
 end;
 
-procedure TRadIAGroqProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
-  const ATemperature: Double; const AMaxTokens: Integer);
-var
-  LUrl, LApiKey, LRequestBody: string;
-  LHeaders: TNetHeaders;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
-begin
-  LProviderRef := Self;
-  LApiKey := GetApiKey;
-  if LApiKey.IsEmpty then
-  begin
-    ACallback('', 'API Key is missing for Groq. Please check settings.', False, TTokenUsage.Empty);
-    Exit;
-  end;
-
-  LUrl := 'https://api.groq.com/openai/v1/chat/completions';
-  SetLength(LHeaders, 1);
-  LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
-
-  try
-    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
-  except
-    on E: Exception do
-    begin
-      ACallback('', 'Error building request JSON: ' + E.Message, False, TTokenUsage.Empty);
-      Exit;
-    end;
-  end;
-
-  LTaskProc :=
-    procedure
-    var
-      LResponseText: string;
-      LUsage: TTokenUsage;
-      LErrorMsg: string;
-    begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType;
-      try
-        LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
-        LResponseText := ParseOpenAICompatibleResponse(LResponseText, LUsage);
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback(LResponseText, '', False, LUsage);
-          end);
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', LErrorMsg, False, TTokenUsage.Empty);
-            end);
-        end;
-      end;
-    end;
-
-  TTask.Run(LTaskProc);
-end;
-
 procedure TRadIAGroqProvider.FetchAvailableModelsAsync(
   const ACallback: TProc<TArray<string>, string>);
 begin
-  { Delegates to the base implementation which uses GetModelsDiscoveryUrl and FilterModelId }
   inherited FetchAvailableModelsAsync(ACallback);
-end;
-
-procedure TRadIAGroqProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
-  const ATemperature: Double; const AMaxTokens: Integer);
-var
-  LUrl, LApiKey, LRequestBody: string;
-  LHeaders: TNetHeaders;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
-begin
-  LProviderRef := Self;
-  LApiKey := GetApiKey;
-  if LApiKey.IsEmpty then
-  begin
-    ACallback('', True, 'API Key is missing for Groq. Please check settings.');
-    Exit;
-  end;
-
-  LUrl := 'https://api.groq.com/openai/v1/chat/completions';
-  SetLength(LHeaders, 1);
-  LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
-
-  try
-    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
-  except
-    on E: Exception do
-    begin
-      ACallback('', True, 'Error building request JSON: ' + E.Message);
-      Exit;
-    end;
-  end;
-
-  LTaskProc :=
-    procedure
-    var
-      LBufferText: string;
-      LErrorMsg: string;
-    begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType;
-      LBufferText := '';
-      try
-        DoPostRequestStream(LUrl, LHeaders, LRequestBody,
-          procedure(ABytes: TBytes)
-          begin
-            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
-            ProcessOpenAICompatibleStreamBuffer(LBufferText, ACallback);
-          end);
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', True, LErrorMsg);
-            end);
-        end;
-      end;
-    end;
-
-  TTask.Run(LTaskProc);
 end;
 
 end.
