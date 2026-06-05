@@ -130,36 +130,22 @@ end;
 
 procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
 var
-  LIsDark: Boolean;
-  LBgColor, LTextColor, LInputBgColor: TColor;
+  LColors: TRadIAThemeColors;
 begin
-  LIsDark := SameText(AThemeName, 'dark') or AThemeName.ToLower.Contains('dark');
-  
-  if LIsDark then
-  begin
-    LBgColor := $00252526;
-    LTextColor := $00D4D4D4;
-    LInputBgColor := $001E1E1E;
-  end
-  else
-  begin
-    LBgColor := clBtnFace;
-    LTextColor := clWindowText;
-    LInputBgColor := clWindow;
-  end;
+  LColors := TRadIAThemeColors.GetColorsForTheme(AThemeName);
 
   Self.StyleElements := Self.StyleElements - [seClient, seBorder];
-  Self.Color := LBgColor;
+  Self.Color := LColors.BgBase;
   pnlFooter.StyleElements := pnlFooter.StyleElements - [seClient, seBorder];
-  pnlFooter.Color := LBgColor;
+  pnlFooter.Color := LColors.BgBase;
   pnlFooter.ParentBackground := False;
   pnlSidebar.StyleElements := pnlSidebar.StyleElements - [seClient, seBorder];
-  pnlSidebar.Color := LBgColor;
+  pnlSidebar.Color := LColors.BgBase;
   pnlSidebar.ParentBackground := False;
 
   tvCategories.StyleElements := tvCategories.StyleElements - [seClient, seBorder];
-  tvCategories.Color := LInputBgColor;
-  tvCategories.Font.Color := LTextColor;
+  tvCategories.Color := LColors.InputBgColor;
+  tvCategories.Font.Color := LColors.TextColor;
 end;
 
 end.

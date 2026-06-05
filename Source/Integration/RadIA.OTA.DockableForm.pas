@@ -32,7 +32,7 @@ var
 implementation
 
 uses
-  DeskUtil, RadIA.Core.Config;
+  DeskUtil, RadIA.Core.Config, RadIA.UI.Resources;
 
 procedure ShowRadIAChat;
 begin
