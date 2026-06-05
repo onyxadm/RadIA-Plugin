@@ -18,7 +18,7 @@ object FrameAIChat: TFrameAIChat
       Top = 11
       Width = 120
       Height = 20
-      Caption = 'AI ASSISTANT'
+      Caption = 'RadIA - AI ASSISTANT'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -15
