@@ -102,7 +102,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger;
+  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger, Vcl.Themes;
 
 type
   TTabSheetColorHack = class(TTabSheet);
@@ -112,7 +112,6 @@ constructor TFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
-  I: Integer;
 begin
   inherited Create(AOwner);
   FConfig := TRadIAConfig.Create;
@@ -232,20 +231,10 @@ begin
     begin
       LThemingServices.ApplyTheme(Self);
       LActiveTheme := LThemingServices.ActiveTheme;
-      
-      TWinControlHack(Self).ParentBackground := True;
-      TWinControlHack(pgcSettings).ParentBackground := True;
-      for I := 0 to pgcSettings.PageCount - 1 do
-      begin
-        TTabSheetColorHack(pgcSettings.Pages[I]).ParentBackground := True;
-      end;
     end;
   end;
 
-  if not (Assigned(LThemingServices) and LThemingServices.IDEThemingEnabled) then
-  begin
-    UpdateVCLColors(LActiveTheme);
-  end;
+  UpdateVCLColors(LActiveTheme);
   LoadConfig;
 end;
 
@@ -318,20 +307,30 @@ var
   LBgColor, LTextColor, LInputBgColor: TColor;
   I: Integer;
   LProvider: TAIProviderType;
+  LThemingServices: IOTAIDEThemingServices;
 begin
   LIsDark := SameText(AThemeName, 'dark');
   
-  if LIsDark then
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) and LThemingServices.IDEThemingEnabled then
   begin
-    LBgColor := $00252526;
-    LTextColor := $00D4D4D4;
-    LInputBgColor := $001E1E1E;
+    LBgColor := StyleServices.GetSystemColor(clBtnFace);
+    LTextColor := StyleServices.GetSystemColor(clWindowText);
+    LInputBgColor := StyleServices.GetSystemColor(clWindow);
   end
   else
   begin
-    LBgColor := clBtnFace;
-    LTextColor := clWindowText;
-    LInputBgColor := clWindow;
+    if LIsDark then
+    begin
+      LBgColor := $00252526;
+      LTextColor := $00D4D4D4;
+      LInputBgColor := $001E1E1E;
+    end
+    else
+    begin
+      LBgColor := clBtnFace;
+      LTextColor := clWindowText;
+      LInputBgColor := clWindow;
+    end;
   end;
 
   Self.Color := LBgColor;
@@ -573,7 +572,8 @@ begin
   { Save templates too }
   FTemplateManager.Save;
 
-  ShowMessage('Settings saved successfully.');
+  if Sender <> nil then
+    ShowMessage('Settings saved successfully.');
 
   LForm := GetParentForm(Self);
   if LForm <> nil then

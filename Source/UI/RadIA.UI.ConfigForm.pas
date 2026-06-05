@@ -34,7 +34,7 @@ implementation
 {$R *.dfm}
 
 uses
-  RadIA.UI.Resources;
+  RadIA.UI.Resources, Vcl.Themes;
 
 constructor TFormAIConfig.Create(AOwner: TComponent);
 var
@@ -76,10 +76,7 @@ begin
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;
 
-  if not (Assigned(LThemingServices) and LThemingServices.IDEThemingEnabled) then
-  begin
-    UpdateVCLColors(LActiveTheme);
-  end;
+  UpdateVCLColors(LActiveTheme);
 end;
 
 procedure TFormAIConfig.CreateWnd;
@@ -112,6 +109,8 @@ end;
 procedure TFormAIConfig.btnSaveClick(Sender: TObject);
 begin
   FFrameConfig.btnSaveClick(Sender);
+  if Self.ModalResult = mrOk then
+    ShowMessage('Settings saved successfully.');
 end;
 
 procedure TFormAIConfig.btnCancelClick(Sender: TObject);
@@ -129,20 +128,30 @@ procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
+  LThemingServices: IOTAIDEThemingServices;
 begin
   LIsDark := SameText(AThemeName, 'dark');
   
-  if LIsDark then
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) and LThemingServices.IDEThemingEnabled then
   begin
-    LBgColor := $00252526;
-    LTextColor := $00D4D4D4;
-    LInputBgColor := $001E1E1E;
+    LBgColor := StyleServices.GetSystemColor(clBtnFace);
+    LTextColor := StyleServices.GetSystemColor(clWindowText);
+    LInputBgColor := StyleServices.GetSystemColor(clWindow);
   end
   else
   begin
-    LBgColor := clBtnFace;
-    LTextColor := clWindowText;
-    LInputBgColor := clWindow;
+    if LIsDark then
+    begin
+      LBgColor := $00252526;
+      LTextColor := $00D4D4D4;
+      LInputBgColor := $001E1E1E;
+    end
+    else
+    begin
+      LBgColor := clBtnFace;
+      LTextColor := clWindowText;
+      LInputBgColor := clWindow;
+    end;
   end;
 
   Self.Color := LBgColor;
