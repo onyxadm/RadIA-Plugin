@@ -77,6 +77,7 @@ type
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
     FWebViewInitialized: Boolean;
+    FWebViewReady: Boolean;
     FPromptHistoryManager: TPromptHistoryManager;
     FAccumulatedUsage: TTokenUsage;
     FTemplateManager: TPromptTemplateManager;
@@ -277,6 +278,7 @@ begin
   if Showing and not FWebViewInitialized then
   begin
     FWebViewInitialized := True;
+    FWebViewReady := False;
     CreateEdgeBrowser;
     TThread.ForceQueue(nil,
       TThreadProcedure(
@@ -310,6 +312,7 @@ begin
   if not FWebViewInitialized and Showing then
   begin
     FWebViewInitialized := True;
+    FWebViewReady := False;
     CreateEdgeBrowser;
     TThread.ForceQueue(nil,
       TThreadProcedure(
@@ -326,6 +329,7 @@ var
 begin
   FBrowserInitialized := False;
   FWebViewInitialized := False;
+  FWebViewReady := False;
   if Assigned(EdgeBrowser) then
   begin
     LEdgeToFree := EdgeBrowser;
@@ -888,7 +892,13 @@ begin
         TThreadProcedure(
         procedure
         begin
+          FWebViewReady := True;
           LoadChatHistory;
+          
+          { Se a WebView carregou enquanto uma requisição de IA já estava rodando, }
+          { garante o envio do indicador de digitação agora que ela está pronta. }
+          if FRequestInProgress then
+            PostToWebView('show_typing', '', '');
         end));
     end;
   finally
@@ -1122,7 +1132,10 @@ begin
             if not SameText(FSessionManager.ActiveSessionId, LSessionId) then
             begin
               TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.', [LSessionId, FSessionManager.ActiveSessionId]), 'UI');
-              if LIsDoneCopy or (not LFullResponse.IsEmpty) then
+              
+              { Apenas salva no histórico no encerramento definitivo (LIsDoneCopy = True) }
+              { para evitar que múltiplos callbacks concorrentes em andamento gravem no mesmo arquivo JSON }
+              if LIsDoneCopy and (not LFullResponse.IsEmpty) then
               begin
                 TThread.CreateAnonymousThread(
                   procedure
@@ -1188,33 +1201,27 @@ begin
               Exit;
             end;
 
-            if not LIsDoneCopy then
+            if not LChunkCopy.IsEmpty then
             begin
               LFullResponse := LFullResponse + LChunkCopy;
               PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
-            end
-            else
+            end;
+
+            if LIsDoneCopy then
             begin
               LDoneHandled := True;
               FRequestInProgress := False;
               UpdateSendButtonVisual;
               btnSend.Enabled := True;
-              TLogger.Log(Format('SendPromptToAI done callback. ResponseLength=%d', [Length(LFullResponse)]), 'UI');
-              if not LChunkCopy.IsEmpty then
-              begin
-                LFullResponse := LFullResponse + LChunkCopy;
-                PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
-              end;
+              TLogger.Log(Format('SendPromptToAI completed. TotalResponseLength=%d', [Length(LFullResponse)]), 'UI');
 
-              if LFullResponse.IsEmpty and AError.IsEmpty then
+              if LFullResponse.IsEmpty then
               begin
                 TLogger.Log('SendPromptToAI: Empty response from AI provider', 'UI');
                 PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.', False, LActiveProvider, LActiveModel);
                 PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
                 Exit;
               end;
-
-              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
 
               { Save assistant response to history }
               LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
@@ -1242,6 +1249,8 @@ begin
 
                 PostToWebView('update_tokens', '', LStats);
               end;
+
+              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
             end;
           end));
       end, LProfile);
@@ -1410,6 +1419,14 @@ procedure TFrameAIChat.btnNewSessionClick(Sender: TObject);
 var
   LSession: TSessionInfo;
 begin
+  if FRequestInProgress then
+  begin
+    FCancelledByUser := True;
+    FAIService.CancelCurrentRequest;
+    FRequestInProgress := False;
+    UpdateSendButtonVisual;
+  end;
+
   if not FSessionManager.ActiveSessionId.IsEmpty then
     SaveChatHistory;
 
@@ -1474,6 +1491,14 @@ begin
   if MessageDlg(Format('Tem certeza que deseja excluir a conversa "%s"?', [LName]),
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
+    if FRequestInProgress and SameText(FSessionManager.ActiveSessionId, LId) then
+    begin
+      FCancelledByUser := True;
+      FAIService.CancelCurrentRequest;
+      FRequestInProgress := False;
+      UpdateSendButtonVisual;
+    end;
+
     FSessionManager.DeleteSession(LId);
     
     if SameText(FSessionManager.ActiveSessionId, LId) then
