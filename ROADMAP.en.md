@@ -36,27 +36,22 @@ Version 1.0 implemented all core plugin features, including:
 
 ---
 
-## 🔲 v1.1 — Control & Visibility (Next Version)
+## ✅ v1.1 — Control & Visibility (Completed)
 
-### 1. Multiple Chat Sessions
-*   **Goal**: Allow developers to organize conversations by project, feature, or task, without losing the context of previous sessions.
-*   **Details**:
-    *   Store sessions in `%APPDATA%\RadIA\sessions\<id>.json`, each with a name, date, and messages array.
-    *   Add a dropdown or side panel to list, create, rename, and delete sessions.
-    *   **"New Session"** button saves the current session and opens a new empty one.
-*   **Impact**: ⭐⭐⭐⭐⭐ High
+Version 1.1 focused on context management and local governance over token usage:
 
-### 2. Local Token Budget & Quota Control
-*   **Goal**: Allow developers to set a monthly token consumption limit to avoid billing surprises on their own API keys.
-*   **Details**:
-    *   Settings field for token limit (e.g., monthly quota of 1,000,000 tokens).
-    *   Persistently accumulate consumption locally per API key.
-    *   Display consumption percentage in the chat status bar and block new calls upon reaching 100% of the quota.
-*   **Impact**: ⭐⭐⭐⭐⭐ High
+- **Multiple Chat Sessions (Advanced History):**
+  * Local conversation persistence saved inside `%APPDATA%\RadIA\sessions\<guid>.json`.
+  * Collapsible sidebar built with high-fidelity HTML/CSS/JS premium styling inside WebView2 for listing, selecting, creating, renaming (inline double-click), and deleting active conversations.
+  * Thread-safe event integration and sync handlers in Delphi-WebView channel.
+- **Local Token Budget & Quota Control:**
+  * Configurable monthly budget limit inside settings.
+  * Local persistency accumulator with real-time percentage consumption status inside WebView status bar.
+  * Dynamic network request block whenever usage exceeds 100% of the set quota.
 
 ---
 
-## 🔲 v1.2 — Advanced Productivity
+## 🔲 v1.2 — Advanced Productivity (Next Version)
 
 ### 3. Automatic Code Review on Save
 *   **Goal**: Silently analyze the active unit on save and signal in the RadIA panel if the AI found points of attention (e.g., potential bugs, duplicated code, or missing exception handling).

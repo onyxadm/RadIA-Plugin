@@ -36,27 +36,22 @@ A versão 1.0 implementou todos os recursos essenciais do plugin, incluindo:
 
 ---
 
-## 🔲 v1.1 — Controle e Visibilidade (Próxima Versão)
+## ✅ v1.1 — Controle e Visibilidade (Concluído)
 
-### 1. Múltiplas Sessões de Chat
-*   **Objetivo**: Permitir que o desenvolvedor organize conversas por projeto, feature ou tarefa, sem perder o contexto de sessões anteriores.
-*   **Detalhamento**:
-    *   Armazenar sessões em `%APPDATA%\RadIA\sessions\<id>.json`, cada uma com nome, data e array de mensagens.
-    *   Adicionar dropdown ou painel lateral para listar, criar, renomear e excluir sessões.
-    *   Botão **"Nova Sessão"** salva a sessão corrente e abre uma nova vazia.
-*   **Impacto**: ⭐⭐⭐⭐⭐ Alto
+A versão 1.1 focou em fornecer maior gerenciamento de contexto e governança sobre o consumo de tokens:
 
-### 2. Controle de Cota e Orçamento de Tokens Local
-*   **Objetivo**: Permitir que o desenvolvedor estabeleça um limite mensal de consumo de tokens para evitar surpresas no faturamento das chaves de API próprias.
-*   **Detalhamento**:
-    *   Campo nas configurações de limite de tokens (ex: cota mensal de 1.000.000 tokens).
-    *   Acumular consumo de forma persistente localmente por chave de API.
-    *   Exibir percentual de consumo na barra de status do chat e bloquear novas chamadas ao atingir 100% da cota.
-*   **Impacto**: ⭐⭐⭐⭐⭐ Alto
+- **Múltiplas Sessões de Chat (Histórico Avançado):**
+  * Gerenciamento de conversas persistido localmente em `%APPDATA%\RadIA\sessions\<guid>.json`.
+  * Barra lateral retrátil (sidebar) estilizada inteiramente em HTML/CSS/JS premium na WebView2 para listar, selecionar, criar, renomear de forma rápida (duplo clique inline) e excluir conversas.
+  * Integração perfeita de eventos e concorrência na sincronização Delphi-WebView.
+- **Controle de Cota e Orçamento de Tokens:**
+  * Configuração de limite de consumo mensal nas opções do plugin.
+  * Acúmulo persistido localmente e exibição do percentual de cota gasto na barra de status inferior.
+  * Bloqueio dinâmico automático de novas chamadas ao ultrapassar 100% da cota.
 
 ---
 
-## 🔲 v1.2 — Produtividade Avançada
+## 🔲 v1.2 — Produtividade Avançada (Próxima Versão)
 
 ### 3. Revisão Automática de Código no Save
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção (ex: possíveis bugs, código duplicado ou falta de tratamento de exceção).
