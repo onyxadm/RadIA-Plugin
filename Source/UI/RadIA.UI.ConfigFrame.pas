@@ -10,6 +10,9 @@ uses
 
 type
   TFormAIConfig = class(TForm)
+    pnlSidebar: TPanel;
+    tvCategories: TTreeView;
+    splSidebar: TSplitter;
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
     tsOpenAI: TTabSheet;
@@ -58,6 +61,7 @@ type
     procedure btnDeleteTemplateClick(Sender: TObject);
     procedure btnSaveTemplateClick(Sender: TObject);
     procedure btnRestoreDefaultsClick(Sender: TObject);
+    procedure tvCategoriesChange(Sender: TObject; Node: TTreeNode);
   protected
     procedure CreateWnd; override;
   private
@@ -135,6 +139,7 @@ constructor TFormAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
+  LNodeGeneral, LNodeProviders: TTreeNode;
 begin
   inherited Create(AOwner);
   FConfig := TRadIAConfig.Create;
@@ -162,6 +167,7 @@ begin
   tsGeneral := TTabSheet.Create(Self);
   tsGeneral.PageControl := pgcSettings;
   tsGeneral.Caption := 'General / Logs';
+  tsGeneral.TabVisible := False;
 
   chkLogEnabled := TCheckBox.Create(Self);
   chkLogEnabled.Parent := tsGeneral;
@@ -257,6 +263,24 @@ begin
       LActiveTheme := LThemingServices.ActiveTheme;
     end;
   end;
+
+  // Configure TreeView and populate categories
+  tvCategories.OnChange := tvCategoriesChange;
+  
+  LNodeGeneral := tvCategories.Items.Add(nil, 'General / Logs');
+  tvCategories.Items.Add(nil, 'System Prompt');
+  tvCategories.Items.Add(nil, 'Templates');
+  LNodeProviders := tvCategories.Items.Add(nil, 'AI Providers');
+  
+  tvCategories.Items.AddChild(LNodeProviders, 'Gemini');
+  tvCategories.Items.AddChild(LNodeProviders, 'OpenAI');
+  tvCategories.Items.AddChild(LNodeProviders, 'Claude');
+  tvCategories.Items.AddChild(LNodeProviders, 'DeepSeek');
+  tvCategories.Items.AddChild(LNodeProviders, 'Groq');
+  tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
+  
+  tvCategories.FullExpand;
+  tvCategories.Selected := LNodeGeneral;
 
   if not (Assigned(LThemingServices) and LThemingServices.IDEThemingEnabled) then
   begin
@@ -467,6 +491,17 @@ begin
     edtQuotaLimit.Color := LInputBgColor;
     edtQuotaLimit.Font.Color := LTextColor;
     lblQuotaUsed.Font.Color := LTextColor;
+  end;
+
+  if Assigned(tvCategories) then
+  begin
+    tvCategories.Color := LInputBgColor;
+    tvCategories.Font.Color := LTextColor;
+  end;
+  if Assigned(pnlSidebar) then
+  begin
+    pnlSidebar.Color := LBgColor;
+    pnlSidebar.ParentBackground := False;
   end;
 end;
 
@@ -748,6 +783,30 @@ begin
     lblQuotaUsed.Caption := 'Monthly Used Tokens: 0';
     ShowMessage('Token usage counter reset successfully.');
   end;
+end;
+
+procedure TFormAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
+begin
+  if Node = nil then Exit;
+  
+  if SameText(Node.Text, 'General / Logs') then
+    pgcSettings.ActivePage := tsGeneral
+  else if SameText(Node.Text, 'System Prompt') then
+    pgcSettings.ActivePage := tsSystemPrompt
+  else if SameText(Node.Text, 'Templates') then
+    pgcSettings.ActivePage := tsTemplates
+  else if SameText(Node.Text, 'Gemini') then
+    pgcSettings.ActivePage := tsGemini
+  else if SameText(Node.Text, 'OpenAI') then
+    pgcSettings.ActivePage := tsOpenAI
+  else if SameText(Node.Text, 'Claude') then
+    pgcSettings.ActivePage := tsClaude
+  else if SameText(Node.Text, 'DeepSeek') then
+    pgcSettings.ActivePage := tsDeepSeek
+  else if SameText(Node.Text, 'Groq') then
+    pgcSettings.ActivePage := tsGroq
+  else if SameText(Node.Text, 'Ollama') then
+    pgcSettings.ActivePage := tsOllama;
 end;
 
 end.

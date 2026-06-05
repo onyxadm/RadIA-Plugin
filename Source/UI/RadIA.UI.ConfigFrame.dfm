@@ -3,8 +3,8 @@ object FormAIConfig: TFormAIConfig
   Top = 0
   BorderStyle = bsDialog
   Caption = 'RadIA Configuration'
-  ClientHeight = 480
-  ClientWidth = 800
+  ClientHeight = 520
+  ClientWidth = 840
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,18 +13,44 @@ object FormAIConfig: TFormAIConfig
   Font.Style = []
   Position = poOwnerFormCenter
   TextHeight = 15
+  object pnlSidebar: TPanel
+    Left = 0
+    Top = 0
+    Width = 200
+    Height = 487
+    Align = alLeft
+    BevelOuter = bvNone
+    TabOrder = 2
+    object tvCategories: TTreeView
+      Left = 0
+      Top = 0
+      Width = 200
+      Height = 487
+      Align = alClient
+      Indent = 19
+      ReadOnly = True
+      ShowLines = False
+      TabOrder = 0
+    end
+  end
+  object splSidebar: TSplitter
+    Left = 200
+    Top = 0
+    Width = 3
+    Height = 487
+  end
   object pgcSettings: TPageControl
     AlignWithMargins = True
-    Left = 3
+    Left = 206
     Top = 3
-    Width = 643
-    Height = 444
+    Width = 631
+    Height = 481
     ActivePage = tsGemini
     Align = alClient
     TabOrder = 0
-    TabWidth = 80
     object tsGemini: TTabSheet
       Caption = 'Gemini'
+      TabVisible = False
       object lblGeminiKey: TLabel
         Left = 16
         Top = 24
@@ -42,6 +68,7 @@ object FormAIConfig: TFormAIConfig
     end
     object tsOpenAI: TTabSheet
       Caption = 'OpenAI'
+      TabVisible = False
       object lblOpenAIKey: TLabel
         Left = 16
         Top = 24
@@ -78,6 +105,7 @@ object FormAIConfig: TFormAIConfig
     end
     object tsClaude: TTabSheet
       Caption = 'Claude'
+      TabVisible = False
       object lblClaudeKey: TLabel
         Left = 16
         Top = 24
@@ -95,6 +123,7 @@ object FormAIConfig: TFormAIConfig
     end
     object tsDeepSeek: TTabSheet
       Caption = 'DeepSeek'
+      TabVisible = False
       object lblDeepSeekKey: TLabel
         Left = 16
         Top = 24
@@ -112,6 +141,7 @@ object FormAIConfig: TFormAIConfig
     end
     object tsGroq: TTabSheet
       Caption = 'Groq'
+      TabVisible = False
       object lblGroqKey: TLabel
         Left = 16
         Top = 24
@@ -129,6 +159,7 @@ object FormAIConfig: TFormAIConfig
     end
     object tsOllama: TTabSheet
       Caption = 'Ollama'
+      TabVisible = False
       object lblOllamaUrl: TLabel
         Left = 16
         Top = 24
@@ -146,6 +177,7 @@ object FormAIConfig: TFormAIConfig
     end
     object tsSystemPrompt: TTabSheet
       Caption = 'System'
+      TabVisible = False
       object memSystemPrompt: TMemo
         AlignWithMargins = True
         Left = 3
@@ -163,6 +195,7 @@ object FormAIConfig: TFormAIConfig
     end
     object tsTemplates: TTabSheet
       Caption = 'Templates'
+      TabVisible = False
       object pnlTemplatesLeft: TPanel
         Left = 0
         Top = 0
@@ -291,8 +324,8 @@ object FormAIConfig: TFormAIConfig
   end
   object pnlFooter: TPanel
     Left = 0
-    Top = 450
-    Width = 649
+    Top = 487
+    Width = 840
     Height = 33
     Align = alBottom
     BevelOuter = bvNone
