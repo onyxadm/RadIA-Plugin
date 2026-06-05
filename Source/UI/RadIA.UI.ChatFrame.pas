@@ -121,6 +121,8 @@ type
     procedure SetTheme(const AThemeName: string);
   end;
 
+function IsThemeDark(const AThemeName: string): Boolean;
+
 implementation
 
 {$R *.dfm}
@@ -132,6 +134,8 @@ uses
 function IsThemeDark(const AThemeName: string): Boolean;
 begin
   Result := AThemeName.ToLower.Contains('dark') or 
+            AThemeName.ToLower.Contains('mountain') or
+            AThemeName.ToLower.Contains('mist') or
             SameText(AThemeName, 'carbon') or 
             SameText(AThemeName, 'glow') or 
             SameText(AThemeName, 'onyx');
@@ -796,7 +800,7 @@ begin
     shpInputBg.Pen.Color := $00D1D5DB;
   shpInputBg.Pen.Style := psSolid;
 
-  memPrompt.StyleElements := memPrompt.StyleElements - [seClient, seBorder];
+  memPrompt.StyleElements := [];
   memPrompt.Color := AColors.InputBgColor;
   memPrompt.Font.Color := AColors.TextColor;
 
