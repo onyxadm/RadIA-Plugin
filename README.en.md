@@ -10,8 +10,6 @@
 
 <p align="center">
   <img src="docs/images/radia_ui_mockup.png" alt="RadIA Chat Panel Mockup" width="45%" />
-  &nbsp;&nbsp;
-  <img src="docs/images/radia_diff_ui_mockup.png" alt="RadIA Diff View Mockup" width="45%" />
 </p>
 
 ---
