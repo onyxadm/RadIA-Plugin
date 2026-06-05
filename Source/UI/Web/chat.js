@@ -48,8 +48,8 @@ renderer.code = function(codeOrToken, lang) {
       <div class="code-header">
         <span>${language.toUpperCase()}</span>
         <div class="code-header-actions">
-          <button class="copy-btn" onclick="copyCode(this, '${id}')">Copy</button>
-          ${isPascal ? `<button class="apply-btn" onclick="applyCode('${id}')">Apply to Editor</button>` : ''}
+          <button class="copy-btn" title="Copy Code" onclick="copyCode(this, '${id}')">❐</button>
+          ${isPascal ? `<button class="apply-btn" title="Apply to Editor" onclick="applyCode('${id}')">✓</button>` : ''}
         </div>
       </div>
       <pre><code class="language-${language}">${highlighted}</code></pre>
@@ -65,9 +65,9 @@ const chatContainer = document.getElementById('chat-container');
 //  Nomes e ícones dos remetentes
 // ============================================================
 const SENDER_INFO = {
-  user:      { name: 'User',     icon: 'U', avatarClass: 'user-avatar', headerClass: 'user-header' },
-  assistant: { name: 'Codex AI', icon: '✦', avatarClass: 'ai-avatar',   headerClass: 'ai-header'   },
-  system:    { name: 'System',   icon: '⚙', avatarClass: 'ai-avatar',   headerClass: 'ai-header'   }
+  user:      { name: 'User',     icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4E4E52"/><path d="M12 11C13.6569 11 15 9.65685 15 8C15 6.34315 13.6569 5 12 5C10.3431 5 9 6.34315 9 8C9 9.65685 10.3431 11 12 11Z" fill="#F1F1F1"/><path d="M12 12.5C9.33 12.5 4 13.84 4 16.5V18H20V16.5C20 13.84 14.67 12.5 12 12.5Z" fill="#F1F1F1"/></svg>`, avatarClass: 'user-avatar', headerClass: 'user-header' },
+  assistant: { name: 'Codex AI', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, avatarClass: 'ai-avatar',   headerClass: 'ai-header'   },
+  system:    { name: 'System',   icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, avatarClass: 'ai-avatar',   headerClass: 'ai-header'   }
 };
 
 // ============================================================
@@ -86,7 +86,7 @@ function addMessage(role, text, provider, model) {
   // Avatar
   const avatar = document.createElement('div');
   avatar.classList.add('message-avatar', info.avatarClass);
-  avatar.textContent = info.icon;
+  avatar.innerHTML = info.icon;
 
   // Corpo (header + conteúdo)
   const body = document.createElement('div');
@@ -168,7 +168,7 @@ function copyCode(btn, id) {
   const code = _codeRegistry[id] || '';
   navigator.clipboard.writeText(code).then(() => {
     const orig = btn.innerText;
-    btn.innerText = 'Copied!';
+    btn.innerText = '✓';
     setTimeout(() => { btn.innerText = orig; }, 2000);
   });
 }
@@ -213,7 +213,7 @@ function showTypingIndicator() {
 
   const avatar = document.createElement('div');
   avatar.classList.add('message-avatar', info.avatarClass);
-  avatar.textContent = info.icon;
+  avatar.innerHTML = info.icon;
 
   const indicator = document.createElement('div');
   indicator.classList.add('typing-indicator');
@@ -265,7 +265,7 @@ function appendMessage(text, isDone, provider, model) {
 
     const avatar = document.createElement('div');
     avatar.classList.add('message-avatar', info.avatarClass);
-    avatar.textContent = info.icon;
+    avatar.innerHTML = info.icon;
 
     const body = document.createElement('div');
     body.classList.add('message-body');
