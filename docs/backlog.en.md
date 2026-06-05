@@ -79,6 +79,19 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Extended settings for API keys with secure storage and DPAPI.
     *   New unit tests in `RadIA.Tests.ProvidersEx.pas` covering payload, response parsing, and streaming SSE flow.
 
+### 11. AI Request Cancellation & New Prompt Design - Item #17
+*   **Description**: Allows the developer to abort active AI HTTP requests asynchronously and instantly, and redesigns the chat input box into a modern and responsive floating capsule layout.
+*   **Details**:
+    *   Implemented network-level cancellation by intercepting the `OnReceiveData` callback of `THTTPClient`.
+    *   The send button changes its function and icon dynamically to a stop button (`■`) during the request, and the UI displays a clean cancellation message without encoding issues.
+    *   Input panel background configured for native transparency (`ParentBackground := True`), with the capsule shape (`shpInputBg`) and memo (`memPrompt`) styled with high contrast and visual integration.
+
+### 12. Advanced Settings per AI Provider - Item #18
+*   **Description**: Allows developers to configure generation parameters such as Temperature and Max Tokens individually per provider inside tabbed sections in the settings screen.
+*   **Details**:
+    *   Dynamic parameter editing and persistence within the Windows Registry via the `TRadIAConfig` class.
+    *   Payload mapping and integration inside HTTP JSON request modules for all supported AI backends (Ollama, Gemini, OpenAI, Claude, Groq, and DeepSeek).
+
 ---
 
 ## 🔲 Pending Items
@@ -105,10 +118,3 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
 	*   Add a setting field for token limit (e.g., monthly quota of 1,000,000 tokens).
 	*   Store and accumulate consumption persistently local.
 	*   Display consumption percentage in the sidebar chat status bar and alert/block calls upon reaching 100% of the defined quota.
-
-### 6. Advanced Settings per AI Provider
-*   **Goal**: Allow the developer to configure values such as Temperature, Max Tokens, TopK, TopP, and Request Timeouts individually per provider in the settings screen.
-*   **Details**:
-    *   Expand the settings screen (within the tabbed `TPageControl`) to include specific additional controls per provider tab (e.g., trackbar or numeric edit for Temperature, numeric edit for Max Tokens, and timeouts).
-    *   Add corresponding fields in the `TRadIAConfig` class and save these properties in the Windows Registry under `Software\Embarcadero\BDS\<versao>\RadIA`.
-    *   Pass these generation parameters in the HTTP REST request payloads of each corresponding provider.
