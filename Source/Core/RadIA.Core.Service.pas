@@ -11,15 +11,24 @@ type
   private
     FRole: TAIMessageRole;
     FContent: string;
+    FProvider: string;
+    FModel: string;
 
     function GetRole: TAIMessageRole;
     function GetContent: string;
     procedure SetContent(const AValue: string);
+    function GetProvider: string;
+    procedure SetProvider(const AValue: string);
+    function GetModel: string;
+    procedure SetModel(const AValue: string);
   public
-    constructor Create(const ARole: TAIMessageRole; const AContent: string);
+    constructor Create(const ARole: TAIMessageRole; const AContent: string;
+      const AProvider: string = ''; const AModel: string = '');
 
     property Role: TAIMessageRole read GetRole;
     property Content: string read GetContent write SetContent;
+    property Provider: string read GetProvider write SetProvider;
+    property Model: string read GetModel write SetModel;
   end;
 
   { Orchestrator service to manage active provider instantiation }
@@ -49,7 +58,8 @@ type
       const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
     procedure ClearCache;
 
-    class function CreateMessage(const ARole: TAIMessageRole; const AContent: string): IChatMessage;
+    class function CreateMessage(const ARole: TAIMessageRole; const AContent: string;
+      const AProvider: string = ''; const AModel: string = ''): IChatMessage;
   end;
 
 implementation
@@ -57,47 +67,24 @@ implementation
 uses
   System.IOUtils, System.JSON, RadIA.OTA.Helper, RadIA.Core.ProjectContext,
   RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama,
-  RadIA.Provider.DeepSeek, RadIA.Provider.Groq;
+  RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Core.Logger;
 
 procedure LogService(const AMsg: string);
-var
-  LFolder, LFile, LText: string;
-  LStream: TFileStream;
-  LWriter: TStreamWriter;
 begin
-  try
-    LFolder := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA';
-    ForceDirectories(LFolder);
-    LFile := LFolder + '\log.txt';
-    if FileExists(LFile) then
-      LStream := TFileStream.Create(LFile, fmOpenWrite or fmShareDenyNone)
-    else
-      LStream := TFileStream.Create(LFile, fmCreate or fmShareDenyNone);
-    try
-      LStream.Seek(0, soEnd);
-      LWriter := TStreamWriter.Create(LStream, TEncoding.UTF8);
-      try
-        LText := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - [Service] ' + AMsg;
-        LWriter.WriteLine(LText);
-      finally
-        LWriter.Free;
-      end;
-    finally
-      LStream.Free;
-    end;
-  except
-    // Silently ignore
-  end;
+  TLogger.Log(AMsg, 'Service');
 end;
 
 
 { TRadIAChatMessage }
 
-constructor TRadIAChatMessage.Create(const ARole: TAIMessageRole; const AContent: string);
+constructor TRadIAChatMessage.Create(const ARole: TAIMessageRole; const AContent: string;
+  const AProvider: string; const AModel: string);
 begin
   inherited Create;
   FRole := ARole;
   FContent := AContent;
+  FProvider := AProvider;
+  FModel := AModel;
 end;
 
 function TRadIAChatMessage.GetContent: string;
@@ -113,6 +100,26 @@ end;
 procedure TRadIAChatMessage.SetContent(const AValue: string);
 begin
   FContent := AValue;
+end;
+
+function TRadIAChatMessage.GetProvider: string;
+begin
+  Result := FProvider;
+end;
+
+procedure TRadIAChatMessage.SetProvider(const AValue: string);
+begin
+  FProvider := AValue;
+end;
+
+function TRadIAChatMessage.GetModel: string;
+begin
+  Result := FModel;
+end;
+
+procedure TRadIAChatMessage.SetModel(const AValue: string);
+begin
+  FModel := AValue;
 end;
 
 { TRadIAService }
@@ -330,6 +337,7 @@ begin
     { R2 FIX: Check cache before streaming }
     if FCacheManager.Get(LHash, LCachedResponse) then
     begin
+      LogService('SendPromptStream: Cache hit for hash ' + LHash + '. Response length: ' + IntToStr(Length(LCachedResponse)));
       TThread.Queue(nil,
         procedure
         begin
@@ -338,28 +346,36 @@ begin
       Exit;
     end;
 
+    LogService('SendPromptStream: Cache miss for hash ' + LHash + '. Initiating request...');
     LHistory     := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
     LAccumulator := '';
 
     { Resolve parameters based on config and profile }
     ResolveParameters(LProvider.GetProviderType, AProfile, LTemperature, LMaxTokens);
+    LogService(Format('SendPromptStream: Params resolved: Temp=%0.2f MaxTokens=%d', [LTemperature, LMaxTokens]));
 
     { R2 FIX: Wrap callback to accumulate chunks and persist to cache on completion }
     LProvider.SendPromptStreamAsync(APrompt, LHistory,
       procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
       begin
+        LogService(Format('SendPromptStream Callback: ChunkLen=%d IsDone=%s Error="%s"', 
+          [Length(AChunk), BoolToStr(AIsDone, True), AError]));
         if AError.IsEmpty then
         begin
           if not AChunk.IsEmpty then
             LAccumulator := LAccumulator + AChunk;
           if AIsDone and not LAccumulator.IsEmpty then
+          begin
+            LogService('SendPromptStream: Caching response of length ' + IntToStr(Length(LAccumulator)));
             FCacheManager.Put(LHash, LAccumulator);
+          end;
         end;
         ACallback(AChunk, AIsDone, AError);
       end, LTemperature, LMaxTokens);
   except
     on E: Exception do
     begin
+      LogService('SendPromptStream: Exception in initialization: ' + E.Message);
       ACallback('', True, 'Failed to initialize AI Provider: ' + E.Message);
     end;
   end;
@@ -409,9 +425,10 @@ begin
     FCacheManager.Clear;
 end;
 
-class function TRadIAService.CreateMessage(const ARole: TAIMessageRole; const AContent: string): IChatMessage;
+class function TRadIAService.CreateMessage(const ARole: TAIMessageRole; const AContent: string;
+  const AProvider: string; const AModel: string): IChatMessage;
 begin
-  Result := TRadIAChatMessage.Create(ARole, AContent);
+  Result := TRadIAChatMessage.Create(ARole, AContent, AProvider, AModel);
 end;
 
 end.

@@ -70,6 +70,16 @@ type
     FEdtTimeouts: array[TAIProviderType] of TEdit;
     FChkSmartConfig: TCheckBox;
     
+    tsGeneral: TTabSheet;
+    chkLogEnabled: TCheckBox;
+    lblLogPath: TLabel;
+    edtLogPath: TEdit;
+    btnBrowseLogPath: TButton;
+    lblLogMaxSize: TLabel;
+    edtLogMaxSize: TEdit;
+    
+    procedure btnBrowseLogPathClick(Sender: TObject);
+    
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
     procedure UpdateVCLColors(const AThemeName: string);
     procedure PopulateTemplatesList;
@@ -86,7 +96,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes;
+  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger;
 
 type
   TTabSheetColorHack = class(TTabSheet);
@@ -139,6 +149,52 @@ begin
   CreateProviderAdvancedControls(tsDeepSeek, ptDeepSeek);
   CreateProviderAdvancedControls(tsGroq, ptGroq);
   CreateProviderAdvancedControls(tsOllama, ptOllama);
+
+  { Create General/Logs Tab and controls programmatically }
+  tsGeneral := TTabSheet.Create(Self);
+  tsGeneral.PageControl := pgcSettings;
+  tsGeneral.Caption := 'General / Logs';
+
+  chkLogEnabled := TCheckBox.Create(Self);
+  chkLogEnabled.Parent := tsGeneral;
+  chkLogEnabled.Left := 16;
+  chkLogEnabled.Top := 16;
+  chkLogEnabled.Width := 200;
+  chkLogEnabled.Caption := 'Enable logging';
+
+  lblLogPath := TLabel.Create(Self);
+  lblLogPath.Parent := tsGeneral;
+  lblLogPath.Left := 16;
+  lblLogPath.Top := 48;
+  lblLogPath.Caption := 'Log Folder Path:';
+
+  edtLogPath := TEdit.Create(Self);
+  edtLogPath.Parent := tsGeneral;
+  edtLogPath.Left := 16;
+  edtLogPath.Top := 66;
+  edtLogPath.Width := 320;
+
+  btnBrowseLogPath := TButton.Create(Self);
+  btnBrowseLogPath.Parent := tsGeneral;
+  btnBrowseLogPath.Left := 342;
+  btnBrowseLogPath.Top := 64;
+  btnBrowseLogPath.Width := 30;
+  btnBrowseLogPath.Height := 23;
+  btnBrowseLogPath.Caption := '...';
+  btnBrowseLogPath.OnClick := btnBrowseLogPathClick;
+
+  lblLogMaxSize := TLabel.Create(Self);
+  lblLogMaxSize.Parent := tsGeneral;
+  lblLogMaxSize.Left := 16;
+  lblLogMaxSize.Top := 104;
+  lblLogMaxSize.Caption := 'Max Log File Size (KB):';
+
+  edtLogMaxSize := TEdit.Create(Self);
+  edtLogMaxSize.Parent := tsGeneral;
+  edtLogMaxSize.Left := 16;
+  edtLogMaxSize.Top := 122;
+  edtLogMaxSize.Width := 100;
+  edtLogMaxSize.NumbersOnly := True;
 
   LActiveTheme := 'light';
   { Apply IDE theme so this form matches the current Delphi skin }
@@ -331,6 +387,28 @@ begin
 
   if Assigned(FChkSmartConfig) then
     FChkSmartConfig.Font.Color := LTextColor;
+
+  if Assigned(tsGeneral) then
+  begin
+    TTabSheetColorHack(tsGeneral).ParentBackground := False;
+    TTabSheetColorHack(tsGeneral).Color := LBgColor;
+  end;
+  if Assigned(chkLogEnabled) then
+    chkLogEnabled.Font.Color := LTextColor;
+  if Assigned(lblLogPath) then
+    lblLogPath.Font.Color := LTextColor;
+  if Assigned(edtLogPath) then
+  begin
+    edtLogPath.Color := LInputBgColor;
+    edtLogPath.Font.Color := LTextColor;
+  end;
+  if Assigned(lblLogMaxSize) then
+    lblLogMaxSize.Font.Color := LTextColor;
+  if Assigned(edtLogMaxSize) then
+  begin
+    edtLogMaxSize.Color := LInputBgColor;
+    edtLogMaxSize.Font.Color := LTextColor;
+  end;
 end;
 
 procedure TFormAIConfig.LoadConfig;
@@ -361,6 +439,13 @@ begin
     if Assigned(FEdtTimeouts[LProvider]) then
       FEdtTimeouts[LProvider].Text := IntToStr(FConfig.GetTimeout(LProvider));
   end;
+
+  if Assigned(chkLogEnabled) then
+    chkLogEnabled.Checked := FConfig.LogEnabled;
+  if Assigned(edtLogPath) then
+    edtLogPath.Text := FConfig.LogPath;
+  if Assigned(edtLogMaxSize) then
+    edtLogMaxSize.Text := IntToStr(FConfig.LogMaxSizeKB);
 
   PopulateTemplatesList;
   if lstTemplates.Count > 0 then
@@ -422,6 +507,13 @@ begin
     if Assigned(FEdtTimeouts[LProvider]) then
       FConfig.SetTimeout(LProvider, StrToIntDef(FEdtTimeouts[LProvider].Text, 60));
   end;
+
+  if Assigned(chkLogEnabled) then
+    FConfig.LogEnabled := chkLogEnabled.Checked;
+  if Assigned(edtLogPath) then
+    FConfig.LogPath := Trim(edtLogPath.Text);
+  if Assigned(edtLogMaxSize) then
+    FConfig.LogMaxSizeKB := StrToIntDef(edtLogMaxSize.Text, 1024);
 
   FConfig.Save;
 
@@ -563,6 +655,14 @@ begin
     end;
     ShowMessage('Default templates restored successfully.');
   end;
+end;
+
+procedure TFormAIConfig.btnBrowseLogPathClick(Sender: TObject);
+var
+  LFolder: string;
+begin
+  if Vcl.FileCtrl.SelectDirectory('Select Log Folder', '', LFolder, [sdNewUI, sdNewFolder]) then
+    edtLogPath.Text := LFolder;
 end;
 
 end.

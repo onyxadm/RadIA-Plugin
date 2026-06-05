@@ -39,7 +39,8 @@ implementation
 
 uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
-  RadIA.UI.ConfigFrame, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm;
+  RadIA.UI.ConfigFrame, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
+  RadIA.Core.Logger;
 
 var
   GWizardIndex: Integer = -1;
@@ -47,38 +48,8 @@ var
   LAboutServices: IOTAAboutBoxServices;
 
 procedure LogDebug(const AMsg: string);
-var
-  LFolder: string;
-  LFile: string;
-  LStream: TFileStream;
-  LWriter: TStreamWriter;
-  LText: string;
 begin
-  try
-    LFolder := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA';
-    ForceDirectories(LFolder);
-    LFile := LFolder + '\log.txt';
-    
-    if FileExists(LFile) then
-      LStream := TFileStream.Create(LFile, fmOpenWrite or fmShareDenyNone)
-    else
-      LStream := TFileStream.Create(LFile, fmCreate or fmShareDenyNone);
-      
-    try
-      LStream.Seek(0, soEnd);
-      LWriter := TStreamWriter.Create(LStream, TEncoding.UTF8);
-      try
-        LText := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - ' + AMsg;
-        LWriter.WriteLine(LText);
-      finally
-        LWriter.Free;
-      end;
-    finally
-      LStream.Free;
-    end;
-  except
-    // Silently capture any file access exception to prevent IDE crash on plugin start
-  end;
+  TLogger.Log(AMsg, 'Register');
 end;
 
 procedure RegisterSplashAndAbout;

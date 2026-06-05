@@ -29,7 +29,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading;
+  System.JSON, System.Threading, System.Math;
 
 { TRadIAOpenAIProvider }
 
@@ -79,7 +79,9 @@ var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -106,7 +108,10 @@ begin
     var
       LResponseText: string;
       LUsage: TTokenUsage;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       try
         LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
         LResponseText := ParseOpenAICompatibleResponse(LResponseText, LUsage);
@@ -119,10 +124,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', E.Message, False, TTokenUsage.Empty);
+              ACallback('', LErrorMsg, False, TTokenUsage.Empty);
             end);
         end;
       end;
@@ -145,7 +151,9 @@ var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -171,7 +179,10 @@ begin
     procedure
     var
       LBufferText: string;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       LBufferText := '';
       try
         DoPostRequestStream(LUrl, LHeaders, LRequestBody,
@@ -183,10 +194,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', True, E.Message);
+              ACallback('', True, LErrorMsg);
             end);
         end;
       end;

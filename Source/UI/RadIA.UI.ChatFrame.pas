@@ -62,8 +62,8 @@ type
     procedure LoadConfig;
     procedure UpdateModelsCombo;
     procedure SendPromptToAI(const APromptText: string);
-    procedure PostToWebView(const AAction, ARole, AText: string); overload;
-    procedure PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean); overload;
+    procedure PostToWebView(const AAction, ARole, AText: string; const AProvider: string = ''; const AModel: string = ''); overload;
+    procedure PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean; const AProvider: string = ''; const AModel: string = ''); overload;
     procedure OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
     procedure LoadChatHistory;
     procedure SaveChatHistory;
@@ -90,7 +90,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigFrame,
-  RadIA.Core.Mediator, RadIA.Core.ConversationExporter;
+  RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger;
 
 
 
@@ -507,17 +507,20 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string);
+procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string; const AProvider: string; const AModel: string);
 begin
-  PostToWebView(AAction, ARole, AText, False);
+  PostToWebView(AAction, ARole, AText, False, AProvider, AModel);
 end;
 
-procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean);
+procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean; const AProvider: string; const AModel: string);
 var
   LJson: TJSONObject;
 begin
   if not FBrowserInitialized then
     Exit;
+
+  TLogger.Log(Format('PostToWebView: Action=%s, Role=%s, TextLen=%d, IsDone=%s, Provider=%s, Model=%s',
+    [AAction, ARole, Length(AText), BoolToStr(AIsDone, True), AProvider, AModel]), 'UI');
     
   LJson := TJSONObject.Create;
   try
@@ -527,6 +530,10 @@ begin
     if not AText.IsEmpty then
       LJson.AddPair('text', AText);
     LJson.AddPair('isDone', TJSONBool.Create(AIsDone));
+    if not AProvider.IsEmpty then
+      LJson.AddPair('provider', AProvider);
+    if not AModel.IsEmpty then
+      LJson.AddPair('model', AModel);
       
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
@@ -832,9 +839,17 @@ var
   LGuard: ILifecycleGuard;
   LProfile: TAIRequestProfile;
   LDoneHandled: Boolean;
+  LActiveProvider: string;
+  LActiveModel: string;
 begin
   LDoneHandled := False;
   btnSend.Enabled := False;
+
+  LActiveProvider := ProviderTypeToString(FConfig.GetActiveProvider);
+  LActiveModel := FConfig.GetActiveModel(FConfig.GetActiveProvider);
+
+  TLogger.Log(Format('SendPromptToAI started. Provider=%s, Model=%s, PromptLength=%d',
+    [LActiveProvider, LActiveModel, Length(APromptText)]), 'UI');
 
   { Infer request profile from slash commands }
   LProfile := rpGeneralChat;
@@ -847,7 +862,7 @@ begin
   else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) then
     LProfile := rpExplainCode;
   
-  LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText);
+  LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText, LActiveProvider, LActiveModel);
   LFullResponse := '';
   LGuard := FLifecycleGuard as ILifecycleGuard;
   
@@ -855,7 +870,14 @@ begin
   
   FAIService.SendPromptStream(APromptText, FHistory,
     procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    var
+      LChunkCopy: string;
+      LIsDoneCopy: Boolean;
+      LErrorCopy: string;
     begin
+      LChunkCopy := AChunk;
+      LIsDoneCopy := AIsDone;
+      LErrorCopy := AError;
       TThread.Queue(nil,
         procedure
         var
@@ -872,41 +894,44 @@ begin
           if not LGuard.IsAlive then
             Exit;
 
-          if not AError.IsEmpty then
+          if not LErrorCopy.IsEmpty then
           begin
             LDoneHandled := True;
             btnSend.Enabled := True;
-            PostToWebView('add_message', 'assistant', '**Error:** ' + AError);
+            TLogger.Log(Format('SendPromptToAI error callback: %s', [LErrorCopy]), 'UI');
+            PostToWebView('add_message', 'assistant', '**Error:** ' + LErrorCopy, False, LActiveProvider, LActiveModel);
             Exit;
           end;
 
-          if not AIsDone then
+          if not LIsDoneCopy then
           begin
-            LFullResponse := LFullResponse + AChunk;
-            PostToWebView('append_message', 'assistant', AChunk, False);
+            LFullResponse := LFullResponse + LChunkCopy;
+            PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
           end
           else
           begin
             LDoneHandled := True;
             btnSend.Enabled := True;
-            if not AChunk.IsEmpty then
+            TLogger.Log(Format('SendPromptToAI done callback. ResponseLength=%d', [Length(LFullResponse)]), 'UI');
+            if not LChunkCopy.IsEmpty then
             begin
-              LFullResponse := LFullResponse + AChunk;
-              PostToWebView('append_message', 'assistant', AChunk, False);
+              LFullResponse := LFullResponse + LChunkCopy;
+              PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
             end;
 
             if LFullResponse.IsEmpty and AError.IsEmpty then
             begin
-              PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.');
-              PostToWebView('append_message', 'assistant', '', True);
+              TLogger.Log('SendPromptToAI: Empty response from AI provider', 'UI');
+              PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.', False, LActiveProvider, LActiveModel);
+              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
               Exit;
             end;
 
-            PostToWebView('append_message', 'assistant', '', True);
+            PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
 
             { Save history }
             FHistory := FHistory + [LUserMsg];
-            LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse);
+            LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
             FHistory := FHistory + [LAssistantMsg];
             SaveChatHistory;
 
@@ -943,19 +968,26 @@ var
   LVal: TJSONValue;
   LMsgObj: TJSONObject;
   LMsg: IChatMessage;
-  LRoleStr, LContentStr: string;
+  LRoleStr, LContentStr, LProviderStr, LModelStr: string;
   LRole: TAIMessageRole;
   LParsedVal: TJSONValue;
 begin
   FHistory := [];
   LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
+  TLogger.Log(Format('LoadChatHistory: Loading history from %s', [LHistoryFile]), 'UI');
   if not TFile.Exists(LHistoryFile) then
+  begin
+    TLogger.Log('LoadChatHistory: No history file found', 'UI');
     Exit;
+  end;
 
   try
     LContent := TFile.ReadAllText(LHistoryFile, TEncoding.UTF8);
     if LContent.IsEmpty then
+    begin
+      TLogger.Log('LoadChatHistory: History file is empty', 'UI');
       Exit;
+    end;
 
     LParsedVal := TJSONObject.ParseJSONValue(LContent);
     if Assigned(LParsedVal) then
@@ -971,30 +1003,38 @@ begin
               LMsgObj := LVal as TJSONObject;
               LRoleStr := LMsgObj.GetValue<string>('role', '');
               LContentStr := LMsgObj.GetValue<string>('content', '');
+              LProviderStr := LMsgObj.GetValue<string>('provider', '');
+              LModelStr := LMsgObj.GetValue<string>('model', '');
               
               if not LContentStr.IsEmpty then
               begin
                 LRole := StringToMessageRole(LRoleStr);
-                LMsg := TRadIAService.CreateMessage(LRole, LContentStr);
+                LMsg := TRadIAService.CreateMessage(LRole, LContentStr, LProviderStr, LModelStr);
                 
                 FHistory := FHistory + [LMsg];
                 
                 { Render message in WebView }
-                PostToWebView('add_message', LRoleStr, LContentStr);
+                PostToWebView('add_message', LRoleStr, LContentStr, False, LProviderStr, LModelStr);
               end;
             end;
           end;
+          TLogger.Log(Format('LoadChatHistory: Loaded %d messages successfully', [Length(FHistory)]), 'UI');
         finally
           LJsonArr.Free;
         end;
       end
       else
       begin
+        TLogger.Log('LoadChatHistory: Invalid JSON format (not an array)', 'UI');
         LParsedVal.Free;
       end;
     end;
   except
-    FHistory := [];
+    on E: Exception do
+    begin
+      TLogger.Log(Format('LoadChatHistory exception: %s', [E.Message]), 'UI');
+      FHistory := [];
+    end;
   end;
 end;
 
@@ -1006,6 +1046,7 @@ var
   LMsg: IChatMessage;
 begin
   LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
+  TLogger.Log(Format('SaveChatHistory: Saving %d messages to %s', [Length(FHistory), LHistoryFile]), 'UI');
   ForceDirectories(TPath.GetDirectoryName(LHistoryFile));
 
   LJsonArr := TJSONArray.Create;
@@ -1018,10 +1059,20 @@ begin
       LMsgObj := TJSONObject.Create;
       LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
       LMsgObj.AddPair('content', LMsg.Content);
+      if not LMsg.Provider.IsEmpty then
+        LMsgObj.AddPair('provider', LMsg.Provider);
+      if not LMsg.Model.IsEmpty then
+        LMsgObj.AddPair('model', LMsg.Model);
       LJsonArr.AddElement(LMsgObj);
     end;
     
-    TFile.WriteAllText(LHistoryFile, LJsonArr.ToJSON, TEncoding.UTF8);
+    try
+      TFile.WriteAllText(LHistoryFile, LJsonArr.ToJSON, TEncoding.UTF8);
+      TLogger.Log('SaveChatHistory: History saved successfully', 'UI');
+    except
+      on E: Exception do
+        TLogger.Log(Format('SaveChatHistory write exception: %s', [E.Message]), 'UI');
+    end;
   finally
     LJsonArr.Free;
   end;

@@ -29,7 +29,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding;
+  System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding, System.Math;
 
 { TRadIAGeminiProvider }
 
@@ -202,7 +202,9 @@ procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHis
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
 
@@ -230,7 +232,10 @@ begin
     var
       LResponseText: string;
       LUsage: TTokenUsage;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       try
         LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
         LResponseText := ParseResponseBody(LResponseText, LUsage);
@@ -243,10 +248,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', E.Message, False, TTokenUsage.Empty);
+              ACallback('', LErrorMsg, False, TTokenUsage.Empty);
             end);
         end;
       end;
@@ -260,7 +266,9 @@ var
   LApiKey: string;
   LUrl: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -287,7 +295,10 @@ begin
                  LCanGenerate: Boolean;
                  LModelsList: TList<string>;
                  LModelsArray: TArray<string>;
+                 LErrorMsg: string;
                begin
+                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+                 LProviderRef.GetProviderType;
                  LModelsList := TList<string>.Create;
                  try
                    try
@@ -352,11 +363,12 @@ begin
                    except
                      on E: Exception do
                      begin
+                       LErrorMsg := E.ClassName + ': ' + E.Message;
                        LModelsArray := GetAvailableModels;
                        TThread.Queue(nil,
                          procedure
                          begin
-                           ACallback(LModelsArray, E.Message);
+                           ACallback(LModelsArray, LErrorMsg);
                          end);
                      end;
                    end;
@@ -478,7 +490,9 @@ procedure TRadIAGeminiProvider.SendPromptStreamAsync(const APrompt: string; cons
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
 
@@ -505,7 +519,10 @@ begin
     procedure
     var
       LBufferText: string;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       LBufferText := '';
       try
         DoPostRequestStream(LUrl, nil, LRequestBody,
@@ -523,10 +540,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', True, E.Message);
+              ACallback('', True, LErrorMsg);
             end);
         end;
       end;

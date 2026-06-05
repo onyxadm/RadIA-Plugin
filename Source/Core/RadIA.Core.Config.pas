@@ -20,6 +20,9 @@ type
     FMaxTokens: array[TAIProviderType] of Integer;
     FTimeouts: array[TAIProviderType] of Integer;
     FSmartConfigEnabled: Boolean;
+    FLogEnabled: Boolean;
+    FLogPath: string;
+    FLogMaxSizeKB: Integer;
 
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
@@ -56,6 +59,12 @@ type
     procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetLogEnabled: Boolean;
+    procedure SetLogEnabled(const AValue: Boolean);
+    function GetLogPath: string;
+    procedure SetLogPath(const AValue: string);
+    function GetLogMaxSizeKB: Integer;
+    procedure SetLogMaxSizeKB(const AValue: Integer);
     procedure Save;
     procedure Load;
   end;
@@ -63,7 +72,8 @@ type
 implementation
 
 uses
-  Winapi.Windows, System.Win.Registry, System.NetEncoding, System.Math, System.IOUtils, ToolsAPI;
+  Winapi.Windows, System.Win.Registry, System.NetEncoding, System.Math, System.IOUtils, ToolsAPI,
+  RadIA.Core.Logger;
 
 { Windows DPAPI Declarations }
 type
@@ -86,38 +96,8 @@ function CryptUnprotectData(pDataIn: PDataBlob; ppszDataDescr: Pointer;
 { TRadIAConfig }
 
 procedure LogDebug(const AMsg: string);
-var
-  LFolder: string;
-  LFile: string;
-  LStream: TFileStream;
-  LWriter: TStreamWriter;
-  LText: string;
 begin
-  try
-    LFolder := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA';
-    ForceDirectories(LFolder);
-    LFile := LFolder + '\log.txt';
-    
-    if FileExists(LFile) then
-      LStream := TFileStream.Create(LFile, fmOpenWrite or fmShareDenyNone)
-    else
-      LStream := TFileStream.Create(LFile, fmCreate or fmShareDenyNone);
-      
-    try
-      LStream.Seek(0, soEnd);
-      LWriter := TStreamWriter.Create(LStream, TEncoding.UTF8);
-      try
-        LText := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - ' + AMsg;
-        LWriter.WriteLine(LText);
-      finally
-        LWriter.Free;
-      end;
-    finally
-      LStream.Free;
-    end;
-  except
-    // Silently capture any file access exception to prevent IDE crash on plugin start
-  end;
+  TLogger.Log(AMsg, 'Config');
 end;
 
 function CleanApiKey(const AValue: string): string;
@@ -168,6 +148,9 @@ begin
   FOpenAICustomBaseUrl := '';
   
   FSmartConfigEnabled := True;
+  FLogEnabled := True;
+  FLogPath := TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'Logs');
+  FLogMaxSizeKB := 1024;
   for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
   begin
     FTemperatures[LProvider] := 0.7;
@@ -348,7 +331,12 @@ begin
       LMaxHist := ReadRegInt(LReg, 'MaxHistoryMessages', 20);
       FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, 20);
       FSmartConfigEnabled := ReadRegInt(LReg, 'SmartConfigEnabled', 1) <> 0;
+      FLogEnabled := ReadRegInt(LReg, 'LogEnabled', 1) <> 0;
+      FLogPath := ReadRegString(LReg, 'LogPath', TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'Logs'));
+      FLogMaxSizeKB := ReadRegInt(LReg, 'LogMaxSizeKB', 1024);
       LReg.CloseKey;
+
+      TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
     end
     else
       LogDebug('TRadIAConfig.Load: Failed to open root path ' + APath);
@@ -475,7 +463,12 @@ begin
       LReg.WriteString('SystemPrompt', FSystemPrompt);
       LReg.WriteInteger('MaxHistoryMessages', FMaxHistoryMessages);
       LReg.WriteInteger('SmartConfigEnabled', IfThen(FSmartConfigEnabled, 1, 0));
+      LReg.WriteInteger('LogEnabled', IfThen(FLogEnabled, 1, 0));
+      LReg.WriteString('LogPath', FLogPath);
+      LReg.WriteInteger('LogMaxSizeKB', FLogMaxSizeKB);
       LReg.CloseKey;
+
+      TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
     end;
 
     { 2. Salvar chaves de cada provedor em subchaves dedicadas }
@@ -599,6 +592,36 @@ end;
 procedure TRadIAConfig.SetSmartConfigEnabled(const AValue: Boolean);
 begin
   FSmartConfigEnabled := AValue;
+end;
+
+function TRadIAConfig.GetLogEnabled: Boolean;
+begin
+  Result := FLogEnabled;
+end;
+
+procedure TRadIAConfig.SetLogEnabled(const AValue: Boolean);
+begin
+  FLogEnabled := AValue;
+end;
+
+function TRadIAConfig.GetLogPath: string;
+begin
+  Result := FLogPath;
+end;
+
+procedure TRadIAConfig.SetLogPath(const AValue: string);
+begin
+  FLogPath := AValue;
+end;
+
+function TRadIAConfig.GetLogMaxSizeKB: Integer;
+begin
+  Result := FLogMaxSizeKB;
+end;
+
+procedure TRadIAConfig.SetLogMaxSizeKB(const AValue: Integer);
+begin
+  FLogMaxSizeKB := AValue;
 end;
 
 function TRadIAConfig.UnprotectString(const AValue: string): string;

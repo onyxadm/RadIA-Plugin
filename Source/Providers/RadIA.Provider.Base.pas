@@ -64,7 +64,35 @@ type
 implementation
 
 uses
-  System.JSON, System.Generics.Collections;
+  System.JSON, System.Generics.Collections, System.Math, RadIA.Core.Logger;
+
+function MaskHeaders(const AHeaders: TNetHeaders): string;
+var
+  LHeader: TNetHeader;
+  LList: TStringList;
+begin
+  LList := TStringList.Create;
+  try
+    for LHeader in AHeaders do
+    begin
+      if SameText(LHeader.Name, 'Authorization') or
+         SameText(LHeader.Name, 'api-key') or
+         SameText(LHeader.Name, 'x-api-key') or
+         LHeader.Name.ToLower.Contains('key') or
+         LHeader.Name.ToLower.Contains('token') then
+      begin
+        LList.Add(LHeader.Name + ': [MASKED]');
+      end
+      else
+      begin
+        LList.Add(LHeader.Name + ': ' + LHeader.Value);
+      end;
+    end;
+    Result := LList.Text.Replace(#13#10, ', ').Trim([',', ' ']);
+  finally
+    LList.Free;
+  end;
+end;
 
 constructor TRadIAProviderBase.Create(const AConfig: IAIConfig);
 begin
@@ -93,6 +121,9 @@ var
   LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
 begin
+  TLogger.Log(Format('DoGetRequest: URL=%s', [AUrl]), 'Provider');
+  TLogger.Log(Format('DoGetRequest: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
+  
   LHTTPClient := THTTPClient.Create;
   try
     LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
@@ -102,14 +133,28 @@ begin
     LHTTPClient.SendTimeout := LTimeoutMs;
     LHTTPClient.ResponseTimeout := LTimeoutMs;
     LHTTPClient.AcceptCharSet := 'utf-8';
+    LHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
 
-    LResponse := LHTTPClient.Get(AUrl, nil, AHeaders);
+    try
+      LResponse := LHTTPClient.Get(AUrl, nil, AHeaders);
+      TLogger.Log(Format('DoGetRequest: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
+      
+      if LResponse.StatusCode <> 200 then
+      begin
+        TLogger.Log(Format('DoGetRequest: Error Response content=%s', [LResponse.ContentAsString(TEncoding.UTF8)]), 'Provider');
+        raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
+          [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
+      end;
 
-    if LResponse.StatusCode <> 200 then
-      raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
-        [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
-
-    Result := LResponse.ContentAsString(TEncoding.UTF8);
+      Result := LResponse.ContentAsString(TEncoding.UTF8);
+      TLogger.Log(Format('DoGetRequest: Response length=%d', [Length(Result)]), 'Provider');
+    except
+      on E: Exception do
+      begin
+        TLogger.Log(Format('DoGetRequest: Exception occurred: %s', [E.Message]), 'Provider');
+        raise;
+      end;
+    end;
   finally
     LHTTPClient.Free;
   end;
@@ -123,6 +168,10 @@ var
   LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
 begin
+  TLogger.Log(Format('DoPostRequest: URL=%s', [AUrl]), 'Provider');
+  TLogger.Log(Format('DoPostRequest: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
+  TLogger.Log(Format('DoPostRequest: Body=%s', [ARequestBody]), 'Provider');
+
   LHTTPClient := THTTPClient.Create;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   try
@@ -134,14 +183,28 @@ begin
     LHTTPClient.ResponseTimeout := LTimeoutMs;
     LHTTPClient.ContentType := 'application/json';
     LHTTPClient.AcceptCharSet := 'utf-8';
+    LHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
 
-    LResponse := LHTTPClient.Post(AUrl, LSourceStream, nil, AHeaders);
+    try
+      LResponse := LHTTPClient.Post(AUrl, LSourceStream, nil, AHeaders);
+      TLogger.Log(Format('DoPostRequest: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
+      
+      if LResponse.StatusCode <> 200 then
+      begin
+        TLogger.Log(Format('DoPostRequest: Error Response content=%s', [LResponse.ContentAsString(TEncoding.UTF8)]), 'Provider');
+        raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
+          [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
+      end;
 
-    if LResponse.StatusCode <> 200 then
-      raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
-        [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
-
-    Result := LResponse.ContentAsString(TEncoding.UTF8);
+      Result := LResponse.ContentAsString(TEncoding.UTF8);
+      TLogger.Log(Format('DoPostRequest: Response Body=%s', [Result]), 'Provider');
+    except
+      on E: Exception do
+      begin
+        TLogger.Log(Format('DoPostRequest: Exception occurred: %s', [E.Message]), 'Provider');
+        raise;
+      end;
+    end;
   finally
     LSourceStream.Free;
     LHTTPClient.Free;
@@ -157,6 +220,10 @@ var
   LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
 begin
+  TLogger.Log(Format('DoPostRequestStream: URL=%s', [AUrl]), 'Provider');
+  TLogger.Log(Format('DoPostRequestStream: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
+  TLogger.Log(Format('DoPostRequestStream: Body=%s', [ARequestBody]), 'Provider');
+
   LHTTPClient := THTTPClient.Create;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   LTargetStream := TStreamingTargetStream.Create(AOnWrite);
@@ -169,13 +236,25 @@ begin
     LHTTPClient.ResponseTimeout := LTimeoutMs;
     LHTTPClient.ContentType := 'application/json';
     LHTTPClient.AcceptCharSet := 'utf-8';
+    LHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
 
-    LResponse := LHTTPClient.Post(AUrl, LSourceStream, LTargetStream, AHeaders);
-
-    if LResponse.StatusCode <> 200 then
-      raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
-        [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
-
+    try
+      LResponse := LHTTPClient.Post(AUrl, LSourceStream, LTargetStream, AHeaders);
+      TLogger.Log(Format('DoPostRequestStream: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
+      
+      if LResponse.StatusCode <> 200 then
+      begin
+        TLogger.Log('DoPostRequestStream: Error occurred during streaming', 'Provider');
+        raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s.',
+          [LResponse.StatusCode, LResponse.StatusText]);
+      end;
+    except
+      on E: Exception do
+      begin
+        TLogger.Log(Format('DoPostRequestStream: Exception occurred (%s): %s', [E.ClassName, E.Message]), 'Provider');
+        raise;
+      end;
+    end;
   finally
     LTargetStream.Free;
     LSourceStream.Free;
@@ -388,7 +467,9 @@ var
   LApiKey: string;
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LUrl := GetModelsDiscoveryUrl;
 
   { Providers that do not supply a discovery URL fall back to static list }
@@ -428,7 +509,10 @@ begin
       LId: string;
       LModelsList: TList<string>;
       LModelsArray: TArray<string>;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType; { Force compiler to capture the interface reference }
       LModelsList := TList<string>.Create;
       try
         try
@@ -471,11 +555,12 @@ begin
         except
           on E: Exception do
           begin
+            LErrorMsg := E.ClassName + ': ' + E.Message;
             LModelsArray := GetAvailableModels;
             TThread.Queue(nil,
               procedure
               begin
-                ACallback(LModelsArray, E.Message);
+                ACallback(LModelsArray, LErrorMsg);
               end);
           end;
         end;
@@ -500,6 +585,7 @@ var
   LBytes: TBytes;
 begin
   Result := Count;
+  TLogger.Log(Format('TStreamingTargetStream.Write: Count = %d', [Count]), 'Provider');
   if (Count > 0) and Assigned(FOnWrite) then
   begin
     SetLength(LBytes, Count);

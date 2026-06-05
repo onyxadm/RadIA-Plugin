@@ -45,8 +45,14 @@ type
     function GetRole: TAIMessageRole;
     function GetContent: string;
     procedure SetContent(const AValue: string);
+    function GetProvider: string;
+    procedure SetProvider(const AValue: string);
+    function GetModel: string;
+    procedure SetModel(const AValue: string);
     property Role: TAIMessageRole read GetRole;
     property Content: string read GetContent write SetContent;
+    property Provider: string read GetProvider write SetProvider;
+    property Model: string read GetModel write SetModel;
   end;
 
   { Interface representing an AI Provider }
@@ -87,6 +93,12 @@ type
     procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetLogEnabled: Boolean;
+    procedure SetLogEnabled(const AValue: Boolean);
+    function GetLogPath: string;
+    procedure SetLogPath(const AValue: string);
+    function GetLogMaxSizeKB: Integer;
+    procedure SetLogMaxSizeKB(const AValue: Integer);
     procedure Save;
     procedure Load;
     property SystemPrompt: string read GetSystemPrompt write SetSystemPrompt;
@@ -94,6 +106,9 @@ type
     property MaxHistoryMessages: Integer read GetMaxHistoryMessages write SetMaxHistoryMessages;
     property OpenAICustomBaseUrl: string read GetOpenAICustomBaseUrl write SetOpenAICustomBaseUrl;
     property SmartConfigEnabled: Boolean read GetSmartConfigEnabled write SetSmartConfigEnabled;
+    property LogEnabled: Boolean read GetLogEnabled write SetLogEnabled;
+    property LogPath: string read GetLogPath write SetLogPath;
+    property LogMaxSizeKB: Integer read GetLogMaxSizeKB write SetLogMaxSizeKB;
   end;
 
 implementation

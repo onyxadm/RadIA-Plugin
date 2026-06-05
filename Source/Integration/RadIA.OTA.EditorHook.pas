@@ -35,7 +35,7 @@ implementation
 
 uses
   RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
-  RadIA.Core.Mediator, RadIA.OTA.DockableForm;
+  RadIA.Core.Mediator, RadIA.OTA.DockableForm, RadIA.Core.Logger;
 
 { TRadIAEditorHook }
 
@@ -75,6 +75,7 @@ var
   LEditorServices: IOTAEditorServices;
   LEditorLocalMenu: INTAEditorLocalMenu;
 begin
+  TLogger.Log('Installing editor local menu hooks', 'EditorHook');
   if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
   begin
     LEditorLocalMenu := LEditorServices.GetEditorLocalMenu;
@@ -142,6 +143,7 @@ var
 begin
   if Assigned(FActionList) then
   begin
+    TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
     if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
     begin
       LEditorLocalMenu := LEditorServices.GetEditorLocalMenu;
@@ -177,10 +179,12 @@ var
 begin
   if not TRadIAOTAHelper.GetActiveEditorText(LSelectedText, True) then
   begin
+    TLogger.Log(Format('SendCommandToChat failed: no active text selection for command %s', [ACommand]), 'EditorHook');
     ShowMessage('Please select a block of code in the editor first.');
     Exit;
   end;
 
+  TLogger.Log(Format('SendCommandToChat: Command=%s, SelectionLength=%d', [ACommand, Length(LSelectedText)]), 'EditorHook');
   ShowRadIAChat;
 
   LPrompt := Format('%s %s'#13#10'```pascal'#13#10'%s'#13#10'```', [ACommand, APromptPrefix, LSelectedText]);
@@ -203,10 +207,12 @@ var
 begin
   if not TRadIAOTAHelper.GetActiveEditorText(LSelectedText, True) then
   begin
+    TLogger.Log('OnOptimizeExecute failed: no active text selection', 'EditorHook');
     ShowMessage('Please select a block of code to optimize first.');
     Exit;
   end;
 
+  TLogger.Log(Format('OnOptimizeExecute: SelectionLength=%d', [Length(LSelectedText)]), 'EditorHook');
   TRadIAMediator.Instance.RequestDiff(LSelectedText);
 end;
 
@@ -227,10 +233,12 @@ var
 begin
   if not TRadIAOTAHelper.GetActiveEditorText(LSelectedText, True) then
   begin
+    TLogger.Log('OnDocExecute failed: no active text selection', 'EditorHook');
     ShowMessage('Please select a method block of code to document.');
     Exit;
   end;
 
+  TLogger.Log(Format('OnDocExecute: SelectionLength=%d', [Length(LSelectedText)]), 'EditorHook');
   LPrompt := Format('/doc'#13#10'```pascal'#13#10'%s'#13#10'```', [LSelectedText]);
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
@@ -242,9 +250,12 @@ var
 begin
   if not TRadIAMessageViewHook.GetLastCompilerError(LErrorMsg, LFileName, LLine) then
   begin
+    TLogger.Log('OnFixErrorExecute failed: no compiler error found in Messages View', 'EditorHook');
     ShowMessage('No compiler errors found in the Messages View.');
     Exit;
   end;
+  
+  TLogger.Log(Format('OnFixErrorExecute: Compiler Error found. File=%s, Line=%d, Msg=%s', [LFileName, LLine, LErrorMsg]), 'EditorHook');
   
   { Extract source code context if line is valid }
   LSourceCode := '';

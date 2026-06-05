@@ -22,6 +22,9 @@ type
     FMaxTokens: array[TAIProviderType] of Integer;
     FTimeouts: array[TAIProviderType] of Integer;
     FSmartConfigEnabled: Boolean;
+    FLogEnabled: Boolean;
+    FLogPath: string;
+    FLogMaxSizeKB: Integer;
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
 
@@ -47,6 +50,12 @@ type
     procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetLogEnabled: Boolean;
+    procedure SetLogEnabled(const AValue: Boolean);
+    function GetLogPath: string;
+    procedure SetLogPath(const AValue: string);
+    function GetLogMaxSizeKB: Integer;
+    procedure SetLogMaxSizeKB(const AValue: Integer);
     procedure Save;
     procedure Load;
   end;
@@ -111,6 +120,9 @@ begin
   FOllamaBaseUrl := 'http://localhost:11434';
   FActiveProvider := ptGemini;
   FSmartConfigEnabled := True;
+  FLogEnabled := True;
+  FLogPath := '';
+  FLogMaxSizeKB := 1024;
   for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
   begin
     FTemperatures[LProvider] := 0.7;
@@ -236,6 +248,36 @@ end;
 procedure TMockConfig.SetSmartConfigEnabled(const AValue: Boolean);
 begin
   FSmartConfigEnabled := AValue;
+end;
+
+function TMockConfig.GetLogEnabled: Boolean;
+begin
+  Result := FLogEnabled;
+end;
+
+procedure TMockConfig.SetLogEnabled(const AValue: Boolean);
+begin
+  FLogEnabled := AValue;
+end;
+
+function TMockConfig.GetLogPath: string;
+begin
+  Result := FLogPath;
+end;
+
+procedure TMockConfig.SetLogPath(const AValue: string);
+begin
+  FLogPath := AValue;
+end;
+
+function TMockConfig.GetLogMaxSizeKB: Integer;
+begin
+  Result := FLogMaxSizeKB;
+end;
+
+procedure TMockConfig.SetLogMaxSizeKB(const AValue: Integer);
+begin
+  FLogMaxSizeKB := AValue;
 end;
 
 { TTestRadIAService helpers }

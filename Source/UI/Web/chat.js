@@ -73,7 +73,7 @@ const SENDER_INFO = {
 // ============================================================
 //  addMessage — gera HTML com avatar + cabeçalho + conteúdo
 // ============================================================
-function addMessage(role, text) {
+function addMessage(role, text, provider, model) {
   if (text === undefined || text === null) {
     text = '';
   }
@@ -93,7 +93,11 @@ function addMessage(role, text) {
 
   const header = document.createElement('div');
   header.classList.add('message-header', info.headerClass);
-  header.textContent = info.name;
+  let headerText = info.name;
+  if (role === 'assistant' && provider && model) {
+    headerText += ` • ${provider} (${model})`;
+  }
+  header.textContent = headerText;
 
   const content = document.createElement('div');
   content.classList.add('message-content');
@@ -220,7 +224,7 @@ let currentAssistantWrapper = null;
 let currentAssistantContent = null;
 let currentAssistantText    = '';
 
-function appendMessage(text, isDone) {
+function appendMessage(text, isDone, provider, model) {
   hideTypingIndicator();
 
   if (text === undefined || text === null) {
@@ -247,7 +251,11 @@ function appendMessage(text, isDone) {
 
     const header = document.createElement('div');
     header.classList.add('message-header', info.headerClass);
-    header.textContent = info.name;
+    let headerText = info.name;
+    if (provider && model) {
+      headerText += ` • ${provider} (${model})`;
+    }
+    header.textContent = headerText;
 
     currentAssistantContent = document.createElement('div');
     currentAssistantContent.classList.add('message-content');
@@ -277,12 +285,12 @@ if (window.chrome && window.chrome.webview) {
   window.chrome.webview.addEventListener('message', event => {
     const data = event.data;
     switch (data.action) {
-      case 'add_message':    addMessage(data.role, data.text);         break;
-      case 'clear_chat':     clearChat();                              break;
-      case 'set_theme':      setTheme(data.theme);                     break;
-      case 'update_tokens':  updateTokens(data.text);                  break;
-      case 'show_typing':    showTypingIndicator();                     break;
-      case 'append_message': appendMessage(data.text, data.isDone);    break;
+      case 'add_message':    addMessage(data.role, data.text, data.provider, data.model); break;
+      case 'clear_chat':     clearChat();                                                 break;
+      case 'set_theme':      setTheme(data.theme);                                        break;
+      case 'update_tokens':  updateTokens(data.text);                                     break;
+      case 'show_typing':    showTypingIndicator();                                       break;
+      case 'append_message': appendMessage(data.text, data.isDone, data.provider, data.model); break;
     }
   });
   window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));
