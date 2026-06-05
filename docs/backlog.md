@@ -79,6 +79,13 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Configurações estendidas para chaves de API com armazenamento seguro e DPAPI.
     *   Novos testes unitários em `RadIA.Tests.ProvidersEx.pas` cobrindo payload, parsing de response e fluxo SSE de streaming.
 
+### 11. Cancelamento de Requisições de IA e Novo Design do Prompt - Item #17
+*   **Descrição**: Permite que o desenvolvedor aborte chamadas HTTP de IA ativas de forma assíncrona instantaneamente e redesenha a caixa de entrada de chat no formato de uma cápsula flutuante moderna e responsiva.
+*   **Detalhes**:
+    *   Implementado o cancelamento de rede em nível de socket interceptando o callback `OnReceiveData` do `THTTPClient`.
+    *   O botão de envio muda de função e ícone dinamicamente para stop (`■`) durante a chamada, e a UI exibe uma mensagem amigável sem erros de encoding.
+    *   Fundo do painel de input configurado para transparência nativa (`ParentBackground := True`), com a cápsula (`shpInputBg`) e o memo (`memPrompt`) exibidos de forma destacada e contrastante.
+
 ---
 
 ## 🔲 Pendentes
