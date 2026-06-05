@@ -137,8 +137,28 @@ function clearChat() {
 // ============================================================
 //  setTheme
 // ============================================================
-function setTheme(themeName) {
-  document.body.className = themeName + '-theme';
+function setTheme(themeInfo) {
+  if (!themeInfo) return;
+
+  if (typeof themeInfo === 'string') {
+    document.body.className = themeInfo + '-theme';
+    return;
+  }
+
+  document.body.className = themeInfo.theme + '-theme';
+
+  const root = document.documentElement;
+  if (themeInfo.bgBase) root.style.setProperty('--bg-base', themeInfo.bgBase);
+  if (themeInfo.bgPanel) root.style.setProperty('--bg-panel', themeInfo.bgPanel);
+  if (themeInfo.bgInput) root.style.setProperty('--bg-input', themeInfo.bgInput);
+  if (themeInfo.fgPrimary) root.style.setProperty('--fg-primary', themeInfo.fgPrimary);
+  if (themeInfo.bgElevated) root.style.setProperty('--bg-elevated', themeInfo.bgElevated);
+  if (themeInfo.fgSecondary) root.style.setProperty('--fg-secondary', themeInfo.fgSecondary);
+  if (themeInfo.border) root.style.setProperty('--border', themeInfo.border);
+  if (themeInfo.accent) root.style.setProperty('--accent', themeInfo.accent);
+  if (themeInfo.codeBg) root.style.setProperty('--code-bg', themeInfo.codeBg);
+  if (themeInfo.codeHeader) root.style.setProperty('--code-header', themeInfo.codeHeader);
+  if (themeInfo.greenApply) root.style.setProperty('--green-apply', themeInfo.greenApply);
 }
 
 // ============================================================
@@ -288,7 +308,7 @@ if (window.chrome && window.chrome.webview) {
     switch (data.action) {
       case 'add_message':    addMessage(data.role, data.text, data.provider, data.model); break;
       case 'clear_chat':     clearChat();                                                 break;
-      case 'set_theme':      setTheme(data.theme);                                        break;
+      case 'set_theme':      setTheme(data);                                              break;
       case 'update_tokens':  updateTokens(data.text);                                     break;
       case 'show_typing':    showTypingIndicator();                                       break;
       case 'append_message': appendMessage(data.text, data.isDone, data.provider, data.model); break;
