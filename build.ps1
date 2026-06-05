@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$Install,
     [switch]$Uninstall,
     [switch]$Release,
@@ -269,3 +269,4 @@ if ($Install) {
     Write-Host " da IDE.                                     " -ForegroundColor Green
     Write-Host "=============================================" -ForegroundColor Green
 }
+
