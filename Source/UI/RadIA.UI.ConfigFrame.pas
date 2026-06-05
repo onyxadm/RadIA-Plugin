@@ -9,10 +9,8 @@ uses
   RadIA.Core.PromptTemplates;
 
 type
-  TFormAIConfig = class(TForm)
-    pnlSidebar: TPanel;
-    tvCategories: TTreeView;
-    splSidebar: TSplitter;
+  TFrameAIConfig = class(TFrame)
+  published
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
     tsOpenAI: TTabSheet;
@@ -36,9 +34,6 @@ type
     lblGroqKey: TLabel;
     edtGroqKey: TEdit;
     memSystemPrompt: TMemo;
-    pnlFooter: TPanel;
-    btnSave: TButton;
-    btnCancel: TButton;
     tsTemplates: TTabSheet;
     pnlTemplatesLeft: TPanel;
     lstTemplates: TListBox;
@@ -54,16 +49,11 @@ type
     memTemplateBody: TMemo;
     btnSaveTemplate: TButton;
     btnRestoreDefaults: TButton;
-    procedure btnSaveClick(Sender: TObject);
-    procedure btnCancelClick(Sender: TObject);
     procedure lstTemplatesClick(Sender: TObject);
     procedure btnNewTemplateClick(Sender: TObject);
     procedure btnDeleteTemplateClick(Sender: TObject);
     procedure btnSaveTemplateClick(Sender: TObject);
     procedure btnRestoreDefaultsClick(Sender: TObject);
-    procedure tvCategoriesChange(Sender: TObject; Node: TTreeNode);
-  protected
-    procedure CreateWnd; override;
   private
     FConfig: IAIConfig;
     FTemplateManager: TPromptTemplateManager;
@@ -93,12 +83,16 @@ type
     procedure btnResetQuotaClick(Sender: TObject);
     
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
-    procedure UpdateVCLColors(const AThemeName: string);
     procedure PopulateTemplatesList;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure LoadConfig;
+    procedure UpdateVCLColors(const AThemeName: string);
+    procedure tvCategoriesChange(Sender: TObject; Node: TTreeNode);
+    procedure SelectCategoryByName(const ACategoryName: string);
+    procedure btnSaveClick(Sender: TObject);
+    procedure btnCancelClick(Sender: TObject);
     
     property OnClose: TNotifyEvent read FOnClose write FOnClose;
   end;
@@ -112,34 +106,13 @@ uses
 
 type
   TTabSheetColorHack = class(TTabSheet);
+  TWinControlHack = class(TWinControl);
 
-procedure TFormAIConfig.CreateWnd;
+constructor TFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
-begin
-  inherited CreateWnd;
-  
-  LActiveTheme := 'light';
-  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
-  begin
-    if LThemingServices.IDEThemingEnabled then
-    begin
-      LActiveTheme := LThemingServices.ActiveTheme;
-    end;
-  end;
-  
-  if SameText(LActiveTheme, 'dark') then
-  begin
-    TUIHelper.ApplyDarkTitleBar(Self, True);
-  end;
-end;
-
-constructor TFormAIConfig.Create(AOwner: TComponent);
-var
-  LThemingServices: IOTAIDEThemingServices;
-  LActiveTheme: string;
-  LNodeGeneral, LNodeProviders: TTreeNode;
+  I: Integer;
 begin
   inherited Create(AOwner);
   FConfig := TRadIAConfig.Create;
@@ -253,33 +226,21 @@ begin
   btnResetQuota.OnClick := btnResetQuotaClick;
 
   LActiveTheme := 'light';
-  { Apply IDE theme so this form matches the current Delphi skin }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
     begin
       LThemingServices.ApplyTheme(Self);
       LActiveTheme := LThemingServices.ActiveTheme;
+      
+      TWinControlHack(Self).ParentBackground := True;
+      TWinControlHack(pgcSettings).ParentBackground := True;
+      for I := 0 to pgcSettings.PageCount - 1 do
+      begin
+        TTabSheetColorHack(pgcSettings.Pages[I]).ParentBackground := True;
+      end;
     end;
   end;
-
-  // Configure TreeView and populate categories
-  tvCategories.OnChange := tvCategoriesChange;
-  
-  LNodeGeneral := tvCategories.Items.Add(nil, 'General / Logs');
-  tvCategories.Items.Add(nil, 'System Prompt');
-  tvCategories.Items.Add(nil, 'Templates');
-  LNodeProviders := tvCategories.Items.Add(nil, 'AI Providers');
-  
-  tvCategories.Items.AddChild(LNodeProviders, 'Gemini');
-  tvCategories.Items.AddChild(LNodeProviders, 'OpenAI');
-  tvCategories.Items.AddChild(LNodeProviders, 'Claude');
-  tvCategories.Items.AddChild(LNodeProviders, 'DeepSeek');
-  tvCategories.Items.AddChild(LNodeProviders, 'Groq');
-  tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
-  
-  tvCategories.FullExpand;
-  tvCategories.Selected := LNodeGeneral;
 
   if not (Assigned(LThemingServices) and LThemingServices.IDEThemingEnabled) then
   begin
@@ -288,13 +249,13 @@ begin
   LoadConfig;
 end;
 
-destructor TFormAIConfig.Destroy;
+destructor TFrameAIConfig.Destroy;
 begin
   FTemplateManager.Free;
   inherited Destroy;
 end;
 
-procedure TFormAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
+procedure TFrameAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
 var
   LGroupBox: TGroupBox;
   LLabel: TLabel;
@@ -351,7 +312,7 @@ begin
   FEdtTimeouts[AProvider].NumbersOnly := True;
 end;
 
-procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
+procedure TFrameAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
@@ -374,8 +335,6 @@ begin
   end;
 
   Self.Color := LBgColor;
-  pnlFooter.Color := LBgColor;
-  pnlFooter.ParentBackground := False;
 
   { Apply theme to all tabs in the PageControl to avoid default white backgrounds }
   for I := 0 to pgcSettings.PageCount - 1 do
@@ -491,20 +450,9 @@ begin
     edtQuotaLimit.Font.Color := LTextColor;
     lblQuotaUsed.Font.Color := LTextColor;
   end;
-
-  if Assigned(tvCategories) then
-  begin
-    tvCategories.Color := LInputBgColor;
-    tvCategories.Font.Color := LTextColor;
-  end;
-  if Assigned(pnlSidebar) then
-  begin
-    pnlSidebar.Color := LBgColor;
-    pnlSidebar.ParentBackground := False;
-  end;
 end;
 
-procedure TFormAIConfig.LoadConfig;
+procedure TFrameAIConfig.LoadConfig;
 var
   LProvider: TAIProviderType;
   LFormatSettings: TFormatSettings;
@@ -555,7 +503,7 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.btnSaveClick(Sender: TObject);
+procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
 var
   LForm: TCustomForm;
   LOllamaUrl: string;
@@ -632,7 +580,7 @@ begin
     LForm.ModalResult := mrOk;
 end;
 
-procedure TFormAIConfig.btnCancelClick(Sender: TObject);
+procedure TFrameAIConfig.btnCancelClick(Sender: TObject);
 var
   LForm: TCustomForm;
 begin
@@ -642,7 +590,7 @@ begin
     LForm.ModalResult := mrCancel;
 end;
 
-procedure TFormAIConfig.PopulateTemplatesList;
+procedure TFrameAIConfig.PopulateTemplatesList;
 var
   LTemplate: TPromptTemplate;
   LSelectedIndex: Integer;
@@ -667,7 +615,7 @@ begin
     lstTemplates.ItemIndex := -1;
 end;
 
-procedure TFormAIConfig.lstTemplatesClick(Sender: TObject);
+procedure TFrameAIConfig.lstTemplatesClick(Sender: TObject);
 var
   LName: string;
   LTemplate: TPromptTemplate;
@@ -689,7 +637,7 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.btnNewTemplateClick(Sender: TObject);
+procedure TFrameAIConfig.btnNewTemplateClick(Sender: TObject);
 begin
   lstTemplates.ItemIndex := -1;
   edtTemplateName.Text := '';
@@ -698,7 +646,7 @@ begin
   edtTemplateName.SetFocus;
 end;
 
-procedure TFormAIConfig.btnDeleteTemplateClick(Sender: TObject);
+procedure TFrameAIConfig.btnDeleteTemplateClick(Sender: TObject);
 var
   LName: string;
 begin
@@ -718,7 +666,7 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.btnSaveTemplateClick(Sender: TObject);
+procedure TFrameAIConfig.btnSaveTemplateClick(Sender: TObject);
 var
   LName, LDesc, LBody: string;
   LIndex: Integer;
@@ -746,7 +694,7 @@ begin
   ShowMessage('Template saved successfully.');
 end;
 
-procedure TFormAIConfig.btnRestoreDefaultsClick(Sender: TObject);
+procedure TFrameAIConfig.btnRestoreDefaultsClick(Sender: TObject);
 begin
   if MessageDlg('Are you sure you want to restore default templates? This will overwrite your changes.',
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
@@ -762,7 +710,7 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.btnBrowseLogPathClick(Sender: TObject);
+procedure TFrameAIConfig.btnBrowseLogPathClick(Sender: TObject);
 var
   LFolder: string;
 begin
@@ -770,7 +718,7 @@ begin
     edtLogPath.Text := LFolder;
 end;
 
-procedure TFormAIConfig.btnResetQuotaClick(Sender: TObject);
+procedure TFrameAIConfig.btnResetQuotaClick(Sender: TObject);
 begin
   if MessageDlg('Are you sure you want to reset the monthly token usage counter to zero?',
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
@@ -784,27 +732,31 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
+procedure TFrameAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
 begin
-  if Node = nil then Exit;
-  
-  if SameText(Node.Text, 'General / Logs') then
+  if Node <> nil then
+    SelectCategoryByName(Node.Text);
+end;
+
+procedure TFrameAIConfig.SelectCategoryByName(const ACategoryName: string);
+begin
+  if SameText(ACategoryName, 'General / Logs') then
     pgcSettings.ActivePage := tsGeneral
-  else if SameText(Node.Text, 'System Prompt') then
+  else if SameText(ACategoryName, 'System Prompt') then
     pgcSettings.ActivePage := tsSystemPrompt
-  else if SameText(Node.Text, 'Templates') then
+  else if SameText(ACategoryName, 'Templates') then
     pgcSettings.ActivePage := tsTemplates
-  else if SameText(Node.Text, 'Gemini') then
+  else if SameText(ACategoryName, 'Gemini') then
     pgcSettings.ActivePage := tsGemini
-  else if SameText(Node.Text, 'OpenAI') then
+  else if SameText(ACategoryName, 'OpenAI') then
     pgcSettings.ActivePage := tsOpenAI
-  else if SameText(Node.Text, 'Claude') then
+  else if SameText(ACategoryName, 'Claude') then
     pgcSettings.ActivePage := tsClaude
-  else if SameText(Node.Text, 'DeepSeek') then
+  else if SameText(ACategoryName, 'DeepSeek') then
     pgcSettings.ActivePage := tsDeepSeek
-  else if SameText(Node.Text, 'Groq') then
+  else if SameText(ACategoryName, 'Groq') then
     pgcSettings.ActivePage := tsGroq
-  else if SameText(Node.Text, 'Ollama') then
+  else if SameText(ACategoryName, 'Ollama') then
     pgcSettings.ActivePage := tsOllama;
 end;
 
