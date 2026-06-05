@@ -749,6 +749,9 @@ var
   LTemplateName: string;
   LResolved: string;
 begin
+  if not btnSend.Enabled then
+    Exit;
+
   LText := Trim(memPrompt.Text);
   if LText.IsEmpty then
     Exit;

@@ -74,6 +74,7 @@ const SENDER_INFO = {
 //  addMessage — gera HTML com avatar + cabeçalho + conteúdo
 // ============================================================
 function addMessage(role, text, provider, model) {
+  hideTypingIndicator();
   if (text === undefined || text === null) {
     text = '';
   }
