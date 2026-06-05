@@ -45,7 +45,8 @@
 | **Atalhos de Teclado** | Chat UX | Atalho `Ctrl + Enter` para enviar prompts e `Enter` para quebra de linha. | ✅ Concluído |
 | **Persistência de Layout** | Chat UX | Salvamento e restauração automática de tamanho/posição flutuante e visibilidade no startup. | ✅ Concluído |
 | **Streaming de Respostas** | Chat UX | Respostas incrementais token a token (SSE) nos provedores OpenAI, Gemini, Claude e Ollama. | ✅ Concluído |
-| **Histórico de Chat Persistente** | Chat UX | Salvamento automático e restauração da conversa anterior de chat em JSON. | ✅ Concluído |
+| **Múltiplas Sessões de Chat** | Chat UX | Criação, renomeação, exclusão e isolamento de conversas em barra lateral retrátil (bloqueadas durante requisições ativas). | ✅ Concluído |
+| **Histórico de Chat Persistente** | Chat UX | Salvamento automático e restauração de sessões anteriores de chat em JSON. | ✅ Concluído |
 | **Histórico de Prompts (↑/↓)** | Chat UX | Navegação rápida pelos prompts enviados anteriormente usando as setas do teclado. | ✅ Concluído |
 | **Cancelamento de Requisições** | Chat UX | Permite abortar chamadas ativas de IA de forma assíncrona (com botão stop ou automaticamente ao alternar/criar chats). | ✅ Concluído |
 | **Exportação de Conversa** | Chat UX | Botão para salvar histórico nos formatos Markdown (.md) ou HTML autônomo com Prism.js. | ✅ Concluído |
