@@ -20,6 +20,8 @@ type
     btnTemplates: TSpeedButton;
     SaveDialog: TSaveDialog;
     pnlInput: TPanel;
+    shpInputBg: TShape;
+    shpSendBg: TShape;
     memPrompt: TMemo;
     btnSend: TSpeedButton;
     lblContext: TLabel;
@@ -49,9 +51,13 @@ type
     FAccumulatedUsage: TTokenUsage;
     FTemplateManager: TPromptTemplateManager;
     FPopupMenuTemplates: TPopupMenu;
+    FLoadingConfig: Boolean;  { Guard: prevents OnChange events from saving during LoadConfig }
     FLifecycleGuard: IInterface;
+    FRequestInProgress: Boolean;
+    FCancelledByUser: Boolean;
     EdgeBrowser: TEdgeBrowser;
     
+    procedure UpdateSendButtonVisual;
     procedure CreateEdgeBrowser;
     
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
@@ -61,8 +67,8 @@ type
     procedure LoadConfig;
     procedure UpdateModelsCombo;
     procedure SendPromptToAI(const APromptText: string);
-    procedure PostToWebView(const AAction, ARole, AText: string); overload;
-    procedure PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean); overload;
+    procedure PostToWebView(const AAction, ARole, AText: string; const AProvider: string = ''; const AModel: string = ''); overload;
+    procedure PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean; const AProvider: string = ''; const AModel: string = ''); overload;
     procedure OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
     procedure LoadChatHistory;
     procedure SaveChatHistory;
@@ -89,7 +95,15 @@ implementation
 
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigFrame,
-  RadIA.Core.Mediator, RadIA.Core.ConversationExporter;
+  RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes;
+
+function IsThemeDark(const AThemeName: string): Boolean;
+begin
+  Result := AThemeName.ToLower.Contains('dark') or 
+            SameText(AThemeName, 'carbon') or 
+            SameText(AThemeName, 'glow') or 
+            SameText(AThemeName, 'onyx');
+end;
 
 
 
@@ -288,46 +302,48 @@ var
   LFoundIndex: Integer;
   I: Integer;
 begin
-  cbProvider.Items.Clear;
-  for LProv := Low(TAIProviderType) to High(TAIProviderType) do
-  begin
-    if IsProviderConfigured(LProv) then
-    begin
-      cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
-    end;
-  end;
-
-  if cbProvider.Items.Count = 0 then
-  begin
+  { Disable OnChange handlers to prevent premature FConfig.Save during
+    programmatic combo updates — e.g. cbProvider.ItemIndex assignment
+    fires cbProviderChange which calls FConfig.Save with partial data. }
+  FLoadingConfig := True;
+  try
+    cbProvider.Items.Clear;
     for LProv := Low(TAIProviderType) to High(TAIProviderType) do
     begin
-      cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
+      if IsProviderConfigured(LProv) then
+        cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
     end;
-  end;
 
-  LActiveProvider := FConfig.GetActiveProvider;
-  LFoundIndex := -1;
-  for I := 0 to cbProvider.Items.Count - 1 do
-  begin
-    if TAIProviderType(cbProvider.Items.Objects[I]) = LActiveProvider then
+    if cbProvider.Items.Count = 0 then
     begin
-      LFoundIndex := I;
-      Break;
+      for LProv := Low(TAIProviderType) to High(TAIProviderType) do
+        cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
     end;
-  end;
 
-  if LFoundIndex <> -1 then
-  begin
-    cbProvider.ItemIndex := LFoundIndex;
-  end
-  else if cbProvider.Items.Count > 0 then
-  begin
-    cbProvider.ItemIndex := 0;
-    FConfig.SetActiveProvider(TAIProviderType(cbProvider.Items.Objects[0]));
-    FConfig.Save;
-  end;
+    LActiveProvider := FConfig.GetActiveProvider;
+    LFoundIndex := -1;
+    for I := 0 to cbProvider.Items.Count - 1 do
+    begin
+      if TAIProviderType(cbProvider.Items.Objects[I]) = LActiveProvider then
+      begin
+        LFoundIndex := I;
+        Break;
+      end;
+    end;
 
-  UpdateModelsCombo;
+    if LFoundIndex <> -1 then
+      cbProvider.ItemIndex := LFoundIndex
+    else if cbProvider.Items.Count > 0 then
+    begin
+      cbProvider.ItemIndex := 0;
+      { Only update FActiveProvider in memory — Save will happen below if needed }
+      FConfig.SetActiveProvider(TAIProviderType(cbProvider.Items.Objects[0]));
+    end;
+
+    UpdateModelsCombo;
+  finally
+    FLoadingConfig := False;
+  end;
 end;
 
 procedure TFrameAIChat.UpdateModelsCombo;
@@ -361,7 +377,14 @@ begin
         LActiveModel := FConfig.GetActiveModel(LProvider.GetProviderType);
         cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
         if cbModel.ItemIndex = -1 then
+        begin
           cbModel.ItemIndex := 0;
+          if cbModel.Items.Count > 0 then
+          begin
+            FConfig.SetActiveModel(LProvider.GetProviderType, cbModel.Items[0]);
+            FConfig.Save;
+          end;
+        end;
           
         cbModel.Enabled := True;
       end);
@@ -380,6 +403,10 @@ procedure TFrameAIChat.cbProviderChange(Sender: TObject);
 var
   LSelectedProvider: TAIProviderType;
 begin
+  { Ignore programmatic changes during LoadConfig to prevent premature Save }
+  if FLoadingConfig then
+    Exit;
+
   if cbProvider.ItemIndex <> -1 then
   begin
     LSelectedProvider := TAIProviderType(cbProvider.Items.Objects[cbProvider.ItemIndex]);
@@ -393,6 +420,10 @@ procedure TFrameAIChat.cbModelChange(Sender: TObject);
 var
   LSelectedProvider: TAIProviderType;
 begin
+  { Ignore programmatic changes during LoadConfig to prevent premature Save }
+  if FLoadingConfig then
+    Exit;
+
   if cbProvider.ItemIndex <> -1 then
   begin
     LSelectedProvider := TAIProviderType(cbProvider.Items.Objects[cbProvider.ItemIndex]);
@@ -489,17 +520,20 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string);
+procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string; const AProvider: string; const AModel: string);
 begin
-  PostToWebView(AAction, ARole, AText, False);
+  PostToWebView(AAction, ARole, AText, False, AProvider, AModel);
 end;
 
-procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean);
+procedure TFrameAIChat.PostToWebView(const AAction, ARole, AText: string; AIsDone: Boolean; const AProvider: string; const AModel: string);
 var
   LJson: TJSONObject;
 begin
   if not FBrowserInitialized then
     Exit;
+
+  TLogger.Log(Format('PostToWebView: Action=%s, Role=%s, TextLen=%d, IsDone=%s, Provider=%s, Model=%s',
+    [AAction, ARole, Length(AText), BoolToStr(AIsDone, True), AProvider, AModel]), 'UI');
     
   LJson := TJSONObject.Create;
   try
@@ -509,6 +543,10 @@ begin
     if not AText.IsEmpty then
       LJson.AddPair('text', AText);
     LJson.AddPair('isDone', TJSONBool.Create(AIsDone));
+    if not AProvider.IsEmpty then
+      LJson.AddPair('provider', AProvider);
+    if not AModel.IsEmpty then
+      LJson.AddPair('model', AModel);
       
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
@@ -538,26 +576,66 @@ begin
   end;
 end;
 
+procedure TFrameAIChat.UpdateSendButtonVisual;
+var
+  LIsDark: Boolean;
+  LThemingServices: IOTAIDEThemingServices;
+  LActiveTheme: string;
+begin
+  LIsDark := False;
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LActiveTheme := LThemingServices.ActiveTheme;
+      LIsDark := IsThemeDark(LActiveTheme);
+    end;
+  end;
+
+  if FRequestInProgress then
+  begin
+    { Estado de Parar / Cancelar }
+    shpSendBg.Brush.Color := $003B3BFC; // Vermelho moderno (BGR)
+    shpSendBg.Pen.Color := $003B3BFC;
+    shpSendBg.Pen.Style := psSolid;
+    btnSend.Caption := #9632; // quadrado ■
+    btnSend.Font.Color := clWhite;
+  end
+  else
+  begin
+    { Estado de Enviar }
+    if LIsDark then
+    begin
+      shpSendBg.Brush.Color := $00E5E5E5; // Branco/Cinza claro
+      shpSendBg.Pen.Color := $00E5E5E5;
+      shpSendBg.Pen.Style := psSolid;
+      btnSend.Caption := #11014; // Seta para cima ⬆
+      btnSend.Font.Color := $001E1E1E; // Cinza escuro
+    end
+    else
+    begin
+      shpSendBg.Brush.Color := $001F1F1F; // Preto/Cinza escuro
+      shpSendBg.Pen.Color := $001F1F1F;
+      shpSendBg.Pen.Style := psSolid;
+      btnSend.Caption := #11014; // Seta para cima ⬆
+      btnSend.Font.Color := clWhite;
+    end;
+  end;
+end;
+
 procedure TFrameAIChat.UpdateVCLColors(const AThemeName: string);
 var
   LThemingServices: IOTAIDEThemingServices;
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
 begin
-  { Se a estilização da IDE estiver ativa, deixamos que o VCL Styles gerencie a pintura }
-  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
-  begin
-    if LThemingServices.IDEThemingEnabled then
-      Exit;
-  end;
-
-  LIsDark := SameText(AThemeName, 'dark');
+  LIsDark := IsThemeDark(AThemeName);
   
   if LIsDark then
   begin
-    LBgColor := $00252526;      // Cinza escuro da IDE do Delphi
+    LBgColor := $00252526;      // Cinza escuro da IDE
     LTextColor := $00D4D4D4;    // Texto cinza claro
-    LInputBgColor := $001E1E1E; // Fundo dos edits/memos
+    LInputBgColor := $001E1E1E; // Fundo escuro do prompt
   end
   else
   begin
@@ -566,33 +644,51 @@ begin
     LInputBgColor := clWindow;
   end;
 
-  Self.Color := LBgColor;
-  pnlToolbar.Color := LBgColor;
-  pnlToolbar.ParentBackground := False;
-  pnlInput.Color := LBgColor;
-  pnlInput.ParentBackground := False;
-  pnlBrowser.Color := LBgColor;
-  pnlBrowser.ParentBackground := False;
+  { Se a estilização da IDE não estiver ativa, pintamos o Frame e Toolbar manualmente }
+  if not Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) or not LThemingServices.IDEThemingEnabled then
+  begin
+    Self.Color := LBgColor;
+    pnlToolbar.Color := LBgColor;
+    pnlToolbar.ParentBackground := False;
+    pnlBrowser.Color := LBgColor;
+    pnlBrowser.ParentBackground := False;
 
-  // Labels
-  lblContext.Font.Color := if LIsDark then $009CA3AF else clGrayText;
+    // Labels
+    lblContext.Font.Color := if LIsDark then $009CA3AF else clGrayText;
 
-  // ComboBoxes
-  cbProvider.Color := LInputBgColor;
-  cbProvider.Font.Color := LTextColor;
-  cbModel.Color := LInputBgColor;
-  cbModel.Font.Color := LTextColor;
+    // ComboBoxes
+    cbProvider.Color := LInputBgColor;
+    cbProvider.Font.Color := LTextColor;
+    cbModel.Color := LInputBgColor;
+    cbModel.Font.Color := LTextColor;
 
-  // Input Memo
+    // SpeedButtons da Toolbar
+    btnTemplates.Font.Color := LTextColor;
+    btnExport.Font.Color := LTextColor;
+    btnClear.Font.Color := LTextColor;
+    btnSettings.Font.Color := LTextColor;
+  end;
+
+  { Componentes da Cápsula do Prompt e Botão de Enviar:
+    Tornamos o pnlInput transparente para assumir a cor nativa da IDE/Frame (mesma cor do topo e do fundo) }
+  pnlInput.ParentBackground := True;
+  pnlInput.StyleElements := pnlInput.StyleElements + [seClient, seBorder];
+  
+  { A cápsula em si (shpInputBg) e o memo (memPrompt) usam a cor do edit (LInputBgColor) }
+  shpInputBg.Brush.Color := LInputBgColor;
+  if LIsDark then
+    shpInputBg.Pen.Color := $003E3E42
+  else
+    shpInputBg.Pen.Color := $00D1D5DB;
+  shpInputBg.Pen.Style := psSolid;
+
+  memPrompt.StyleElements := memPrompt.StyleElements - [seClient, seBorder];
   memPrompt.Color := LInputBgColor;
   memPrompt.Font.Color := LTextColor;
 
-  // SpeedButtons (Toolbar e Send)
-  btnTemplates.Font.Color := LTextColor;
-  btnExport.Font.Color := LTextColor;
-  btnClear.Font.Color := LTextColor;
-  btnSettings.Font.Color := LTextColor;
-  btnSend.Font.Color := LTextColor;
+  btnSend.StyleElements := btnSend.StyleElements - [seFont, seClient, seBorder];
+  
+  UpdateSendButtonVisual;
 end;
 
 procedure TFrameAIChat.ApplyIDETheme;
@@ -605,7 +701,7 @@ begin
     if LThemingServices.IDEThemingEnabled then
     begin
       LActiveTheme := LThemingServices.ActiveTheme;
-      if SameText(LActiveTheme, 'Dark') then
+      if IsThemeDark(LActiveTheme) then
         SetTheme('dark')
       else
         SetTheme('light');
@@ -724,6 +820,19 @@ var
   LTemplateName: string;
   LResolved: string;
 begin
+  if FRequestInProgress then
+  begin
+    FCancelledByUser := True;
+    TLogger.Log('btnSendClick: User requested cancellation of active request.', 'UI');
+    btnSend.Enabled := False;
+    UpdateSendButtonVisual;
+    FAIService.CancelCurrentRequest;
+    Exit;
+  end;
+
+  if not btnSend.Enabled then
+    Exit;
+
   LText := Trim(memPrompt.Text);
   if LText.IsEmpty then
     Exit;
@@ -812,10 +921,35 @@ var
   LUserMsg: IChatMessage;
   LFullResponse: string;
   LGuard: ILifecycleGuard;
+  LProfile: TAIRequestProfile;
+  LDoneHandled: Boolean;
+  LActiveProvider: string;
+  LActiveModel: string;
 begin
-  btnSend.Enabled := False;
+  LDoneHandled := False;
+  FRequestInProgress := True;
+  FCancelledByUser := False;
+  UpdateSendButtonVisual;
+  btnSend.Enabled := True;
+
+  LActiveProvider := ProviderTypeToString(FConfig.GetActiveProvider);
+  LActiveModel := FConfig.GetActiveModel(FConfig.GetActiveProvider);
+
+  TLogger.Log(Format('SendPromptToAI started. Provider=%s, Model=%s, PromptLength=%d',
+    [LActiveProvider, LActiveModel, Length(APromptText)]), 'UI');
+
+  { Infer request profile from slash commands }
+  LProfile := rpGeneralChat;
+  if APromptText.StartsWith('/refactor', True) or APromptText.StartsWith('/optimize', True) then
+    LProfile := rpRefactorCode
+  else if APromptText.StartsWith('/bugs', True) then
+    LProfile := rpFindBugs
+  else if APromptText.StartsWith('/test', True) then
+    LProfile := rpGenerateTests
+  else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) then
+    LProfile := rpExplainCode;
   
-  LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText);
+  LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText, LActiveProvider, LActiveModel);
   LFullResponse := '';
   LGuard := FLifecycleGuard as ILifecycleGuard;
   
@@ -823,7 +957,14 @@ begin
   
   FAIService.SendPromptStream(APromptText, FHistory,
     procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    var
+      LChunkCopy: string;
+      LIsDoneCopy: Boolean;
+      LErrorCopy: string;
     begin
+      LChunkCopy := AChunk;
+      LIsDoneCopy := AIsDone;
+      LErrorCopy := AError;
       TThread.Queue(nil,
         procedure
         var
@@ -831,62 +972,99 @@ begin
           LStats: string;
           LUsage: TTokenUsage;
         begin
+          { Guard: discard duplicate done/error signals emitted by providers
+            that call ACallback(done) both in ProcessStreamBuffer AND after
+            DoPostRequestStream returns. }
+          if LDoneHandled then
+            Exit;
+
           if not LGuard.IsAlive then
             Exit;
-            
-          if not AError.IsEmpty then
+
+          if FCancelledByUser then
           begin
+            LDoneHandled := True;
+            FRequestInProgress := False;
+            UpdateSendButtonVisual;
             btnSend.Enabled := True;
-            PostToWebView('add_message', 'assistant', '**Error:** ' + AError);
+            TLogger.Log('SendPromptToAI: Handling user cancellation in UI callback.', 'UI');
+            PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*', False, LActiveProvider, LActiveModel);
+            PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
             Exit;
           end;
-          
-          if not AIsDone then
+
+          if not LErrorCopy.IsEmpty then
           begin
-            LFullResponse := LFullResponse + AChunk;
-            PostToWebView('append_message', 'assistant', AChunk, False);
+            LDoneHandled := True;
+            FRequestInProgress := False;
+            UpdateSendButtonVisual;
+            btnSend.Enabled := True;
+            TLogger.Log(Format('SendPromptToAI error callback: %s', [LErrorCopy]), 'UI');
+            
+            if FCancelledByUser then
+            begin
+              PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*', False, LActiveProvider, LActiveModel);
+              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+            end
+            else
+            begin
+              PostToWebView('add_message', 'assistant', '**Error:** ' + LErrorCopy, False, LActiveProvider, LActiveModel);
+              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+            end;
+            Exit;
+          end;
+
+          if not LIsDoneCopy then
+          begin
+            LFullResponse := LFullResponse + LChunkCopy;
+            PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
           end
           else
           begin
+            LDoneHandled := True;
+            FRequestInProgress := False;
+            UpdateSendButtonVisual;
             btnSend.Enabled := True;
-            if not AChunk.IsEmpty then
+            TLogger.Log(Format('SendPromptToAI done callback. ResponseLength=%d', [Length(LFullResponse)]), 'UI');
+            if not LChunkCopy.IsEmpty then
             begin
-              LFullResponse := LFullResponse + AChunk;
-              PostToWebView('append_message', 'assistant', AChunk, False);
+              LFullResponse := LFullResponse + LChunkCopy;
+              PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
             end;
-            
+
             if LFullResponse.IsEmpty and AError.IsEmpty then
             begin
-              PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.');
-              PostToWebView('append_message', 'assistant', '', True);
+              TLogger.Log('SendPromptToAI: Empty response from AI provider', 'UI');
+              PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.', False, LActiveProvider, LActiveModel);
+              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
               Exit;
             end;
-            
-            PostToWebView('append_message', 'assistant', '', True);
-            
+
+            PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+
             { Save history }
             FHistory := FHistory + [LUserMsg];
-            LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse);
+            LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
             FHistory := FHistory + [LAssistantMsg];
             SaveChatHistory;
-            
+
             { Estimate and update token usage stats }
             LUsage.PromptTokens := Length(APromptText) div 4;
             LUsage.CompletionTokens := Length(LFullResponse) div 4;
             LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
-            
+
             if LUsage.TotalTokens > 0 then
             begin
               FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
               FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
               FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
-              
+
               LStats := FAccumulatedUsage.FormatStats;
               PostToWebView('update_tokens', '', LStats);
             end;
           end;
         end);
-    end);
+    end, LProfile);
 end;
 
 procedure TFrameAIChat.OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
@@ -903,19 +1081,26 @@ var
   LVal: TJSONValue;
   LMsgObj: TJSONObject;
   LMsg: IChatMessage;
-  LRoleStr, LContentStr: string;
+  LRoleStr, LContentStr, LProviderStr, LModelStr: string;
   LRole: TAIMessageRole;
   LParsedVal: TJSONValue;
 begin
   FHistory := [];
   LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
+  TLogger.Log(Format('LoadChatHistory: Loading history from %s', [LHistoryFile]), 'UI');
   if not TFile.Exists(LHistoryFile) then
+  begin
+    TLogger.Log('LoadChatHistory: No history file found', 'UI');
     Exit;
+  end;
 
   try
     LContent := TFile.ReadAllText(LHistoryFile, TEncoding.UTF8);
     if LContent.IsEmpty then
+    begin
+      TLogger.Log('LoadChatHistory: History file is empty', 'UI');
       Exit;
+    end;
 
     LParsedVal := TJSONObject.ParseJSONValue(LContent);
     if Assigned(LParsedVal) then
@@ -931,30 +1116,38 @@ begin
               LMsgObj := LVal as TJSONObject;
               LRoleStr := LMsgObj.GetValue<string>('role', '');
               LContentStr := LMsgObj.GetValue<string>('content', '');
+              LProviderStr := LMsgObj.GetValue<string>('provider', '');
+              LModelStr := LMsgObj.GetValue<string>('model', '');
               
               if not LContentStr.IsEmpty then
               begin
                 LRole := StringToMessageRole(LRoleStr);
-                LMsg := TRadIAService.CreateMessage(LRole, LContentStr);
+                LMsg := TRadIAService.CreateMessage(LRole, LContentStr, LProviderStr, LModelStr);
                 
                 FHistory := FHistory + [LMsg];
                 
                 { Render message in WebView }
-                PostToWebView('add_message', LRoleStr, LContentStr);
+                PostToWebView('add_message', LRoleStr, LContentStr, False, LProviderStr, LModelStr);
               end;
             end;
           end;
+          TLogger.Log(Format('LoadChatHistory: Loaded %d messages successfully', [Length(FHistory)]), 'UI');
         finally
           LJsonArr.Free;
         end;
       end
       else
       begin
+        TLogger.Log('LoadChatHistory: Invalid JSON format (not an array)', 'UI');
         LParsedVal.Free;
       end;
     end;
   except
-    FHistory := [];
+    on E: Exception do
+    begin
+      TLogger.Log(Format('LoadChatHistory exception: %s', [E.Message]), 'UI');
+      FHistory := [];
+    end;
   end;
 end;
 
@@ -966,6 +1159,7 @@ var
   LMsg: IChatMessage;
 begin
   LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
+  TLogger.Log(Format('SaveChatHistory: Saving %d messages to %s', [Length(FHistory), LHistoryFile]), 'UI');
   ForceDirectories(TPath.GetDirectoryName(LHistoryFile));
 
   LJsonArr := TJSONArray.Create;
@@ -978,10 +1172,20 @@ begin
       LMsgObj := TJSONObject.Create;
       LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
       LMsgObj.AddPair('content', LMsg.Content);
+      if not LMsg.Provider.IsEmpty then
+        LMsgObj.AddPair('provider', LMsg.Provider);
+      if not LMsg.Model.IsEmpty then
+        LMsgObj.AddPair('model', LMsg.Model);
       LJsonArr.AddElement(LMsgObj);
     end;
     
-    TFile.WriteAllText(LHistoryFile, LJsonArr.ToJSON, TEncoding.UTF8);
+    try
+      TFile.WriteAllText(LHistoryFile, LJsonArr.ToJSON, TEncoding.UTF8);
+      TLogger.Log('SaveChatHistory: History saved successfully', 'UI');
+    except
+      on E: Exception do
+        TLogger.Log(Format('SaveChatHistory write exception: %s', [E.Message]), 'UI');
+    end;
   finally
     LJsonArr.Free;
   end;

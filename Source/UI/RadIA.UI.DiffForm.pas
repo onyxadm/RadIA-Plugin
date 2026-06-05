@@ -239,7 +239,7 @@ begin
           if LGuard.IsAlive then
             RenderDiffInBrowser;
         end);
-    end);
+    end, rpRefactorCode);
 end;
 
 procedure TFormAIDiff.btnPrevConflictClick(Sender: TObject);

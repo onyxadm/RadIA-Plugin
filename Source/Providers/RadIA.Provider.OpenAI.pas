@@ -18,9 +18,9 @@ type
     constructor Create(const AConfig: IAIConfig); override;
 
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TCompletionCallback); override;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); override;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -29,7 +29,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading;
+  System.JSON, System.Threading, System.Math;
 
 { TRadIAOpenAIProvider }
 
@@ -73,12 +73,15 @@ begin
 end;
 
 procedure TRadIAOpenAIProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback);
+  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -91,7 +94,7 @@ begin
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
 
   try
-    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False);
+    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -105,7 +108,10 @@ begin
     var
       LResponseText: string;
       LUsage: TTokenUsage;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       try
         LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
         LResponseText := ParseOpenAICompatibleResponse(LResponseText, LUsage);
@@ -118,10 +124,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', E.Message, False, TTokenUsage.Empty);
+              ACallback('', LErrorMsg, False, TTokenUsage.Empty);
             end);
         end;
       end;
@@ -138,12 +145,15 @@ begin
 end;
 
 procedure TRadIAOpenAIProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback);
+  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -156,7 +166,7 @@ begin
   LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LApiKey);
 
   try
-    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True);
+    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -169,7 +179,10 @@ begin
     procedure
     var
       LBufferText: string;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       LBufferText := '';
       try
         DoPostRequestStream(LUrl, LHeaders, LRequestBody,
@@ -181,10 +194,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', True, E.Message);
+              ACallback('', True, LErrorMsg);
             end);
         end;
       end;

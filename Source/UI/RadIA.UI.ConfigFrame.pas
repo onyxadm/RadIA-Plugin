@@ -64,6 +64,23 @@ type
     FConfig: IAIConfig;
     FTemplateManager: TPromptTemplateManager;
     FOnClose: TNotifyEvent;
+    
+    FEdtTemperatures: array[TAIProviderType] of TEdit;
+    FEdtMaxTokens: array[TAIProviderType] of TEdit;
+    FEdtTimeouts: array[TAIProviderType] of TEdit;
+    FChkSmartConfig: TCheckBox;
+    
+    tsGeneral: TTabSheet;
+    chkLogEnabled: TCheckBox;
+    lblLogPath: TLabel;
+    edtLogPath: TEdit;
+    btnBrowseLogPath: TButton;
+    lblLogMaxSize: TLabel;
+    edtLogMaxSize: TEdit;
+    
+    procedure btnBrowseLogPathClick(Sender: TObject);
+    
+    procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
     procedure UpdateVCLColors(const AThemeName: string);
     procedure PopulateTemplatesList;
   public
@@ -79,7 +96,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes;
+  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger;
 
 type
   TTabSheetColorHack = class(TTabSheet);
@@ -116,6 +133,69 @@ begin
   FTemplateManager := TPromptTemplateManager.Create;
   FTemplateManager.Load;
 
+  { Create CheckBox in Footer }
+  FChkSmartConfig := TCheckBox.Create(Self);
+  FChkSmartConfig.Parent := pnlFooter;
+  FChkSmartConfig.Align := alLeft;
+  FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
+  FChkSmartConfig.Margins.Left := 16;
+  FChkSmartConfig.AlignWithMargins := True;
+  FChkSmartConfig.Width := 200;
+
+  { Create advanced settings groupbox for each provider tab }
+  CreateProviderAdvancedControls(tsGemini, ptGemini);
+  CreateProviderAdvancedControls(tsOpenAI, ptOpenAI);
+  CreateProviderAdvancedControls(tsClaude, ptClaude);
+  CreateProviderAdvancedControls(tsDeepSeek, ptDeepSeek);
+  CreateProviderAdvancedControls(tsGroq, ptGroq);
+  CreateProviderAdvancedControls(tsOllama, ptOllama);
+
+  { Create General/Logs Tab and controls programmatically }
+  tsGeneral := TTabSheet.Create(Self);
+  tsGeneral.PageControl := pgcSettings;
+  tsGeneral.Caption := 'General / Logs';
+
+  chkLogEnabled := TCheckBox.Create(Self);
+  chkLogEnabled.Parent := tsGeneral;
+  chkLogEnabled.Left := 16;
+  chkLogEnabled.Top := 16;
+  chkLogEnabled.Width := 200;
+  chkLogEnabled.Caption := 'Enable logging';
+
+  lblLogPath := TLabel.Create(Self);
+  lblLogPath.Parent := tsGeneral;
+  lblLogPath.Left := 16;
+  lblLogPath.Top := 48;
+  lblLogPath.Caption := 'Log Folder Path:';
+
+  edtLogPath := TEdit.Create(Self);
+  edtLogPath.Parent := tsGeneral;
+  edtLogPath.Left := 16;
+  edtLogPath.Top := 66;
+  edtLogPath.Width := 320;
+
+  btnBrowseLogPath := TButton.Create(Self);
+  btnBrowseLogPath.Parent := tsGeneral;
+  btnBrowseLogPath.Left := 342;
+  btnBrowseLogPath.Top := 64;
+  btnBrowseLogPath.Width := 30;
+  btnBrowseLogPath.Height := 23;
+  btnBrowseLogPath.Caption := '...';
+  btnBrowseLogPath.OnClick := btnBrowseLogPathClick;
+
+  lblLogMaxSize := TLabel.Create(Self);
+  lblLogMaxSize.Parent := tsGeneral;
+  lblLogMaxSize.Left := 16;
+  lblLogMaxSize.Top := 104;
+  lblLogMaxSize.Caption := 'Max Log File Size (KB):';
+
+  edtLogMaxSize := TEdit.Create(Self);
+  edtLogMaxSize.Parent := tsGeneral;
+  edtLogMaxSize.Left := 16;
+  edtLogMaxSize.Top := 122;
+  edtLogMaxSize.Width := 100;
+  edtLogMaxSize.NumbersOnly := True;
+
   LActiveTheme := 'light';
   { Apply IDE theme so this form matches the current Delphi skin }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
@@ -140,11 +220,69 @@ begin
   inherited Destroy;
 end;
 
+procedure TFormAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
+var
+  LGroupBox: TGroupBox;
+  LLabel: TLabel;
+begin
+  LGroupBox := TGroupBox.Create(Self);
+  LGroupBox.Parent := ATabSheet;
+  LGroupBox.Align := alBottom;
+  LGroupBox.Height := 90;
+  LGroupBox.Caption := ' Advanced Settings ';
+  LGroupBox.Margins.Left := 8;
+  LGroupBox.Margins.Right := 8;
+  LGroupBox.Margins.Bottom := 8;
+  LGroupBox.AlignWithMargins := True;
+
+  // Temperature
+  LLabel := TLabel.Create(Self);
+  LLabel.Parent := LGroupBox;
+  LLabel.Left := 16;
+  LLabel.Top := 24;
+  LLabel.Caption := 'Temperature (0.0 - 1.0):';
+
+  FEdtTemperatures[AProvider] := TEdit.Create(Self);
+  FEdtTemperatures[AProvider].Parent := LGroupBox;
+  FEdtTemperatures[AProvider].Left := 16;
+  FEdtTemperatures[AProvider].Top := 42;
+  FEdtTemperatures[AProvider].Width := 100;
+
+  // Max Tokens
+  LLabel := TLabel.Create(Self);
+  LLabel.Parent := LGroupBox;
+  LLabel.Left := 140;
+  LLabel.Top := 24;
+  LLabel.Caption := 'Max Output Tokens:';
+
+  FEdtMaxTokens[AProvider] := TEdit.Create(Self);
+  FEdtMaxTokens[AProvider].Parent := LGroupBox;
+  FEdtMaxTokens[AProvider].Left := 140;
+  FEdtMaxTokens[AProvider].Top := 42;
+  FEdtMaxTokens[AProvider].Width := 100;
+  FEdtMaxTokens[AProvider].NumbersOnly := True;
+
+  // Timeout
+  LLabel := TLabel.Create(Self);
+  LLabel.Parent := LGroupBox;
+  LLabel.Left := 264;
+  LLabel.Top := 24;
+  LLabel.Caption := 'Timeout (seconds):';
+
+  FEdtTimeouts[AProvider] := TEdit.Create(Self);
+  FEdtTimeouts[AProvider].Parent := LGroupBox;
+  FEdtTimeouts[AProvider].Left := 264;
+  FEdtTimeouts[AProvider].Top := 42;
+  FEdtTimeouts[AProvider].Width := 100;
+  FEdtTimeouts[AProvider].NumbersOnly := True;
+end;
+
 procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
   I: Integer;
+  LProvider: TAIProviderType;
 begin
   LIsDark := SameText(AThemeName, 'dark');
   
@@ -226,10 +364,60 @@ begin
   lblTemplateName.Font.Color := LTextColor;
   lblTemplateDesc.Font.Color := LTextColor;
   lblTemplateBody.Font.Color := LTextColor;
+
+  { Paint Advanced Controls }
+  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  begin
+    if Assigned(FEdtTemperatures[LProvider]) then
+    begin
+      FEdtTemperatures[LProvider].Color := LInputBgColor;
+      FEdtTemperatures[LProvider].Font.Color := LTextColor;
+    end;
+    if Assigned(FEdtMaxTokens[LProvider]) then
+    begin
+      FEdtMaxTokens[LProvider].Color := LInputBgColor;
+      FEdtMaxTokens[LProvider].Font.Color := LTextColor;
+    end;
+    if Assigned(FEdtTimeouts[LProvider]) then
+    begin
+      FEdtTimeouts[LProvider].Color := LInputBgColor;
+      FEdtTimeouts[LProvider].Font.Color := LTextColor;
+    end;
+  end;
+
+  if Assigned(FChkSmartConfig) then
+    FChkSmartConfig.Font.Color := LTextColor;
+
+  if Assigned(tsGeneral) then
+  begin
+    TTabSheetColorHack(tsGeneral).ParentBackground := False;
+    TTabSheetColorHack(tsGeneral).Color := LBgColor;
+  end;
+  if Assigned(chkLogEnabled) then
+    chkLogEnabled.Font.Color := LTextColor;
+  if Assigned(lblLogPath) then
+    lblLogPath.Font.Color := LTextColor;
+  if Assigned(edtLogPath) then
+  begin
+    edtLogPath.Color := LInputBgColor;
+    edtLogPath.Font.Color := LTextColor;
+  end;
+  if Assigned(lblLogMaxSize) then
+    lblLogMaxSize.Font.Color := LTextColor;
+  if Assigned(edtLogMaxSize) then
+  begin
+    edtLogMaxSize.Color := LInputBgColor;
+    edtLogMaxSize.Font.Color := LTextColor;
+  end;
 end;
 
 procedure TFormAIConfig.LoadConfig;
+var
+  LProvider: TAIProviderType;
+  LFormatSettings: TFormatSettings;
 begin
+  LFormatSettings := TFormatSettings.Invariant;
+  
   edtGeminiKey.Text := FConfig.GetApiKey(ptGemini);
   edtOpenAIKey.Text := FConfig.GetApiKey(ptOpenAI);
   edtOpenAICustomUrl.Text := FConfig.OpenAICustomBaseUrl;
@@ -238,6 +426,26 @@ begin
   edtGroqKey.Text := FConfig.GetApiKey(ptGroq);
   memSystemPrompt.Text := FConfig.SystemPrompt;
   edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
+
+  if Assigned(FChkSmartConfig) then
+    FChkSmartConfig.Checked := FConfig.SmartConfigEnabled;
+
+  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  begin
+    if Assigned(FEdtTemperatures[LProvider]) then
+      FEdtTemperatures[LProvider].Text := FormatFloat('0.0', FConfig.GetTemperature(LProvider), LFormatSettings);
+    if Assigned(FEdtMaxTokens[LProvider]) then
+      FEdtMaxTokens[LProvider].Text := IntToStr(FConfig.GetMaxTokens(LProvider));
+    if Assigned(FEdtTimeouts[LProvider]) then
+      FEdtTimeouts[LProvider].Text := IntToStr(FConfig.GetTimeout(LProvider));
+  end;
+
+  if Assigned(chkLogEnabled) then
+    chkLogEnabled.Checked := FConfig.LogEnabled;
+  if Assigned(edtLogPath) then
+    edtLogPath.Text := FConfig.LogPath;
+  if Assigned(edtLogMaxSize) then
+    edtLogMaxSize.Text := IntToStr(FConfig.LogMaxSizeKB);
 
   PopulateTemplatesList;
   if lstTemplates.Count > 0 then
@@ -252,9 +460,13 @@ var
   LForm: TCustomForm;
   LOllamaUrl: string;
   LOpenAIUrl: string;
+  LProvider: TAIProviderType;
+  LFormatSettings: TFormatSettings;
+  LTemp: Double;
 begin
   LOllamaUrl := Trim(edtOllamaUrl.Text);
   LOpenAIUrl := Trim(edtOpenAICustomUrl.Text);
+  LFormatSettings := TFormatSettings.Invariant;
 
   if not LOllamaUrl.IsEmpty and not (LOllamaUrl.StartsWith('http://', True) or LOllamaUrl.StartsWith('https://', True)) then
   begin
@@ -276,6 +488,33 @@ begin
   FConfig.SetApiKey(ptGroq, Trim(edtGroqKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := LOllamaUrl;
+
+  if Assigned(FChkSmartConfig) then
+    FConfig.SmartConfigEnabled := FChkSmartConfig.Checked;
+
+  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  begin
+    if Assigned(FEdtTemperatures[LProvider]) then
+    begin
+      if TryStrToFloat(FEdtTemperatures[LProvider].Text, LTemp, LFormatSettings) then
+      begin
+        if (LTemp >= 0.0) and (LTemp <= 2.0) then
+          FConfig.SetTemperature(LProvider, LTemp);
+      end;
+    end;
+    if Assigned(FEdtMaxTokens[LProvider]) then
+      FConfig.SetMaxTokens(LProvider, StrToIntDef(FEdtMaxTokens[LProvider].Text, 2048));
+    if Assigned(FEdtTimeouts[LProvider]) then
+      FConfig.SetTimeout(LProvider, StrToIntDef(FEdtTimeouts[LProvider].Text, 60));
+  end;
+
+  if Assigned(chkLogEnabled) then
+    FConfig.LogEnabled := chkLogEnabled.Checked;
+  if Assigned(edtLogPath) then
+    FConfig.LogPath := Trim(edtLogPath.Text);
+  if Assigned(edtLogMaxSize) then
+    FConfig.LogMaxSizeKB := StrToIntDef(edtLogMaxSize.Text, 1024);
+
   FConfig.Save;
 
   { Save templates too }
@@ -416,6 +655,14 @@ begin
     end;
     ShowMessage('Default templates restored successfully.');
   end;
+end;
+
+procedure TFormAIConfig.btnBrowseLogPathClick(Sender: TObject);
+var
+  LFolder: string;
+begin
+  if Vcl.FileCtrl.SelectDirectory('Select Log Folder', '', LFolder, [sdNewUI, sdNewFolder]) then
+    edtLogPath.Text := LFolder;
 end;
 
 end.

@@ -10,15 +10,16 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAOllamaProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback); override;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); override;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -28,7 +29,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections;
+  System.JSON, System.Threading, System.Generics.Collections, System.Math;
 
 { TRadIAOllamaProvider }
 
@@ -48,17 +49,30 @@ begin
   Result := 'Ollama Local/Network';
 end;
 
-function TRadIAOllamaProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
+function TRadIAOllamaProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
   LMsgObj: TJSONObject;
   LMsg: IChatMessage;
+  LOptionsObj: TJSONObject;
 begin
   LRootObj := TJSONObject.Create;
   try
     LRootObj.AddPair('model', GetActiveModel);
     LRootObj.AddPair('stream', TJSONBool.Create(AStream));
+
+    LOptionsObj := TJSONObject.Create;
+    if ATemperature >= 0.0 then
+      LOptionsObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
+    if AMaxTokens > 0 then
+      LOptionsObj.AddPair('num_predict', TJSONNumber.Create(AMaxTokens));
+
+    if LOptionsObj.Count > 0 then
+      LRootObj.AddPair('options', LOptionsObj)
+    else
+      LOptionsObj.Free;
     
     LMessagesArr := TJSONArray.Create;
     LRootObj.AddPair('messages', LMessagesArr);
@@ -119,15 +133,17 @@ begin
 end;
 
 procedure TRadIAOllamaProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-  const ACallback: TCompletionCallback);
+  const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LUrl := FConfig.OllamaBaseUrl + '/api/chat';
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -140,7 +156,10 @@ begin
                var
                  LResponseText: string;
                  LUsage: TTokenUsage;
+                 LErrorMsg: string;
                begin
+                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+                 LProviderRef.GetProviderType;
                  try
                    LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
                    LResponseText := ParseResponseBody(LResponseText, LUsage);
@@ -153,10 +172,11 @@ begin
                  except
                    on E: Exception do
                    begin
+                     LErrorMsg := E.ClassName + ': ' + E.Message;
                      TThread.Queue(nil,
                        procedure
                        begin
-                         ACallback('', E.Message, False, TTokenUsage.Empty);
+                         ACallback('', LErrorMsg, False, TTokenUsage.Empty);
                        end);
                    end;
                  end;
@@ -169,7 +189,9 @@ procedure TRadIAOllamaProvider.FetchAvailableModelsAsync(const ACallback: TProc<
 var
   LUrl: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LUrl := FConfig.OllamaBaseUrl + '/api/tags';
 
   LTaskProc := procedure
@@ -182,7 +204,10 @@ begin
                  LName: string;
                  LModelsList: TList<string>;
                  LModelsArray: TArray<string>;
+                 LErrorMsg: string;
                begin
+                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+                 LProviderRef.GetProviderType;
                  LModelsList := TList<string>.Create;
                  try
                    try
@@ -225,11 +250,12 @@ begin
                    except
                      on E: Exception do
                      begin
+                       LErrorMsg := E.ClassName + ': ' + E.Message;
                        LModelsArray := GetAvailableModels;
                        TThread.Queue(nil,
                          procedure
                          begin
-                           ACallback(LModelsArray, E.Message);
+                           ACallback(LModelsArray, LErrorMsg);
                          end);
                      end;
                    end;
@@ -295,20 +321,12 @@ begin
 
           if not LContent.IsEmpty then
           begin
-            TThread.Queue(nil,
-              procedure
-              begin
-                ACallback(LContent, False, '');
-              end);
+            ACallback(LContent, False, '');
           end;
 
           if LDone then
           begin
-            TThread.Queue(nil,
-              procedure
-              begin
-                ACallback('', True, '');
-              end);
+            ACallback('', True, '');
             
             ABuffer := ABuffer.Substring(LLastProcessedPos);
             Exit;
@@ -329,15 +347,17 @@ begin
 end;
 
 procedure TRadIAOllamaProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TStreamChunkCallback);
+  const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LUrl := FConfig.OllamaBaseUrl + '/api/chat';
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory, True);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -350,7 +370,10 @@ begin
     procedure
     var
       LBufferText: string;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       LBufferText := '';
       try
         DoPostRequestStream(LUrl, nil, LRequestBody,
@@ -368,10 +391,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', True, E.Message);
+              ACallback('', True, LErrorMsg);
             end);
         end;
       end;

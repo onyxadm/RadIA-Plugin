@@ -138,11 +138,12 @@ object FrameAIChat: TFrameAIChat
   object pnlInput: TPanel
     AlignWithMargins = True
     Left = 3
-    Top = 545
+    Top = 537
     Width = 984
-    Height = 102
+    Height = 110
     Align = alBottom
     BevelOuter = bvNone
+    StyleElements = [seFont]
     TabOrder = 1
     object lblContext: TLabel
       Left = 0
@@ -159,32 +160,46 @@ object FrameAIChat: TFrameAIChat
       ParentFont = False
       ExplicitWidth = 37
     end
+    object shpInputBg: TShape
+      Left = 10
+      Top = 18
+      Width = 964
+      Height = 84
+      Anchors = [akLeft, akTop, akRight, akBottom]
+      Shape = stRoundRect
+    end
+    object shpSendBg: TShape
+      Left = 944
+      Top = 68
+      Width = 28
+      Height = 28
+      Anchors = [akRight, akBottom]
+      Shape = stCircle
+    end
     object btnSend: TSpeedButton
-      AlignWithMargins = True
-      Left = 933
-      Top = 16
-      Width = 48
-      Height = 83
-      Align = alRight
-      Caption = #10148
+      Left = 944
+      Top = 68
+      Width = 28
+      Height = 28
+      Cursor = crHandPoint
+      Anchors = [akRight, akBottom]
+      Caption = #11014
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -26
+      Font.Height = -14
       Font.Name = 'Segoe UI Symbol'
-      Font.Style = []
+      Font.Style = [fsBold]
       ParentFont = False
+      StyleElements = [seFont]
       OnClick = btnSendClick
-      ExplicitLeft = 272
-      ExplicitHeight = 86
     end
     object memPrompt: TMemo
-      AlignWithMargins = True
-      Left = 3
-      Top = 16
-      Width = 924
-      Height = 83
-      Align = alClient
+      Left = 20
+      Top = 26
+      Width = 910
+      Height = 66
+      Anchors = [akLeft, akTop, akRight, akBottom]
       BorderStyle = bsNone
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -192,7 +207,7 @@ object FrameAIChat: TFrameAIChat
       Font.Name = 'Segoe UI'
       Font.Style = []
       ParentFont = False
-      ScrollBars = ssVertical
+      ScrollBars = ssNone
       TabOrder = 0
     end
   end
@@ -200,7 +215,7 @@ object FrameAIChat: TFrameAIChat
     Left = 0
     Top = 44
     Width = 990
-    Height = 498
+    Height = 493
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 2

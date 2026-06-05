@@ -10,6 +10,7 @@ uses
   // Production Units
   RadIA.Core.Types in '..\Source\Core\RadIA.Core.Types.pas',
   RadIA.Core.Interfaces in '..\Source\Core\RadIA.Core.Interfaces.pas',
+  RadIA.Core.Logger in '..\Source\Core\RadIA.Core.Logger.pas',
   RadIA.Core.Config in '..\Source\Core\RadIA.Core.Config.pas',
   RadIA.Core.Cache in '..\Source\Core\RadIA.Core.Cache.pas',
   RadIA.Core.Service in '..\Source\Core\RadIA.Core.Service.pas',
@@ -39,7 +40,8 @@ uses
   RadIA.Tests.Templates in 'Source\RadIA.Tests.Templates.pas',
   RadIA.Tests.ProjectContext in 'Source\RadIA.Tests.ProjectContext.pas',
   RadIA.Tests.Streaming in 'Source\RadIA.Tests.Streaming.pas',
-  RadIA.Tests.ProvidersEx in 'Source\RadIA.Tests.ProvidersEx.pas';
+  RadIA.Tests.ProvidersEx in 'Source\RadIA.Tests.ProvidersEx.pas',
+  RadIA.Tests.Logger in 'Source\RadIA.Tests.Logger.pas';
 
 var
   Runner: ITestRunner;

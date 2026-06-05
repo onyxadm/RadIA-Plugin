@@ -70,7 +70,12 @@ begin
     LMethod := LType.GetMethod('BuildOpenAICompatibleRequestBody');
   if Assigned(LMethod) then
   begin
-    LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream]);
+    case Length(LMethod.GetParameters) of
+      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), 0.7, 2048]);
+      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream, 0.7, 2048]);
+    else
+      LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream]);
+    end;
     Result := LResult.AsString;
   end
   else

@@ -10,15 +10,16 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAGeminiProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback); override;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); override;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -28,7 +29,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding;
+  System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding, System.Math;
 
 { TRadIAGeminiProvider }
 
@@ -48,7 +49,8 @@ begin
   Result := 'Google Gemini';
 end;
 
-function TRadIAGeminiProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>): string;
+function TRadIAGeminiProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LContentsArr: TJSONArray;
@@ -61,6 +63,7 @@ var
   LSystemObj: TJSONObject;
   LSystemPartsArr: TJSONArray;
   LSystemPartObj: TJSONObject;
+  LGenConfigObj: TJSONObject;
 begin
   LRootObj := TJSONObject.Create;
   try
@@ -123,6 +126,18 @@ begin
       LSystemPartObj.AddPair('text', LSystemPrompt.Trim);
     end;
 
+    { Add Generation Config if present }
+    LGenConfigObj := TJSONObject.Create;
+    if ATemperature >= 0.0 then
+      LGenConfigObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
+    if AMaxTokens > 0 then
+      LGenConfigObj.AddPair('maxOutputTokens', TJSONNumber.Create(AMaxTokens));
+
+    if LGenConfigObj.Count > 0 then
+      LRootObj.AddPair('generationConfig', LGenConfigObj)
+    else
+      LGenConfigObj.Free;
+
     Result := LRootObj.ToJSON;
   finally
     LRootObj.Free;
@@ -183,11 +198,13 @@ begin
 end;
 
 procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TCompletionCallback);
+  const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
 
@@ -201,7 +218,7 @@ begin
     [LModel, TNetEncoding.URL.Encode(LApiKey)]);
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -215,7 +232,10 @@ begin
     var
       LResponseText: string;
       LUsage: TTokenUsage;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       try
         LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
         LResponseText := ParseResponseBody(LResponseText, LUsage);
@@ -228,10 +248,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', E.Message, False, TTokenUsage.Empty);
+              ACallback('', LErrorMsg, False, TTokenUsage.Empty);
             end);
         end;
       end;
@@ -245,7 +266,9 @@ var
   LApiKey: string;
   LUrl: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -272,7 +295,10 @@ begin
                  LCanGenerate: Boolean;
                  LModelsList: TList<string>;
                  LModelsArray: TArray<string>;
+                 LErrorMsg: string;
                begin
+                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+                 LProviderRef.GetProviderType;
                  LModelsList := TList<string>.Create;
                  try
                    try
@@ -337,11 +363,12 @@ begin
                    except
                      on E: Exception do
                      begin
+                       LErrorMsg := E.ClassName + ': ' + E.Message;
                        LModelsArray := GetAvailableModels;
                        TThread.Queue(nil,
                          procedure
                          begin
-                           ACallback(LModelsArray, E.Message);
+                           ACallback(LModelsArray, LErrorMsg);
                          end);
                      end;
                    end;
@@ -413,11 +440,7 @@ begin
                     if LText.IsEmpty then
                       LText := LJson.GetValue('error').ToString;
 
-                    TThread.Queue(nil,
-                      procedure
-                      begin
-                        ACallback('', True, LText);
-                      end);
+                    ACallback('', True, LText);
                     Exit;
                   end;
 
@@ -441,11 +464,7 @@ begin
 
                   if not LText.IsEmpty then
                   begin
-                    TThread.Queue(nil,
-                      procedure
-                      begin
-                        ACallback(LText, False, '');
-                      end);
+                    ACallback(LText, False, '');
                   end;
                 finally
                   LJson.Free;
@@ -467,11 +486,13 @@ begin
 end;
 
 procedure TRadIAGeminiProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TStreamChunkCallback);
+  const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
 
@@ -485,7 +506,7 @@ begin
     [LModel, TNetEncoding.URL.Encode(LApiKey)]);
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -498,7 +519,10 @@ begin
     procedure
     var
       LBufferText: string;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       LBufferText := '';
       try
         DoPostRequestStream(LUrl, nil, LRequestBody,
@@ -516,10 +540,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', True, E.Message);
+              ACallback('', True, LErrorMsg);
             end);
         end;
       end;

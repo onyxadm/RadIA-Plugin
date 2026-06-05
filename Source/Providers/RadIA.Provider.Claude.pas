@@ -10,15 +10,16 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAClaudeProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-      const ACallback: TCompletionCallback); override;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-      const ACallback: TStreamChunkCallback); override;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
     procedure ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
@@ -27,7 +28,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading;
+  System.JSON, System.Threading, System.Math;
 
 { TRadIAClaudeProvider }
 
@@ -47,7 +48,8 @@ begin
   Result := 'Anthropic Claude';
 end;
 
-function TRadIAClaudeProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
+function TRadIAClaudeProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+  const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
@@ -58,7 +60,13 @@ begin
   LRootObj := TJSONObject.Create;
   try
     LRootObj.AddPair('model', GetActiveModel);
-    LRootObj.AddPair('max_tokens', TJSONNumber.Create(4096));
+    if AMaxTokens > 0 then
+      LRootObj.AddPair('max_tokens', TJSONNumber.Create(AMaxTokens))
+    else
+      LRootObj.AddPair('max_tokens', TJSONNumber.Create(4096));
+
+    if ATemperature >= 0.0 then
+      LRootObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
     if AStream then
       LRootObj.AddPair('stream', TJSONBool.Create(True));
     
@@ -145,12 +153,14 @@ begin
 end;
 
 procedure TRadIAClaudeProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
-  const ACallback: TCompletionCallback);
+  const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -165,7 +175,7 @@ begin
   LHeaders[1] := TNetHeader.Create('anthropic-version', '2023-06-01');
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -178,7 +188,10 @@ begin
                var
                  LResponseText: string;
                  LUsage: TTokenUsage;
+                 LErrorMsg: string;
                begin
+                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+                 LProviderRef.GetProviderType;
                  try
                    LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
                    LResponseText := ParseResponseBody(LResponseText, LUsage);
@@ -191,10 +204,11 @@ begin
                  except
                    on E: Exception do
                    begin
+                     LErrorMsg := E.ClassName + ': ' + E.Message;
                      TThread.Queue(nil,
                        procedure
                        begin
-                         ACallback('', E.Message, False, TTokenUsage.Empty);
+                         ACallback('', LErrorMsg, False, TTokenUsage.Empty);
                        end);
                    end;
                  end;
@@ -258,20 +272,12 @@ begin
               begin
                 LText := LDeltaObj.GetValue<string>('text', '');
                 if not LText.IsEmpty then
-                TThread.Queue(nil,
-                  procedure
-                  begin
-                    ACallback(LText, False, '');
-                  end);
+                  ACallback(LText, False, '');
               end;
             end
             else if LTypeStr = 'message_stop' then
             begin
-              TThread.Queue(nil,
-                procedure
-                begin
-                  ACallback('', True, '');
-                end);
+              ACallback('', True, '');
               
               ABuffer := ABuffer.Substring(LLastProcessedPos);
               Exit;
@@ -293,12 +299,14 @@ begin
 end;
 
 procedure TRadIAClaudeProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
-  const ACallback: TStreamChunkCallback);
+  const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
+  LProviderRef: IIAProvider;
 begin
+  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -313,7 +321,7 @@ begin
   LHeaders[1] := TNetHeader.Create('anthropic-version', '2023-06-01');
 
   try
-    LRequestBody := BuildRequestBody(APrompt, AHistory, True);
+    LRequestBody := BuildRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
   except
     on E: Exception do
     begin
@@ -326,7 +334,10 @@ begin
     procedure
     var
       LBufferText: string;
+      LErrorMsg: string;
     begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
       LBufferText := '';
       try
         DoPostRequestStream(LUrl, LHeaders, LRequestBody,
@@ -344,10 +355,11 @@ begin
       except
         on E: Exception do
         begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
           TThread.Queue(nil,
             procedure
             begin
-              ACallback('', True, E.Message);
+              ACallback('', True, LErrorMsg);
             end);
         end;
       end;

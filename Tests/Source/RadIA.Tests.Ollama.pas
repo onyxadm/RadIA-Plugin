@@ -75,7 +75,7 @@ begin
   FConfig.SetActiveModel(ptOllama, 'llama3:latest');
   
   { Invoke private method BuildRequestBody via RTTI }
-  LResultJson := CallPrivateMethod('BuildRequestBody', [LPrompt, TValue.From<TArray<IChatMessage>>(LHistory), False]).AsString;
+  LResultJson := CallPrivateMethod('BuildRequestBody', [LPrompt, TValue.From<TArray<IChatMessage>>(LHistory), False, 0.7, 2048]).AsString;
   
   Assert.IsFalse(LResultJson.IsEmpty, 'JSON Request body should not be empty');
   

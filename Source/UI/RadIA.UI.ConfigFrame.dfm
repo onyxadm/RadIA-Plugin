@@ -3,17 +3,16 @@ object FormAIConfig: TFormAIConfig
   Top = 0
   BorderStyle = bsDialog
   Caption = 'RadIA Configuration'
-  ClientHeight = 483
-  ClientWidth = 649
+  ClientHeight = 480
+  ClientWidth = 800
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
-  OldCreateOrder = False
   Position = poOwnerFormCenter
-  PixelsPerInch = 96
+  TextHeight = 15
   object pgcSettings: TPageControl
     AlignWithMargins = True
     Left = 3
@@ -229,7 +228,7 @@ object FormAIConfig: TFormAIConfig
         object lblTemplateName: TLabel
           Left = 14
           Top = 6
-          Width = 84
+          Width = 87
           Height = 15
           Caption = 'Template Name:'
         end
@@ -243,7 +242,7 @@ object FormAIConfig: TFormAIConfig
         object lblTemplateBody: TLabel
           Left = 14
           Top = 106
-          Width = 51
+          Width = 52
           Height = 15
           Caption = 'Template:'
         end
