@@ -112,6 +112,7 @@ constructor TFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
+  LUseIDETheme: Boolean;
 begin
   inherited Create(AOwner);
   FConfig := TRadIAConfig.Create;
@@ -225,16 +226,19 @@ begin
   btnResetQuota.OnClick := btnResetQuotaClick;
 
   LActiveTheme := 'light';
+  LUseIDETheme := False;
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
     begin
       LThemingServices.ApplyTheme(Self);
       LActiveTheme := LThemingServices.ActiveTheme;
+      LUseIDETheme := True;
     end;
   end;
 
-  UpdateVCLColors(LActiveTheme);
+  if not LUseIDETheme then
+    UpdateVCLColors(LActiveTheme);
   LoadConfig;
 end;
 
@@ -307,37 +311,29 @@ var
   LBgColor, LTextColor, LInputBgColor: TColor;
   I: Integer;
   LProvider: TAIProviderType;
-  LThemingServices: IOTAIDEThemingServices;
 begin
-  LIsDark := SameText(AThemeName, 'dark');
-  
-  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) and LThemingServices.IDEThemingEnabled then
+  LIsDark := SameText(AThemeName, 'dark') or AThemeName.ToLower.Contains('dark');
+
+  if LIsDark then
   begin
-    LBgColor := StyleServices.GetSystemColor(clBtnFace);
-    LTextColor := StyleServices.GetSystemColor(clWindowText);
-    LInputBgColor := StyleServices.GetSystemColor(clWindow);
+    LBgColor := $00252526;
+    LTextColor := $00D4D4D4;
+    LInputBgColor := $001E1E1E;
   end
   else
   begin
-    if LIsDark then
-    begin
-      LBgColor := $00252526;
-      LTextColor := $00D4D4D4;
-      LInputBgColor := $001E1E1E;
-    end
-    else
-    begin
-      LBgColor := clBtnFace;
-      LTextColor := clWindowText;
-      LInputBgColor := clWindow;
-    end;
+    LBgColor := clBtnFace;
+    LTextColor := clWindowText;
+    LInputBgColor := clWindow;
   end;
 
   Self.StyleElements := Self.StyleElements - [seClient, seBorder];
-  Self.Color := LBgColor;
-
-  { Apply theme to all tabs in the PageControl to avoid default white backgrounds }
+  TWinControlHack(Self).Color := LBgColor;
   pgcSettings.StyleElements := pgcSettings.StyleElements - [seClient, seBorder];
+  TWinControlHack(pgcSettings).Color := LBgColor;
+
+  TWinControlHack(Self).ParentBackground := False;
+  TWinControlHack(pgcSettings).ParentBackground := False;
   for I := 0 to pgcSettings.PageCount - 1 do
   begin
     pgcSettings.Pages[I].StyleElements := pgcSettings.Pages[I].StyleElements - [seClient, seBorder];
@@ -346,58 +342,83 @@ begin
   end;
 
   // Memo do System Prompt
+  memSystemPrompt.StyleElements := memSystemPrompt.StyleElements - [seClient, seBorder];
   memSystemPrompt.Color := LInputBgColor;
   memSystemPrompt.Font.Color := LTextColor;
 
   // Inputs
+  edtGeminiKey.StyleElements := edtGeminiKey.StyleElements - [seClient, seBorder];
   edtGeminiKey.Color := LInputBgColor;
   edtGeminiKey.Font.Color := LTextColor;
   
+  edtOpenAIKey.StyleElements := edtOpenAIKey.StyleElements - [seClient, seBorder];
   edtOpenAIKey.Color := LInputBgColor;
   edtOpenAIKey.Font.Color := LTextColor;
+  edtOpenAICustomUrl.StyleElements := edtOpenAICustomUrl.StyleElements - [seClient, seBorder];
   edtOpenAICustomUrl.Color := LInputBgColor;
   edtOpenAICustomUrl.Font.Color := LTextColor;
   
+  edtClaudeKey.StyleElements := edtClaudeKey.StyleElements - [seClient, seBorder];
   edtClaudeKey.Color := LInputBgColor;
   edtClaudeKey.Font.Color := LTextColor;
   
+  edtDeepSeekKey.StyleElements := edtDeepSeekKey.StyleElements - [seClient, seBorder];
   edtDeepSeekKey.Color := LInputBgColor;
   edtDeepSeekKey.Font.Color := LTextColor;
   
+  edtGroqKey.StyleElements := edtGroqKey.StyleElements - [seClient, seBorder];
   edtGroqKey.Color := LInputBgColor;
   edtGroqKey.Font.Color := LTextColor;
   
+  edtOllamaUrl.StyleElements := edtOllamaUrl.StyleElements - [seClient, seBorder];
   edtOllamaUrl.Color := LInputBgColor;
   edtOllamaUrl.Font.Color := LTextColor;
 
   // Labels
+  lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
   lblGeminiKey.Font.Color := LTextColor;
+  lblOpenAIKey.StyleElements := lblOpenAIKey.StyleElements - [seClient, seBorder];
   lblOpenAIKey.Font.Color := LTextColor;
+  lblOpenAICustomUrl.StyleElements := lblOpenAICustomUrl.StyleElements - [seClient, seBorder];
   lblOpenAICustomUrl.Font.Color := LTextColor;
+  lblClaudeKey.StyleElements := lblClaudeKey.StyleElements - [seClient, seBorder];
   lblClaudeKey.Font.Color := LTextColor;
+  lblDeepSeekKey.StyleElements := lblDeepSeekKey.StyleElements - [seClient, seBorder];
   lblDeepSeekKey.Font.Color := LTextColor;
+  lblGroqKey.StyleElements := lblGroqKey.StyleElements - [seClient, seBorder];
   lblGroqKey.Font.Color := LTextColor;
+  lblOllamaUrl.StyleElements := lblOllamaUrl.StyleElements - [seClient, seBorder];
   lblOllamaUrl.Font.Color := LTextColor;
 
   // Aba de Templates
+  pnlTemplatesLeft.StyleElements := pnlTemplatesLeft.StyleElements - [seClient, seBorder];
   pnlTemplatesLeft.Color := LBgColor;
   pnlTemplatesLeft.ParentBackground := False;
+  pnlTemplatesLeftButtons.StyleElements := pnlTemplatesLeftButtons.StyleElements - [seClient, seBorder];
   pnlTemplatesLeftButtons.Color := LBgColor;
   pnlTemplatesLeftButtons.ParentBackground := False;
+  pnlTemplatesClient.StyleElements := pnlTemplatesClient.StyleElements - [seClient, seBorder];
   pnlTemplatesClient.Color := LBgColor;
   pnlTemplatesClient.ParentBackground := False;
   
+  lstTemplates.StyleElements := lstTemplates.StyleElements - [seClient, seBorder];
   lstTemplates.Color := LInputBgColor;
   lstTemplates.Font.Color := LTextColor;
+  edtTemplateName.StyleElements := edtTemplateName.StyleElements - [seClient, seBorder];
   edtTemplateName.Color := LInputBgColor;
   edtTemplateName.Font.Color := LTextColor;
+  edtTemplateDesc.StyleElements := edtTemplateDesc.StyleElements - [seClient, seBorder];
   edtTemplateDesc.Color := LInputBgColor;
   edtTemplateDesc.Font.Color := LTextColor;
+  memTemplateBody.StyleElements := memTemplateBody.StyleElements - [seClient, seBorder];
   memTemplateBody.Color := LInputBgColor;
   memTemplateBody.Font.Color := LTextColor;
   
+  lblTemplateName.StyleElements := lblTemplateName.StyleElements - [seClient, seBorder];
   lblTemplateName.Font.Color := LTextColor;
+  lblTemplateDesc.StyleElements := lblTemplateDesc.StyleElements - [seClient, seBorder];
   lblTemplateDesc.Font.Color := LTextColor;
+  lblTemplateBody.StyleElements := lblTemplateBody.StyleElements - [seClient, seBorder];
   lblTemplateBody.Font.Color := LTextColor;
 
   { Paint Advanced Controls }
@@ -405,51 +426,71 @@ begin
   begin
     if Assigned(FEdtTemperatures[LProvider]) then
     begin
+      FEdtTemperatures[LProvider].StyleElements := FEdtTemperatures[LProvider].StyleElements - [seClient, seBorder];
       FEdtTemperatures[LProvider].Color := LInputBgColor;
       FEdtTemperatures[LProvider].Font.Color := LTextColor;
     end;
     if Assigned(FEdtMaxTokens[LProvider]) then
     begin
+      FEdtMaxTokens[LProvider].StyleElements := FEdtMaxTokens[LProvider].StyleElements - [seClient, seBorder];
       FEdtMaxTokens[LProvider].Color := LInputBgColor;
       FEdtMaxTokens[LProvider].Font.Color := LTextColor;
     end;
     if Assigned(FEdtTimeouts[LProvider]) then
     begin
+      FEdtTimeouts[LProvider].StyleElements := FEdtTimeouts[LProvider].StyleElements - [seClient, seBorder];
       FEdtTimeouts[LProvider].Color := LInputBgColor;
       FEdtTimeouts[LProvider].Font.Color := LTextColor;
     end;
   end;
 
   if Assigned(FChkSmartConfig) then
+  begin
+    FChkSmartConfig.StyleElements := FChkSmartConfig.StyleElements - [seClient, seBorder];
     FChkSmartConfig.Font.Color := LTextColor;
+  end;
 
   if Assigned(tsGeneral) then
   begin
+    tsGeneral.StyleElements := tsGeneral.StyleElements - [seClient, seBorder];
     TTabSheetColorHack(tsGeneral).ParentBackground := False;
     TTabSheetColorHack(tsGeneral).Color := LBgColor;
   end;
   if Assigned(chkLogEnabled) then
+  begin
+    chkLogEnabled.StyleElements := chkLogEnabled.StyleElements - [seClient, seBorder];
     chkLogEnabled.Font.Color := LTextColor;
+  end;
   if Assigned(lblLogPath) then
+  begin
+    lblLogPath.StyleElements := lblLogPath.StyleElements - [seClient, seBorder];
     lblLogPath.Font.Color := LTextColor;
+  end;
   if Assigned(edtLogPath) then
   begin
+    edtLogPath.StyleElements := edtLogPath.StyleElements - [seClient, seBorder];
     edtLogPath.Color := LInputBgColor;
     edtLogPath.Font.Color := LTextColor;
   end;
   if Assigned(edtLogMaxSize) then
   begin
+    edtLogMaxSize.StyleElements := edtLogMaxSize.StyleElements - [seClient, seBorder];
     edtLogMaxSize.Color := LInputBgColor;
     edtLogMaxSize.Font.Color := LTextColor;
   end;
   
   if Assigned(grpQuota) then
   begin
+    grpQuota.StyleElements := grpQuota.StyleElements - [seClient, seBorder];
     grpQuota.Font.Color := LTextColor;
+    chkQuotaEnabled.StyleElements := chkQuotaEnabled.StyleElements - [seClient, seBorder];
     chkQuotaEnabled.Font.Color := LTextColor;
+    lblQuotaLimit.StyleElements := lblQuotaLimit.StyleElements - [seClient, seBorder];
     lblQuotaLimit.Font.Color := LTextColor;
+    edtQuotaLimit.StyleElements := edtQuotaLimit.StyleElements - [seClient, seBorder];
     edtQuotaLimit.Color := LInputBgColor;
     edtQuotaLimit.Font.Color := LTextColor;
+    lblQuotaUsed.StyleElements := lblQuotaUsed.StyleElements - [seClient, seBorder];
     lblQuotaUsed.Font.Color := LTextColor;
   end;
 end;

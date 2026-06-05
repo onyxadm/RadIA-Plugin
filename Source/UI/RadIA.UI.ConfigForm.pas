@@ -41,6 +41,7 @@ var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
   LNodeGeneral, LNodeProviders: TTreeNode;
+  LUseIDETheme: Boolean;
 begin
   inherited Create(AOwner);
   
@@ -50,12 +51,14 @@ begin
   FFrameConfig.Visible := True;
 
   LActiveTheme := 'light';
+  LUseIDETheme := False;
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
     begin
       LThemingServices.ApplyTheme(Self);
       LActiveTheme := LThemingServices.ActiveTheme;
+      LUseIDETheme := True;
     end;
   end;
 
@@ -76,7 +79,8 @@ begin
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;
 
-  UpdateVCLColors(LActiveTheme);
+  if not LUseIDETheme then
+    UpdateVCLColors(LActiveTheme);
 end;
 
 procedure TFormAIConfig.CreateWnd;
@@ -128,30 +132,20 @@ procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LIsDark: Boolean;
   LBgColor, LTextColor, LInputBgColor: TColor;
-  LThemingServices: IOTAIDEThemingServices;
 begin
-  LIsDark := SameText(AThemeName, 'dark');
+  LIsDark := SameText(AThemeName, 'dark') or AThemeName.ToLower.Contains('dark');
   
-  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) and LThemingServices.IDEThemingEnabled then
+  if LIsDark then
   begin
-    LBgColor := StyleServices.GetSystemColor(clBtnFace);
-    LTextColor := StyleServices.GetSystemColor(clWindowText);
-    LInputBgColor := StyleServices.GetSystemColor(clWindow);
+    LBgColor := $00252526;
+    LTextColor := $00D4D4D4;
+    LInputBgColor := $001E1E1E;
   end
   else
   begin
-    if LIsDark then
-    begin
-      LBgColor := $00252526;
-      LTextColor := $00D4D4D4;
-      LInputBgColor := $001E1E1E;
-    end
-    else
-    begin
-      LBgColor := clBtnFace;
-      LTextColor := clWindowText;
-      LInputBgColor := clWindow;
-    end;
+    LBgColor := clBtnFace;
+    LTextColor := clWindowText;
+    LInputBgColor := clWindow;
   end;
 
   Self.StyleElements := Self.StyleElements - [seClient, seBorder];
