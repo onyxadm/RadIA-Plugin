@@ -770,6 +770,7 @@ begin
   pnlBrowser.ParentBackground := False;
 
   // Labels
+  lblTitle.Font.Color := AColors.TextColor;
   if AColors.IsDark then
     lblContext.Font.Color := $009CA3AF
   else
