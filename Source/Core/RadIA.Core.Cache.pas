@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Cache;
+unit RadIA.Core.Cache;
 
 interface
 
@@ -233,21 +233,31 @@ begin
       Exit;
     end;
 
-    { If limit reached, discard LRU (Least Recently Used) }
+    { If limit reached, discard LRU (Least Recently Used) in batch (10% of limit, at least 1) }
     if FEntries.Count >= FLimit then
     begin
-      LMinIndex := 0;
-      LMinDate := FEntries[0].LastAccessed;
-      for I := 1 to FEntries.Count - 1 do
+      var LEvictCount := FLimit div 10;
+      if LEvictCount < 1 then
+        LEvictCount := 1;
+
+      // Repeat eviction LEvictCount times
+      for var K := 1 to LEvictCount do
       begin
-        if FEntries[I].LastAccessed < LMinDate then
+        if FEntries.Count = 0 then
+          Break;
+        LMinIndex := 0;
+        LMinDate := FEntries[0].LastAccessed;
+        for I := 1 to FEntries.Count - 1 do
         begin
-          LMinDate := FEntries[I].LastAccessed;
-          LMinIndex := I;
+          if FEntries[I].LastAccessed < LMinDate then
+          begin
+            LMinDate := FEntries[I].LastAccessed;
+            LMinIndex := I;
+          end;
         end;
+        FDictionary.Remove(FEntries[LMinIndex].Hash);
+        FEntries.Delete(LMinIndex);
       end;
-      FDictionary.Remove(FEntries[LMinIndex].Hash);
-      FEntries.Delete(LMinIndex);
     end;
 
     { Add new entry }
