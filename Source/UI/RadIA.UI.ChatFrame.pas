@@ -140,41 +140,16 @@ end;
 { TRadIAThemeColors }
 
 class function TRadIAThemeColors.GetColorsForTheme(const AThemeName: string): TRadIAThemeColors;
-var
-  LThemingServices: IOTAIDEThemingServices;
 begin
   Result.IsDark := IsThemeDark(AThemeName);
 
-  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) and LThemingServices.IDEThemingEnabled then
-  begin
-    Result.BgBase := StyleServices.GetSystemColor(clBtnFace);
-    Result.TextColor := StyleServices.GetSystemColor(clWindowText);
-    Result.InputBgColor := StyleServices.GetSystemColor(clWindow);
-    Result.BorderColor := StyleServices.GetStyleColor(scBorder);
-    Result.AccentColor := StyleServices.GetSystemColor(clHighlight);
-  end
-  else
-  begin
-    if Result.IsDark then
-    begin
-      Result.BgBase := $00252526;
-      Result.TextColor := $00D4D4D4;
-      Result.InputBgColor := $001E1E1E;
-      Result.BorderColor := $003C3C3C;
-      Result.AccentColor := $00CC7A00;
-    end
-    else
-    begin
-      Result.BgBase := clBtnFace;
-      Result.TextColor := clWindowText;
-      Result.InputBgColor := clWindow;
-      Result.BorderColor := $00C8C8C8;
-      Result.AccentColor := $009E5A00;
-    end;
-  end;
-
   if Result.IsDark then
   begin
+    Result.BgBase := $00252526;
+    Result.TextColor := $00D4D4D4;
+    Result.InputBgColor := $001E1E1E;
+    Result.BorderColor := $003C3C3C;
+    Result.AccentColor := $00CC7A00;
     Result.BgElevated := $002D2D2D;
     Result.FgSecondary := '#858585';
     Result.CodeBg := '#1E1E1E';
@@ -183,6 +158,11 @@ begin
   end
   else
   begin
+    Result.BgBase := clBtnFace;
+    Result.TextColor := clWindowText;
+    Result.InputBgColor := clWindow;
+    Result.BorderColor := $00C8C8C8;
+    Result.AccentColor := $009E5A00;
     Result.BgElevated := $00EAEAEA;
     Result.FgSecondary := '#6e6e6e';
     Result.CodeBg := '#ffffff';
@@ -805,8 +785,9 @@ begin
   btnDeleteSession.Font.Color := AColors.TextColor;
 
   { Componentes da Barra de Input e Prompt }
-  pnlInput.ParentBackground := True;
-  pnlInput.StyleElements := pnlInput.StyleElements + [seClient, seBorder];
+  pnlInput.ParentBackground := False;
+  pnlInput.Color := AColors.BgBase;
+  pnlInput.StyleElements := pnlInput.StyleElements - [seClient, seBorder];
   
   shpInputBg.Brush.Color := AColors.InputBgColor;
   if AColors.IsDark then
