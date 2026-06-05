@@ -24,6 +24,7 @@
 *   **Dockable Sidebar Chat:** A native-looking, dockable panel integrated into the Delphi IDE featuring a high-fidelity web-rendered chat window (Edge/WebView2) with full Markdown rendering and Delphi syntax highlighting.
 *   **Multi-Provider AI Support:** Bring Your Own Key (BYOK) support for **Google Gemini**, **OpenAI ChatGPT**, **Anthropic Claude**, **DeepSeek**, **Groq**, and local/network models via **Ollama** (e.g., Llama 3, Phi-3, Mistral, CodeLlama).
 *   **Persistent Chat History:** Chat conversations are automatically saved locally in JSON format, restoring previous context whenever the IDE is closed and reopened.
+*   **Shortcuts and Prompt History:** Integrated productivity shortcuts: use `Ctrl + Enter` to send prompts, `Enter` for line breaks, and keyboard arrows `↑` (up) and `↓` (down) inside the text input area to quickly cycle through previously typed and sent prompts.
 *   **Context-Aware Editor Actions:** Right-click on any code selection to:
     *   *Explain Selected Code:* Analyze and explain the logic.
     *   *Optimize/Refactor:* Improve performance and apply clean code practices.

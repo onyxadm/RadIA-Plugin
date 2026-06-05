@@ -295,7 +295,7 @@ object FrameAIChat: TFrameAIChat
         Height = 24
         Hint = 'Excluir Conversa'
         Align = alLeft
-        Caption = #128465
+        Caption = #57607
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
