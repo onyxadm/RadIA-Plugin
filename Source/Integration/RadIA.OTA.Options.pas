@@ -53,11 +53,15 @@ end;
 
 function TRadIAAddInOptions.GetCaption: string;
 begin
-  // Ex: "RadIA.Gemini" cria o nó "RadIA" e sob ele o subnó "Gemini"
-  if FTag = ptNone then
-    Result := 'RadIA.General'
+  case FTag of
+    ptNone: Result := 'RadIA.General';
+    ptSystem: Result := 'RadIA.System Prompt';
+    ptTemplates: Result := 'RadIA.Templates';
+    ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOllama: 
+      Result := 'RadIA.AI Providers.' + FTitle;
   else
     Result := 'RadIA.' + FTitle;
+  end;
 end;
 
 function TRadIAAddInOptions.GetFrameClass: TCustomFrameClass;
