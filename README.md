@@ -9,7 +9,7 @@
 **RadIA** é um plugin assistente de IA avançado projetado especificamente para a IDE do Embarcadero Delphi (usando a Open Tools API). Ele se acopla diretamente à barra lateral da IDE, fornecendo uma interface de chat interativa e integração contextual profunda com o editor de código para acelerar o desenvolvimento, refatoração e depuração.
 
 <p align="center">
-  <img src="docs/images/radia_ui_mockup.png" alt="RadIA Chat Panel Mockup" width="45%" />
+  <img src="docs/images/radia_ui_mockup.png" alt="RadIA Chat Panel Mockup" width="100%" />
 </p>
 
 ---
