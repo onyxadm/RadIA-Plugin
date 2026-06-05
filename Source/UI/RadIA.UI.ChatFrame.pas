@@ -117,6 +117,7 @@ type
     procedure SendInitialConfigToWeb;
     procedure SendModelsUpdateToWeb;
     procedure PostRequestStateToWeb(AInProgress: Boolean);
+    procedure SendSessionsUpdateToWeb;
   protected
     procedure CreateWnd; override;
     procedure DestroyWnd; override;
@@ -913,6 +914,7 @@ begin
           FWebViewReady := True;
           LoadChatHistory;
           SendInitialConfigToWeb;
+          SendSessionsUpdateToWeb;
           
           { Se a WebView carregou enquanto uma requisição de IA já estava rodando, }
           { garante o envio do indicador de digitação agora que ela está pronta. }
@@ -927,6 +929,17 @@ begin
         procedure
         begin
           btnNewSessionClick(nil);
+          SendSessionsUpdateToWeb;
+        end));
+    end
+    else if LAction = 'new_session' then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          btnNewSessionClick(nil);
+          SendSessionsUpdateToWeb;
         end));
     end
     else if LAction = 'toggle_history' then
@@ -979,6 +992,91 @@ begin
             cbModel.ItemIndex := Idx;
             cbModelChange(nil);
           end;
+        end));
+    end
+    else if LAction = 'select_session' then
+    begin
+      LText := LJson.GetValue<string>('id', '');
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          if FRequestInProgress then
+          begin
+            FCancelledByUser := True;
+            FAIService.CancelCurrentRequest;
+            FRequestInProgress := False;
+            UpdateSendButtonVisual;
+          end;
+          
+          if not FSessionManager.ActiveSessionId.IsEmpty and not SameText(FSessionManager.ActiveSessionId, LText) then
+            SaveChatHistory;
+            
+          FSessionManager.ActiveSessionId := LText;
+          FSessionManager.UpdateSessionActivity(LText);
+          FConfig.ActiveSessionId := LText;
+          FConfig.Save;
+          
+          UpdateSessionsList;
+          
+          FHistory := [];
+          FAccumulatedUsage := TTokenUsage.Empty;
+          PostToWebView('clear_chat', '', '');
+          PostToWebView('update_tokens', '', '');
+          
+          LoadChatHistory;
+          SendSessionsUpdateToWeb;
+        end));
+    end
+    else if LAction = 'rename_session' then
+    begin
+      LProviderStr := LJson.GetValue<string>('id', '');
+      LModelStr := LJson.GetValue<string>('name', '');
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          if not LModelStr.Trim.IsEmpty then
+          begin
+            FSessionManager.RenameSession(LProviderStr, LModelStr);
+            UpdateSessionsList;
+            SendSessionsUpdateToWeb;
+          end;
+        end));
+    end
+    else if LAction = 'delete_session' then
+    begin
+      LText := LJson.GetValue<string>('id', '');
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          if FRequestInProgress and SameText(FSessionManager.ActiveSessionId, LText) then
+          begin
+            FCancelledByUser := True;
+            FAIService.CancelCurrentRequest;
+            FRequestInProgress := False;
+            UpdateSendButtonVisual;
+          end;
+
+          FSessionManager.DeleteSession(LText);
+          
+          if SameText(FSessionManager.ActiveSessionId, LText) then
+          begin
+            FSessionManager.ActiveSessionId := '';
+            FConfig.ActiveSessionId := '';
+            FConfig.Save;
+          end;
+          
+          UpdateSessionsList;
+          
+          FHistory := [];
+          FAccumulatedUsage := TTokenUsage.Empty;
+          PostToWebView('clear_chat', '', '');
+          PostToWebView('update_tokens', '', '');
+          
+          LoadChatHistory;
+          SendSessionsUpdateToWeb;
         end));
     end
     else if LAction = 'send_prompt' then
@@ -1751,6 +1849,37 @@ begin
   try
     LJson.AddPair('action', 'set_request_state');
     LJson.AddPair('inProgress', TJSONBool.Create(AInProgress));
+
+    if Assigned(EdgeBrowser.DefaultInterface) then
+      EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+  finally
+    LJson.Free;
+  end;
+end;
+
+procedure TFrameAIChat.SendSessionsUpdateToWeb;
+var
+  LJson: TJSONObject;
+  LArr: TJSONArray;
+  LSessionObj: TJSONObject;
+  LSession: TSessionInfo;
+begin
+  if not FWebViewReady then Exit;
+
+  LJson := TJSONObject.Create;
+  LArr := TJSONArray.Create;
+  try
+    for LSession in FSessionManager.Sessions do
+    begin
+      LSessionObj := TJSONObject.Create;
+      LSessionObj.AddPair('id', LSession.Id);
+      LSessionObj.AddPair('name', LSession.Name);
+      LArr.AddElement(LSessionObj);
+    end;
+
+    LJson.AddPair('action', 'update_sessions');
+    LJson.AddPair('sessions', LArr);
+    LJson.AddPair('activeSessionId', FSessionManager.ActiveSessionId);
 
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));

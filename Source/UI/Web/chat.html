@@ -14,7 +14,7 @@
   <script src="prism-pascal.min.js"></script>
 </head>
 <body class="dark-theme">
-  <!-- Header do Assistente (Alinhamento 1:1 com o Mockup) -->
+  <!-- Header do Assistente (Mockup 1:1) -->
   <header id="chat-header">
     <div class="header-left">
       <div class="header-logo">
@@ -51,50 +51,61 @@
     </div>
   </header>
 
-  <!-- Histórico de Mensagens -->
-  <main id="chat-container">
-    <!-- Messages will be appended here -->
-  </main>
-  
-  <!-- Área de Input e Configurações de Modelos (Base) -->
-  <footer id="chat-footer">
-    <div id="context-bar" class="hidden">
-      <span id="context-text"></span>
-    </div>
-
-    <!-- Contêiner do Input em formato Cápsula (Pill Shape) -->
-    <div id="prompt-wrapper">
-      <div id="prompt-capsule">
-        <textarea id="prompt-textarea" placeholder="Ask Codex AI about Delphi coding..." rows="1"></textarea>
-        <button id="btn-send-prompt" title="Send message">
-          <!-- Ícone do aviãozinho do mockup -->
-          <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-          </svg>
-        </button>
+  <!-- Layout Principal Flexível -->
+  <div id="main-layout">
+    <!-- Sidebar Retrátil de Histórico (HTML Premium) -->
+    <aside id="sessions-sidebar" class="collapsed">
+      <div class="sidebar-header">
+        <span>CHATS</span>
+        <button id="btn-new-chat-sidebar" title="New Session">+</button>
       </div>
-    </div>
-
-    <!-- Seletores de Provider e Model Planos (Flat Style) -->
-    <div id="model-selectors">
-      <div class="selector-wrapper">
-        <select id="select-provider">
-          <option value="">Provider...</option>
-        </select>
+      <div id="sessions-list">
+        <!-- Sessions will be dynamically appended here -->
       </div>
-      <div class="selector-wrapper">
-        <select id="select-model">
-          <option value="">Model...</option>
-        </select>
-      </div>
-    </div>
+    </aside>
 
-    <!-- Barra de Tokens / Uso -->
-    <div id="status-bar" class="hidden">
-      <span id="status-text"></span>
+    <!-- Wrapper do Chat (Histórico + Digitação) -->
+    <div id="chat-wrapper">
+      <main id="chat-container">
+        <!-- Messages will be appended here -->
+      </main>
+      
+      <footer id="chat-footer">
+        <div id="context-bar" class="hidden">
+          <span id="context-text"></span>
+        </div>
+
+        <div id="prompt-wrapper">
+          <div id="prompt-capsule">
+            <textarea id="prompt-textarea" placeholder="Ask Codex AI about Delphi coding..." rows="1"></textarea>
+            <button id="btn-send-prompt" title="Send message">
+              <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="model-selectors">
+          <div class="selector-wrapper">
+            <select id="select-provider">
+              <option value="">Provider...</option>
+            </select>
+          </div>
+          <div class="selector-wrapper">
+            <select id="select-model">
+              <option value="">Model...</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="status-bar" class="hidden">
+          <span id="status-text"></span>
+        </div>
+      </footer>
     </div>
-  </footer>
+  </div>
   
   <script src="chat.js"></script>
 </body>

@@ -263,6 +263,7 @@ object FrameAIChat: TFrameAIChat
     Align = alLeft
     BevelOuter = bvNone
     TabOrder = 3
+    Visible = False
     object pnlSessionsHeader: TPanel
       Left = 0
       Top = 0
@@ -336,6 +337,7 @@ object FrameAIChat: TFrameAIChat
     Width = 3
     Height = 493
     Align = alLeft
+    Visible = False
   end
   object pnlBrowser: TPanel
     Left = 183

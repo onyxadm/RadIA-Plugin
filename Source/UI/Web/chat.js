@@ -1,5 +1,5 @@
 // ============================================================
-//  RadIA Chat — JavaScript (Redesign Premium Integrado)
+//  RadIA Chat — JavaScript (Redesign Premium com Sidebar)
 // ============================================================
 
 // -- Configuração do Marked com Prism para highlight de código --
@@ -16,7 +16,16 @@ marked.setOptions({
 const _codeRegistry = {};
 let _codeRegistryCounter = 0;
 
-// -- Renderer customizado com copy + apply buttons --
+// -- Ícones SVG discretos e nítidos (Mockup 1:1) --
+const SVG_ICONS = {
+  copy: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
+  apply: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>`,
+  check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>`,
+  edit: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`,
+  trash: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+};
+
+// -- Renderer de Markdown com botões baseados em SVGs nítidos --
 const renderer = new marked.Renderer();
 renderer.code = function(codeOrToken, lang) {
   let code = '';
@@ -37,20 +46,17 @@ renderer.code = function(codeOrToken, lang) {
   _codeRegistry[id] = code;
 
   const isPascal = ['pascal', 'delphi', 'objectpascal'].includes(language.toLowerCase());
-  const highlighted = Prism.languages[language]
-    ? Prism.highlight(code, Prism.languages[language], language)
-    : code;
 
   return `
     <div class="code-block-container">
       <div class="code-header">
         <span>${language.toUpperCase()}</span>
         <div class="code-header-actions">
-          <button class="copy-btn" title="Copy Code" onclick="copyCode(this, '${id}')">❐</button>
-          ${isPascal ? `<button class="apply-btn" title="Apply to Editor" onclick="applyCode('${id}')">✓</button>` : ''}
+          <button class="copy-btn" title="Copy Code" onclick="copyCode(this, '${id}')">${SVG_ICONS.copy}</button>
+          ${isPascal ? `<button class="apply-btn" title="Apply to Editor" onclick="applyCode('${id}')">${SVG_ICONS.apply}</button>` : ''}
         </div>
       </div>
-      <pre><code class="language-${language}">${highlighted}</code></pre>
+      <pre><code class="language-${language}">${code}</code></pre>
     </div>
   `;
 };
@@ -71,6 +77,11 @@ const statusBar       = document.getElementById('status-bar');
 const statusText      = document.getElementById('status-text');
 const contextBar      = document.getElementById('context-bar');
 const contextText     = document.getElementById('context-text');
+
+// Elementos da Sidebar
+const sessionsSidebar = document.getElementById('sessions-sidebar');
+const btnNewChatSidebar = document.getElementById('btn-new-chat-sidebar');
+const sessionsList    = document.getElementById('sessions-list');
 
 // ============================================================
 //  Nomes e ícones dos remetentes (SVG Premium)
@@ -129,7 +140,6 @@ btnSendPrompt.addEventListener('click', handleSend);
 
 function handleSend() {
   if (requestInProgress) {
-    // Ação de cancelar requisição ativa
     postMessageToDelphi({ action: 'cancel_request' });
     return;
   }
@@ -137,7 +147,6 @@ function handleSend() {
   const text = promptTextarea.value.trim();
   if (!text) return;
 
-  // Enviar prompt ao Delphi
   postMessageToDelphi({ action: 'send_prompt', text: text });
   promptTextarea.value = '';
   promptTextarea.style.height = 'auto';
@@ -145,8 +154,14 @@ function handleSend() {
 
 // Eventos dos botões do topo
 btnNewChat.addEventListener('click', () => postMessageToDelphi({ action: 'new_chat' }));
-btnHistory.addEventListener('click', () => postMessageToDelphi({ action: 'toggle_history' }));
+btnHistory.addEventListener('click', () => {
+  // Alterna o estado recolhido da sidebar HTML
+  sessionsSidebar.classList.toggle('collapsed');
+});
 btnSettings.addEventListener('click', () => postMessageToDelphi({ action: 'open_settings' }));
+
+// Novo chat pela sidebar
+btnNewChatSidebar.addEventListener('click', () => postMessageToDelphi({ action: 'new_chat' }));
 
 // Mudança de Provedores e Modelos
 selectProvider.addEventListener('change', () => {
@@ -202,6 +217,12 @@ function addMessage(role, text, provider, model) {
   wrapper.appendChild(body);
 
   chatContainer.appendChild(wrapper);
+  
+  // Realça sintaxe usando Prism de forma assíncrona
+  setTimeout(() => {
+    Prism.highlightAllUnder(wrapper);
+  }, 10);
+
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
   return wrapper;
@@ -241,9 +262,9 @@ function setTheme(themeInfo) {
 function copyCode(btn, id) {
   const code = _codeRegistry[id] || '';
   navigator.clipboard.writeText(code).then(() => {
-    const orig = btn.innerText;
-    btn.innerText = '✓';
-    setTimeout(() => { btn.innerText = orig; }, 2000);
+    const orig = btn.innerHTML;
+    btn.innerHTML = SVG_ICONS.check;
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
   });
 }
 
@@ -344,6 +365,10 @@ function appendMessage(text, isDone, provider, model) {
 
   currentAssistantText += text;
   currentAssistantContent.innerHTML = marked.parse(currentAssistantText);
+  
+  // Executa Prism de forma contínua nos blocos de código adicionados
+  Prism.highlightAllUnder(currentAssistantContent);
+
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
   if (isDone) {
@@ -357,7 +382,6 @@ function appendMessage(text, isDone, provider, model) {
 //  Controle de Seleção Dinâmica (Providers & Models)
 // ============================================================
 function initializeConfig(data) {
-  // Preencher provedores
   selectProvider.innerHTML = '';
   data.providers.forEach(p => {
     const opt = document.createElement('option');
@@ -369,7 +393,6 @@ function initializeConfig(data) {
     selectProvider.appendChild(opt);
   });
 
-  // Preencher modelos
   updateModelsList(data.models, data.activeModel);
 }
 
@@ -400,7 +423,6 @@ function setRequestState(inProgress) {
   if (inProgress) {
     btnSendPrompt.classList.add('stop-btn');
     btnSendPrompt.title = 'Cancel request';
-    // Opcional: desabilitar selects enquanto carrega
     selectProvider.disabled = true;
     selectModel.disabled = true;
   } else {
@@ -421,6 +443,112 @@ function setContextText(text) {
 }
 
 // ============================================================
+//  Renderização Dinâmica do Histórico de Sessões (HTML Premium)
+// ============================================================
+function updateSessions(sessions, activeSessionId) {
+  sessionsList.innerHTML = '';
+
+  if (!sessions || sessions.length === 0) {
+    sessionsList.innerHTML = `<div class="no-sessions">No conversations active</div>`;
+    return;
+  }
+
+  sessions.forEach(session => {
+    const item = document.createElement('div');
+    item.classList.add('session-item');
+    if (session.id === activeSessionId) {
+      item.classList.add('active');
+    }
+
+    // Nome da Sessão (ou input para renomear)
+    const nameEl = document.createElement('span');
+    nameEl.classList.add('session-name');
+    nameEl.textContent = session.name;
+    
+    // Suporte a duplo clique para renomeação inline rápida
+    nameEl.addEventListener('dblclick', () => startRename(item, session.id, nameEl));
+
+    // Ações (Editar e Deletar)
+    const actions = document.createElement('div');
+    actions.classList.add('session-item-actions');
+
+    const btnRename = document.createElement('button');
+    btnRename.classList.add('session-action-btn');
+    btnRename.title = "Rename Conversation";
+    btnRename.innerHTML = SVG_ICONS.edit;
+    btnRename.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startRename(item, session.id, nameEl);
+    });
+
+    const btnDelete = document.createElement('button');
+    btnDelete.classList.add('session-action-btn', 'delete-btn');
+    btnDelete.title = "Delete Conversation";
+    btnDelete.innerHTML = SVG_ICONS.trash;
+    btnDelete.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Excluir conversa "${session.name}"?`)) {
+        postMessageToDelphi({ action: 'delete_session', id: session.id });
+      }
+    });
+
+    actions.appendChild(btnRename);
+    actions.appendChild(btnDelete);
+
+    item.appendChild(nameEl);
+    item.appendChild(actions);
+
+    // Seleção de Sessão ao clicar no item
+    item.addEventListener('click', (e) => {
+      if (item.classList.contains('renaming')) return;
+      postMessageToDelphi({ action: 'select_session', id: session.id });
+    });
+
+    sessionsList.appendChild(item);
+  });
+}
+
+function startRename(item, sessionId, nameEl) {
+  item.classList.add('renaming');
+  const currentName = nameEl.textContent;
+  
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.classList.add('session-rename-input');
+  input.value = currentName;
+  
+  nameEl.style.display = 'none';
+  item.insertBefore(input, nameEl);
+  input.focus();
+  input.select();
+
+  // Função para salvar a renomeação
+  function saveRename() {
+    const newName = input.value.trim();
+    if (newName && newName !== currentName) {
+      postMessageToDelphi({ action: 'rename_session', id: sessionId, name: newName });
+    }
+    cleanup();
+  }
+
+  function cleanup() {
+    input.remove();
+    nameEl.style.display = '';
+    item.classList.remove('renaming');
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      saveRename();
+    } else if (e.key === 'Escape') {
+      cleanup();
+    }
+  });
+
+  input.addEventListener('blur', saveRename);
+}
+
+// ============================================================
 //  Listener de mensagens do Delphi (WebView2)
 // ============================================================
 if (window.chrome && window.chrome.webview) {
@@ -438,6 +566,7 @@ if (window.chrome && window.chrome.webview) {
       case 'update_models':     updateModelsList(data.models, data.activeModel);             break;
       case 'set_request_state': setRequestState(data.inProgress);                            break;
       case 'set_context':       setContextText(data.text);                                   break;
+      case 'update_sessions':   updateSessions(data.sessions, data.activeSessionId);         break;
     }
   });
   window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));
