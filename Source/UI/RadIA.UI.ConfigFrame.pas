@@ -13,12 +13,19 @@ type
   published
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
+    pnlGemini: TPanel;
     tsOpenAI: TTabSheet;
+    pnlOpenAI: TPanel;
     tsClaude: TTabSheet;
+    pnlClaude: TPanel;
     tsDeepSeek: TTabSheet;
+    pnlDeepSeek: TPanel;
     tsGroq: TTabSheet;
+    pnlGroq: TPanel;
     tsOllama: TTabSheet;
+    pnlOllama: TPanel;
     tsSystemPrompt: TTabSheet;
+    pnlSystemPrompt: TPanel;
     lblGeminiKey: TLabel;
     edtGeminiKey: TEdit;
     lblOpenAIKey: TLabel;
@@ -65,6 +72,7 @@ type
     FChkSmartConfig: TCheckBox;
     
     tsGeneral: TTabSheet;
+    pnlGeneral: TPanel;
     chkLogEnabled: TCheckBox;
     lblLogPath: TLabel;
     edtLogPath: TEdit;
@@ -133,8 +141,14 @@ begin
   tsGeneral.Caption := 'General / Logs';
   tsGeneral.TabVisible := False;
 
+  pnlGeneral := TPanel.Create(Self);
+  pnlGeneral.Parent := tsGeneral;
+  pnlGeneral.Align := alClient;
+  pnlGeneral.BevelOuter := bvNone;
+  pnlGeneral.ShowCaption := False;
+
   FChkSmartConfig := TCheckBox.Create(Self);
-  FChkSmartConfig.Parent := tsGeneral;
+  FChkSmartConfig.Parent := pnlGeneral;
   FChkSmartConfig.Left := 16;
   FChkSmartConfig.Top := 16;
   FChkSmartConfig.Width := 300;
@@ -142,26 +156,26 @@ begin
   FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
 
   chkLogEnabled := TCheckBox.Create(Self);
-  chkLogEnabled.Parent := tsGeneral;
+  chkLogEnabled.Parent := pnlGeneral;
   chkLogEnabled.Left := 16;
   chkLogEnabled.Top := 48;
   chkLogEnabled.Width := 200;
   chkLogEnabled.Caption := 'Enable logging';
 
   lblLogPath := TLabel.Create(Self);
-  lblLogPath.Parent := tsGeneral;
+  lblLogPath.Parent := pnlGeneral;
   lblLogPath.Left := 16;
   lblLogPath.Top := 80;
   lblLogPath.Caption := 'Log Folder Path:';
 
   edtLogPath := TEdit.Create(Self);
-  edtLogPath.Parent := tsGeneral;
+  edtLogPath.Parent := pnlGeneral;
   edtLogPath.Left := 16;
   edtLogPath.Top := 98;
   edtLogPath.Width := 320;
 
   btnBrowseLogPath := TButton.Create(Self);
-  btnBrowseLogPath.Parent := tsGeneral;
+  btnBrowseLogPath.Parent := pnlGeneral;
   btnBrowseLogPath.Left := 342;
   btnBrowseLogPath.Top := 96;
   btnBrowseLogPath.Width := 30;
@@ -170,20 +184,20 @@ begin
   btnBrowseLogPath.OnClick := btnBrowseLogPathClick;
 
   lblLogMaxSize := TLabel.Create(Self);
-  lblLogMaxSize.Parent := tsGeneral;
+  lblLogMaxSize.Parent := pnlGeneral;
   lblLogMaxSize.Left := 16;
   lblLogMaxSize.Top := 136;
   lblLogMaxSize.Caption := 'Max Log File Size (KB):';
 
   edtLogMaxSize := TEdit.Create(Self);
-  edtLogMaxSize.Parent := tsGeneral;
+  edtLogMaxSize.Parent := pnlGeneral;
   edtLogMaxSize.Left := 16;
   edtLogMaxSize.Top := 154;
   edtLogMaxSize.Width := 100;
   edtLogMaxSize.NumbersOnly := True;
 
   grpQuota := TGroupBox.Create(Self);
-  grpQuota.Parent := tsGeneral;
+  grpQuota.Parent := pnlGeneral;
   grpQuota.Left := 16;
   grpQuota.Top := 192;
   grpQuota.Width := 356;
@@ -252,9 +266,21 @@ procedure TFrameAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; AP
 var
   LGroupBox: TGroupBox;
   LLabel: TLabel;
+  LParent: TWinControl;
+  I: Integer;
 begin
+  LParent := ATabSheet;
+  for I := 0 to ATabSheet.ControlCount - 1 do
+  begin
+    if ATabSheet.Controls[I] is TPanel then
+    begin
+      LParent := TWinControl(ATabSheet.Controls[I]);
+      Break;
+    end;
+  end;
+
   LGroupBox := TGroupBox.Create(Self);
-  LGroupBox.Parent := ATabSheet;
+  LGroupBox.Parent := LParent;
   LGroupBox.Align := alBottom;
   LGroupBox.Height := 90;
   LGroupBox.Caption := ' Advanced Settings ';
@@ -339,6 +365,35 @@ begin
     pgcSettings.Pages[I].StyleElements := pgcSettings.Pages[I].StyleElements - [seClient, seBorder];
     TTabSheetColorHack(pgcSettings.Pages[I]).ParentBackground := False;
     TTabSheetColorHack(pgcSettings.Pages[I]).Color := LBgColor;
+  end;
+
+  pnlGemini.StyleElements := pnlGemini.StyleElements - [seClient, seBorder];
+  pnlGemini.Color := LBgColor;
+  pnlGemini.ParentBackground := False;
+  pnlOpenAI.StyleElements := pnlOpenAI.StyleElements - [seClient, seBorder];
+  pnlOpenAI.Color := LBgColor;
+  pnlOpenAI.ParentBackground := False;
+  pnlClaude.StyleElements := pnlClaude.StyleElements - [seClient, seBorder];
+  pnlClaude.Color := LBgColor;
+  pnlClaude.ParentBackground := False;
+  pnlDeepSeek.StyleElements := pnlDeepSeek.StyleElements - [seClient, seBorder];
+  pnlDeepSeek.Color := LBgColor;
+  pnlDeepSeek.ParentBackground := False;
+  pnlGroq.StyleElements := pnlGroq.StyleElements - [seClient, seBorder];
+  pnlGroq.Color := LBgColor;
+  pnlGroq.ParentBackground := False;
+  pnlOllama.StyleElements := pnlOllama.StyleElements - [seClient, seBorder];
+  pnlOllama.Color := LBgColor;
+  pnlOllama.ParentBackground := False;
+  pnlSystemPrompt.StyleElements := pnlSystemPrompt.StyleElements - [seClient, seBorder];
+  pnlSystemPrompt.Color := LBgColor;
+  pnlSystemPrompt.ParentBackground := False;
+
+  if Assigned(pnlGeneral) then
+  begin
+    pnlGeneral.StyleElements := pnlGeneral.StyleElements - [seClient, seBorder];
+    pnlGeneral.Color := LBgColor;
+    pnlGeneral.ParentBackground := False;
   end;
 
   // Memo do System Prompt

@@ -15,144 +15,212 @@ object FrameAIConfig: TFrameAIConfig
     object tsGemini: TTabSheet
       Caption = 'Gemini'
       TabVisible = False
-      object lblGeminiKey: TLabel
-        Left = 16
-        Top = 24
-        Width = 43
-        Height = 15
-        Caption = 'API Key:'
-      end
-      object edtGeminiKey: TEdit
-        Left = 16
-        Top = 43
-        Width = 360
-        Height = 23
+      object pnlGemini: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
         TabOrder = 0
+        object lblGeminiKey: TLabel
+          Left = 16
+          Top = 24
+          Width = 43
+          Height = 15
+          Caption = 'API Key:'
+        end
+        object edtGeminiKey: TEdit
+          Left = 16
+          Top = 43
+          Width = 580
+          Height = 23
+          TabOrder = 0
+        end
       end
     end
     object tsOpenAI: TTabSheet
       Caption = 'OpenAI'
       TabVisible = False
-      object lblOpenAIKey: TLabel
-        Left = 16
-        Top = 24
-        Width = 43
-        Height = 15
-        Caption = 'API Key:'
-      end
-      object lblOpenAICustomUrl: TLabel
-        Left = 16
-        Top = 80
-        Width = 151
-        Height = 15
-        Caption = 'Custom Base URL (optional):'
-      end
-      object edtOpenAIKey: TEdit
-        Left = 16
-        Top = 43
-        Width = 360
-        Height = 23
+      object pnlOpenAI: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
         TabOrder = 0
-      end
-      object edtOpenAICustomUrl: TEdit
-        Left = 16
-        Top = 99
-        Width = 360
-        Height = 23
-        Hint = 
-          'e.g.: http://localhost:1234/v1 (LM Studio), https://api.groq.com' +
-          '/openai/v1 (Groq)'
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 1
+        object lblOpenAIKey: TLabel
+          Left = 16
+          Top = 24
+          Width = 43
+          Height = 15
+          Caption = 'API Key:'
+        end
+        object lblOpenAICustomUrl: TLabel
+          Left = 16
+          Top = 80
+          Width = 151
+          Height = 15
+          Caption = 'Custom Base URL (optional):'
+        end
+        object edtOpenAIKey: TEdit
+          Left = 16
+          Top = 43
+          Width = 575
+          Height = 23
+          TabOrder = 0
+        end
+        object edtOpenAICustomUrl: TEdit
+          Left = 16
+          Top = 99
+          Width = 575
+          Height = 23
+          Hint = 
+            'e.g.: http://localhost:1234/v1 (LM Studio), https://api.groq.com' +
+            '/openai/v1 (Groq)'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 1
+        end
       end
     end
     object tsClaude: TTabSheet
       Caption = 'Claude'
       TabVisible = False
-      object lblClaudeKey: TLabel
-        Left = 16
-        Top = 24
-        Width = 43
-        Height = 15
-        Caption = 'API Key:'
-      end
-      object edtClaudeKey: TEdit
-        Left = 16
-        Top = 43
-        Width = 360
-        Height = 23
+      object pnlClaude: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
         TabOrder = 0
+        object lblClaudeKey: TLabel
+          Left = 16
+          Top = 24
+          Width = 43
+          Height = 15
+          Caption = 'API Key:'
+        end
+        object edtClaudeKey: TEdit
+          Left = 16
+          Top = 43
+          Width = 585
+          Height = 23
+          TabOrder = 0
+        end
       end
     end
     object tsDeepSeek: TTabSheet
       Caption = 'DeepSeek'
       TabVisible = False
-      object lblDeepSeekKey: TLabel
-        Left = 16
-        Top = 24
-        Width = 43
-        Height = 15
-        Caption = 'API Key:'
-      end
-      object edtDeepSeekKey: TEdit
-        Left = 16
-        Top = 43
-        Width = 360
-        Height = 23
+      object pnlDeepSeek: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
         TabOrder = 0
+        object lblDeepSeekKey: TLabel
+          Left = 16
+          Top = 24
+          Width = 43
+          Height = 15
+          Caption = 'API Key:'
+        end
+        object edtDeepSeekKey: TEdit
+          Left = 16
+          Top = 43
+          Width = 585
+          Height = 23
+          TabOrder = 0
+        end
       end
     end
     object tsGroq: TTabSheet
       Caption = 'Groq'
       TabVisible = False
-      object lblGroqKey: TLabel
-        Left = 16
-        Top = 24
-        Width = 43
-        Height = 15
-        Caption = 'API Key:'
-      end
-      object edtGroqKey: TEdit
-        Left = 16
-        Top = 43
-        Width = 360
-        Height = 23
+      object pnlGroq: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
         TabOrder = 0
+        object lblGroqKey: TLabel
+          Left = 16
+          Top = 24
+          Width = 43
+          Height = 15
+          Caption = 'API Key:'
+        end
+        object edtGroqKey: TEdit
+          Left = 16
+          Top = 43
+          Width = 575
+          Height = 23
+          TabOrder = 0
+        end
       end
     end
     object tsOllama: TTabSheet
       Caption = 'Ollama'
       TabVisible = False
-      object lblOllamaUrl: TLabel
-        Left = 16
-        Top = 24
-        Width = 59
-        Height = 15
-        Caption = 'Server URL:'
-      end
-      object edtOllamaUrl: TEdit
-        Left = 16
-        Top = 43
-        Width = 360
-        Height = 23
+      object pnlOllama: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
         TabOrder = 0
+        object lblOllamaUrl: TLabel
+          Left = 16
+          Top = 24
+          Width = 59
+          Height = 15
+          Caption = 'Server URL:'
+        end
+        object edtOllamaUrl: TEdit
+          Left = 16
+          Top = 43
+          Width = 580
+          Height = 23
+          TabOrder = 0
+        end
       end
     end
     object tsSystemPrompt: TTabSheet
       Caption = 'System'
       TabVisible = False
-      object memSystemPrompt: TMemo
-        AlignWithMargins = True
-        Left = 3
-        Top = 3
-        Width = 623
-        Height = 471
+      object pnlSystemPrompt: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
         Align = alClient
-        ScrollBars = ssVertical
+        BevelOuter = bvNone
+        ShowCaption = False
         TabOrder = 0
-        ExplicitWidth = 617
-        ExplicitHeight = 465
+        object memSystemPrompt: TMemo
+          AlignWithMargins = True
+          Left = 3
+          Top = 3
+          Width = 616
+          Height = 466
+          Align = alClient
+          ScrollBars = ssVertical
+          TabOrder = 0
+        end
       end
     end
     object tsTemplates: TTabSheet
@@ -162,34 +230,31 @@ object FrameAIConfig: TFrameAIConfig
         Left = 0
         Top = 0
         Width = 180
-        Height = 477
+        Height = 470
         Align = alLeft
         BevelOuter = bvNone
         ShowCaption = False
         TabOrder = 0
-        ExplicitHeight = 471
         object lstTemplates: TListBox
           AlignWithMargins = True
           Left = 3
           Top = 3
           Width = 174
-          Height = 431
+          Height = 424
           Align = alClient
           ItemHeight = 15
           TabOrder = 0
           OnClick = lstTemplatesClick
-          ExplicitHeight = 425
         end
         object pnlTemplatesLeftButtons: TPanel
           Left = 0
-          Top = 437
+          Top = 430
           Width = 180
           Height = 40
           Align = alBottom
           BevelOuter = bvNone
           ShowCaption = False
           TabOrder = 1
-          ExplicitTop = 431
           object btnNewTemplate: TButton
             AlignWithMargins = True
             Left = 3
@@ -217,14 +282,12 @@ object FrameAIConfig: TFrameAIConfig
       object pnlTemplatesClient: TPanel
         Left = 180
         Top = 0
-        Width = 449
-        Height = 477
+        Width = 442
+        Height = 470
         Align = alClient
         BevelOuter = bvNone
         ShowCaption = False
         TabOrder = 1
-        ExplicitWidth = 443
-        ExplicitHeight = 471
         object lblTemplateName: TLabel
           Left = 14
           Top = 6
