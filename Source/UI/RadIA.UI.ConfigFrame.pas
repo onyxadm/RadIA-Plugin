@@ -146,15 +146,6 @@ begin
   FTemplateManager := TPromptTemplateManager.Create;
   FTemplateManager.Load;
 
-  { Create CheckBox in Footer }
-  FChkSmartConfig := TCheckBox.Create(Self);
-  FChkSmartConfig.Parent := pnlFooter;
-  FChkSmartConfig.Align := alLeft;
-  FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
-  FChkSmartConfig.Margins.Left := 16;
-  FChkSmartConfig.AlignWithMargins := True;
-  FChkSmartConfig.Width := 200;
-
   { Create advanced settings groupbox for each provider tab }
   CreateProviderAdvancedControls(tsGemini, ptGemini);
   CreateProviderAdvancedControls(tsOpenAI, ptOpenAI);
@@ -169,29 +160,37 @@ begin
   tsGeneral.Caption := 'General / Logs';
   tsGeneral.TabVisible := False;
 
+  FChkSmartConfig := TCheckBox.Create(Self);
+  FChkSmartConfig.Parent := tsGeneral;
+  FChkSmartConfig.Left := 16;
+  FChkSmartConfig.Top := 16;
+  FChkSmartConfig.Width := 300;
+  FChkSmartConfig.Height := 23;
+  FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
+
   chkLogEnabled := TCheckBox.Create(Self);
   chkLogEnabled.Parent := tsGeneral;
   chkLogEnabled.Left := 16;
-  chkLogEnabled.Top := 16;
+  chkLogEnabled.Top := 48;
   chkLogEnabled.Width := 200;
   chkLogEnabled.Caption := 'Enable logging';
 
   lblLogPath := TLabel.Create(Self);
   lblLogPath.Parent := tsGeneral;
   lblLogPath.Left := 16;
-  lblLogPath.Top := 48;
+  lblLogPath.Top := 80;
   lblLogPath.Caption := 'Log Folder Path:';
 
   edtLogPath := TEdit.Create(Self);
   edtLogPath.Parent := tsGeneral;
   edtLogPath.Left := 16;
-  edtLogPath.Top := 66;
+  edtLogPath.Top := 98;
   edtLogPath.Width := 320;
 
   btnBrowseLogPath := TButton.Create(Self);
   btnBrowseLogPath.Parent := tsGeneral;
   btnBrowseLogPath.Left := 342;
-  btnBrowseLogPath.Top := 64;
+  btnBrowseLogPath.Top := 96;
   btnBrowseLogPath.Width := 30;
   btnBrowseLogPath.Height := 23;
   btnBrowseLogPath.Caption := '...';
@@ -200,20 +199,20 @@ begin
   lblLogMaxSize := TLabel.Create(Self);
   lblLogMaxSize.Parent := tsGeneral;
   lblLogMaxSize.Left := 16;
-  lblLogMaxSize.Top := 104;
+  lblLogMaxSize.Top := 136;
   lblLogMaxSize.Caption := 'Max Log File Size (KB):';
 
   edtLogMaxSize := TEdit.Create(Self);
   edtLogMaxSize.Parent := tsGeneral;
   edtLogMaxSize.Left := 16;
-  edtLogMaxSize.Top := 122;
+  edtLogMaxSize.Top := 154;
   edtLogMaxSize.Width := 100;
   edtLogMaxSize.NumbersOnly := True;
 
   grpQuota := TGroupBox.Create(Self);
   grpQuota.Parent := tsGeneral;
   grpQuota.Left := 16;
-  grpQuota.Top := 160;
+  grpQuota.Top := 192;
   grpQuota.Width := 356;
   grpQuota.Height := 140;
   grpQuota.Caption := ' Local Token Quota ';
