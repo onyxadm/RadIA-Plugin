@@ -92,29 +92,30 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Campos de edição e persistência dinâmica de parâmetros no Registro do Windows pela classe `TRadIAConfig`.
     *   Mapeamento e integração no payload de requisição HTTP JSON de todos os provedores suportados (Ollama, Gemini, OpenAI, Claude, Groq e DeepSeek).
 
+### 13. Múltiplas Sessões de Chat - Item #5
+*   **Descrição**: Permite organizar conversas por projeto, feature ou tarefa, sem perder o contexto de sessões anteriores.
+*   **Detalhes**:
+    *   Armazenamento persistente de sessões em `%APPDATA%\RadIA\sessions\<guid>.json` indexadas em `sessions_index.json` pela classe `TRadIASessionManager`.
+    *   Painel lateral retrátil integrado na UI (`pnlSessions`) contendo `ListBox` e controles (Nova Sessão, Renomear, Excluir) com transição suave e botão de Toggle (☰) na barra de ferramentas.
+    *   Validação robusta com testes unitários em `RadIA.Tests.Sessions.pas`.
+
+### 14. Controle de Cota e Orçamento de Tokens Local - Item #19
+*   **Descrição**: Permite configurar um limite mensal de tokens nas configurações do plugin para evitar surpresas no faturamento das chaves de API, acumulando o consumo localmente e bloqueando requisições.
+*   **Detalhes**:
+    *   Integração no Registro do Windows com redefinição mensal automática de cota de tokens.
+    *   Controles visuais dinâmicos criados na aba de configurações do painel.
+    *   Exibição do percentual de cota consumida na barra de status em HTML na WebView.
+    *   Validação completa com testes unitários cobrindo o bloqueio e ciclos de cota em `RadIA.Tests.Quota.pas`.
+
 ---
 
 ## 🔲 Pendentes
 
-### 1. Múltiplas Sessões de Chat (Item #5)
-*   **Objetivo**: Permitir que o desenvolvedor organize conversas por projeto, feature ou tarefa, sem perder o contexto de sessões anteriores.
-*   **Detalhamento**:
-    *   Armazenar sessões em `%APPDATA%\RadIA\sessions\<id>.json`, cada uma com nome, data e array de mensagens.
-    *   Adicionar painel lateral (ou dropdown) para listar, criar, renomear e excluir sessões.
-    *   Botão "Nova Sessão" salva a corrente e abre uma vazia.
-
-### 2. Painel de Gerenciamento do Cache (Item #13)
+### 1. Painel de Gerenciamento do Cache (Item #13)
 *   **Objetivo**: Dar visibilidade e controle sobre o cache de respostas sem precisar editar o arquivo JSON manualmente.
 
-### 3. Revisão Automática de Código no Save (Item #15)
+### 2. Revisão Automática de Código no Save (Item #15)
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção.
 
-### 4. Histórico de Refatorações Aplicadas (Item #16)
+### 3. Histórico de Refatorações Aplicadas (Item #16)
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão [Aplicar Alteração] foi acionado, permitindo revisão e desfazimento manual.
-
-### 5. Controle de Cota e Orçamento de Tokens Local
-*   **Objetivo**: Permitir que o desenvolvedor estabeleça um limite de consumo de tokens mensal local para evitar surpresas no faturamento de suas chaves de API.
-*   **Detalhamento**:
-    *   Adicionar campo nas configurações de limite de tokens (ex: cota mensal de 1.000.000 de tokens).
-    *   Armazenar e acumular o consumo de forma persistente localmente.
-    *   Exibir percentual de consumo na barra de status do chat lateral e alertar/bloquear chamadas ao atingir 100% da cota definida.

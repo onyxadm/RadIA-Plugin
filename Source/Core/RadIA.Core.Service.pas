@@ -279,6 +279,12 @@ var
   LTemperature: Double;
   LMaxTokens: Integer;
 begin
+  if FConfig.QuotaEnabled and (FConfig.QuotaUsed >= FConfig.QuotaLimit) then
+  begin
+    ACallback('', 'Cota mensal de tokens excedida (limite local atingido).', False, TTokenUsage.Empty);
+    Exit;
+  end;
+
   try
     LProvider := CreateActiveProvider;
     TMonitor.Enter(Self);
@@ -355,6 +361,16 @@ var
   LTemperature: Double;
   LMaxTokens: Integer;
 begin
+  if FConfig.QuotaEnabled and (FConfig.QuotaUsed >= FConfig.QuotaLimit) then
+  begin
+    TThread.Queue(nil,
+      procedure
+      begin
+        ACallback('', True, 'Cota mensal de tokens excedida (limite local atingido).');
+      end);
+    Exit;
+  end;
+
   try
     LProvider       := CreateActiveProvider;
     TMonitor.Enter(Self);
@@ -473,32 +489,34 @@ begin
       rpRefactorCode:
       begin
         ATemperature := 0.1;
-        AMaxTokens := 4096;
+        AMaxTokens := 16384;
       end;
       rpFindBugs:
       begin
         ATemperature := 0.1;
-        AMaxTokens := 2048;
+        AMaxTokens := 8192;
       end;
       rpGenerateTests:
       begin
         ATemperature := 0.2;
-        AMaxTokens := 4096;
+        AMaxTokens := 16384;
       end;
       rpExplainCode:
       begin
         ATemperature := 0.3;
-        AMaxTokens := 2048;
+        AMaxTokens := 8192;
       end;
     else
       ATemperature := 0.7;
-      AMaxTokens := 2048;
+      AMaxTokens := 8192;
     end;
   end
   else
   begin
     ATemperature := FConfig.GetTemperature(AProvider);
     AMaxTokens := FConfig.GetMaxTokens(AProvider);
+    if AMaxTokens <= 0 then
+      AMaxTokens := 8192;
   end;
 end;
 

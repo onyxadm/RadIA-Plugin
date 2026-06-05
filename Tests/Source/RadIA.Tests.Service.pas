@@ -7,7 +7,8 @@ uses
   RadIA.Core.Interfaces,
   RadIA.Core.Types,
   RadIA.Core.Service,
-  RadIA.Core.Config;
+  RadIA.Core.Config,
+  RadIA.Core.TokenUsage;
 
 type
   { Mock minimal config for trimming tests — avoids registry I/O }
@@ -25,6 +26,11 @@ type
     FLogEnabled: Boolean;
     FLogPath: string;
     FLogMaxSizeKB: Integer;
+    FQuotaEnabled: Boolean;
+    FQuotaLimit: Int64;
+    FQuotaUsed: Int64;
+    FQuotaCycleStart: TDateTime;
+    FActiveSessionId: string;
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
 
@@ -56,6 +62,17 @@ type
     procedure SetLogPath(const AValue: string);
     function GetLogMaxSizeKB: Integer;
     procedure SetLogMaxSizeKB(const AValue: Integer);
+    function GetQuotaEnabled: Boolean;
+    procedure SetQuotaEnabled(const AValue: Boolean);
+    function GetQuotaLimit: Int64;
+    procedure SetQuotaLimit(const AValue: Int64);
+    function GetQuotaUsed: Int64;
+    procedure SetQuotaUsed(const AValue: Int64);
+    function GetQuotaCycleStart: TDateTime;
+    procedure SetQuotaCycleStart(const AValue: TDateTime);
+    function GetActiveSessionId: string;
+    procedure SetActiveSessionId(const AValue: string);
+    procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
   end;
@@ -129,6 +146,11 @@ begin
     FMaxTokens[LProvider] := 2048;
     FTimeouts[LProvider] := 60;
   end;
+  FQuotaEnabled := False;
+  FQuotaLimit := 1000000;
+  FQuotaUsed := 0;
+  FQuotaCycleStart := Now;
+  FActiveSessionId := '';
 end;
 
 function TMockConfig.GetApiKey(const AProvider: TAIProviderType): string;
@@ -278,6 +300,62 @@ end;
 procedure TMockConfig.SetLogMaxSizeKB(const AValue: Integer);
 begin
   FLogMaxSizeKB := AValue;
+end;
+
+function TMockConfig.GetQuotaEnabled: Boolean;
+begin
+  Result := FQuotaEnabled;
+end;
+
+procedure TMockConfig.SetQuotaEnabled(const AValue: Boolean);
+begin
+  FQuotaEnabled := AValue;
+end;
+
+function TMockConfig.GetQuotaLimit: Int64;
+begin
+  Result := FQuotaLimit;
+end;
+
+procedure TMockConfig.SetQuotaLimit(const AValue: Int64);
+begin
+  FQuotaLimit := AValue;
+end;
+
+function TMockConfig.GetQuotaUsed: Int64;
+begin
+  Result := FQuotaUsed;
+end;
+
+procedure TMockConfig.SetQuotaUsed(const AValue: Int64);
+begin
+  FQuotaUsed := AValue;
+end;
+
+function TMockConfig.GetQuotaCycleStart: TDateTime;
+begin
+  Result := FQuotaCycleStart;
+end;
+
+procedure TMockConfig.SetQuotaCycleStart(const AValue: TDateTime);
+begin
+  FQuotaCycleStart := AValue;
+end;
+
+function TMockConfig.GetActiveSessionId: string;
+begin
+  Result := FActiveSessionId;
+end;
+
+procedure TMockConfig.SetActiveSessionId(const AValue: string);
+begin
+  FActiveSessionId := AValue;
+end;
+
+procedure TMockConfig.AddToQuotaUsage(const AUsage: TTokenUsage);
+begin
+  if FQuotaEnabled then
+    FQuotaUsed := FQuotaUsed + AUsage.TotalTokens;
 end;
 
 { TTestRadIAService helpers }
@@ -434,12 +512,12 @@ begin
     // Refatorar
     LService.ResolveParameters(ptGemini, rpRefactorCode, LTemp, LMaxTokens);
     Assert.AreEqual(0.1, LTemp, 0.01);
-    Assert.AreEqual(4096, LMaxTokens);
+    Assert.AreEqual(16384, LMaxTokens);
     
     // Chat Geral
     LService.ResolveParameters(ptGemini, rpGeneralChat, LTemp, LMaxTokens);
     Assert.AreEqual(0.7, LTemp, 0.01);
-    Assert.AreEqual(2048, LMaxTokens);
+    Assert.AreEqual(8192, LMaxTokens);
     
     { 2. Com Smart Config Disabled (Usa valores da config) }
     LConfig.SmartConfigEnabled := False;

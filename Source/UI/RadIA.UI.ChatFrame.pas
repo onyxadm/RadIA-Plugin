@@ -7,11 +7,28 @@ uses
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
   RadIA.Core.Service, RadIA.Core.PromptHistory, RadIA.Core.TokenUsage, Vcl.Menus,
-  RadIA.Core.PromptTemplates, Vcl.Buttons, Winapi.WebView2, Winapi.ActiveX;
+  RadIA.Core.PromptTemplates, Vcl.Buttons, Winapi.WebView2, Winapi.ActiveX,
+  RadIA.Core.Sessions;
 
 type
+  TRadIAThemeColors = record
+    IsDark: Boolean;
+    BgBase: TColor;
+    TextColor: TColor;
+    InputBgColor: TColor;
+    BorderColor: TColor;
+    AccentColor: TColor;
+    BgElevated: TColor;
+    FgSecondary: string;
+    CodeBg: string;
+    CodeHeader: TColor;
+    GreenApply: string;
+    class function GetColorsForTheme(const AThemeName: string): TRadIAThemeColors; static;
+  end;
+
   TFrameAIChat = class(TFrame)
     pnlToolbar: TPanel;
+    btnToggleSessions: TSpeedButton;
     cbProvider: TComboBox;
     cbModel: TComboBox;
     btnSettings: TSpeedButton;
@@ -26,6 +43,13 @@ type
     btnSend: TSpeedButton;
     lblContext: TLabel;
     pnlBrowser: TPanel;
+    pnlSessions: TPanel;
+    pnlSessionsHeader: TPanel;
+    btnNewSession: TSpeedButton;
+    btnRenameSession: TSpeedButton;
+    btnDeleteSession: TSpeedButton;
+    lstSessions: TListBox;
+    splitterSessions: TSplitter;
     procedure btnSendClick(Sender: TObject);
     procedure cbProviderChange(Sender: TObject);
     procedure cbModelChange(Sender: TObject);
@@ -40,13 +64,20 @@ type
     procedure EdgeBrowserWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
     {$ENDIF}
     procedure memPromptKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure btnToggleSessionsClick(Sender: TObject);
+    procedure btnNewSessionClick(Sender: TObject);
+    procedure btnRenameSessionClick(Sender: TObject);
+    procedure btnDeleteSessionClick(Sender: TObject);
+    procedure lstSessionsClick(Sender: TObject);
   private
     FConfig: IAIConfig;
     FAIService: TRadIAService;
+    FSessionManager: TRadIASessionManager;
     FHistory: TArray<IChatMessage>;
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
     FWebViewInitialized: Boolean;
+    FWebViewReady: Boolean;
     FPromptHistoryManager: TPromptHistoryManager;
     FAccumulatedUsage: TTokenUsage;
     FTemplateManager: TPromptTemplateManager;
@@ -58,6 +89,7 @@ type
     EdgeBrowser: TEdgeBrowser;
     
     procedure UpdateSendButtonVisual;
+    function ColorToHex(AColor: TColor): string;
     procedure CreateEdgeBrowser;
     
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
@@ -74,10 +106,11 @@ type
     procedure SaveChatHistory;
     procedure LoadPromptHistory;
     procedure SavePromptHistory;
+    procedure UpdateSessionsList;
     procedure LoadTemplatesMenu;
     procedure OnTemplateMenuClick(Sender: TObject);
     procedure ApplyIDETheme;
-    procedure UpdateVCLColors(const AThemeName: string);
+    procedure UpdateVCLColors(const AColors: TRadIAThemeColors);
     procedure ProcessWebMessage(const AMessage: string);
   protected
     procedure CreateWnd; override;
@@ -88,6 +121,8 @@ type
     
     procedure SetTheme(const AThemeName: string);
   end;
+
+function IsThemeDark(const AThemeName: string): Boolean;
 
 implementation
 
@@ -100,9 +135,58 @@ uses
 function IsThemeDark(const AThemeName: string): Boolean;
 begin
   Result := AThemeName.ToLower.Contains('dark') or 
+            AThemeName.ToLower.Contains('mountain') or
+            AThemeName.ToLower.Contains('mist') or
             SameText(AThemeName, 'carbon') or 
             SameText(AThemeName, 'glow') or 
             SameText(AThemeName, 'onyx');
+end;
+
+{ TRadIAThemeColors }
+
+class function TRadIAThemeColors.GetColorsForTheme(const AThemeName: string): TRadIAThemeColors;
+begin
+  Result.IsDark := IsThemeDark(AThemeName);
+
+  if Result.IsDark then
+  begin
+    Result.BgBase := $00252526;
+    Result.TextColor := $00D4D4D4;
+    Result.InputBgColor := $001E1E1E;
+    Result.BorderColor := $003C3C3C;
+    Result.AccentColor := $00CC7A00;
+    Result.BgElevated := $002D2D2D;
+    Result.FgSecondary := '#858585';
+    Result.CodeBg := '#1E1E1E';
+    Result.CodeHeader := $002D2D2D;
+    Result.GreenApply := '#28a745';
+  end
+  else
+  begin
+    Result.BgBase := clBtnFace;
+    Result.TextColor := clWindowText;
+    Result.InputBgColor := clWindow;
+    Result.BorderColor := $00C8C8C8;
+    Result.AccentColor := $009E5A00;
+    Result.BgElevated := $00EAEAEA;
+    Result.FgSecondary := '#6e6e6e';
+    Result.CodeBg := '#ffffff';
+    Result.CodeHeader := $00F0F0F0;
+    Result.GreenApply := '#237c3c';
+  end;
+end;
+
+type
+  TSessionObject = class
+  public
+    Id: string;
+    constructor Create(const AId: string);
+  end;
+
+constructor TSessionObject.Create(const AId: string);
+begin
+  inherited Create;
+  Id := AId;
 end;
 
 
@@ -137,19 +221,23 @@ begin
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   CopyWebFiles;
   
+  FSessionManager := TRadIASessionManager.Create;
+  FSessionManager.ActiveSessionId := FConfig.ActiveSessionId;
+  
   LoadConfig;
+  UpdateSessionsList;
   LoadPromptHistory;
 
   { Detect current IDE theme and apply colors to VCL controls }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
-      UpdateVCLColors(LThemingServices.ActiveTheme)
+      UpdateVCLColors(TRadIAThemeColors.GetColorsForTheme(LThemingServices.ActiveTheme))
     else
-      UpdateVCLColors('light');
+      UpdateVCLColors(TRadIAThemeColors.GetColorsForTheme('light'));
   end
   else
-    UpdateVCLColors('light');
+    UpdateVCLColors(TRadIAThemeColors.GetColorsForTheme('light'));
 
   memPrompt.OnKeyDown := Self.memPromptKeyDown;
   TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
@@ -169,8 +257,18 @@ begin
       FPopupMenuTemplates.Items[I].OnClick := nil;
   end;
   
+  if Assigned(lstSessions) then
+  begin
+    for I := 0 to lstSessions.Items.Count - 1 do
+    begin
+      if Assigned(lstSessions.Items.Objects[I]) then
+        lstSessions.Items.Objects[I].Free;
+    end;
+  end;
+
   FPromptHistoryManager.Free;
   FreeAndNil(FTemplateManager);
+  FreeAndNil(FSessionManager);
   inherited Destroy;
 end;
 
@@ -180,12 +278,14 @@ begin
   if Showing and not FWebViewInitialized then
   begin
     FWebViewInitialized := True;
+    FWebViewReady := False;
     CreateEdgeBrowser;
     TThread.ForceQueue(nil,
+      TThreadProcedure(
       procedure
       begin
         InitializeWebView;
-      end);
+      end));
   end;
 end;
 
@@ -212,12 +312,14 @@ begin
   if not FWebViewInitialized and Showing then
   begin
     FWebViewInitialized := True;
+    FWebViewReady := False;
     CreateEdgeBrowser;
     TThread.ForceQueue(nil,
+      TThreadProcedure(
       procedure
       begin
         InitializeWebView;
-      end);
+      end));
   end;
 end;
 
@@ -227,16 +329,18 @@ var
 begin
   FBrowserInitialized := False;
   FWebViewInitialized := False;
+  FWebViewReady := False;
   if Assigned(EdgeBrowser) then
   begin
     LEdgeToFree := EdgeBrowser;
     EdgeBrowser := nil;
     LEdgeToFree.Parent := nil; // Desvincula visualmente de forma síncrona
     TThread.Queue(nil,
+      TThreadProcedure(
       procedure
       begin
         LEdgeToFree.Free; // Libera da memória de forma assíncrona (thread-safe/layout-safe)
-      end);
+      end));
   end;
   inherited DestroyWnd;
 end;
@@ -433,8 +537,6 @@ begin
 end;
 
 procedure TFrameAIChat.btnClearClick(Sender: TObject);
-var
-  LHistoryFile: string;
 begin
   FHistory := [];
   FAccumulatedUsage := TTokenUsage.Empty;
@@ -444,14 +546,12 @@ begin
   if Assigned(FAIService) then
     FAIService.ClearCache;
   
-  { Clear physical file }
-  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
-  if TFile.Exists(LHistoryFile) then
+  if (FSessionManager <> nil) and not FSessionManager.ActiveSessionId.IsEmpty then
   begin
     try
-      TFile.Delete(LHistoryFile);
+      FSessionManager.SaveSessionHistory(FSessionManager.ActiveSessionId, []);
     except
-      // Ignore delete errors
+      // Ignore write errors
     end;
   end;
 end;
@@ -558,22 +658,52 @@ end;
 procedure TFrameAIChat.SetTheme(const AThemeName: string);
 var
   LJson: TJSONObject;
+  LColors: TRadIAThemeColors;
 begin
-  UpdateVCLColors(AThemeName);
+  LColors := TRadIAThemeColors.GetColorsForTheme(AThemeName);
+  UpdateVCLColors(LColors);
 
   if not FBrowserInitialized then
     Exit;
-    
+
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'set_theme');
     LJson.AddPair('theme', AThemeName.ToLower);
     
+    LJson.AddPair('bgBase', ColorToHex(LColors.BgBase));
+    LJson.AddPair('bgPanel', ColorToHex(LColors.BgBase));
+    LJson.AddPair('bgInput', ColorToHex(LColors.InputBgColor));
+    LJson.AddPair('fgPrimary', ColorToHex(LColors.TextColor));
+    LJson.AddPair('bgElevated', ColorToHex(LColors.BgElevated));
+    LJson.AddPair('fgSecondary', LColors.FgSecondary);
+    LJson.AddPair('codeBg', LColors.CodeBg);
+    LJson.AddPair('codeHeader', ColorToHex(LColors.CodeHeader));
+    LJson.AddPair('greenApply', LColors.GreenApply);
+    LJson.AddPair('border', ColorToHex(LColors.BorderColor));
+    
+    if LColors.IsDark then
+      LJson.AddPair('accent', '#007acc')
+    else
+      LJson.AddPair('accent', '#005a9e');
+
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
   finally
     LJson.Free;
   end;
+end;
+
+function TFrameAIChat.ColorToHex(AColor: TColor): string;
+var
+  LColorRGB: Longint;
+  R, G, B: Byte;
+begin
+  LColorRGB := ColorToRGB(AColor);
+  R := GetRValue(LColorRGB);
+  G := GetGValue(LColorRGB);
+  B := GetBValue(LColorRGB);
+  Result := Format('#%.2x%.2x%.2x', [R, G, B]);
 end;
 
 procedure TFrameAIChat.UpdateSendButtonVisual;
@@ -609,7 +739,7 @@ begin
       shpSendBg.Brush.Color := $00E5E5E5; // Branco/Cinza claro
       shpSendBg.Pen.Color := $00E5E5E5;
       shpSendBg.Pen.Style := psSolid;
-      btnSend.Caption := #11014; // Seta para cima ⬆
+      btnSend.Caption := #10148; // Símbolo de aviãozinho/seta moderno
       btnSend.Font.Color := $001E1E1E; // Cinza escuro
     end
     else
@@ -617,74 +747,72 @@ begin
       shpSendBg.Brush.Color := $001F1F1F; // Preto/Cinza escuro
       shpSendBg.Pen.Color := $001F1F1F;
       shpSendBg.Pen.Style := psSolid;
-      btnSend.Caption := #11014; // Seta para cima ⬆
+      btnSend.Caption := #10148; // Símbolo de aviãozinho/seta moderno
       btnSend.Font.Color := clWhite;
     end;
   end;
+
+  { Habilita/Desabilita os componentes de múltiplas sessões com base no progresso da requisição }
+  btnNewSession.Enabled := not FRequestInProgress;
+  btnRenameSession.Enabled := not FRequestInProgress;
+  btnDeleteSession.Enabled := not FRequestInProgress;
+  lstSessions.Enabled := not FRequestInProgress;
 end;
 
-procedure TFrameAIChat.UpdateVCLColors(const AThemeName: string);
-var
-  LThemingServices: IOTAIDEThemingServices;
-  LIsDark: Boolean;
-  LBgColor, LTextColor, LInputBgColor: TColor;
+procedure TFrameAIChat.UpdateVCLColors(const AColors: TRadIAThemeColors);
 begin
-  LIsDark := IsThemeDark(AThemeName);
-  
-  if LIsDark then
-  begin
-    LBgColor := $00252526;      // Cinza escuro da IDE
-    LTextColor := $00D4D4D4;    // Texto cinza claro
-    LInputBgColor := $001E1E1E; // Fundo escuro do prompt
-  end
+  { Pintamos sempre todos os nossos componentes para garantir total consistência cromática }
+  Self.Color := AColors.BgBase;
+  pnlToolbar.Color := AColors.BgBase;
+  pnlToolbar.ParentBackground := False;
+  pnlBrowser.Color := AColors.BgBase;
+  pnlBrowser.ParentBackground := False;
+
+  // Labels
+  if AColors.IsDark then
+    lblContext.Font.Color := $009CA3AF
   else
-  begin
-    LBgColor := clBtnFace;
-    LTextColor := clWindowText;
-    LInputBgColor := clWindow;
-  end;
+    lblContext.Font.Color := clGrayText;
 
-  { Se a estilização da IDE não estiver ativa, pintamos o Frame e Toolbar manualmente }
-  if not Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) or not LThemingServices.IDEThemingEnabled then
-  begin
-    Self.Color := LBgColor;
-    pnlToolbar.Color := LBgColor;
-    pnlToolbar.ParentBackground := False;
-    pnlBrowser.Color := LBgColor;
-    pnlBrowser.ParentBackground := False;
+  // ComboBoxes
+  cbProvider.Color := AColors.InputBgColor;
+  cbProvider.Font.Color := AColors.TextColor;
+  cbModel.Color := AColors.InputBgColor;
+  cbModel.Font.Color := AColors.TextColor;
 
-    // Labels
-    lblContext.Font.Color := if LIsDark then $009CA3AF else clGrayText;
+  // SpeedButtons da Toolbar
+  btnTemplates.Font.Color := AColors.TextColor;
+  btnExport.Font.Color := AColors.TextColor;
+  btnClear.Font.Color := AColors.TextColor;
+  btnSettings.Font.Color := AColors.TextColor;
+  btnToggleSessions.Font.Color := AColors.TextColor;
 
-    // ComboBoxes
-    cbProvider.Color := LInputBgColor;
-    cbProvider.Font.Color := LTextColor;
-    cbModel.Color := LInputBgColor;
-    cbModel.Font.Color := LTextColor;
+  // Componentes da Barra Lateral de Sessões
+  pnlSessions.Color := AColors.BgBase;
+  pnlSessions.ParentBackground := False;
+  pnlSessionsHeader.Color := AColors.BgBase;
+  pnlSessionsHeader.ParentBackground := False;
+  lstSessions.Color := AColors.InputBgColor;
+  lstSessions.Font.Color := AColors.TextColor;
+  btnNewSession.Font.Color := AColors.TextColor;
+  btnRenameSession.Font.Color := AColors.TextColor;
+  btnDeleteSession.Font.Color := AColors.TextColor;
 
-    // SpeedButtons da Toolbar
-    btnTemplates.Font.Color := LTextColor;
-    btnExport.Font.Color := LTextColor;
-    btnClear.Font.Color := LTextColor;
-    btnSettings.Font.Color := LTextColor;
-  end;
-
-  { Componentes da Cápsula do Prompt e Botão de Enviar:
-    Tornamos o pnlInput transparente para assumir a cor nativa da IDE/Frame (mesma cor do topo e do fundo) }
-  pnlInput.ParentBackground := True;
-  pnlInput.StyleElements := pnlInput.StyleElements + [seClient, seBorder];
+  { Componentes da Barra de Input e Prompt }
+  pnlInput.ParentBackground := False;
+  pnlInput.Color := AColors.BgBase;
+  pnlInput.StyleElements := pnlInput.StyleElements - [seClient, seBorder];
   
-  { A cápsula em si (shpInputBg) e o memo (memPrompt) usam a cor do edit (LInputBgColor) }
-  shpInputBg.Brush.Color := LInputBgColor;
-  if LIsDark then
+  shpInputBg.Brush.Color := AColors.InputBgColor;
+  if AColors.IsDark then
     shpInputBg.Pen.Color := $003E3E42
   else
     shpInputBg.Pen.Color := $00D1D5DB;
   shpInputBg.Pen.Style := psSolid;
 
-  memPrompt.StyleElements := memPrompt.StyleElements - [seClient, seBorder];
-  memPrompt.Color := LInputBgColor;
-  memPrompt.Font.Color := LTextColor;
+  memPrompt.StyleElements := [];
+  memPrompt.Color := AColors.InputBgColor;
+  memPrompt.Font.Color := AColors.TextColor;
 
   btnSend.StyleElements := btnSend.StyleElements - [seFont, seClient, seBorder];
   
@@ -758,18 +886,26 @@ begin
       LCode := StringReplace(LCode, #13,    #10, [rfReplaceAll]);
       LCode := StringReplace(LCode, #10,    #13#10, [rfReplaceAll]);
       TThread.Queue(nil,
+        TThreadProcedure(
         procedure
         begin
           TRadIAOTAHelper.ReplaceActiveEditorText(LCode);
-        end);
+        end));
     end
     else if LAction = 'ready' then
     begin
       TThread.Queue(nil,
+        TThreadProcedure(
         procedure
         begin
+          FWebViewReady := True;
           LoadChatHistory;
-        end);
+          
+          { Se a WebView carregou enquanto uma requisição de IA já estava rodando, }
+          { garante o envio do indicador de digitação agora que ela está pronta. }
+          if FRequestInProgress then
+            PostToWebView('show_typing', '', '');
+        end));
     end;
   finally
     LParsed.Free;
@@ -925,7 +1061,19 @@ var
   LDoneHandled: Boolean;
   LActiveProvider: string;
   LActiveModel: string;
+  LSessionId: string;
 begin
+  if FConfig.QuotaEnabled then
+  begin
+    FConfig.Load;
+    if FConfig.QuotaUsed >= FConfig.QuotaLimit then
+    begin
+      ShowMessage(Format('Não foi possível enviar a requisição: Cota mensal de tokens excedida (limite local de %s tokens atingido).',
+        [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
+      Exit;
+    end;
+  end;
+
   LDoneHandled := False;
   FRequestInProgress := True;
   FCancelledByUser := False;
@@ -934,9 +1082,10 @@ begin
 
   LActiveProvider := ProviderTypeToString(FConfig.GetActiveProvider);
   LActiveModel := FConfig.GetActiveModel(FConfig.GetActiveProvider);
+  LSessionId := FSessionManager.ActiveSessionId;
 
-  TLogger.Log(Format('SendPromptToAI started. Provider=%s, Model=%s, PromptLength=%d',
-    [LActiveProvider, LActiveModel, Length(APromptText)]), 'UI');
+  TLogger.Log(Format('SendPromptToAI started. Provider=%s, Model=%s, PromptLength=%d, Session=%s',
+    [LActiveProvider, LActiveModel, Length(APromptText), LSessionId]), 'UI');
 
   { Infer request profile from slash commands }
   LProfile := rpGeneralChat;
@@ -949,122 +1098,178 @@ begin
   else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) then
     LProfile := rpExplainCode;
   
+  { Save user prompt to history immediately to avoid losing it on network failure or IDE exit }
   LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText, LActiveProvider, LActiveModel);
+  FHistory := FHistory + [LUserMsg];
+  SaveChatHistory;
+
   LFullResponse := '';
   LGuard := FLifecycleGuard as ILifecycleGuard;
   
   PostToWebView('show_typing', '', '');
   
-  FAIService.SendPromptStream(APromptText, FHistory,
-    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    var
-      LChunkCopy: string;
-      LIsDoneCopy: Boolean;
-      LErrorCopy: string;
-    begin
-      LChunkCopy := AChunk;
-      LIsDoneCopy := AIsDone;
-      LErrorCopy := AError;
-      TThread.Queue(nil,
-        procedure
-        var
-          LAssistantMsg: IChatMessage;
-          LStats: string;
-          LUsage: TTokenUsage;
-        begin
-          { Guard: discard duplicate done/error signals emitted by providers
-            that call ACallback(done) both in ProcessStreamBuffer AND after
-            DoPostRequestStream returns. }
-          if LDoneHandled then
-            Exit;
-
-          if not LGuard.IsAlive then
-            Exit;
-
-          if FCancelledByUser then
+  try
+    FAIService.SendPromptStream(APromptText, FHistory,
+      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+      var
+        LChunkCopy: string;
+        LIsDoneCopy: Boolean;
+        LErrorCopy: string;
+      begin
+        LChunkCopy := AChunk;
+        LIsDoneCopy := AIsDone;
+        LErrorCopy := AError;
+        TThread.Queue(nil,
+          TThreadProcedure(
+          procedure
+          var
+            LAssistantMsg: IChatMessage;
+            LStats: string;
+            LUsage: TTokenUsage;
           begin
-            LDoneHandled := True;
-            FRequestInProgress := False;
-            UpdateSendButtonVisual;
-            btnSend.Enabled := True;
-            TLogger.Log('SendPromptToAI: Handling user cancellation in UI callback.', 'UI');
-            PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*', False, LActiveProvider, LActiveModel);
-            PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
-            Exit;
-          end;
+            { Guard: discard duplicate done/error signals emitted by providers }
+            if LDoneHandled then
+              Exit;
 
-          if not LErrorCopy.IsEmpty then
-          begin
-            LDoneHandled := True;
-            FRequestInProgress := False;
-            UpdateSendButtonVisual;
-            btnSend.Enabled := True;
-            TLogger.Log(Format('SendPromptToAI error callback: %s', [LErrorCopy]), 'UI');
-            
+            if not LGuard.IsAlive then
+              Exit;
+
+            { Session Check: if the active session changed, discard UI updates but save partial response to the origin session }
+            if not SameText(FSessionManager.ActiveSessionId, LSessionId) then
+            begin
+              TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.', [LSessionId, FSessionManager.ActiveSessionId]), 'UI');
+              
+              { Apenas salva no histórico no encerramento definitivo (LIsDoneCopy = True) }
+              { para evitar que múltiplos callbacks concorrentes em andamento gravem no mesmo arquivo JSON }
+              if LIsDoneCopy and (not LFullResponse.IsEmpty) then
+              begin
+                TThread.CreateAnonymousThread(
+                  procedure
+                  var
+                    LOrigHistory: TArray<IChatMessage>;
+                    LAssistantMsg: IChatMessage;
+                  begin
+                    try
+                      LOrigHistory := FSessionManager.LoadSessionHistory(LSessionId);
+                      LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+                      LOrigHistory := LOrigHistory + [LAssistantMsg];
+                      FSessionManager.SaveSessionHistory(LSessionId, LOrigHistory);
+                    except
+                      // Mute background thread exception
+                    end;
+                  end).Start;
+              end;
+              Exit;
+            end;
+
             if FCancelledByUser then
             begin
+              LDoneHandled := True;
+              FRequestInProgress := False;
+              UpdateSendButtonVisual;
+              btnSend.Enabled := True;
+              TLogger.Log('SendPromptToAI: Handling user cancellation in UI callback.', 'UI');
+              
+              if not LFullResponse.IsEmpty then
+              begin
+                LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse + ' [Cancelado pelo usuário]', LActiveProvider, LActiveModel);
+                FHistory := FHistory + [LAssistantMsg];
+                SaveChatHistory;
+              end;
+              
               PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*', False, LActiveProvider, LActiveModel);
               PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
-            end
-            else
-            begin
-              PostToWebView('add_message', 'assistant', '**Error:** ' + LErrorCopy, False, LActiveProvider, LActiveModel);
-              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+              Exit;
             end;
-            Exit;
-          end;
 
-          if not LIsDoneCopy then
-          begin
-            LFullResponse := LFullResponse + LChunkCopy;
-            PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
-          end
-          else
-          begin
-            LDoneHandled := True;
-            FRequestInProgress := False;
-            UpdateSendButtonVisual;
-            btnSend.Enabled := True;
-            TLogger.Log(Format('SendPromptToAI done callback. ResponseLength=%d', [Length(LFullResponse)]), 'UI');
+            if not LErrorCopy.IsEmpty then
+            begin
+              LDoneHandled := True;
+              FRequestInProgress := False;
+              UpdateSendButtonVisual;
+              btnSend.Enabled := True;
+              TLogger.Log(Format('SendPromptToAI error callback: %s', [LErrorCopy]), 'UI');
+              
+              if not LFullResponse.IsEmpty then
+              begin
+                LFullResponse := LFullResponse + #13#10#13#10 + '**Error:** ' + LErrorCopy;
+                PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + LErrorCopy, True, LActiveProvider, LActiveModel);
+                
+                LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+                FHistory := FHistory + [LAssistantMsg];
+                SaveChatHistory;
+              end
+              else
+              begin
+                PostToWebView('add_message', 'assistant', '**Error:** ' + LErrorCopy, False, LActiveProvider, LActiveModel);
+                PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+              end;
+              Exit;
+            end;
+
             if not LChunkCopy.IsEmpty then
             begin
               LFullResponse := LFullResponse + LChunkCopy;
               PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
             end;
 
-            if LFullResponse.IsEmpty and AError.IsEmpty then
+            if LIsDoneCopy then
             begin
-              TLogger.Log('SendPromptToAI: Empty response from AI provider', 'UI');
-              PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.', False, LActiveProvider, LActiveModel);
+              LDoneHandled := True;
+              FRequestInProgress := False;
+              UpdateSendButtonVisual;
+              btnSend.Enabled := True;
+              TLogger.Log(Format('SendPromptToAI completed. TotalResponseLength=%d', [Length(LFullResponse)]), 'UI');
+
+              if LFullResponse.IsEmpty then
+              begin
+                TLogger.Log('SendPromptToAI: Empty response from AI provider', 'UI');
+                PostToWebView('add_message', 'assistant', '**Error:** The AI provider returned an empty response. Please check your settings, API Key, and model selection.', False, LActiveProvider, LActiveModel);
+                PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+                Exit;
+              end;
+
+              { Save assistant response to history }
+              LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+              FHistory := FHistory + [LAssistantMsg];
+              SaveChatHistory;
+
+              { Estimate and update token usage stats }
+              LUsage.PromptTokens := Length(APromptText) div 4;
+              LUsage.CompletionTokens := Length(LFullResponse) div 4;
+              LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
+
+              if LUsage.TotalTokens > 0 then
+              begin
+                FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
+                FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
+                FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
+
+                FConfig.AddToQuotaUsage(LUsage);
+
+                LStats := FAccumulatedUsage.FormatStats;
+                if FConfig.QuotaEnabled then
+                begin
+                  LStats := LStats + Format(' · Quota %d%%', [Round((FConfig.QuotaUsed / FConfig.QuotaLimit) * 100)]);
+                end;
+
+                PostToWebView('update_tokens', '', LStats);
+              end;
+
               PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
-              Exit;
             end;
-
-            PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
-
-            { Save history }
-            FHistory := FHistory + [LUserMsg];
-            LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
-            FHistory := FHistory + [LAssistantMsg];
-            SaveChatHistory;
-
-            { Estimate and update token usage stats }
-            LUsage.PromptTokens := Length(APromptText) div 4;
-            LUsage.CompletionTokens := Length(LFullResponse) div 4;
-            LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
-
-            if LUsage.TotalTokens > 0 then
-            begin
-              FAccumulatedUsage.PromptTokens := FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
-              FAccumulatedUsage.CompletionTokens := FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
-              FAccumulatedUsage.TotalTokens := FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
-
-              LStats := FAccumulatedUsage.FormatStats;
-              PostToWebView('update_tokens', '', LStats);
-            end;
-          end;
-        end);
-    end, LProfile);
+          end));
+      end, LProfile);
+  except
+    on E: Exception do
+    begin
+      FRequestInProgress := False;
+      UpdateSendButtonVisual;
+      btnSend.Enabled := True;
+      PostToWebView('add_message', 'assistant', '**Error:** ' + E.Message, False, LActiveProvider, LActiveModel);
+      PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+    end;
+  end;
 end;
 
 procedure TFrameAIChat.OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
@@ -1075,73 +1280,20 @@ end;
 
 procedure TFrameAIChat.LoadChatHistory;
 var
-  LHistoryFile: string;
-  LContent: string;
-  LJsonArr: TJSONArray;
-  LVal: TJSONValue;
-  LMsgObj: TJSONObject;
   LMsg: IChatMessage;
-  LRoleStr, LContentStr, LProviderStr, LModelStr: string;
-  LRole: TAIMessageRole;
-  LParsedVal: TJSONValue;
 begin
   FHistory := [];
-  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
-  TLogger.Log(Format('LoadChatHistory: Loading history from %s', [LHistoryFile]), 'UI');
-  if not TFile.Exists(LHistoryFile) then
-  begin
-    TLogger.Log('LoadChatHistory: No history file found', 'UI');
+  if (FSessionManager = nil) or FSessionManager.ActiveSessionId.IsEmpty then
     Exit;
-  end;
 
   try
-    LContent := TFile.ReadAllText(LHistoryFile, TEncoding.UTF8);
-    if LContent.IsEmpty then
+    FHistory := FSessionManager.LoadSessionHistory(FSessionManager.ActiveSessionId);
+    for LMsg in FHistory do
     begin
-      TLogger.Log('LoadChatHistory: History file is empty', 'UI');
-      Exit;
+      PostToWebView('add_message', MessageRoleToString(LMsg.Role), LMsg.Content, False, LMsg.Provider, LMsg.Model);
     end;
-
-    LParsedVal := TJSONObject.ParseJSONValue(LContent);
-    if Assigned(LParsedVal) then
-    begin
-      if LParsedVal is TJSONArray then
-      begin
-        LJsonArr := LParsedVal as TJSONArray;
-        try
-          for LVal in LJsonArr do
-          begin
-            if LVal is TJSONObject then
-            begin
-              LMsgObj := LVal as TJSONObject;
-              LRoleStr := LMsgObj.GetValue<string>('role', '');
-              LContentStr := LMsgObj.GetValue<string>('content', '');
-              LProviderStr := LMsgObj.GetValue<string>('provider', '');
-              LModelStr := LMsgObj.GetValue<string>('model', '');
-              
-              if not LContentStr.IsEmpty then
-              begin
-                LRole := StringToMessageRole(LRoleStr);
-                LMsg := TRadIAService.CreateMessage(LRole, LContentStr, LProviderStr, LModelStr);
-                
-                FHistory := FHistory + [LMsg];
-                
-                { Render message in WebView }
-                PostToWebView('add_message', LRoleStr, LContentStr, False, LProviderStr, LModelStr);
-              end;
-            end;
-          end;
-          TLogger.Log(Format('LoadChatHistory: Loaded %d messages successfully', [Length(FHistory)]), 'UI');
-        finally
-          LJsonArr.Free;
-        end;
-      end
-      else
-      begin
-        TLogger.Log('LoadChatHistory: Invalid JSON format (not an array)', 'UI');
-        LParsedVal.Free;
-      end;
-    end;
+    TLogger.Log(Format('LoadChatHistory: Loaded %d messages successfully from session %s',
+      [Length(FHistory), FSessionManager.ActiveSessionId]), 'UI');
   except
     on E: Exception do
     begin
@@ -1152,42 +1304,16 @@ begin
 end;
 
 procedure TFrameAIChat.SaveChatHistory;
-var
-  LHistoryFile: string;
-  LJsonArr: TJSONArray;
-  LMsgObj: TJSONObject;
-  LMsg: IChatMessage;
 begin
-  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\history.json');
-  TLogger.Log(Format('SaveChatHistory: Saving %d messages to %s', [Length(FHistory), LHistoryFile]), 'UI');
-  ForceDirectories(TPath.GetDirectoryName(LHistoryFile));
+  if (FSessionManager = nil) or FSessionManager.ActiveSessionId.IsEmpty then
+    Exit;
 
-  LJsonArr := TJSONArray.Create;
   try
-    for LMsg in FHistory do
-    begin
-      if LMsg.Role = mrSystem then
-        Continue;
-
-      LMsgObj := TJSONObject.Create;
-      LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
-      LMsgObj.AddPair('content', LMsg.Content);
-      if not LMsg.Provider.IsEmpty then
-        LMsgObj.AddPair('provider', LMsg.Provider);
-      if not LMsg.Model.IsEmpty then
-        LMsgObj.AddPair('model', LMsg.Model);
-      LJsonArr.AddElement(LMsgObj);
-    end;
-    
-    try
-      TFile.WriteAllText(LHistoryFile, LJsonArr.ToJSON, TEncoding.UTF8);
-      TLogger.Log('SaveChatHistory: History saved successfully', 'UI');
-    except
-      on E: Exception do
-        TLogger.Log(Format('SaveChatHistory write exception: %s', [E.Message]), 'UI');
-    end;
-  finally
-    LJsonArr.Free;
+    FSessionManager.SaveSessionHistory(FSessionManager.ActiveSessionId, FHistory);
+    TLogger.Log('SaveChatHistory: History saved successfully for session ' + FSessionManager.ActiveSessionId, 'UI');
+  except
+    on E: Exception do
+      TLogger.Log(Format('SaveChatHistory write exception: %s', [E.Message]), 'UI');
   end;
 end;
 
@@ -1238,6 +1364,213 @@ var
 begin
   LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\prompt_history.json');
   FPromptHistoryManager.SaveToFile(LHistoryFile);
+end;
+
+procedure TFrameAIChat.UpdateSessionsList;
+var
+  LSession: TSessionInfo;
+  I, LIndexToSelect: Integer;
+begin
+  lstSessions.OnClick := nil;
+  try
+    // Clean old objects to avoid memory leaks
+    for I := 0 to lstSessions.Items.Count - 1 do
+    begin
+      if Assigned(lstSessions.Items.Objects[I]) then
+        lstSessions.Items.Objects[I].Free;
+    end;
+    lstSessions.Items.Clear;
+    
+    if FSessionManager.Sessions.Count = 0 then
+    begin
+      FSessionManager.CreateSession('Conversa Inicial');
+    end;
+    
+    for LSession in FSessionManager.Sessions do
+    begin
+      lstSessions.Items.AddObject(LSession.Name, TSessionObject.Create(LSession.Id));
+    end;
+    
+    LIndexToSelect := -1;
+    for I := 0 to lstSessions.Items.Count - 1 do
+    begin
+      if SameText(TSessionObject(lstSessions.Items.Objects[I]).Id, FSessionManager.ActiveSessionId) then
+      begin
+        LIndexToSelect := I;
+        Break;
+      end;
+    end;
+    
+    if LIndexToSelect <> -1 then
+      lstSessions.ItemIndex := LIndexToSelect
+    else if lstSessions.Items.Count > 0 then
+    begin
+      lstSessions.ItemIndex := 0;
+      FSessionManager.ActiveSessionId := TSessionObject(lstSessions.Items.Objects[0]).Id;
+      FConfig.ActiveSessionId := FSessionManager.ActiveSessionId;
+      FConfig.Save;
+    end;
+  finally
+    lstSessions.OnClick := Self.lstSessionsClick;
+  end;
+end;
+
+procedure TFrameAIChat.btnToggleSessionsClick(Sender: TObject);
+begin
+  pnlSessions.Visible := not pnlSessions.Visible;
+  splitterSessions.Visible := pnlSessions.Visible;
+end;
+
+procedure TFrameAIChat.btnNewSessionClick(Sender: TObject);
+var
+  LSession: TSessionInfo;
+begin
+  if FRequestInProgress then
+  begin
+    FCancelledByUser := True;
+    FAIService.CancelCurrentRequest;
+    FRequestInProgress := False;
+    UpdateSendButtonVisual;
+  end;
+
+  if not FSessionManager.ActiveSessionId.IsEmpty then
+    SaveChatHistory;
+
+  LSession := FSessionManager.CreateSession('Nova Conversa');
+  FSessionManager.ActiveSessionId := LSession.Id;
+  FConfig.ActiveSessionId := LSession.Id;
+  FConfig.Save;
+  
+  UpdateSessionsList;
+  
+  FHistory := [];
+  FAccumulatedUsage := TTokenUsage.Empty;
+  PostToWebView('clear_chat', '', '');
+  PostToWebView('update_tokens', '', '');
+end;
+
+procedure TFrameAIChat.btnRenameSessionClick(Sender: TObject);
+var
+  LIndex: Integer;
+  LId: string;
+  LName: string;
+  LNewName: string;
+begin
+  LIndex := lstSessions.ItemIndex;
+  if LIndex < 0 then
+  begin
+    ShowMessage('Selecione uma conversa para renomear.');
+    Exit;
+  end;
+  
+  LId := TSessionObject(lstSessions.Items.Objects[LIndex]).Id;
+  LName := lstSessions.Items[LIndex];
+  
+  LNewName := LName;
+  if InputQuery('Renomear Conversa', 'Digite o novo nome:', LNewName) then
+  begin
+    LNewName := Trim(LNewName);
+    if not LNewName.IsEmpty then
+    begin
+      FSessionManager.RenameSession(LId, LNewName);
+      UpdateSessionsList;
+    end;
+  end;
+end;
+
+procedure TFrameAIChat.btnDeleteSessionClick(Sender: TObject);
+var
+  LIndex: Integer;
+  LId: string;
+  LName: string;
+begin
+  LIndex := lstSessions.ItemIndex;
+  if LIndex < 0 then
+  begin
+    ShowMessage('Selecione uma conversa para excluir.');
+    Exit;
+  end;
+  
+  LId := TSessionObject(lstSessions.Items.Objects[LIndex]).Id;
+  LName := lstSessions.Items[LIndex];
+  
+  if MessageDlg(Format('Tem certeza que deseja excluir a conversa "%s"?', [LName]),
+    mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  begin
+    if FRequestInProgress and SameText(FSessionManager.ActiveSessionId, LId) then
+    begin
+      FCancelledByUser := True;
+      FAIService.CancelCurrentRequest;
+      FRequestInProgress := False;
+      UpdateSendButtonVisual;
+    end;
+
+    FSessionManager.DeleteSession(LId);
+    
+    if SameText(FSessionManager.ActiveSessionId, LId) then
+    begin
+      FSessionManager.ActiveSessionId := '';
+      FConfig.ActiveSessionId := '';
+      FConfig.Save;
+    end;
+    
+    UpdateSessionsList;
+    
+    FHistory := [];
+    FAccumulatedUsage := TTokenUsage.Empty;
+    PostToWebView('clear_chat', '', '');
+    PostToWebView('update_tokens', '', '');
+    
+    TThread.ForceQueue(nil,
+      TThreadProcedure(
+      procedure
+      begin
+        LoadChatHistory;
+      end));
+  end;
+end;
+
+procedure TFrameAIChat.lstSessionsClick(Sender: TObject);
+var
+  LIndex: Integer;
+  LId: string;
+begin
+  LIndex := lstSessions.ItemIndex;
+  if LIndex < 0 then
+    Exit;
+    
+  LId := TSessionObject(lstSessions.Items.Objects[LIndex]).Id;
+  
+  if FRequestInProgress then
+  begin
+    FCancelledByUser := True;
+    FAIService.CancelCurrentRequest;
+    FRequestInProgress := False;
+    UpdateSendButtonVisual;
+  end;
+  
+  if not FSessionManager.ActiveSessionId.IsEmpty and not SameText(FSessionManager.ActiveSessionId, LId) then
+    SaveChatHistory;
+    
+  FSessionManager.ActiveSessionId := LId;
+  FSessionManager.UpdateSessionActivity(LId);
+  
+  FConfig.ActiveSessionId := LId;
+  FConfig.Save;
+  
+  UpdateSessionsList;
+  
+  FHistory := [];
+  FAccumulatedUsage := TTokenUsage.Empty;
+  PostToWebView('clear_chat', '', '');
+  PostToWebView('update_tokens', '', '');
+  
+  TThread.ForceQueue(nil,
+    TThreadProcedure(
+    procedure
+    begin
+      LoadChatHistory;
+    end));
 end;
 
 end.

@@ -19,6 +19,7 @@ uses
   RadIA.Core.ConversationExporter in '..\Source\Core\RadIA.Core.ConversationExporter.pas',
   RadIA.Core.PromptTemplates in '..\Source\Core\RadIA.Core.PromptTemplates.pas',
   RadIA.Core.ProjectContext in '..\Source\Core\RadIA.Core.ProjectContext.pas',
+  RadIA.Core.Sessions in '..\Source\Core\RadIA.Core.Sessions.pas',
   RadIA.OTA.Helper in '..\Source\Integration\RadIA.OTA.Helper.pas',
   RadIA.Provider.Base in '..\Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in '..\Source\Providers\RadIA.Provider.Gemini.pas',
@@ -41,7 +42,9 @@ uses
   RadIA.Tests.ProjectContext in 'Source\RadIA.Tests.ProjectContext.pas',
   RadIA.Tests.Streaming in 'Source\RadIA.Tests.Streaming.pas',
   RadIA.Tests.ProvidersEx in 'Source\RadIA.Tests.ProvidersEx.pas',
-  RadIA.Tests.Logger in 'Source\RadIA.Tests.Logger.pas';
+  RadIA.Tests.Logger in 'Source\RadIA.Tests.Logger.pas',
+  RadIA.Tests.Sessions in 'Source\RadIA.Tests.Sessions.pas',
+  RadIA.Tests.Quota in 'Source\RadIA.Tests.Quota.pas';
 
 var
   Runner: ITestRunner;

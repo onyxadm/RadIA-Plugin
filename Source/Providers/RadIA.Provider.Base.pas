@@ -18,6 +18,10 @@ type
     function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
   end;
 
+type
+  TParserFunc = reference to function(const AResponseJson: string; out AUsage: TTokenUsage): string;
+  TProcessBufferFunc = reference to function(const ABuffer: string): string;
+
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   { Base class for AI Providers implementing IIAProvider }
   TRadIAProviderBase = class(TInterfacedObject, IIAProvider)
@@ -36,7 +40,18 @@ type
       const ARequestBody: string): string;
     procedure DoPostRequestStream(const AUrl: string; const AHeaders: TNetHeaders;
       const ARequestBody: string; const AOnWrite: TProc<TBytes>);
+    procedure DoPostRequestStreamString(const AUrl: string; const AHeaders: TNetHeaders;
+      const ARequestBody: string; const AOnStringChunk: TProc<string>);
     function DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders): string;
+
+    { Concurrency and stream orchestration helpers }
+    procedure ExecuteRequestAsync(const AUrl: string; const AHeaders: TNetHeaders;
+      const ARequestBody: string; const AParseFunc: TParserFunc;
+      const ACallback: TCompletionCallback);
+    procedure ExecuteRequestStreamAsync(const AUrl: string; const AHeaders: TNetHeaders;
+      const ARequestBody: string; const AProcessBufferFunc: TProcessBufferFunc;
+      const ACallback: TStreamChunkCallback);
+    procedure ProcessBufferLines(var ABuffer: string; const ALineCallback: TProc<string>);
 
     { OpenAI-compatible helpers (shared by OpenAI, DeepSeek, Groq providers) }
     function BuildOpenAICompatibleRequestBody(const APrompt: string;
@@ -66,6 +81,18 @@ type
     function GetName: string; virtual; abstract;
     function GetProviderType: TAIProviderType;
     procedure CancelCurrentRequest; virtual;
+  end;
+
+  { Ancestor class for OpenAI-compatible providers (OpenAI, DeepSeek, Groq) }
+  TRadIAOpenAICompatibleProvider = class(TRadIAProviderBase)
+  protected
+    function GetBaseUrl: string; virtual; abstract;
+    function GetAuthorizationHeader: string; virtual;
+  public
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
   end;
 
 implementation
@@ -98,6 +125,42 @@ begin
     Result := LList.Text.Replace(#13#10, ', ').Trim([',', ' ']);
   finally
     LList.Free;
+  end;
+end;
+
+function ExtractErrorMessageFromJson(const AJsonStr: string): string;
+var
+  LJson: TJSONObject;
+  LError: TJSONObject;
+begin
+  Result := '';
+  try
+    LJson := TJSONObject.ParseJSONValue(AJsonStr) as TJSONObject;
+    if Assigned(LJson) then
+    begin
+      try
+        // Caso 1: {"error": {"message": "..."}}
+        LError := LJson.GetValue('error') as TJSONObject;
+        if Assigned(LError) then
+        begin
+          Result := LError.GetValue<string>('message', '');
+          if Result.IsEmpty then
+            Result := LError.GetValue<string>('msg', '');
+        end;
+
+        // Caso 2: {"error": "..."}
+        if Result.IsEmpty then
+          Result := LJson.GetValue<string>('error', '');
+
+        // Caso 3: {"message": "..."}
+        if Result.IsEmpty then
+          Result := LJson.GetValue<string>('message', '');
+      finally
+        LJson.Free;
+      end;
+    end;
+  except
+    // Ignore parse errors
   end;
 end;
 
@@ -282,6 +345,271 @@ begin
     LTargetStream.Free;
     LSourceStream.Free;
   end;
+end;
+
+procedure TRadIAProviderBase.DoPostRequestStreamString(const AUrl: string; const AHeaders: TNetHeaders;
+  const ARequestBody: string; const AOnStringChunk: TProc<string>);
+var
+  LAccumulatedBytes: TBytes;
+begin
+  LAccumulatedBytes := nil;
+  DoPostRequestStream(AUrl, AHeaders, ARequestBody,
+    procedure(ABytes: TBytes)
+    var
+      LCombined: TBytes;
+      LLenCombined, LLenChunk, LKeepCount: Integer;
+      LDecodableLen: Integer;
+      LDecodedStr: string;
+      I, LContinuations: Integer;
+      LStartByte: Byte;
+      LNeeded: Integer;
+    begin
+      if (Length(ABytes) > 0) and Assigned(AOnStringChunk) then
+      begin
+        LLenChunk := Length(ABytes);
+        if Length(LAccumulatedBytes) > 0 then
+        begin
+          SetLength(LCombined, Length(LAccumulatedBytes) + LLenChunk);
+          Move(LAccumulatedBytes[0], LCombined[0], Length(LAccumulatedBytes));
+          Move(ABytes[0], LCombined[Length(LAccumulatedBytes)], LLenChunk);
+        end
+        else
+        begin
+          LCombined := ABytes;
+        end;
+
+        LLenCombined := Length(LCombined);
+        LDecodableLen := LLenCombined;
+        LKeepCount := 0;
+
+        I := LLenCombined - 1;
+        LContinuations := 0;
+        while (I >= 0) and (I >= LLenCombined - 4) do
+        begin
+          LStartByte := LCombined[I];
+          if LStartByte < $80 then
+            Break;
+
+          if (LStartByte >= $80) and (LStartByte <= $BF) then
+          begin
+            Inc(LContinuations);
+            Dec(I);
+            Continue;
+          end;
+
+          if LStartByte >= $C0 then
+          begin
+            LNeeded := 0;
+            if (LStartByte >= $C0) and (LStartByte <= $DF) then
+              LNeeded := 1
+            else if (LStartByte >= $E0) and (LStartByte <= $EF) then
+              LNeeded := 2
+            else if (LStartByte >= $F0) and (LStartByte <= $F7) then
+              LNeeded := 3;
+
+            if LContinuations < LNeeded then
+            begin
+              LKeepCount := LLenCombined - I;
+              LDecodableLen := I;
+            end;
+            Break;
+          end;
+
+          Dec(I);
+        end;
+
+        if LKeepCount > 0 then
+        begin
+          SetLength(LAccumulatedBytes, LKeepCount);
+          Move(LCombined[LDecodableLen], LAccumulatedBytes[0], LKeepCount);
+        end
+        else
+        begin
+          LAccumulatedBytes := nil;
+        end;
+
+        if LDecodableLen > 0 then
+        begin
+          LDecodedStr := TEncoding.UTF8.GetString(LCombined, 0, LDecodableLen);
+          AOnStringChunk(LDecodedStr);
+        end;
+      end;
+    end);
+end;
+
+procedure TRadIAProviderBase.ExecuteRequestAsync(const AUrl: string; const AHeaders: TNetHeaders;
+  const ARequestBody: string; const AParseFunc: TParserFunc;
+  const ACallback: TCompletionCallback);
+var
+  LTaskProc: TProc;
+  LProviderRef: IIAProvider;
+begin
+  LProviderRef := Self;
+  LTaskProc :=
+    procedure
+    var
+      LResponseText: string;
+      LUsage: TTokenUsage;
+      LErrorMsg: string;
+    begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
+      try
+        LResponseText := DoPostRequest(AUrl, AHeaders, ARequestBody);
+        LResponseText := AParseFunc(LResponseText, LUsage);
+
+        TThread.Queue(nil,
+          TThreadProcedure(
+            procedure
+            begin
+              ACallback(LResponseText, '', False, LUsage);
+            end
+          )
+        );
+      except
+        on E: Exception do
+        begin
+          LErrorMsg := E.ClassName + ': ' + E.Message;
+          TThread.Queue(nil,
+            TThreadProcedure(
+              procedure
+              begin
+                ACallback('', LErrorMsg, False, TTokenUsage.Empty);
+              end
+            )
+          );
+        end;
+      end;
+    end;
+
+  TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAProviderBase.ExecuteRequestStreamAsync(const AUrl: string; const AHeaders: TNetHeaders;
+  const ARequestBody: string; const AProcessBufferFunc: TProcessBufferFunc;
+  const ACallback: TStreamChunkCallback);
+var
+  LTaskProc: TProc;
+  LProviderRef: IIAProvider;
+begin
+  LProviderRef := Self;
+  LTaskProc :=
+    procedure
+    var
+      LBufferText: string;
+      LErrorMsg: string;
+      LJsonError: string;
+    begin
+      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+      LProviderRef.GetProviderType;
+      LBufferText := '';
+      try
+        DoPostRequestStreamString(AUrl, AHeaders, ARequestBody,
+          procedure(AChunk: string)
+          begin
+            LBufferText := LBufferText + AChunk;
+            LBufferText := AProcessBufferFunc(LBufferText);
+          end);
+
+        // Process residual data in buffer after network stream completes
+        if not LBufferText.IsEmpty then
+        begin
+          if not LBufferText.EndsWith(#10) then
+            LBufferText := LBufferText + #10;
+          try
+            AProcessBufferFunc(LBufferText);
+          except
+            // Mute buffer processing exception on teardown
+          end;
+        end;
+
+        TThread.Queue(nil,
+          TThreadProcedure(
+            procedure
+            begin
+              ACallback('', True, '');
+            end
+          )
+        );
+      except
+        on E: Exception do
+        begin
+          // Process residual buffer data before returning error
+          if not LBufferText.IsEmpty then
+          begin
+            if not LBufferText.EndsWith(#10) then
+              LBufferText := LBufferText + #10;
+            try
+              AProcessBufferFunc(LBufferText);
+            except
+            end;
+          end;
+
+          LErrorMsg := E.Message;
+          if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
+          begin
+            LJsonError := ExtractErrorMessageFromJson(LBufferText);
+            if not LJsonError.IsEmpty then
+              LErrorMsg := LErrorMsg + ' Response: ' + LJsonError
+            else if not LBufferText.Trim.IsEmpty then
+              LErrorMsg := LErrorMsg + ' Response: ' + LBufferText.Trim;
+          end;
+          LErrorMsg := E.ClassName + ': ' + LErrorMsg;
+          
+          TThread.Queue(nil,
+            TThreadProcedure(
+              procedure
+              begin
+                ACallback('', True, LErrorMsg);
+              end
+            )
+          );
+        end;
+      end;
+    end;
+
+  TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAProviderBase.ProcessBufferLines(var ABuffer: string; const ALineCallback: TProc<string>);
+var
+  LLine: string;
+  LIdx: Integer;
+  LStartPos: Integer;
+  LPtr: PChar;
+  LLen: Integer;
+  LLastProcessedPos: Integer;
+begin
+  LLen := ABuffer.Length;
+  if LLen = 0 then
+    Exit;
+
+  LPtr := PChar(ABuffer);
+  LStartPos := 0;
+  LLastProcessedPos := 0;
+
+  while LStartPos < LLen do
+  begin
+    LIdx := LStartPos;
+    while (LIdx < LLen) and (LPtr[LIdx] <> #10) do
+      Inc(LIdx);
+
+    if LIdx >= LLen then
+      Break;
+
+    LLine := ABuffer.Substring(LStartPos, LIdx - LStartPos);
+    LStartPos := LIdx + 1;
+    LLastProcessedPos := LStartPos;
+
+    LLine := Trim(LLine);
+    if not LLine.IsEmpty then
+    begin
+      ALineCallback(LLine);
+    end;
+  end;
+
+  if LLastProcessedPos > 0 then
+    ABuffer := ABuffer.Substring(LLastProcessedPos);
 end;
 
 procedure TRadIAProviderBase.SendPromptStreamAsync(const APrompt: string;
@@ -657,6 +985,85 @@ end;
 function TStreamingTargetStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
 begin
   Result := 0;
+end;
+
+{ TRadIAOpenAICompatibleProvider }
+
+function TRadIAOpenAICompatibleProvider.GetAuthorizationHeader: string;
+begin
+  Result := 'Bearer ' + GetApiKey;
+end;
+
+procedure TRadIAOpenAICompatibleProvider.SendPromptAsync(const APrompt: string;
+  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const ATemperature: Double; const AMaxTokens: Integer);
+var
+  LUrl, LRequestBody: string;
+  LHeaders: TNetHeaders;
+begin
+  if GetApiKey.IsEmpty then
+  begin
+    ACallback('', Format('API Key is missing for %s. Please check settings.', [GetName]), False, TTokenUsage.Empty);
+    Exit;
+  end;
+
+  LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
+  SetLength(LHeaders, 1);
+  LHeaders[0] := TNetHeader.Create('Authorization', GetAuthorizationHeader);
+
+  try
+    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
+  except
+    on E: Exception do
+    begin
+      ACallback('', 'Error building request JSON: ' + E.Message, False, TTokenUsage.Empty);
+      Exit;
+    end;
+  end;
+
+  ExecuteRequestAsync(LUrl, LHeaders, LRequestBody,
+    function(const AResponseJson: string; out AUsage: TTokenUsage): string
+    begin
+      Result := ParseOpenAICompatibleResponse(AResponseJson, AUsage);
+    end, ACallback);
+end;
+
+procedure TRadIAOpenAICompatibleProvider.SendPromptStreamAsync(const APrompt: string;
+  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const ATemperature: Double; const AMaxTokens: Integer);
+var
+  LUrl, LRequestBody: string;
+  LHeaders: TNetHeaders;
+begin
+  if GetApiKey.IsEmpty then
+  begin
+    ACallback('', True, Format('API Key is missing for %s. Please check settings.', [GetName]));
+    Exit;
+  end;
+
+  LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
+  SetLength(LHeaders, 1);
+  LHeaders[0] := TNetHeader.Create('Authorization', GetAuthorizationHeader);
+
+  try
+    LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
+  except
+    on E: Exception do
+    begin
+      ACallback('', True, 'Error building request JSON: ' + E.Message);
+      Exit;
+    end;
+  end;
+
+  ExecuteRequestStreamAsync(LUrl, LHeaders, LRequestBody,
+    function(const ABuffer: string): string
+    var
+      LTemp: string;
+    begin
+      LTemp := ABuffer;
+      ProcessOpenAICompatibleStreamBuffer(LTemp, ACallback);
+      Result := LTemp;
+    end, ACallback);
 end;
 
 end.

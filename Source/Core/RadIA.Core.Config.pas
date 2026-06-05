@@ -3,7 +3,7 @@ unit RadIA.Core.Config;
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types;
+  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 type
   TRadIAConfig = class(TInterfacedObject, IAIConfig)
@@ -23,6 +23,11 @@ type
     FLogEnabled: Boolean;
     FLogPath: string;
     FLogMaxSizeKB: Integer;
+    FQuotaEnabled: Boolean;
+    FQuotaLimit: Int64;
+    FQuotaUsed: Int64;
+    FQuotaCycleStart: TDateTime;
+    FActiveSessionId: string;
 
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
@@ -31,6 +36,7 @@ type
     function ReadRegString(const AReg: TObject; const AKey: string; const ADefault: string): string;
     function ReadRegInt(const AReg: TObject; const AKey: string; const ADefault: Integer): Integer;
     function ReadRegDouble(const AReg: TObject; const AKey: string; const ADefault: Double): Double;
+    procedure CheckAndResetQuotaCycle;
   public
     constructor Create;
     class procedure SetBaseRegistryPath(const APath: string);
@@ -65,6 +71,17 @@ type
     procedure SetLogPath(const AValue: string);
     function GetLogMaxSizeKB: Integer;
     procedure SetLogMaxSizeKB(const AValue: Integer);
+    function GetQuotaEnabled: Boolean;
+    procedure SetQuotaEnabled(const AValue: Boolean);
+    function GetQuotaLimit: Int64;
+    procedure SetQuotaLimit(const AValue: Int64);
+    function GetQuotaUsed: Int64;
+    procedure SetQuotaUsed(const AValue: Int64);
+    function GetQuotaCycleStart: TDateTime;
+    procedure SetQuotaCycleStart(const AValue: TDateTime);
+    function GetActiveSessionId: string;
+    procedure SetActiveSessionId(const AValue: string);
+    procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
   end;
@@ -157,6 +174,12 @@ begin
     FMaxTokens[LProvider] := 2048;
     FTimeouts[LProvider] := 60;
   end;
+
+  FQuotaEnabled := False;
+  FQuotaLimit := 1000000;
+  FQuotaUsed := 0;
+  FQuotaCycleStart := Now;
+  FActiveSessionId := '';
   
   Load;
 end;
@@ -334,8 +357,14 @@ begin
       FLogEnabled := ReadRegInt(LReg, 'LogEnabled', 1) <> 0;
       FLogPath := ReadRegString(LReg, 'LogPath', TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'Logs'));
       FLogMaxSizeKB := ReadRegInt(LReg, 'LogMaxSizeKB', 1024);
+      FQuotaEnabled := ReadRegInt(LReg, 'QuotaEnabled', 0) <> 0;
+      FQuotaLimit := StrToInt64Def(ReadRegString(LReg, 'QuotaLimit', '1000000'), 1000000);
+      FQuotaUsed := StrToInt64Def(ReadRegString(LReg, 'QuotaUsed', '0'), 0);
+      FQuotaCycleStart := ReadRegDouble(LReg, 'QuotaCycleStart', Now);
+      FActiveSessionId := ReadRegString(LReg, 'ActiveSessionId', '');
       LReg.CloseKey;
 
+      CheckAndResetQuotaCycle;
       TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
     end
     else
@@ -466,6 +495,11 @@ begin
       LReg.WriteInteger('LogEnabled', IfThen(FLogEnabled, 1, 0));
       LReg.WriteString('LogPath', FLogPath);
       LReg.WriteInteger('LogMaxSizeKB', FLogMaxSizeKB);
+      LReg.WriteInteger('QuotaEnabled', IfThen(FQuotaEnabled, 1, 0));
+      LReg.WriteString('QuotaLimit', FQuotaLimit.ToString);
+      LReg.WriteString('QuotaUsed', FQuotaUsed.ToString);
+      LReg.WriteFloat('QuotaCycleStart', FQuotaCycleStart);
+      LReg.WriteString('ActiveSessionId', FActiveSessionId);
       LReg.CloseKey;
 
       TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
@@ -622,6 +656,82 @@ end;
 procedure TRadIAConfig.SetLogMaxSizeKB(const AValue: Integer);
 begin
   FLogMaxSizeKB := AValue;
+end;
+
+function TRadIAConfig.GetQuotaEnabled: Boolean;
+begin
+  Result := FQuotaEnabled;
+end;
+
+procedure TRadIAConfig.SetQuotaEnabled(const AValue: Boolean);
+begin
+  FQuotaEnabled := AValue;
+end;
+
+function TRadIAConfig.GetQuotaLimit: Int64;
+begin
+  Result := FQuotaLimit;
+end;
+
+procedure TRadIAConfig.SetQuotaLimit(const AValue: Int64);
+begin
+  FQuotaLimit := AValue;
+end;
+
+function TRadIAConfig.GetQuotaUsed: Int64;
+begin
+  Result := FQuotaUsed;
+end;
+
+procedure TRadIAConfig.SetQuotaUsed(const AValue: Int64);
+begin
+  FQuotaUsed := AValue;
+end;
+
+function TRadIAConfig.GetQuotaCycleStart: TDateTime;
+begin
+  Result := FQuotaCycleStart;
+end;
+
+procedure TRadIAConfig.SetQuotaCycleStart(const AValue: TDateTime);
+begin
+  FQuotaCycleStart := AValue;
+end;
+
+function TRadIAConfig.GetActiveSessionId: string;
+begin
+  Result := FActiveSessionId;
+end;
+
+procedure TRadIAConfig.SetActiveSessionId(const AValue: string);
+begin
+  FActiveSessionId := AValue;
+end;
+
+procedure TRadIAConfig.AddToQuotaUsage(const AUsage: TTokenUsage);
+begin
+  if not FQuotaEnabled then
+    Exit;
+    
+  CheckAndResetQuotaCycle;
+  FQuotaUsed := FQuotaUsed + AUsage.TotalTokens;
+  Save;
+end;
+
+procedure TRadIAConfig.CheckAndResetQuotaCycle;
+var
+  LYear, LMonth, LDay: Word;
+  LCycleYear, LCycleMonth, LCycleDay: Word;
+begin
+  DecodeDate(Now, LYear, LMonth, LDay);
+  DecodeDate(FQuotaCycleStart, LCycleYear, LCycleMonth, LCycleDay);
+  
+  if (LYear <> LCycleYear) or (LMonth <> LCycleMonth) then
+  begin
+    FQuotaUsed := 0;
+    FQuotaCycleStart := Now;
+    Save;
+  end;
 end;
 
 function TRadIAConfig.UnprotectString(const AValue: string): string;

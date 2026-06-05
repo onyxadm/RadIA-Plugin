@@ -88,7 +88,7 @@ body:not(.dark-theme):not(.light-theme) {
    Base
    ---------------------------------------------------------- */
 body {
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', "Segoe UI", system-ui, -apple-system, sans-serif;
   font-size: 13px;
   line-height: 1.6;
   background-color: var(--bg-base);
@@ -105,57 +105,65 @@ body {
 #chat-container {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 12px;
+  padding: 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 24px;
   scroll-behavior: smooth;
 }
 
-#chat-container::-webkit-scrollbar { width: 5px; }
+#chat-container::-webkit-scrollbar { width: 6px; }
 #chat-container::-webkit-scrollbar-track { background: transparent; }
 #chat-container::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 /* ----------------------------------------------------------
-   Wrapper de mensagem: avatar + corpo
+   Wrapper de mensagem: avatar + corpo com linha divisória sutil
    ---------------------------------------------------------- */
 .message-wrapper {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
   animation: fadeSlideIn 0.15s ease-out;
 }
 
+.message-wrapper:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
 @keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(5px); }
+  from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ----------------------------------------------------------
-   Avatar circular
+   Avatar circular minimalista
    ---------------------------------------------------------- */
 .message-avatar {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   flex-shrink: 0;
   user-select: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
 .message-avatar.user-avatar {
-  background-color: var(--avatar-user);
-  color: var(--fg-primary);
+  background-color: #3e3e42;
+  color: #f1f1f1;
 }
 
 .message-avatar.ai-avatar {
-  background-color: var(--avatar-ai);
+  background-color: var(--accent);
   color: #ffffff;
 }
 
@@ -169,29 +177,34 @@ body {
 
 .message-header {
   font-weight: 600;
-  font-size: 11.5px;
-  margin-bottom: 3px;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--fg-primary);
 }
 
-.message-header.user-header { color: var(--header-user); }
-.message-header.ai-header   { color: var(--header-ai); }
+.message-header.user-header {
+  color: var(--fg-primary);
+}
+
+.message-header.ai-header {
+  color: var(--fg-primary);
+}
 
 .message-content {
   color: var(--fg-primary);
+  font-size: 13.5px;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
 /* Parágrafos */
-.message-content p          { margin-bottom: 6px; }
+.message-content p          { margin-bottom: 8px; }
 .message-content p:last-child { margin-bottom: 0; }
 
 /* Listas */
 .message-content ul,
-.message-content ol { padding-left: 20px; margin-bottom: 6px; }
-.message-content li { margin-bottom: 2px; }
+.message-content ol { padding-left: 20px; margin-bottom: 8px; }
+.message-content li { margin-bottom: 4px; }
 
 /* Negrito */
 .message-content strong { font-weight: 600; }
@@ -199,11 +212,11 @@ body {
 /* Código inline */
 .message-content code {
   font-family: Consolas, "Cascadia Code", "Fira Code", monospace;
-  font-size: 11.5px;
+  font-size: 12px;
   background-color: var(--bg-elevated);
   color: var(--fg-primary);
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: 4px;
   border: 1px solid var(--border);
 }
 
@@ -211,29 +224,30 @@ body {
    Bloco de código
    ---------------------------------------------------------- */
 .code-block-container {
-  margin: 8px 0;
-  border-radius: 4px;
+  margin: 12px 0;
+  border-radius: 6px;
   border: 1px solid var(--border);
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .code-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--code-header);
-  padding: 4px 10px;
-  font-size: 10px;
+  background-color: #1e1e1e;
+  padding: 6px 12px;
+  font-size: 11px;
   font-family: Consolas, monospace;
   color: var(--fg-secondary);
   border-bottom: 1px solid var(--border);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .code-header-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .copy-btn,
@@ -241,18 +255,19 @@ body {
   background-color: transparent;
   border: 1px solid var(--border);
   color: var(--fg-secondary);
-  padding: 2px 7px;
-  border-radius: 3px;
+  padding: 3px 8px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 9px;
-  font-family: "Segoe UI", sans-serif;
-  transition: all 0.14s ease;
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
 }
 
 .copy-btn:hover {
-  background-color: var(--accent);
+  background-color: #3e3e42;
   color: #ffffff;
-  border-color: var(--accent);
+  border-color: #555558;
 }
 
 .apply-btn:hover {
@@ -268,7 +283,7 @@ body {
 
 .message-content pre code {
   display: block;
-  padding: 10px 12px;
+  padding: 12px 14px;
   overflow-x: auto;
   background-color: var(--code-bg) !important;
   color: var(--code-fg) !important;

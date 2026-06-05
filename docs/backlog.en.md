@@ -92,29 +92,30 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Dynamic parameter editing and persistence within the Windows Registry via the `TRadIAConfig` class.
     *   Payload mapping and integration inside HTTP JSON request modules for all supported AI backends (Ollama, Gemini, OpenAI, Claude, Groq, and DeepSeek).
 
+### 13. Multiple Chat Sessions - Item #5
+*   **Description**: Allows developers to organize conversations by project, feature, or task without losing the context of previous sessions.
+*   **Details**:
+    *   Persistent session storage in `%APPDATA%\RadIA\sessions\<guid>.json` indexed within `sessions_index.json` managed by the `TRadIASessionManager` class.
+    *   Collapsible sidebar panel in the UI (`pnlSessions`) with a `ListBox` and controls (New Session, Rename, Delete) featuring a smooth slide animation and a Hamburger toggle (☰) on the toolbar.
+    *   Robust validation using unit tests in `RadIA.Tests.Sessions.pas`.
+
+### 14. Local Token Budget and Quota Control - Item #19
+*   **Description**: Allows developers to set a monthly local token usage limit in settings to avoid surprise charges on their API keys, accumulating the consumption locally and blocking new requests if exceeded.
+*   **Details**:
+    *   Windows Registry integration with automatic monthly token quota resets.
+    *   Dynamic settings controls generated on the panel's configuration page.
+    *   HTML-based quota consumption percentage display inside the WebView's status bar.
+    *   Full test coverage in `RadIA.Tests.Quota.pas` checking blocking logic and reset cycles.
+
 ---
 
 ## 🔲 Pending Items
 
-### 1. Multiple Chat Sessions (Item #5)
-*   **Goal**: Allow the developer to organize conversations by project, feature, or task, without losing the context of previous sessions.
-*   **Details**:
-    *   Store sessions in `%APPDATA%\RadIA\sessions\<id>.json`, each with a name, date, and array of messages.
-    *   Add a sidebar panel (or dropdown) to list, create, rename, and delete sessions.
-    *   The "New Session" button saves the current one and opens a blank one.
-
-### 2. Cache Management Panel (Item #13)
+### 1. Cache Management Panel (Item #13)
 *   **Goal**: Provide visibility and control over the response cache without having to edit the JSON file manually.
 
-### 3. Automatic Code Review on Save (Item #15)
+### 2. Automatic Code Review on Save (Item #15)
 *   **Goal**: Silently analyze the unit upon saving and signal in the RadIA panel if the AI found any points of interest.
 
-### 4. Applied Refactoring History (Item #16)
+### 3. Applied Refactoring History (Item #16)
 *   **Goal**: Maintain an auditable log of every time the [Apply Changes] button was triggered, allowing manual review and undo.
-
-### 5. Local Token Budget and Quota Control
-*   **Goal**: Allow the developer to set a monthly local token consumption limit to avoid surprise billing on their API keys.
-*   **Details**:
-	*   Add a setting field for token limit (e.g., monthly quota of 1,000,000 tokens).
-	*   Store and accumulate consumption persistently local.
-	*   Display consumption percentage in the sidebar chat status bar and alert/block calls upon reaching 100% of the defined quota.

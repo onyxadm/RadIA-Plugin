@@ -78,7 +78,15 @@ type
     lblLogMaxSize: TLabel;
     edtLogMaxSize: TEdit;
     
+    grpQuota: TGroupBox;
+    chkQuotaEnabled: TCheckBox;
+    lblQuotaLimit: TLabel;
+    edtQuotaLimit: TEdit;
+    lblQuotaUsed: TLabel;
+    btnResetQuota: TButton;
+    
     procedure btnBrowseLogPathClick(Sender: TObject);
+    procedure btnResetQuotaClick(Sender: TObject);
     
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
     procedure UpdateVCLColors(const AThemeName: string);
@@ -195,6 +203,49 @@ begin
   edtLogMaxSize.Top := 122;
   edtLogMaxSize.Width := 100;
   edtLogMaxSize.NumbersOnly := True;
+
+  grpQuota := TGroupBox.Create(Self);
+  grpQuota.Parent := tsGeneral;
+  grpQuota.Left := 16;
+  grpQuota.Top := 160;
+  grpQuota.Width := 356;
+  grpQuota.Height := 140;
+  grpQuota.Caption := ' Local Token Quota ';
+
+  chkQuotaEnabled := TCheckBox.Create(Self);
+  chkQuotaEnabled.Parent := grpQuota;
+  chkQuotaEnabled.Left := 16;
+  chkQuotaEnabled.Top := 24;
+  chkQuotaEnabled.Width := 200;
+  chkQuotaEnabled.Caption := 'Enable local token quota';
+
+  lblQuotaLimit := TLabel.Create(Self);
+  lblQuotaLimit.Parent := grpQuota;
+  lblQuotaLimit.Left := 16;
+  lblQuotaLimit.Top := 54;
+  lblQuotaLimit.Caption := 'Monthly Token Limit:';
+
+  edtQuotaLimit := TEdit.Create(Self);
+  edtQuotaLimit.Parent := grpQuota;
+  edtQuotaLimit.Left := 16;
+  edtQuotaLimit.Top := 72;
+  edtQuotaLimit.Width := 150;
+  edtQuotaLimit.NumbersOnly := True;
+
+  lblQuotaUsed := TLabel.Create(Self);
+  lblQuotaUsed.Parent := grpQuota;
+  lblQuotaUsed.Left := 16;
+  lblQuotaUsed.Top := 110;
+  lblQuotaUsed.Caption := 'Monthly Used Tokens: 0';
+
+  btnResetQuota := TButton.Create(Self);
+  btnResetQuota.Parent := grpQuota;
+  btnResetQuota.Left := 240;
+  btnResetQuota.Top := 68;
+  btnResetQuota.Width := 100;
+  btnResetQuota.Height := 25;
+  btnResetQuota.Caption := 'Reset Usage';
+  btnResetQuota.OnClick := btnResetQuotaClick;
 
   LActiveTheme := 'light';
   { Apply IDE theme so this form matches the current Delphi skin }
@@ -402,12 +453,20 @@ begin
     edtLogPath.Color := LInputBgColor;
     edtLogPath.Font.Color := LTextColor;
   end;
-  if Assigned(lblLogMaxSize) then
-    lblLogMaxSize.Font.Color := LTextColor;
   if Assigned(edtLogMaxSize) then
   begin
     edtLogMaxSize.Color := LInputBgColor;
     edtLogMaxSize.Font.Color := LTextColor;
+  end;
+  
+  if Assigned(grpQuota) then
+  begin
+    grpQuota.Font.Color := LTextColor;
+    chkQuotaEnabled.Font.Color := LTextColor;
+    lblQuotaLimit.Font.Color := LTextColor;
+    edtQuotaLimit.Color := LInputBgColor;
+    edtQuotaLimit.Font.Color := LTextColor;
+    lblQuotaUsed.Font.Color := LTextColor;
   end;
 end;
 
@@ -446,6 +505,13 @@ begin
     edtLogPath.Text := FConfig.LogPath;
   if Assigned(edtLogMaxSize) then
     edtLogMaxSize.Text := IntToStr(FConfig.LogMaxSizeKB);
+
+  if Assigned(chkQuotaEnabled) then
+    chkQuotaEnabled.Checked := FConfig.QuotaEnabled;
+  if Assigned(edtQuotaLimit) then
+    edtQuotaLimit.Text := FConfig.QuotaLimit.ToString;
+  if Assigned(lblQuotaUsed) then
+    lblQuotaUsed.Caption := Format('Monthly Used Tokens: %s', [FormatFloat('#,##0', FConfig.QuotaUsed, LFormatSettings)]);
 
   PopulateTemplatesList;
   if lstTemplates.Count > 0 then
@@ -514,6 +580,11 @@ begin
     FConfig.LogPath := Trim(edtLogPath.Text);
   if Assigned(edtLogMaxSize) then
     FConfig.LogMaxSizeKB := StrToIntDef(edtLogMaxSize.Text, 1024);
+
+  if Assigned(chkQuotaEnabled) then
+    FConfig.QuotaEnabled := chkQuotaEnabled.Checked;
+  if Assigned(edtQuotaLimit) then
+    FConfig.QuotaLimit := StrToInt64Def(edtQuotaLimit.Text, 1000000);
 
   FConfig.Save;
 
@@ -663,6 +734,20 @@ var
 begin
   if Vcl.FileCtrl.SelectDirectory('Select Log Folder', '', LFolder, [sdNewUI, sdNewFolder]) then
     edtLogPath.Text := LFolder;
+end;
+
+procedure TFormAIConfig.btnResetQuotaClick(Sender: TObject);
+begin
+  if MessageDlg('Are you sure you want to reset the monthly token usage counter to zero?',
+    mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  begin
+    FConfig.QuotaUsed := 0;
+    FConfig.QuotaCycleStart := Now;
+    FConfig.Save;
+    
+    lblQuotaUsed.Caption := 'Monthly Used Tokens: 0';
+    ShowMessage('Token usage counter reset successfully.');
+  end;
 end;
 
 end.

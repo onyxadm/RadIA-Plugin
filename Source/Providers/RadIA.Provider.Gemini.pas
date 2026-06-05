@@ -15,8 +15,8 @@ type
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IAIConfig); override;
-    
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
@@ -29,7 +29,8 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding, System.Math;
+  System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding,
+  System.Math, RadIA.Core.Logger;
 
 { TRadIAGeminiProvider }
 
@@ -69,7 +70,7 @@ begin
   try
     LContentsArr := TJSONArray.Create;
     LRootObj.AddPair('contents', LContentsArr);
-    
+
     LSystemPrompt := '';
 
     { Add History }
@@ -83,18 +84,18 @@ begin
 
       LContentObj := TJSONObject.Create;
       LContentsArr.AddElement(LContentObj);
-      
+
       { Gemini expects 'model' instead of 'assistant' }
       if LMsg.Role = mrAssistant then
         LRoleStr := 'model'
       else
         LRoleStr := 'user';
-        
+
       LContentObj.AddPair('role', LRoleStr);
-      
+
       LPartsArr := TJSONArray.Create;
       LContentObj.AddPair('parts', LPartsArr);
-      
+
       LPartObj := TJSONObject.Create;
       LPartsArr.AddElement(LPartObj);
       LPartObj.AddPair('text', LMsg.Content);
@@ -104,10 +105,10 @@ begin
     LContentObj := TJSONObject.Create;
     LContentsArr.AddElement(LContentObj);
     LContentObj.AddPair('role', 'user');
-    
+
     LPartsArr := TJSONArray.Create;
     LContentObj.AddPair('parts', LPartsArr);
-    
+
     LPartObj := TJSONObject.Create;
     LPartsArr.AddElement(LPartObj);
     LPartObj.AddPair('text', APrompt);
@@ -117,16 +118,16 @@ begin
     begin
       LSystemObj := TJSONObject.Create;
       LRootObj.AddPair('systemInstruction', LSystemObj);
-      
+
       LSystemPartsArr := TJSONArray.Create;
       LSystemObj.AddPair('parts', LSystemPartsArr);
-      
+
       LSystemPartObj := TJSONObject.Create;
       LSystemPartsArr.AddElement(LSystemPartObj);
       LSystemPartObj.AddPair('text', LSystemPrompt.Trim);
     end;
 
-    { Add Generation Config if present }
+    { Add Generation Config }
     LGenConfigObj := TJSONObject.Create;
     if ATemperature >= 0.0 then
       LGenConfigObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
@@ -162,7 +163,6 @@ begin
     Exit;
 
   try
-    { Extract text from candidates[0].content.parts[0].text }
     LCandidates := LJsonObj.GetValue('candidates') as TJSONArray;
     if Assigned(LCandidates) and (LCandidates.Count > 0) then
     begin
@@ -180,11 +180,9 @@ begin
       end;
     end;
 
-    { Check for API error in response }
     if Result.IsEmpty and Assigned(LJsonObj.GetValue('error')) then
       raise Exception.Create(LJsonObj.GetValue('error').ToString);
 
-    { Extract token usage from usageMetadata }
     LUsageNode := LJsonObj.GetValue('usageMetadata') as TJSONObject;
     if Assigned(LUsageNode) then
     begin
@@ -201,10 +199,7 @@ procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHis
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
 begin
-  LProviderRef := Self;
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
 
@@ -227,38 +222,11 @@ begin
     end;
   end;
 
-  LTaskProc :=
-    procedure
-    var
-      LResponseText: string;
-      LUsage: TTokenUsage;
-      LErrorMsg: string;
+  ExecuteRequestAsync(LUrl, nil, LRequestBody,
+    function(const AResponseJson: string; out AUsage: TTokenUsage): string
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType;
-      try
-        LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
-        LResponseText := ParseResponseBody(LResponseText, LUsage);
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback(LResponseText, '', False, LUsage);
-          end);
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', LErrorMsg, False, TTokenUsage.Empty);
-            end);
-        end;
-      end;
-    end;
-
-  TTask.Run(LTaskProc);
+      Result := ParseResponseBody(AResponseJson, AUsage);
+    end, ACallback);
 end;
 
 procedure TRadIAGeminiProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
@@ -316,10 +284,9 @@ begin
                              begin
                                LModelObj := LVal as TJSONObject;
                                LName := LModelObj.GetValue<string>('name', '');
-                               
+
                                if not LName.IsEmpty then
                                begin
-                                 { Check if it supports generateContent }
                                  LCanGenerate := False;
                                  LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
                                  if Assigned(LMethodsArr) then
@@ -333,10 +300,9 @@ begin
                                      end;
                                    end;
                                  end;
-                                 
+
                                  if LCanGenerate then
                                  begin
-                                   { Remove prefix 'models/' }
                                    if LName.StartsWith('models/') then
                                      LName := LName.Substring(7);
                                    LModelsList.Add(LName);
@@ -349,12 +315,12 @@ begin
                          LJson.Free;
                        end;
                      end;
-                     
+
                      if LModelsList.Count = 0 then
                        LModelsArray := GetAvailableModels
                      else
                        LModelsArray := LModelsList.ToArray;
-                       
+
                      TThread.Queue(nil,
                        procedure
                        begin
@@ -381,6 +347,8 @@ begin
 end;
 
 procedure TRadIAGeminiProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
+// Parses the Gemini streaming response format: a JSON array of objects.
+// Logs every step for diagnostics. Remove TLogger calls after issue is resolved.
 var
   LOpenBrackets: Integer;
   I: Integer;
@@ -395,85 +363,103 @@ var
   LText: string;
   LPtr: PChar;
   LLen: Integer;
+  LObjectCount: Integer;
 begin
+  LObjectCount := 0;
+  TLogger.Log(Format('PSB: Entry BufferLen=%d First30=|%s|', [ABuffer.Length, ABuffer.Substring(0, Min(30, ABuffer.Length))]), 'Provider');
+
   while True do
   begin
-    ABuffer := ABuffer.TrimLeft(['[', ',', #13, #10, ' ']);
+    ABuffer := ABuffer.TrimLeft(['[', ',', #13, #10, ' ', ']']);
     if ABuffer.IsEmpty or not ABuffer.StartsWith('{') then
+    begin
+      TLogger.Log(Format('PSB: Break. Empty=%s StartBrace=%s Objs=%d ResidualLen=%d', [
+        BoolToStr(ABuffer.IsEmpty, True), BoolToStr(ABuffer.StartsWith('{'), True),
+        LObjectCount, ABuffer.Length]), 'Provider');
       Break;
+    end;
 
     LOpenBrackets := 0;
     LInString := False;
     LLen := ABuffer.Length;
     LPtr := PChar(ABuffer);
     I := 0;
+
     while I < LLen do
     begin
-      if LPtr[I] = '"' then
+      if LInString then
       begin
-        if (I = 0) or (LPtr[I - 1] <> '\') then
-          LInString := not LInString;
+        if LPtr[I] = '\' then
+          Inc(I)
+        else if LPtr[I] = '"' then
+          LInString := False;
       end
-      else if not LInString then
+      else
       begin
-        if LPtr[I] = '{' then
-          Inc(LOpenBrackets)
-        else if LPtr[I] = '}' then
-        begin
-          Dec(LOpenBrackets);
-          if LOpenBrackets = 0 then
+        case LPtr[I] of
+          '"': LInString := True;
+          '{': Inc(LOpenBrackets);
+          '}':
           begin
-            LCandidateStr := ABuffer.Substring(0, I + 1);
-            ABuffer := ABuffer.Substring(I + 1);
+            Dec(LOpenBrackets);
+            if LOpenBrackets = 0 then
+            begin
+              LCandidateStr := ABuffer.Substring(0, I + 1);
+              ABuffer := ABuffer.Substring(I + 1);
+              Inc(LObjectCount);
 
-            try
-              LJson := TJSONObject.ParseJSONValue(LCandidateStr) as TJSONObject;
-              if Assigned(LJson) then
-              begin
-                try
-                  if Assigned(LJson.GetValue('error')) then
-                  begin
-                    LText := '';
-                    if LJson.GetValue('error') is TJSONObject then
-                      LText := TJSONObject(LJson.GetValue('error')).GetValue<string>('message', '');
-                    
-                    if LText.IsEmpty then
-                      LText := LJson.GetValue('error').ToString;
+              TLogger.Log(Format('PSB: Obj#%d Found ObjLen=%d', [LObjectCount, LCandidateStr.Length]), 'Provider');
 
-                    ACallback('', True, LText);
-                    Exit;
-                  end;
-
-                  LText := '';
-                  LCandidates := LJson.GetValue('candidates') as TJSONArray;
-                  if Assigned(LCandidates) and (LCandidates.Count > 0) then
-                  begin
-                    LCandidate := LCandidates.Items[0] as TJSONObject;
-                    LContent := LCandidate.GetValue('content') as TJSONObject;
-                    if Assigned(LContent) then
+              try
+                LJson := TJSONObject.ParseJSONValue(LCandidateStr) as TJSONObject;
+                if Assigned(LJson) then
+                begin
+                  try
+                    if Assigned(LJson.GetValue('error')) then
                     begin
-                       LParts := LContent.GetValue('parts') as TJSONArray;
-                       if Assigned(LParts) and (LParts.Count > 0) then
-                       begin
-                         LPart := LParts.Items[0] as TJSONObject;
-                         if Assigned(LPart) then
-                           LText := LPart.GetValue<string>('text', '');
-                       end;
+                      LText := '';
+                      if LJson.GetValue('error') is TJSONObject then
+                        LText := TJSONObject(LJson.GetValue('error')).GetValue<string>('message', '');
+                      if LText.IsEmpty then
+                        LText := LJson.GetValue('error').ToString;
+                      TLogger.Log('PSB: API error=' + LText, 'Provider');
+                      ACallback('', True, LText);
+                      Exit;
                     end;
-                  end;
 
-                  if not LText.IsEmpty then
-                  begin
-                    ACallback(LText, False, '');
+                    LText := '';
+                    LCandidates := LJson.GetValue('candidates') as TJSONArray;
+                    if Assigned(LCandidates) and (LCandidates.Count > 0) then
+                    begin
+                      LCandidate := LCandidates.Items[0] as TJSONObject;
+                      LContent := LCandidate.GetValue('content') as TJSONObject;
+                      if Assigned(LContent) then
+                      begin
+                        LParts := LContent.GetValue('parts') as TJSONArray;
+                        if Assigned(LParts) and (LParts.Count > 0) then
+                        begin
+                          LPart := LParts.Items[0] as TJSONObject;
+                          if Assigned(LPart) then
+                            LText := LPart.GetValue<string>('text', '');
+                        end;
+                      end;
+                    end;
+
+                    TLogger.Log(Format('PSB: Obj#%d TextLen=%d', [LObjectCount, LText.Length]), 'Provider');
+                    if not LText.IsEmpty then
+                      ACallback(LText, False, '');
+                  finally
+                    LJson.Free;
                   end;
-                finally
-                  LJson.Free;
-                end;
+                end
+                else
+                  TLogger.Log(Format('PSB: Obj#%d ParseJSONValue=nil', [LObjectCount]), 'Provider');
+              except
+                on E: Exception do
+                  TLogger.Log(Format('PSB: Obj#%d Exception=%s', [LObjectCount, E.Message]), 'Provider');
               end;
-            except
-              // Ignora erro de parse
+              Break;
             end;
-            Break;
           end;
         end;
       end;
@@ -481,18 +467,19 @@ begin
     end;
 
     if I >= LLen then
+    begin
+      TLogger.Log(Format('PSB: Incomplete obj, waiting. BufferLen=%d', [ABuffer.Length]), 'Provider');
       Break;
+    end;
   end;
+  TLogger.Log(Format('PSB: Exit Objs=%d ResidualLen=%d', [LObjectCount, ABuffer.Length]), 'Provider');
 end;
 
 procedure TRadIAGeminiProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
 begin
-  LProviderRef := Self;
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
 
@@ -515,42 +502,15 @@ begin
     end;
   end;
 
-  LTaskProc :=
-    procedure
+  ExecuteRequestStreamAsync(LUrl, nil, LRequestBody,
+    function(const ABuffer: string): string
     var
-      LBufferText: string;
-      LErrorMsg: string;
+      LTemp: string;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType;
-      LBufferText := '';
-      try
-        DoPostRequestStream(LUrl, nil, LRequestBody,
-          procedure(ABytes: TBytes)
-          begin
-            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
-            ProcessStreamBuffer(LBufferText, ACallback);
-          end);
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback('', True, '');
-          end);
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', True, LErrorMsg);
-            end);
-        end;
-      end;
-    end;
-
-  TTask.Run(LTaskProc);
+      LTemp := ABuffer;
+      ProcessStreamBuffer(LTemp, ACallback);
+      Result := LTemp;
+    end, ACallback);
 end;
 
 end.

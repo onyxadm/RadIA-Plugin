@@ -211,7 +211,7 @@ begin
     if LThemingServices.IDEThemingEnabled then
     begin
       LActiveTheme := LThemingServices.ActiveTheme;
-      if SameText(LActiveTheme, 'Dark') then
+      if IsThemeDark(LActiveTheme) then
         FChatFrame.SetTheme('dark')
       else
         FChatFrame.SetTheme('light');

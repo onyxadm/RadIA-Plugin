@@ -157,10 +157,7 @@ procedure TRadIAClaudeProvider.SendPromptAsync(const APrompt: string; const AHis
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
 begin
-  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -184,118 +181,66 @@ begin
     end;
   end;
 
-  LTaskProc := procedure
-               var
-                 LResponseText: string;
-                 LUsage: TTokenUsage;
-                 LErrorMsg: string;
-               begin
-                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-                 LProviderRef.GetProviderType;
-                 try
-                   LResponseText := DoPostRequest(LUrl, LHeaders, LRequestBody);
-                   LResponseText := ParseResponseBody(LResponseText, LUsage);
-                   
-                   TThread.Queue(nil,
-                     procedure
-                     begin
-                       ACallback(LResponseText, '', False, LUsage);
-                     end);
-                 except
-                   on E: Exception do
-                   begin
-                     LErrorMsg := E.ClassName + ': ' + E.Message;
-                     TThread.Queue(nil,
-                       procedure
-                       begin
-                         ACallback('', LErrorMsg, False, TTokenUsage.Empty);
-                       end);
-                   end;
-                 end;
-               end;
-
-  TTask.Run(LTaskProc);
+  ExecuteRequestAsync(LUrl, LHeaders, LRequestBody,
+    function(const AResponseJson: string; out AUsage: TTokenUsage): string
+    begin
+      Result := ParseResponseBody(AResponseJson, AUsage);
+    end, ACallback);
 end;
 
 procedure TRadIAClaudeProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
 var
-  LLine: string;
-  LJsonLine: string;
-  LJson: TJSONObject;
-  LTypeStr: string;
-  LDeltaObj: TJSONObject;
-  LText: string;
-  LIdx: Integer;
-  LStartPos: Integer;
-  LPtr: PChar;
-  LLen: Integer;
-  LLastProcessedPos: Integer;
+  LStopRequested: Boolean;
 begin
-  LLen := ABuffer.Length;
-  if LLen = 0 then
-    Exit;
-
-  LPtr := PChar(ABuffer);
-  LStartPos := 0;
-  LLastProcessedPos := 0;
-
-  while LStartPos < LLen do
-  begin
-    LIdx := LStartPos;
-    while (LIdx < LLen) and (LPtr[LIdx] <> #10) do
-      Inc(LIdx);
-      
-    if LIdx >= LLen then
-      Break;
-      
-    LLine := ABuffer.Substring(LStartPos, LIdx - LStartPos);
-    LStartPos := LIdx + 1;
-    LLastProcessedPos := LStartPos;
-
-    LLine := Trim(LLine);
-    if LLine.StartsWith('data:') then
+  LStopRequested := False;
+  ProcessBufferLines(ABuffer,
+    procedure(ALine: string)
+    var
+      LJsonLine: string;
+      LJson: TJSONObject;
+      LTypeStr: string;
+      LDeltaObj: TJSONObject;
+      LText: string;
     begin
-      LJsonLine := Trim(LLine.Substring(5));
-      if LJsonLine.IsEmpty then
-        Continue;
+      if LStopRequested then
+        Exit;
 
-      try
-        LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
-        if Assigned(LJson) then
-        begin
-          try
-            LTypeStr := LJson.GetValue<string>('type', '');
-            if LTypeStr = 'content_block_delta' then
-            begin
-              LDeltaObj := LJson.GetValue('delta') as TJSONObject;
-              if Assigned(LDeltaObj) then
+      if ALine.StartsWith('data:') then
+      begin
+        LJsonLine := Trim(ALine.Substring(5));
+        if LJsonLine.IsEmpty then
+          Exit;
+
+        try
+          LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
+          if Assigned(LJson) then
+          begin
+            try
+              LTypeStr := LJson.GetValue<string>('type', '');
+              if LTypeStr = 'content_block_delta' then
               begin
-                LText := LDeltaObj.GetValue<string>('text', '');
-                if not LText.IsEmpty then
-                  ACallback(LText, False, '');
+                LDeltaObj := LJson.GetValue('delta') as TJSONObject;
+                if Assigned(LDeltaObj) then
+                begin
+                  LText := LDeltaObj.GetValue<string>('text', '');
+                  if not LText.IsEmpty then
+                    ACallback(LText, False, '');
+                end;
+              end
+              else if LTypeStr = 'message_stop' then
+              begin
+                LStopRequested := True;
+                ACallback('', True, '');
               end;
-            end
-            else if LTypeStr = 'message_stop' then
-            begin
-              ACallback('', True, '');
-              
-              ABuffer := ABuffer.Substring(LLastProcessedPos);
-              Exit;
+            finally
+              LJson.Free;
             end;
-          finally
-            LJson.Free;
           end;
+        except
+          { Ignore parse errors }
         end;
-      except
-        { Ignore parse errors }
       end;
-    end;
-  end;
-
-  if LLastProcessedPos > 0 then
-  begin
-    ABuffer := ABuffer.Substring(LLastProcessedPos);
-  end;
+    end);
 end;
 
 procedure TRadIAClaudeProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
@@ -303,10 +248,7 @@ procedure TRadIAClaudeProvider.SendPromptStreamAsync(const APrompt: string; cons
 var
   LUrl, LApiKey, LRequestBody: string;
   LHeaders: TNetHeaders;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
 begin
-  LProviderRef := Self;
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
@@ -330,42 +272,15 @@ begin
     end;
   end;
 
-  LTaskProc :=
-    procedure
+  ExecuteRequestStreamAsync(LUrl, LHeaders, LRequestBody,
+    function(const ABuffer: string): string
     var
-      LBufferText: string;
-      LErrorMsg: string;
+      LTemp: string;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType;
-      LBufferText := '';
-      try
-        DoPostRequestStream(LUrl, LHeaders, LRequestBody,
-          procedure(ABytes: TBytes)
-          begin
-            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
-            ProcessStreamBuffer(LBufferText, ACallback);
-          end);
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback('', True, '');
-          end);
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', True, LErrorMsg);
-            end);
-        end;
-      end;
-    end;
-
-  TTask.Run(LTaskProc);
+      LTemp := ABuffer;
+      ProcessStreamBuffer(LTemp, ACallback);
+      Result := LTemp;
+    end, ACallback);
 end;
 
 end.

@@ -136,10 +136,7 @@ procedure TRadIAOllamaProvider.SendPromptAsync(const APrompt: string; const AHis
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
 begin
-  LProviderRef := Self;
   LUrl := FConfig.OllamaBaseUrl + '/api/chat';
 
   try
@@ -152,37 +149,11 @@ begin
     end;
   end;
 
-  LTaskProc := procedure
-               var
-                 LResponseText: string;
-                 LUsage: TTokenUsage;
-                 LErrorMsg: string;
-               begin
-                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-                 LProviderRef.GetProviderType;
-                 try
-                   LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
-                   LResponseText := ParseResponseBody(LResponseText, LUsage);
-                   
-                   TThread.Queue(nil,
-                     procedure
-                     begin
-                       ACallback(LResponseText, '', False, LUsage);
-                     end);
-                 except
-                   on E: Exception do
-                   begin
-                     LErrorMsg := E.ClassName + ': ' + E.Message;
-                     TThread.Queue(nil,
-                       procedure
-                       begin
-                         ACallback('', LErrorMsg, False, TTokenUsage.Empty);
-                       end);
-                   end;
-                 end;
-               end;
-
-  TTask.Run(LTaskProc);
+  ExecuteRequestAsync(LUrl, nil, LRequestBody,
+    function(const AResponseJson: string; out AUsage: TTokenUsage): string
+    begin
+      Result := ParseResponseBody(AResponseJson, AUsage);
+    end, ACallback);
 end;
 
 procedure TRadIAOllamaProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
@@ -269,91 +240,59 @@ end;
 
 procedure TRadIAOllamaProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
 var
-  LLine: string;
-  LJson: TJSONObject;
-  LMsgObj: TJSONObject;
-  LContent: string;
-  LDone: Boolean;
-  LIdx: Integer;
-  LStartPos: Integer;
-  LPtr: PChar;
-  LLen: Integer;
-  LLastProcessedPos: Integer;
+  LStopRequested: Boolean;
 begin
-  LLen := ABuffer.Length;
-  if LLen = 0 then
-    Exit;
+  LStopRequested := False;
+  ProcessBufferLines(ABuffer,
+    procedure(ALine: string)
+    var
+      LJson: TJSONObject;
+      LMsgObj: TJSONObject;
+      LContent: string;
+      LDone: Boolean;
+    begin
+      if LStopRequested then
+        Exit;
 
-  LPtr := PChar(ABuffer);
-  LStartPos := 0;
-  LLastProcessedPos := 0;
+      try
+        LJson := TJSONObject.ParseJSONValue(ALine) as TJSONObject;
+        if Assigned(LJson) then
+        begin
+          try
+            LContent := '';
+            LMsgObj := LJson.GetValue('message') as TJSONObject;
+            if Assigned(LMsgObj) then
+            begin
+              LContent := LMsgObj.GetValue<string>('content', '');
+            end;
 
-  while LStartPos < LLen do
-  begin
-    LIdx := LStartPos;
-    while (LIdx < LLen) and (LPtr[LIdx] <> #10) do
-      Inc(LIdx);
-      
-    if LIdx >= LLen then
-      Break;
-      
-    LLine := ABuffer.Substring(LStartPos, LIdx - LStartPos);
-    LStartPos := LIdx + 1;
-    LLastProcessedPos := LStartPos;
+            LDone := LJson.GetValue<Boolean>('done', False);
 
-    LLine := Trim(LLine);
-    if LLine.IsEmpty then
-      Continue;
+            if not LContent.IsEmpty then
+            begin
+              ACallback(LContent, False, '');
+            end;
 
-    try
-      LJson := TJSONObject.ParseJSONValue(LLine) as TJSONObject;
-      if Assigned(LJson) then
-      begin
-        try
-          LContent := '';
-          LMsgObj := LJson.GetValue('message') as TJSONObject;
-          if Assigned(LMsgObj) then
-          begin
-            LContent := LMsgObj.GetValue<string>('content', '');
+            if LDone then
+            begin
+              LStopRequested := True;
+              ACallback('', True, '');
+            end;
+          finally
+            LJson.Free;
           end;
-
-          LDone := LJson.GetValue<Boolean>('done', False);
-
-          if not LContent.IsEmpty then
-          begin
-            ACallback(LContent, False, '');
-          end;
-
-          if LDone then
-          begin
-            ACallback('', True, '');
-            
-            ABuffer := ABuffer.Substring(LLastProcessedPos);
-            Exit;
-          end;
-        finally
-          LJson.Free;
         end;
+      except
+        { Ignore parse errors }
       end;
-    except
-      { Ignore parse errors }
-    end;
-  end;
-
-  if LLastProcessedPos > 0 then
-  begin
-    ABuffer := ABuffer.Substring(LLastProcessedPos);
-  end;
+    end);
 end;
 
 procedure TRadIAOllamaProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
 begin
-  LProviderRef := Self;
   LUrl := FConfig.OllamaBaseUrl + '/api/chat';
 
   try
@@ -366,42 +305,15 @@ begin
     end;
   end;
 
-  LTaskProc :=
-    procedure
+  ExecuteRequestStreamAsync(LUrl, nil, LRequestBody,
+    function(const ABuffer: string): string
     var
-      LBufferText: string;
-      LErrorMsg: string;
+      LTemp: string;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType;
-      LBufferText := '';
-      try
-        DoPostRequestStream(LUrl, nil, LRequestBody,
-          procedure(ABytes: TBytes)
-          begin
-            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
-            ProcessStreamBuffer(LBufferText, ACallback);
-          end);
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback('', True, '');
-          end);
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', True, LErrorMsg);
-            end);
-        end;
-      end;
-    end;
-
-  TTask.Run(LTaskProc);
+      LTemp := ABuffer;
+      ProcessStreamBuffer(LTemp, ACallback);
+      Result := LTemp;
+    end, ACallback);
 end;
 
 end.
