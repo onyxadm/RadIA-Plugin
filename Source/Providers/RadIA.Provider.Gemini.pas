@@ -201,10 +201,7 @@ procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHis
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
 begin
-  LProviderRef := Self;
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
 
@@ -227,38 +224,11 @@ begin
     end;
   end;
 
-  LTaskProc :=
-    procedure
-    var
-      LResponseText: string;
-      LUsage: TTokenUsage;
-      LErrorMsg: string;
+  ExecuteRequestAsync(LUrl, nil, LRequestBody,
+    function(const AResponseJson: string; out AUsage: TTokenUsage): string
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType;
-      try
-        LResponseText := DoPostRequest(LUrl, nil, LRequestBody);
-        LResponseText := ParseResponseBody(LResponseText, LUsage);
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback(LResponseText, '', False, LUsage);
-          end);
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', LErrorMsg, False, TTokenUsage.Empty);
-            end);
-        end;
-      end;
-    end;
-
-  TTask.Run(LTaskProc);
+      Result := ParseResponseBody(AResponseJson, AUsage);
+    end, ACallback);
 end;
 
 procedure TRadIAGeminiProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
@@ -489,10 +459,7 @@ procedure TRadIAGeminiProvider.SendPromptStreamAsync(const APrompt: string; cons
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
-  LTaskProc: TProc;
-  LProviderRef: IIAProvider;
 begin
-  LProviderRef := Self;
   LApiKey := GetApiKey;
   LModel := GetActiveModel;
 
@@ -515,42 +482,15 @@ begin
     end;
   end;
 
-  LTaskProc :=
-    procedure
+  ExecuteRequestStreamAsync(LUrl, nil, LRequestBody,
+    function(const ABuffer: string): string
     var
-      LBufferText: string;
-      LErrorMsg: string;
+      LTemp: string;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderType;
-      LBufferText := '';
-      try
-        DoPostRequestStream(LUrl, nil, LRequestBody,
-          procedure(ABytes: TBytes)
-          begin
-            LBufferText := LBufferText + TEncoding.UTF8.GetString(ABytes);
-            ProcessStreamBuffer(LBufferText, ACallback);
-          end);
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            ACallback('', True, '');
-          end);
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', True, LErrorMsg);
-            end);
-        end;
-      end;
-    end;
-
-  TTask.Run(LTaskProc);
+      LTemp := ABuffer;
+      ProcessStreamBuffer(LTemp, ACallback);
+      Result := LTemp;
+    end, ACallback);
 end;
 
 end.
