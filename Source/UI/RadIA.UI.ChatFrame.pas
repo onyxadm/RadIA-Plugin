@@ -1105,6 +1105,15 @@ begin
             FAIService.CancelCurrentRequest;
           end;
         end));
+    end
+    else if LAction = 'clear_chat' then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          btnClearClick(nil);
+        end));
     end;
   finally
     LParsed.Free;

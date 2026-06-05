@@ -33,3 +33,9 @@ node_modules/
 /Sources/*.bpi
 *.dsv
 test-results.xml
+
+# Allow WebView2 DLLs in Redist directory
+!/Redist/Win32/
+!/Redist/Win64/
+!/Redist/Win32/*.dll
+!/Redist/Win64/*.dll
