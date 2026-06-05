@@ -154,12 +154,16 @@ begin
     end;
   end;
 
+  Self.StyleElements := Self.StyleElements - [seClient, seBorder];
   Self.Color := LBgColor;
+  pnlFooter.StyleElements := pnlFooter.StyleElements - [seClient, seBorder];
   pnlFooter.Color := LBgColor;
   pnlFooter.ParentBackground := False;
+  pnlSidebar.StyleElements := pnlSidebar.StyleElements - [seClient, seBorder];
   pnlSidebar.Color := LBgColor;
   pnlSidebar.ParentBackground := False;
 
+  tvCategories.StyleElements := tvCategories.StyleElements - [seClient, seBorder];
   tvCategories.Color := LInputBgColor;
   tvCategories.Font.Color := LTextColor;
 end;

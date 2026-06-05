@@ -333,11 +333,14 @@ begin
     end;
   end;
 
+  Self.StyleElements := Self.StyleElements - [seClient, seBorder];
   Self.Color := LBgColor;
 
   { Apply theme to all tabs in the PageControl to avoid default white backgrounds }
+  pgcSettings.StyleElements := pgcSettings.StyleElements - [seClient, seBorder];
   for I := 0 to pgcSettings.PageCount - 1 do
   begin
+    pgcSettings.Pages[I].StyleElements := pgcSettings.Pages[I].StyleElements - [seClient, seBorder];
     TTabSheetColorHack(pgcSettings.Pages[I]).ParentBackground := False;
     TTabSheetColorHack(pgcSettings.Pages[I]).Color := LBgColor;
   end;
