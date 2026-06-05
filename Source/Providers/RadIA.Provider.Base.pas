@@ -511,6 +511,18 @@ begin
             LBufferText := AProcessBufferFunc(LBufferText);
           end);
 
+        // Process residual data in buffer after network stream completes
+        if not LBufferText.IsEmpty then
+        begin
+          if not LBufferText.EndsWith(#10) then
+            LBufferText := LBufferText + #10;
+          try
+            AProcessBufferFunc(LBufferText);
+          except
+            // Mute buffer processing exception on teardown
+          end;
+        end;
+
         TThread.Queue(nil,
           TThreadProcedure(
             procedure
@@ -522,6 +534,17 @@ begin
       except
         on E: Exception do
         begin
+          // Process residual buffer data before returning error
+          if not LBufferText.IsEmpty then
+          begin
+            if not LBufferText.EndsWith(#10) then
+              LBufferText := LBufferText + #10;
+            try
+              AProcessBufferFunc(LBufferText);
+            except
+            end;
+          end;
+
           LErrorMsg := E.Message;
           if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
           begin
