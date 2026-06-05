@@ -561,8 +561,13 @@ begin
 end;
 
 procedure TRadIAConfig.SetOllamaBaseUrl(const AValue: string);
+var
+  LVal: string;
 begin
-  FOllamaBaseUrl := AValue;
+  LVal := AValue.Trim;
+  if LVal.EndsWith('/') then
+    LVal := LVal.Substring(0, LVal.Length - 1);
+  FOllamaBaseUrl := LVal;
 end;
 
 function TRadIAConfig.GetMaxHistoryMessages: Integer;
