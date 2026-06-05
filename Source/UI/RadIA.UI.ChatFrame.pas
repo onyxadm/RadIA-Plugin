@@ -739,7 +739,7 @@ begin
       shpSendBg.Brush.Color := $00E5E5E5; // Branco/Cinza claro
       shpSendBg.Pen.Color := $00E5E5E5;
       shpSendBg.Pen.Style := psSolid;
-      btnSend.Caption := #11014; // Seta para cima ⬆
+      btnSend.Caption := #10148; // Símbolo de aviãozinho/seta moderno
       btnSend.Font.Color := $001E1E1E; // Cinza escuro
     end
     else
@@ -747,7 +747,7 @@ begin
       shpSendBg.Brush.Color := $001F1F1F; // Preto/Cinza escuro
       shpSendBg.Pen.Color := $001F1F1F;
       shpSendBg.Pen.Style := psSolid;
-      btnSend.Caption := #11014; // Seta para cima ⬆
+      btnSend.Caption := #10148; // Símbolo de aviãozinho/seta moderno
       btnSend.Font.Color := clWhite;
     end;
   end;

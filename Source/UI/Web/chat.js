@@ -65,9 +65,9 @@ const chatContainer = document.getElementById('chat-container');
 //  Nomes e ícones dos remetentes
 // ============================================================
 const SENDER_INFO = {
-  user:      { name: 'You',      icon: '👤', avatarClass: 'user-avatar', headerClass: 'user-header' },
-  assistant: { name: 'RadIA',    icon: '✦',  avatarClass: 'ai-avatar',   headerClass: 'ai-header'   },
-  system:    { name: 'System',   icon: '⚙',   avatarClass: 'ai-avatar',   headerClass: 'ai-header'   }
+  user:      { name: 'User',     icon: 'U', avatarClass: 'user-avatar', headerClass: 'user-header' },
+  assistant: { name: 'Codex AI', icon: '✦', avatarClass: 'ai-avatar',   headerClass: 'ai-header'   },
+  system:    { name: 'System',   icon: '⚙', avatarClass: 'ai-avatar',   headerClass: 'ai-header'   }
 };
 
 // ============================================================

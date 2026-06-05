@@ -203,7 +203,7 @@ object FrameAIChat: TFrameAIChat
       Height = 28
       Cursor = crHandPoint
       Anchors = [akRight, akBottom]
-      Caption = #11014
+      Caption = #10148
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
