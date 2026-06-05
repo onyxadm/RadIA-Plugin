@@ -108,6 +108,9 @@ const SENDER_INFO = {
 };
 
 let requestInProgress = false;
+const _promptHistory = [];
+let _promptHistoryIndex = -1;
+let _promptDraft = '';
 
 // ============================================================
 //  Ponte de Comunicação (PostMessage)
@@ -128,11 +131,49 @@ promptTextarea.addEventListener('input', () => {
   promptTextarea.style.height = promptTextarea.scrollHeight + 'px';
 });
 
-// Envio por Ctrl+Enter ou Click
+// Envio por Ctrl+Enter, e navegação no histórico com Seta Cima/Baixo
 promptTextarea.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.ctrlKey) {
     e.preventDefault();
     handleSend();
+  } else if (e.key === 'ArrowUp') {
+    // Só navega se o cursor estiver na primeira linha (sem \n antes do cursor)
+    const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
+    if (!textBeforeCursor.includes('\n')) {
+      if (_promptHistory.length > 0) {
+        if (_promptHistoryIndex === -1) {
+          _promptDraft = promptTextarea.value;
+          _promptHistoryIndex = _promptHistory.length - 1;
+        } else if (_promptHistoryIndex > 0) {
+          _promptHistoryIndex--;
+        }
+        promptTextarea.value = _promptHistory[_promptHistoryIndex];
+        setTimeout(() => {
+          promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+          promptTextarea.dispatchEvent(new Event('input'));
+        }, 0);
+        e.preventDefault();
+      }
+    }
+  } else if (e.key === 'ArrowDown') {
+    // Só navega se o cursor estiver na última linha (sem \n depois do cursor)
+    const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
+    if (!textAfterCursor.includes('\n')) {
+      if (_promptHistoryIndex !== -1) {
+        if (_promptHistoryIndex < _promptHistory.length - 1) {
+          _promptHistoryIndex++;
+          promptTextarea.value = _promptHistory[_promptHistoryIndex];
+        } else {
+          _promptHistoryIndex = -1;
+          promptTextarea.value = _promptDraft;
+        }
+        setTimeout(() => {
+          promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+          promptTextarea.dispatchEvent(new Event('input'));
+        }, 0);
+        e.preventDefault();
+      }
+    }
   }
 });
 
@@ -146,6 +187,16 @@ function handleSend() {
 
   const text = promptTextarea.value.trim();
   if (!text) return;
+
+  // Salva no histórico de prompts locais enviados
+  if (_promptHistory.length === 0 || _promptHistory[_promptHistory.length - 1] !== text) {
+    _promptHistory.push(text);
+    if (_promptHistory.length > 100) {
+      _promptHistory.shift();
+    }
+  }
+  _promptHistoryIndex = -1;
+  _promptDraft = '';
 
   postMessageToDelphi({ action: 'send_prompt', text: text });
   promptTextarea.value = '';
