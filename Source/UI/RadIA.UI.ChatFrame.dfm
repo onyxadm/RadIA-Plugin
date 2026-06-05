@@ -12,6 +12,26 @@ object FrameAIChat: TFrameAIChat
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
+    object btnToggleSessions: TSpeedButton
+      AlignWithMargins = True
+      Left = 3
+      Top = 3
+      Width = 32
+      Height = 38
+      Hint = 'Exibir/Ocultar Conversas'
+      Align = alLeft
+      Caption = #9776
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -18
+      Font.Name = 'Segoe UI Symbol'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnToggleSessionsClick
+    end
     object btnTemplates: TSpeedButton
       AlignWithMargins = True
       Left = 841
@@ -105,7 +125,7 @@ object FrameAIChat: TFrameAIChat
       ExplicitHeight = 32
     end
     object cbProvider: TComboBox
-      Left = 6
+      Left = 40
       Top = 10
       Width = 105
       Height = 21
@@ -120,7 +140,7 @@ object FrameAIChat: TFrameAIChat
       OnChange = cbProviderChange
     end
     object cbModel: TComboBox
-      Left = 117
+      Left = 151
       Top = 10
       Width = 289
       Height = 21
@@ -211,10 +231,112 @@ object FrameAIChat: TFrameAIChat
       TabOrder = 0
     end
   end
-  object pnlBrowser: TPanel
+  object pnlSessions: TPanel
     Left = 0
     Top = 44
-    Width = 990
+    Width = 180
+    Height = 493
+    Align = alLeft
+    BevelOuter = bvNone
+    TabOrder = 3
+    object pnlSessionsHeader: TPanel
+      Left = 0
+      Top = 0
+      Width = 180
+      Height = 30
+      Align = alTop
+      BevelOuter = bvNone
+      TabOrder = 0
+      object btnNewSession: TSpeedButton
+        AlignWithMargins = True
+        Left = 3
+        Top = 3
+        Width = 24
+        Height = 24
+        Hint = 'Nova Conversa'
+        Align = alLeft
+        Caption = '+'
+        Flat = True
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -16
+        Font.Name = 'Segoe UI'
+        Font.Style = [fsBold]
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        OnClick = btnNewSessionClick
+      end
+      object btnRenameSession: TSpeedButton
+        AlignWithMargins = True
+        Left = 33
+        Top = 3
+        Width = 24
+        Height = 24
+        Hint = 'Renomear Conversa'
+        Align = alLeft
+        Caption = #9998
+        Flat = True
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -14
+        Font.Name = 'Segoe UI Symbol'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        OnClick = btnRenameSessionClick
+      end
+      object btnDeleteSession: TSpeedButton
+        AlignWithMargins = True
+        Left = 63
+        Top = 3
+        Width = 24
+        Height = 24
+        Hint = 'Excluir Conversa'
+        Align = alLeft
+        Caption = #128465
+        Flat = True
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -14
+        Font.Name = 'Segoe UI Symbol'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        OnClick = btnDeleteSessionClick
+      end
+    end
+    object lstSessions: TListBox
+      Left = 0
+      Top = 30
+      Width = 180
+      Height = 463
+      Align = alClient
+      BorderStyle = bsNone
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Segoe UI'
+      Font.Style = []
+      ItemHeight = 20
+      ParentFont = False
+      TabOrder = 1
+      OnClick = lstSessionsClick
+    end
+  end
+  object splitterSessions: TSplitter
+    Left = 180
+    Top = 44
+    Width = 3
+    Height = 493
+    Align = alLeft
+  end
+  object pnlBrowser: TPanel
+    Left = 183
+    Top = 44
+    Width = 807
     Height = 493
     Align = alClient
     BevelOuter = bvNone

@@ -100,6 +100,17 @@ type
     procedure SetLogPath(const AValue: string);
     function GetLogMaxSizeKB: Integer;
     procedure SetLogMaxSizeKB(const AValue: Integer);
+    function GetQuotaEnabled: Boolean;
+    procedure SetQuotaEnabled(const AValue: Boolean);
+    function GetQuotaLimit: Int64;
+    procedure SetQuotaLimit(const AValue: Int64);
+    function GetQuotaUsed: Int64;
+    procedure SetQuotaUsed(const AValue: Int64);
+    function GetQuotaCycleStart: TDateTime;
+    procedure SetQuotaCycleStart(const AValue: TDateTime);
+    function GetActiveSessionId: string;
+    procedure SetActiveSessionId(const AValue: string);
+    procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
     property SystemPrompt: string read GetSystemPrompt write SetSystemPrompt;
@@ -110,6 +121,11 @@ type
     property LogEnabled: Boolean read GetLogEnabled write SetLogEnabled;
     property LogPath: string read GetLogPath write SetLogPath;
     property LogMaxSizeKB: Integer read GetLogMaxSizeKB write SetLogMaxSizeKB;
+    property QuotaEnabled: Boolean read GetQuotaEnabled write SetQuotaEnabled;
+    property QuotaLimit: Int64 read GetQuotaLimit write SetQuotaLimit;
+    property QuotaUsed: Int64 read GetQuotaUsed write SetQuotaUsed;
+    property QuotaCycleStart: TDateTime read GetQuotaCycleStart write SetQuotaCycleStart;
+    property ActiveSessionId: string read GetActiveSessionId write SetActiveSessionId;
   end;
 
 implementation

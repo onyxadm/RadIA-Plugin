@@ -279,6 +279,12 @@ var
   LTemperature: Double;
   LMaxTokens: Integer;
 begin
+  if FConfig.QuotaEnabled and (FConfig.QuotaUsed >= FConfig.QuotaLimit) then
+  begin
+    ACallback('', 'Cota mensal de tokens excedida (limite local atingido).', False, TTokenUsage.Empty);
+    Exit;
+  end;
+
   try
     LProvider := CreateActiveProvider;
     TMonitor.Enter(Self);
@@ -355,6 +361,16 @@ var
   LTemperature: Double;
   LMaxTokens: Integer;
 begin
+  if FConfig.QuotaEnabled and (FConfig.QuotaUsed >= FConfig.QuotaLimit) then
+  begin
+    TThread.Queue(nil,
+      procedure
+      begin
+        ACallback('', True, 'Cota mensal de tokens excedida (limite local atingido).');
+      end);
+    Exit;
+  end;
+
   try
     LProvider       := CreateActiveProvider;
     TMonitor.Enter(Self);
