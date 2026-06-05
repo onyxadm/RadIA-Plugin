@@ -107,6 +107,15 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Exibição do percentual de cota consumida na barra de status em HTML na WebView.
     *   Validação completa com testes unitários cobrindo o bloqueio e ciclos de cota em `RadIA.Tests.Quota.pas`.
 
+### 15. Novo Layout de Configurações (Delphi-like) e Integração no Tools -> Options - Item #2
+*   **Descrição**: Separação da tela de configuração em um frame reutilizável integrado nativamente no diálogo global da IDE (`Tools -> Options`), com visual estilizado e mapeamento dinâmico em árvore.
+*   **Detalhes**:
+    *   Implementação do frame `TFrameAIConfig` contendo o PageControl e controle das opções.
+    *   Implementação do formulário wrapper `TFormAIConfig` contendo uma barra lateral com `TTreeView` e botões de rodapé para manter o comportamento original de popup independente.
+    *   Integração da ponte Open Tools API via `TRadIAAddInOptions` (`INTAAddInOptions`) registrando a árvore de categorias sob **Third Party > RadIA** (com subnós para Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama).
+    *   Pintura e estilização automatizada seguindo o tema nativo da IDE usando painéis wrappers individuais para herança de estilo e prevenção de contraste inadequado de cores no tema escuro.
+    *   Salvamento automatizado silencioso ao pressionar "OK" nas opções da IDE, e aviso explícito de sucesso apenas no formulário popup standalone.
+
 ---
 
 ## 🔲 Pendentes
