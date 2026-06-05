@@ -657,9 +657,6 @@ begin
   { Save templates too }
   FTemplateManager.Save;
 
-  if Sender <> nil then
-    ShowMessage('Settings saved successfully.');
-
   LForm := GetParentForm(Self);
   if LForm <> nil then
     LForm.ModalResult := mrOk;
