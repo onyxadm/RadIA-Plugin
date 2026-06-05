@@ -1173,13 +1173,18 @@ begin
               
               if not LFullResponse.IsEmpty then
               begin
-                LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse + ' [Erro na resposta]', LActiveProvider, LActiveModel);
+                LFullResponse := LFullResponse + #13#10#13#10 + '**Error:** ' + LErrorCopy;
+                PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + LErrorCopy, True, LActiveProvider, LActiveModel);
+                
+                LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
                 FHistory := FHistory + [LAssistantMsg];
                 SaveChatHistory;
+              end
+              else
+              begin
+                PostToWebView('add_message', 'assistant', '**Error:** ' + LErrorCopy, False, LActiveProvider, LActiveModel);
+                PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
               end;
-
-              PostToWebView('add_message', 'assistant', '**Error:** ' + LErrorCopy, False, LActiveProvider, LActiveModel);
-              PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
               Exit;
             end;
 

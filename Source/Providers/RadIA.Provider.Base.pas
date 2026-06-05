@@ -128,6 +128,42 @@ begin
   end;
 end;
 
+function ExtractErrorMessageFromJson(const AJsonStr: string): string;
+var
+  LJson: TJSONObject;
+  LError: TJSONObject;
+begin
+  Result := '';
+  try
+    LJson := TJSONObject.ParseJSONValue(AJsonStr) as TJSONObject;
+    if Assigned(LJson) then
+    begin
+      try
+        // Caso 1: {"error": {"message": "..."}}
+        LError := LJson.GetValue('error') as TJSONObject;
+        if Assigned(LError) then
+        begin
+          Result := LError.GetValue<string>('message', '');
+          if Result.IsEmpty then
+            Result := LError.GetValue<string>('msg', '');
+        end;
+
+        // Caso 2: {"error": "..."}
+        if Result.IsEmpty then
+          Result := LJson.GetValue<string>('error', '');
+
+        // Caso 3: {"message": "..."}
+        if Result.IsEmpty then
+          Result := LJson.GetValue<string>('message', '');
+      finally
+        LJson.Free;
+      end;
+    end;
+  except
+    // Ignore parse errors
+  end;
+end;
+
 constructor TRadIAProviderBase.Create(const AConfig: IAIConfig);
 begin
   inherited Create;
@@ -462,6 +498,7 @@ begin
     var
       LBufferText: string;
       LErrorMsg: string;
+      LJsonError: string;
     begin
       System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
       LProviderRef.GetProviderType;
@@ -485,7 +522,17 @@ begin
       except
         on E: Exception do
         begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
+          LErrorMsg := E.Message;
+          if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
+          begin
+            LJsonError := ExtractErrorMessageFromJson(LBufferText);
+            if not LJsonError.IsEmpty then
+              LErrorMsg := LErrorMsg + ' Response: ' + LJsonError
+            else if not LBufferText.Trim.IsEmpty then
+              LErrorMsg := LErrorMsg + ' Response: ' + LBufferText.Trim;
+          end;
+          LErrorMsg := E.ClassName + ': ' + LErrorMsg;
+          
           TThread.Queue(nil,
             TThreadProcedure(
               procedure
