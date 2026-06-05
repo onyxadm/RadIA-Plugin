@@ -13,6 +13,11 @@ object FormAIConfig: TFormAIConfig
   Font.Style = []
   Position = poOwnerFormCenter
   TextHeight = 15
+  object splSidebar: TSplitter
+    Left = 200
+    Top = 0
+    Height = 487
+  end
   object pnlSidebar: TPanel
     Left = 0
     Top = 0
@@ -33,21 +38,18 @@ object FormAIConfig: TFormAIConfig
       TabOrder = 0
     end
   end
-  object splSidebar: TSplitter
-    Left = 200
-    Top = 0
-    Width = 3
-    Height = 487
-  end
   object pgcSettings: TPageControl
-    AlignWithMargins = True
-    Left = 206
-    Top = 3
-    Width = 631
-    Height = 481
+    Left = 203
+    Top = 0
+    Width = 637
+    Height = 487
     ActivePage = tsGemini
     Align = alClient
     TabOrder = 0
+    ExplicitLeft = 206
+    ExplicitTop = 3
+    ExplicitWidth = 631
+    ExplicitHeight = 481
     object tsGemini: TTabSheet
       Caption = 'Gemini'
       TabVisible = False
@@ -182,15 +184,13 @@ object FormAIConfig: TFormAIConfig
         AlignWithMargins = True
         Left = 3
         Top = 3
-        Width = 629
-        Height = 408
+        Width = 623
+        Height = 471
         Align = alClient
         ScrollBars = ssVertical
         TabOrder = 0
-        ExplicitLeft = 16
-        ExplicitTop = 24
-        ExplicitWidth = 360
-        ExplicitHeight = 260
+        ExplicitWidth = 617
+        ExplicitHeight = 465
       end
     end
     object tsTemplates: TTabSheet
@@ -200,31 +200,34 @@ object FormAIConfig: TFormAIConfig
         Left = 0
         Top = 0
         Width = 180
-        Height = 414
+        Height = 477
         Align = alLeft
         BevelOuter = bvNone
         ShowCaption = False
         TabOrder = 0
+        ExplicitHeight = 471
         object lstTemplates: TListBox
           AlignWithMargins = True
           Left = 3
           Top = 3
           Width = 174
-          Height = 368
+          Height = 431
           Align = alClient
           ItemHeight = 15
           TabOrder = 0
           OnClick = lstTemplatesClick
+          ExplicitHeight = 425
         end
         object pnlTemplatesLeftButtons: TPanel
           Left = 0
-          Top = 374
+          Top = 437
           Width = 180
           Height = 40
           Align = alBottom
           BevelOuter = bvNone
           ShowCaption = False
           TabOrder = 1
+          ExplicitTop = 431
           object btnNewTemplate: TButton
             AlignWithMargins = True
             Left = 3
@@ -252,12 +255,14 @@ object FormAIConfig: TFormAIConfig
       object pnlTemplatesClient: TPanel
         Left = 180
         Top = 0
-        Width = 455
-        Height = 414
+        Width = 449
+        Height = 477
         Align = alClient
         BevelOuter = bvNone
         ShowCaption = False
         TabOrder = 1
+        ExplicitWidth = 443
+        ExplicitHeight = 471
         object lblTemplateName: TLabel
           Left = 14
           Top = 6
@@ -332,7 +337,7 @@ object FormAIConfig: TFormAIConfig
     TabOrder = 1
     object btnSave: TButton
       AlignWithMargins = True
-      Left = 490
+      Left = 681
       Top = 3
       Width = 75
       Height = 27
@@ -343,7 +348,7 @@ object FormAIConfig: TFormAIConfig
     end
     object btnCancel: TButton
       AlignWithMargins = True
-      Left = 571
+      Left = 762
       Top = 3
       Width = 75
       Height = 27
