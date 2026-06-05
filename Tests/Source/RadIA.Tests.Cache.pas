@@ -126,7 +126,8 @@ begin
   Assert.IsTrue(FCache.Get('hash-1', LResponse));
   Sleep(5);
   
-  { Now, put hash-6. The LRU entry (which is hash-2, since hash-1 was accessed recently) should be evicted }
+  { Now, put hash-6. The LRU entry (which is hash-2, since hash-1 was accessed recently and hash-3,4,5 are newer than hash-2) should be evicted.
+    Since FLimit is 5, 5 div 10 = 0, so LEvictCount defaults to 1. Thus, only 1 item (hash-2) is evicted. }
   FCache.Put('hash-6', 'resp-6');
   
   Assert.IsTrue(FCache.Get('hash-1', LResponse), 'hash-1 should still be present since it was recently accessed');
