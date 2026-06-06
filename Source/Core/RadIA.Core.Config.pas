@@ -646,67 +646,91 @@ end;
 
 function TRadIAConfig.GetApiKey(const AProviderName: string): string;
 begin
+  if AProviderName.IsEmpty then
+    Exit('');
   if not FDynamicApiKeys.TryGetValue(AProviderName.ToLower, Result) then
     Result := '';
 end;
 
 procedure TRadIAConfig.SetApiKey(const AProviderName: string; const AKey: string);
 begin
+  if AProviderName.IsEmpty then
+    Exit;
   FDynamicApiKeys.AddOrSetValue(AProviderName.ToLower, CleanApiKey(AKey));
 end;
 
 function TRadIAConfig.GetActiveModel(const AProviderName: string): string;
 begin
+  if AProviderName.IsEmpty then
+    Exit('');
   if not FDynamicModels.TryGetValue(AProviderName.ToLower, Result) then
     Result := '';
 end;
 
 procedure TRadIAConfig.SetActiveModel(const AProviderName: string; const AModel: string);
 begin
+  if AProviderName.IsEmpty then
+    Exit;
   FDynamicModels.AddOrSetValue(AProviderName.ToLower, AModel);
 end;
 
 function TRadIAConfig.GetTemperature(const AProviderName: string): Double;
 begin
+  if AProviderName.IsEmpty then
+    Exit(0.7);
   if not FDynamicTemperatures.TryGetValue(AProviderName.ToLower, Result) then
     Result := 0.7;
 end;
 
 procedure TRadIAConfig.SetTemperature(const AProviderName: string; const AValue: Double);
 begin
+  if AProviderName.IsEmpty then
+    Exit;
   FDynamicTemperatures.AddOrSetValue(AProviderName.ToLower, AValue);
 end;
 
 function TRadIAConfig.GetMaxTokens(const AProviderName: string): Integer;
 begin
+  if AProviderName.IsEmpty then
+    Exit(2048);
   if not FDynamicMaxTokens.TryGetValue(AProviderName.ToLower, Result) then
     Result := 2048;
 end;
 
 procedure TRadIAConfig.SetMaxTokens(const AProviderName: string; const AValue: Integer);
 begin
+  if AProviderName.IsEmpty then
+    Exit;
   FDynamicMaxTokens.AddOrSetValue(AProviderName.ToLower, AValue);
 end;
 
 function TRadIAConfig.GetTimeout(const AProviderName: string): Integer;
 begin
+  if AProviderName.IsEmpty then
+    Exit(60);
   if not FDynamicTimeouts.TryGetValue(AProviderName.ToLower, Result) then
     Result := 60;
 end;
 
 procedure TRadIAConfig.SetTimeout(const AProviderName: string; const AValue: Integer);
 begin
+  if AProviderName.IsEmpty then
+    Exit;
   FDynamicTimeouts.AddOrSetValue(AProviderName.ToLower, AValue);
 end;
 
 function TRadIAConfig.GetProviderBaseUrl(const AProviderName: string): string;
 begin
+  if AProviderName.IsEmpty then
+    Exit('');
   if not FDynamicBaseUrls.TryGetValue(AProviderName.ToLower, Result) then
     Result := '';
 end;
 
 procedure TRadIAConfig.SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
 begin
+  if AProviderName.IsEmpty then
+    Exit;
   FDynamicBaseUrls.AddOrSetValue(AProviderName.ToLower, AUrl);
 end;
 
