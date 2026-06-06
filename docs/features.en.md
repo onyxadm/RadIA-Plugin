@@ -35,4 +35,7 @@ This document contains the complete checklist, categorization, and development s
 | **Smart Build Debugger** | Integration | Message tab integration to resolve compiler issues with one-click fixes. | ✅ Completed |
 | **Auto XML Documentation** | Generation | Write Delphi-compliant XML help comments above methods automatically. | ✅ Completed |
 | **DTO & Model Converter** | Generation | Convert JSON or SQL DDL payloads into Object Pascal data classes (DTOs) or records (DEXT ORM, Aurelius, REST.Json, or Vanilla). | ✅ Completed |
+| **Slash Commands Popup Menu (/)** | Chat UX | Floating suggestions and autocomplete menu when typing `/` in the chat input. | ⏳ In Development |
+| **Stack Trace Assistant** | Integration | Error log/stack trace analyzer integrated with active unit context. | ⏳ In Development |
+| **Static Code Analysis** | Integration | Code scan for memory leaks (missing try..finally) and SOLID/Clean Code anti-patterns. | ⏳ In Development |
 | **Secure Credentials** | Security | API Keys saved securely inside the Windows Registry using DPAPI. | ✅ Completed |

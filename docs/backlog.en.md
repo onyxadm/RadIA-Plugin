@@ -141,6 +141,19 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
 
 ---
 
+## ⏳ In Development
+
+### 1. Stack Trace Assistant (Debug Companion - Phase 1) - Item #23
+*   **Goal**: Analyze pasted Stack Traces (from IDE exceptions, MadExcept, or EurekaLog) to pinpoint the failing unit/method and suggest fixes.
+
+### 2. Memory Leak & Anti-pattern Analyzer (Static Analysis) - Item #24
+*   **Goal**: Asynchronously analyze the active unit in the editor to locate memory leaks (e.g., missing try..finally) and semantic violations of SOLID/Clean Code.
+
+### 3. Popup Shortcut Menu for Slash Commands (/) - Item #25
+*   **Goal**: Show a modern shortcut and autocomplete popup when typing `/` in the chat input.
+
+---
+
 ## 🔲 Pending Items
 
 ### 1. Cache Management Panel (Item #13)
