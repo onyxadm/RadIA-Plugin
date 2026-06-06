@@ -26,6 +26,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Ollama Local/Rede** | Provedor | Integração com modelos locais open-source sem chaves pagas e autodescoberta de tags. | ✅ Concluído |
 | **OpenRouter** | Provedor | Suporte nativo ao OpenRouter com streaming SSE, carregamento de modelos dinâmico e integração completa. | ✅ Concluído |
 | **Custom Base URL** | Provedor | Suporte a qualquer endpoint compatível com OpenAI (Groq, DeepSeek, LM Studio). | ✅ Concluído |
+| **Provedores Dinâmicos** | Provedor | Arquitetura plugin-like orientada a metadados para registro dinâmico de novos modelos/backends de IA. | ✅ Concluído |
 | **Contexto de Projeto** | Inteligência | Carregamento automático de instruções de system e arquivos de contexto via `.radia`. | ✅ Concluído |
 | **Rastreamento de Tokens e Custo**| Transparência | Contador dinâmico de consumo e custo acumulado estimado em USD (locale invariant). | ✅ Concluído |
 | **Limite de Cota Local** | Transparência | Definição de limite de tokens mensal com bloqueio de chamadas e botão de reset. | ✅ Concluído |
