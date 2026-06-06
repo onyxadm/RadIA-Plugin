@@ -24,6 +24,8 @@ type
     pnlGroq: TPanel;
     tsOllama: TTabSheet;
     pnlOllama: TPanel;
+    tsOpenRouter: TTabSheet;
+    pnlOpenRouter: TPanel;
     tsSystemPrompt: TTabSheet;
     pnlSystemPrompt: TPanel;
     lblGeminiKey: TLabel;
@@ -40,6 +42,8 @@ type
     edtDeepSeekKey: TEdit;
     lblGroqKey: TLabel;
     edtGroqKey: TEdit;
+    lblOpenRouterKey: TLabel;
+    edtOpenRouterKey: TEdit;
     memSystemPrompt: TMemo;
     tsTemplates: TTabSheet;
     pnlTemplatesLeft: TPanel;
@@ -127,13 +131,13 @@ begin
   FTemplateManager := TPromptTemplateManager.Create;
   FTemplateManager.Load;
 
-  { Create advanced settings groupbox for each provider tab }
   CreateProviderAdvancedControls(tsGemini, ptGemini);
   CreateProviderAdvancedControls(tsOpenAI, ptOpenAI);
   CreateProviderAdvancedControls(tsClaude, ptClaude);
   CreateProviderAdvancedControls(tsDeepSeek, ptDeepSeek);
   CreateProviderAdvancedControls(tsGroq, ptGroq);
   CreateProviderAdvancedControls(tsOllama, ptOllama);
+  CreateProviderAdvancedControls(tsOpenRouter, ptOpenRouter);
 
   { Create General/Logs Tab and controls programmatically }
   tsGeneral := TTabSheet.Create(Self);
@@ -371,6 +375,9 @@ begin
   pnlOllama.StyleElements := pnlOllama.StyleElements - [seClient, seBorder];
   pnlOllama.Color := LColors.BgBase;
   pnlOllama.ParentBackground := False;
+  pnlOpenRouter.StyleElements := pnlOpenRouter.StyleElements - [seClient, seBorder];
+  pnlOpenRouter.Color := LColors.BgBase;
+  pnlOpenRouter.ParentBackground := False;
   pnlSystemPrompt.StyleElements := pnlSystemPrompt.StyleElements - [seClient, seBorder];
   pnlSystemPrompt.Color := LColors.BgBase;
   pnlSystemPrompt.ParentBackground := False;
@@ -414,6 +421,10 @@ begin
   edtOllamaUrl.StyleElements := edtOllamaUrl.StyleElements - [seClient, seBorder];
   edtOllamaUrl.Color := LColors.InputBgColor;
   edtOllamaUrl.Font.Color := LColors.TextColor;
+  
+  edtOpenRouterKey.StyleElements := edtOpenRouterKey.StyleElements - [seClient, seBorder];
+  edtOpenRouterKey.Color := LColors.InputBgColor;
+  edtOpenRouterKey.Font.Color := LColors.TextColor;
 
   // Labels
   lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
@@ -430,6 +441,8 @@ begin
   lblGroqKey.Font.Color := LColors.TextColor;
   lblOllamaUrl.StyleElements := lblOllamaUrl.StyleElements - [seClient, seBorder];
   lblOllamaUrl.Font.Color := LColors.TextColor;
+  lblOpenRouterKey.StyleElements := lblOpenRouterKey.StyleElements - [seClient, seBorder];
+  lblOpenRouterKey.Font.Color := LColors.TextColor;
 
   // Aba de Templates
   pnlTemplatesLeft.StyleElements := pnlTemplatesLeft.StyleElements - [seClient, seBorder];
@@ -549,6 +562,7 @@ begin
   edtClaudeKey.Text := FConfig.GetApiKey(ptClaude);
   edtDeepSeekKey.Text := FConfig.GetApiKey(ptDeepSeek);
   edtGroqKey.Text := FConfig.GetApiKey(ptGroq);
+  edtOpenRouterKey.Text := FConfig.GetApiKey(ptOpenRouter);
   memSystemPrompt.Text := FConfig.SystemPrompt;
   edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
 
@@ -618,6 +632,7 @@ begin
   FConfig.SetApiKey(ptClaude, Trim(edtClaudeKey.Text));
   FConfig.SetApiKey(ptDeepSeek, Trim(edtDeepSeekKey.Text));
   FConfig.SetApiKey(ptGroq, Trim(edtGroqKey.Text));
+  FConfig.SetApiKey(ptOpenRouter, Trim(edtOpenRouterKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := LOllamaUrl;
 
@@ -839,7 +854,9 @@ begin
   else if SameText(ACategoryName, 'Groq') then
     pgcSettings.ActivePage := tsGroq
   else if SameText(ACategoryName, 'Ollama') then
-    pgcSettings.ActivePage := tsOllama;
+    pgcSettings.ActivePage := tsOllama
+  else if SameText(ACategoryName, 'OpenRouter') then
+    pgcSettings.ActivePage := tsOpenRouter;
 end;
 
 end.

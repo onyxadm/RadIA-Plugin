@@ -8,7 +8,7 @@ uses
 
 type
   { Provider page configuration tag }
-  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOllama, ptSystem, ptTemplates);
+  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOllama, ptOpenRouter, ptSystem, ptTemplates);
 
   { INTAAddInOptions implementation for RadIA Options }
   TRadIAAddInOptions = class(TInterfacedObject, INTAAddInOptions)
@@ -57,7 +57,7 @@ begin
     ptNone: Result := 'RadIA.General';
     ptSystem: Result := 'RadIA.System Prompt';
     ptTemplates: Result := 'RadIA.Templates';
-    ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOllama: 
+    ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOllama, ptOpenRouter: 
       Result := 'RadIA.AI Providers.' + FTitle;
   else
     Result := 'RadIA.' + FTitle;
@@ -85,6 +85,7 @@ begin
       ptDeepSeek: FFrame.SelectCategoryByName('DeepSeek');
       ptGroq: FFrame.SelectCategoryByName('Groq');
       ptOllama: FFrame.SelectCategoryByName('Ollama');
+      ptOpenRouter: FFrame.SelectCategoryByName('OpenRouter');
       ptSystem: FFrame.SelectCategoryByName('System Prompt');
       ptTemplates: FFrame.SelectCategoryByName('Templates');
     end;

@@ -231,6 +231,7 @@ begin
     AddPage('DeepSeek', ptDeepSeek);
     AddPage('Groq', ptGroq);
     AddPage('Ollama', ptOllama);
+    AddPage('OpenRouter', ptOpenRouter);
     AddPage('System Prompt', ptSystem);
     AddPage('Templates', ptTemplates);
   end;

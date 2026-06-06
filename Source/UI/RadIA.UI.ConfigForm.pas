@@ -75,6 +75,7 @@ begin
   tvCategories.Items.AddChild(LNodeProviders, 'DeepSeek');
   tvCategories.Items.AddChild(LNodeProviders, 'Groq');
   tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
+  tvCategories.Items.AddChild(LNodeProviders, 'OpenRouter');
   
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;

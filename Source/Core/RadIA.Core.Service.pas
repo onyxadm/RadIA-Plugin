@@ -69,7 +69,7 @@ implementation
 uses
   System.IOUtils, System.JSON, System.Threading, System.Math, RadIA.OTA.Helper, RadIA.Core.ProjectContext,
   RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama,
-  RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Core.Logger;
+  RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter, RadIA.Core.Logger;
 
 procedure LogService(const AMsg: string);
 begin
@@ -185,12 +185,13 @@ var
 begin
   LProviderType := FConfig.GetActiveProvider;
   case LProviderType of
-    ptGemini:   Result := TRadIAGeminiProvider.Create(FConfig);
-    ptOpenAI:   Result := TRadIAOpenAIProvider.Create(FConfig);
-    ptClaude:   Result := TRadIAClaudeProvider.Create(FConfig);
-    ptOllama:   Result := TRadIAOllamaProvider.Create(FConfig);
-    ptDeepSeek: Result := TRadIADeepSeekProvider.Create(FConfig);
-    ptGroq:     Result := TRadIAGroqProvider.Create(FConfig);
+    ptGemini:     Result := TRadIAGeminiProvider.Create(FConfig);
+    ptOpenAI:     Result := TRadIAOpenAIProvider.Create(FConfig);
+    ptClaude:     Result := TRadIAClaudeProvider.Create(FConfig);
+    ptOllama:     Result := TRadIAOllamaProvider.Create(FConfig);
+    ptDeepSeek:   Result := TRadIADeepSeekProvider.Create(FConfig);
+    ptGroq:       Result := TRadIAGroqProvider.Create(FConfig);
+    ptOpenRouter: Result := TRadIAOpenRouterProvider.Create(FConfig);
   else
     raise Exception.Create('Invalid active provider type selected.');
   end;
