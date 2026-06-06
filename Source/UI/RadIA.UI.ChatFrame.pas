@@ -397,7 +397,6 @@ end;
 
 procedure TFrameAIChat.UpdateModelsCombo;
 var
-  LActiveModel: string;
   LProvider: IIAProvider;
   LGuard: ILifecycleGuard;
 begin
@@ -412,31 +411,46 @@ begin
     LProvider.FetchAvailableModelsAsync(
       procedure(AModels: TArray<string>; AError: string)
       var
-        LModel: string;
+        LProviderRef: IIAProvider;
       begin
         if not LGuard.IsAlive then
           Exit;
           
-        cbModel.Items.Clear;
-        for LModel in AModels do
-        begin
-          cbModel.Items.Add(LModel);
-        end;
-        
-        LActiveModel := FConfig.GetActiveModel(LProvider.GetProviderType);
-        cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
-        if cbModel.ItemIndex = -1 then
-        begin
-          cbModel.ItemIndex := 0;
-          if cbModel.Items.Count > 0 then
+        LProviderRef := LProvider;
+        TThread.Queue(nil,
+          procedure
+          var
+            LModel: string;
+            LActiveModel: string;
+            LProvType: TAIProviderType;
           begin
-            FConfig.SetActiveModel(LProvider.GetProviderType, cbModel.Items[0]);
-            FConfig.Save;
-          end;
-        end;
-          
-        cbModel.Enabled := True;
-        SendModelsUpdateToWeb;
+            if not LGuard.IsAlive then
+              Exit;
+              
+            cbModel.Items.Clear;
+            for LModel in AModels do
+              cbModel.Items.Add(LModel);
+            
+            if Assigned(LProviderRef) then
+            begin
+              LProvType := LProviderRef.GetProviderType;
+              LActiveModel := FConfig.GetActiveModel(LProvType);
+              cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
+              if cbModel.ItemIndex = -1 then
+              begin
+                cbModel.ItemIndex := 0;
+                if cbModel.Items.Count > 0 then
+                begin
+                  FConfig.SetActiveModel(LProvType, cbModel.Items[0]);
+                  FConfig.Save;
+                end;
+              end;
+            end;
+              
+            cbModel.Enabled := True;
+            SendModelsUpdateToWeb;
+          end
+        );
       end);
   except
     on E: Exception do
