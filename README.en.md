@@ -59,6 +59,12 @@ RadIA can be installed in two ways: **Automated via PowerShell** (recommended) o
 
 👉 [**Complete Installation and Configuration Guide (docs/install_config.en.md)**](docs/install_config.en.md)
 
+### 5.1 Adding a New AI Provider (Plugin Architecture)
+
+RadIA employs a metadata-driven provider registry system (`TProviderRegistry`). This allows developers to add new AI backends in a fully dynamic and decoupled manner. For a step-by-step tutorial on how to implement your provider class and perform auto-registration, please check our:
+
+👉 [**Guide for Adding New Providers (docs/new_provider_guide.en.md)**](docs/new_provider_guide.en.md)
+
 ---
 
 ### 6. Repository Structure
