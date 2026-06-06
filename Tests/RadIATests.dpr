@@ -21,6 +21,7 @@ uses
   RadIA.Core.PromptTemplates in '..\Source\Core\RadIA.Core.PromptTemplates.pas',
   RadIA.Core.ProjectContext in '..\Source\Core\RadIA.Core.ProjectContext.pas',
   RadIA.Core.Sessions in '..\Source\Core\RadIA.Core.Sessions.pas',
+  RadIA.Core.DTO.Generator in '..\Source\Core\RadIA.Core.DTO.Generator.pas',
   RadIA.OTA.Helper in '..\Source\Integration\RadIA.OTA.Helper.pas',
   RadIA.Provider.Base in '..\Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in '..\Source\Providers\RadIA.Provider.Gemini.pas',
@@ -46,7 +47,8 @@ uses
   RadIA.Tests.ProvidersEx in 'Source\RadIA.Tests.ProvidersEx.pas',
   RadIA.Tests.Logger in 'Source\RadIA.Tests.Logger.pas',
   RadIA.Tests.Sessions in 'Source\RadIA.Tests.Sessions.pas',
-  RadIA.Tests.Quota in 'Source\RadIA.Tests.Quota.pas';
+  RadIA.Tests.Quota in 'Source\RadIA.Tests.Quota.pas',
+  RadIA.Tests.DTOGenerator in 'Source\RadIA.Tests.DTOGenerator.pas';
 
 var
   Runner: ITestRunner;

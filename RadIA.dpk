@@ -51,6 +51,7 @@ contains
   RadIA.Core.ProjectContext in 'Source\Core\RadIA.Core.ProjectContext.pas',
   RadIA.Core.Mediator in 'Source\Core\RadIA.Core.Mediator.pas',
   RadIA.Core.Sessions in 'Source\Core\RadIA.Core.Sessions.pas',
+  RadIA.Core.DTO.Generator in 'Source\Core\RadIA.Core.DTO.Generator.pas',
   RadIA.Provider.Base in 'Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in 'Source\Providers\RadIA.Provider.Gemini.pas',
   RadIA.Provider.OpenAI in 'Source\Providers\RadIA.Provider.OpenAI.pas',

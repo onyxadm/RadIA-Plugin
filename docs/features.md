@@ -34,4 +34,5 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Smart Diff (Comparador)** | Integração | Visualização lado a lado de código sugerido vs. original com aplicação instantânea. | ✅ Concluído |
 | **Smart Build Debugger** | Integração | Clique com o botão direito nos erros de compilação da IDE para correções instantâneas. | ✅ Concluído |
 | **Documentação XML Automática** | Geração | Geração automática de comentários `/// <summary>` sobre os métodos da unit. | ✅ Concluído |
+| **Conversor de DTO e Modelos** | Geração | Conversor de payload JSON ou DDL SQL para classes de dados (DTOs) ou records Object Pascal (com DEXT ORM, Aurelius, REST.Json ou Vanilla). | ✅ Concluído |
 | **Armazenamento Seguro** | Segurança | Chaves de API salvas localmente criptografadas usando a API do Windows DPAPI. | ✅ Concluído |

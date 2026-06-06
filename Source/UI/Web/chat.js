@@ -89,6 +89,21 @@ const sessionsSidebar = document.getElementById('sessions-sidebar');
 const btnNewChatSidebar = document.getElementById('btn-new-chat-sidebar');
 const sessionsList    = document.getElementById('sessions-list');
 
+// Elementos do Gerador
+const chatWrapper          = document.getElementById('chat-wrapper');
+const generatorsWrapper    = document.getElementById('generators-wrapper');
+const btnGenerators        = document.getElementById('btn-generators');
+const btnGenerateModel     = document.getElementById('btn-generate-model');
+const btnCopyGenerator     = document.getElementById('btn-copy-generator');
+const btnInsertGenerator   = document.getElementById('btn-insert-generator');
+const generatorInput       = document.getElementById('generator-input');
+const generatorInputType   = document.getElementById('generator-input-type');
+const generatorOutputType  = document.getElementById('generator-output-type');
+const generatorPreviewCard = document.getElementById('generator-preview-card');
+const generatorOutputCode  = document.getElementById('generator-output-code');
+
+let generatorAccumulatedCode = '';
+
 // ============================================================
 //  Nomes e ícones dos remetentes (SVG Premium)
 // ============================================================
@@ -209,21 +224,84 @@ function handleSend() {
   promptTextarea.style.height = 'auto';
 }
 
+function showTab(tabName) {
+  if (tabName === 'generators') {
+    chatWrapper.classList.add('hidden');
+    generatorsWrapper.classList.remove('hidden');
+    btnGenerators.classList.add('active');
+  } else {
+    generatorsWrapper.classList.add('hidden');
+    chatWrapper.classList.remove('hidden');
+    btnGenerators.classList.remove('active');
+  }
+}
+
 // Eventos dos botões do topo
-btnNewChat.addEventListener('click', () => postMessageToDelphi({ action: 'new_chat' }));
+btnGenerators.addEventListener('click', () => {
+  if (generatorsWrapper.classList.contains('hidden')) {
+    showTab('generators');
+  } else {
+    showTab('chat');
+  }
+});
+
+btnNewChat.addEventListener('click', () => {
+  showTab('chat');
+  postMessageToDelphi({ action: 'new_chat' });
+});
+
 btnClearChat.addEventListener('click', () => {
   if (confirm('Limpar o histórico da conversa atual?')) {
     postMessageToDelphi({ action: 'clear_chat' });
   }
 });
+
 btnHistory.addEventListener('click', () => {
   // Alterna o estado recolhido da sidebar HTML
   sessionsSidebar.classList.toggle('collapsed');
 });
+
 btnSettings.addEventListener('click', () => postMessageToDelphi({ action: 'open_settings' }));
 
 // Novo chat pela sidebar
-btnNewChatSidebar.addEventListener('click', () => postMessageToDelphi({ action: 'new_chat' }));
+btnNewChatSidebar.addEventListener('click', () => {
+  showTab('chat');
+  postMessageToDelphi({ action: 'new_chat' });
+});
+
+// Ações do Gerador
+btnGenerateModel.addEventListener('click', () => {
+  const inputVal = generatorInput.value.trim();
+  if (!inputVal) return;
+
+  btnGenerateModel.disabled = true;
+  btnGenerateModel.textContent = 'Generating...';
+  generatorAccumulatedCode = '';
+  generatorPreviewCard.classList.add('hidden');
+  generatorOutputCode.textContent = '';
+
+  postMessageToDelphi({
+    action: 'generate_dto',
+    input: inputVal,
+    inputType: generatorInputType.value,
+    outputType: generatorOutputType.value
+  });
+});
+
+btnCopyGenerator.addEventListener('click', () => {
+  navigator.clipboard.writeText(generatorAccumulatedCode).then(() => {
+    const orig = btnCopyGenerator.innerHTML;
+    btnCopyGenerator.innerHTML = SVG_ICONS.check;
+    setTimeout(() => { btnCopyGenerator.innerHTML = orig; }, 2000);
+  });
+});
+
+btnInsertGenerator.addEventListener('click', () => {
+  postMessageToDelphi({ action: 'apply_code', code: generatorAccumulatedCode });
+  const orig = btnInsertGenerator.innerHTML;
+  btnInsertGenerator.innerHTML = SVG_ICONS.check;
+  setTimeout(() => { btnInsertGenerator.innerHTML = orig; }, 2000);
+});
 
 // Mudança de Provedores e Modelos
 selectProvider.addEventListener('change', () => {
@@ -635,6 +713,7 @@ function updateSessions(sessions, activeSessionId) {
     // Seleção de Sessão ao clicar no item
     item.addEventListener('click', (e) => {
       if (item.classList.contains('renaming')) return;
+      showTab('chat');
       postMessageToDelphi({ action: 'select_session', id: session.id });
     });
 
@@ -682,6 +761,28 @@ function startRename(item, sessionId, nameEl) {
   input.addEventListener('blur', saveRename);
 }
 
+function appendGeneratorCode(text, isDone) {
+  if (text === undefined || text === null) text = '';
+  
+  if (generatorAccumulatedCode === '' && text !== '') {
+    generatorPreviewCard.classList.remove('hidden');
+    generatorOutputCode.textContent = '';
+  }
+  
+  generatorAccumulatedCode += text;
+  generatorOutputCode.textContent = generatorAccumulatedCode;
+  
+  if (isDone) {
+    try {
+      Prism.highlightElement(generatorOutputCode);
+    } catch (e) {
+      // Ignorar ou logar erro de realce silenciosamente
+    }
+    btnGenerateModel.disabled = false;
+    btnGenerateModel.textContent = 'Generate Model';
+  }
+}
+
 // ============================================================
 //  Listener de mensagens do Delphi (WebView2)
 // ============================================================
@@ -689,18 +790,19 @@ if (window.chrome && window.chrome.webview) {
   window.chrome.webview.addEventListener('message', event => {
     const data = event.data;
     switch (data.action) {
-      case 'add_message':       addMessage(data.role, data.text, data.provider, data.model); break;
-      case 'clear_chat':        clearChat();                                                 break;
-      case 'set_theme':         setTheme(data);                                              break;
-      case 'update_tokens':     updateTokens(data.text);                                     break;
-      case 'show_typing':       showTypingIndicator();                                       break;
-      case 'hide_typing':       hideTypingIndicator();                                       break;
-      case 'append_message':    appendMessage(data.text, data.isDone, data.provider, data.model); break;
-      case 'initialize_config': initializeConfig(data);                                      break;
-      case 'update_models':     updateModelsList(data.models, data.activeModel);             break;
-      case 'set_request_state': setRequestState(data.inProgress);                            break;
-      case 'set_context':       setContextText(data.text);                                   break;
-      case 'update_sessions':   updateSessions(data.sessions, data.activeSessionId);         break;
+      case 'add_message':           addMessage(data.role, data.text, data.provider, data.model); break;
+      case 'clear_chat':            clearChat();                                                 break;
+      case 'set_theme':             setTheme(data);                                              break;
+      case 'update_tokens':         updateTokens(data.text);                                     break;
+      case 'show_typing':           showTypingIndicator();                                       break;
+      case 'hide_typing':           hideTypingIndicator();                                       break;
+      case 'append_message':        appendMessage(data.text, data.isDone, data.provider, data.model); break;
+      case 'initialize_config':     initializeConfig(data);                                      break;
+      case 'update_models':         updateModelsList(data.models, data.activeModel);             break;
+      case 'set_request_state':     setRequestState(data.inProgress);                            break;
+      case 'set_context':           setContextText(data.text);                                   break;
+      case 'update_sessions':       updateSessions(data.sessions, data.activeSessionId);         break;
+      case 'append_generator_code': appendGeneratorCode(data.text, data.isDone);                 break;
     }
   });
   window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));

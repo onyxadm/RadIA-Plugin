@@ -69,21 +69,44 @@ A versão v0.0.3 trouxe melhorias de arquitetura cruciais para a extensibilidade
 
 ## 🔲 v0.1.0 — Produtividade Avançada (Próxima Versão)
 
-### 3. Revisão Automática de Código no Save
+### 1. Conversor de DTO e Modelos (JSON / DDL ➔ Delphi) (✅ Concluído)
+*   **Objetivo**: Colar um payload JSON ou DDL de tabelas SQL e gerar classes de dados (DTOs) ou records em Object Pascal correspondentes com um clique.
+*   **Impacto**: ⭐⭐⭐⭐⭐ Alto
+*   **Complexidade**: Baixa
+
+### 2. Assistente de Stack Trace (Debug Companion - Fase 1)
+*   **Objetivo**: Analisar Stack Traces colados no chat (de exceções da IDE, MadExcept ou EurekaLog), apontando a unidade e o método causador do erro com sugestão de correção.
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 3. Analisador de Memory Leaks e Anti-patterns (Análise Estática)
+*   **Objetivo**: Analisar assincronamente a unit ativa no editor em busca de vazamentos de memória (ausência de try..finally) e violações semânticas de SOLID/Clean Code.
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 4. Revisão Automática de Código no Save
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção (ex: possíveis bugs, código duplicado ou falta de tratamento de exceção).
 *   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
 
-### 4. Histórico de Refatorações Aplicadas
+### 5. Histórico de Refatorações Aplicadas
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão **[Aplicar Alteração]** foi acionado, registrando o trecho original, o trecho aplicado, a data e o arquivo, permitindo revisão manual posterior.
 *   **Impacto**: ⭐⭐⭐ Médio
+*   **Complexidade**: Baixa
 
 ---
 
 ## 🔲 v0.2.0 — Administração e Diagnóstico
 
-### 5. Painel de Gerenciamento do Cache
+### 6. Assistente de Migração de Versão (Smart Migrate)
+*   **Objetivo**: Comando contextual de menu ou chat lateral para reescrever trechos selecionados de código procedurais/legados usando recursos modernos do Delphi (Unicode, PPL, FireDAC).
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 7. Painel de Gerenciamento do Cache
 *   **Objetivo**: Exibir uma tela de administração interna do cache de respostas, permitindo visualizar entradas em cache, limpar entradas específicas e ver o tamanho total do arquivo de cache sem editar o JSON manualmente.
 *   **Impacto**: ⭐⭐⭐ Médio
+*   **Complexidade**: Média
 
 ---
 
@@ -91,8 +114,9 @@ A versão v0.0.3 trouxe melhorias de arquitetura cruciais para a extensibilidade
 
 Os itens abaixo ainda estão em fase de concepção e avaliação de viabilidade técnica com a Open Tools API:
 
+- **Autocompletar Inline Inteligente (Ghost Text):** Sugestões de código em tempo real no editor de código com texto acinzentado estilo Copilot (Complexidade: Alta).
+- **Integração Automática com Depurador da IDE:** Captura dinâmica e análise automática de exceções ativas durante sessões de depuração de código (Complexidade: Alta).
 - **Geração automática de documentação de projeto** (varrer units e gerar um `docs/API.md` completo).
-- **Assistente de migração de versão do Delphi** (análise de compatibilidade de código ao migrar entre versões da IDE).
 - **Integração com GitHub Copilot / GitLab Duo** (bridging via protocolo LSP).
 - **Suporte nativo a macOS/Linux** via FPC/Lazarus (análise de viabilidade).
 

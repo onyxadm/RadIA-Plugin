@@ -68,21 +68,44 @@ Version v0.0.3 introduced critical architectural enhancements for extensibility 
 
 ## 🔲 v0.1.0 — Advanced Productivity (Next Version)
 
-### 3. Automatic Code Review on Save
+### 1. DTO and Model Converter (JSON / DDL ➔ Delphi) (✅ Completed)
+*   **Goal**: Paste a JSON payload or SQL table DDL to generate matching Object Pascal data classes (DTOs) or records with a single click.
+*   **Impact**: ⭐⭐⭐⭐⭐ High
+*   **Complexity**: Low
+
+### 2. Stack Trace Assistant (Debug Companion - Phase 1)
+*   **Goal**: Analyze pasted Stack Traces (from IDE exceptions, MadExcept, or EurekaLog) to pinpoint the failing unit/method and suggest fixes.
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 3. Memory Leak & Anti-pattern Analyzer (Static Analysis)
+*   **Goal**: Asynchronously analyze the active unit in the editor to locate memory leaks (e.g., missing try..finally) and semantic violations of SOLID/Clean Code.
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 4. Automatic Code Review on Save
 *   **Goal**: Silently analyze the active unit on save and signal in the RadIA panel if the AI found points of attention (e.g., potential bugs, duplicated code, or missing exception handling).
 *   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Medium
 
-### 4. Applied Refactoring History
+### 5. Applied Refactoring History
 *   **Goal**: Maintain an auditable log of every time the **[Apply Changes]** button was clicked, recording the original snippet, the applied snippet, the date, and the file, allowing future manual review.
 *   **Impact**: ⭐⭐⭐ Medium
+*   **Complexity**: Low
 
 ---
 
 ## 🔲 v0.2.0 — Administration & Diagnostics
 
-### 5. Cache Management Panel
+### 6. Version Migration Assistant (Smart Migrate)
+*   **Goal**: Contextual menu or sidebar action to rewrite legacy/procedural code blocks utilizing modern Delphi features (Unicode, PPL, FireDAC).
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 7. Cache Management Panel
 *   **Goal**: Display an internal administration screen for the response cache, allowing users to view cached entries, delete specific ones, and see the total cache file size without manually editing JSON.
 *   **Impact**: ⭐⭐⭐ Medium
+*   **Complexity**: Medium
 
 ---
 
@@ -90,8 +113,9 @@ Version v0.0.3 introduced critical architectural enhancements for extensibility 
 
 The items below are still in the conceptual stage and are being evaluated for technical feasibility with the Open Tools API:
 
+- **Smart Inline Autocomplete (Ghost Text):** Real-time gray text code suggestions inside the editor similar to Copilot (Complexity: High).
+- **IDE Debugger Auto Hook:** Dynamic capture and automatic explanation of active exceptions raised during debug sessions (Complexity: High).
 - **Automatic project documentation generation** (scan units and generate a complete `docs/API.md`).
-- **Delphi version migration assistant** (code compatibility analysis when migrating between IDE versions).
 - **GitHub Copilot / GitLab Duo integration** (bridging via LSP protocol).
 - **Native macOS/Linux support** via FPC/Lazarus (feasibility analysis).
 

@@ -863,3 +863,158 @@ body.light-theme .session-action-btn:hover {
   color: var(--accent-hover);
   font-weight: 600;
 }
+
+/* =========================================================
+   Estilos do Conversor DTO & Geradores (v0.1.0)
+   ========================================================= */
+#generators-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  background-color: var(--bg-base);
+}
+
+#generators-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.generator-card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.generator-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.generator-form-group label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-secondary);
+}
+
+.generator-form-group textarea {
+  width: 100%;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--fg-primary);
+  font-family: Consolas, "Cascadia Code", monospace;
+  font-size: 12.5px;
+  padding: 10px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.generator-form-group textarea:focus {
+  border-color: var(--accent);
+}
+
+.generator-options-row {
+  display: flex;
+  gap: 14px;
+}
+
+.generator-options-row .generator-form-group {
+  flex: 1;
+}
+
+.generator-form-group select {
+  width: 100%;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--fg-primary);
+  padding: 8px 10px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s ease;
+}
+
+/* Adicionando ícone de seta customizado nos selects do gerador */
+.generator-form-group {
+  position: relative;
+}
+
+.generator-options-row select {
+  padding-right: 28px;
+}
+
+.generator-options-row .generator-form-group::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid var(--fg-secondary);
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  pointer-events: none;
+}
+
+.btn-primary-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.2s ease;
+  outline: none;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  align-self: flex-end;
+}
+
+.btn-primary-gradient:hover {
+  filter: brightness(1.1);
+}
+
+.btn-primary-gradient:active {
+  transform: scale(0.98);
+}
+
+.generator-preview-card {
+  animation: fadeSlideIn 0.2s ease-out;
+}
+
+.generator-preview-card .code-block-container {
+  margin: 0;
+}
+
+/* Ocultar elementos */
+.hidden {
+  display: none !important;
+}
+
+/* Ativação do botão do header */
+.header-action-btn.active {
+  color: var(--accent-hover);
+  border-bottom: 2px solid var(--accent);
+  border-radius: 0;
+  padding-bottom: 2px;
+}

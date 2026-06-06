@@ -98,6 +98,7 @@ type
     procedure ApplyIDETheme;
     procedure UpdateVCLColors(const AColors: TRadIAThemeColors);
     procedure ProcessWebMessage(const AMessage: string);
+    procedure GenerateDTO(const AInput, AInputType, AOutputType: string);
     
     procedure SendInitialConfigToWeb;
     procedure SendModelsUpdateToWeb;
@@ -117,7 +118,8 @@ implementation
 
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
-  RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes;
+  RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes,
+  RadIA.Core.DTO.Generator;
 
 {$R *.dfm}
 
@@ -1043,6 +1045,20 @@ begin
           SendPromptToAI(LText);
         end));
     end
+    else if LAction = 'generate_dto' then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        var
+          LInput, LInputType, LOutputType: string;
+        begin
+          LInput := LJson.GetValue<string>('input', '');
+          LInputType := LJson.GetValue<string>('inputType', '');
+          LOutputType := LJson.GetValue<string>('outputType', '');
+          GenerateDTO(LInput, LInputType, LOutputType);
+        end));
+    end
     else if LAction = 'cancel_request' then
     begin
       TThread.Queue(nil,
@@ -1429,6 +1445,125 @@ begin
       btnSend.Enabled := True;
       PostToWebView('add_message', 'assistant', '**Error:** ' + E.Message, False, LActiveProvider, LActiveModel);
       PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+    end;
+  end;
+end;
+
+procedure TFrameAIChat.GenerateDTO(const AInput, AInputType, AOutputType: string);
+var
+  LPromptText: string;
+  LGuard: ILifecycleGuard;
+  LDoneHandled: Boolean;
+  LActiveProvider: string;
+  LActiveModel: string;
+begin
+  if FConfig.QuotaEnabled then
+  begin
+    FConfig.Load;
+    if FConfig.QuotaUsed >= FConfig.QuotaLimit then
+    begin
+      ShowMessage(Format('Não foi possível enviar a requisição: Cota mensal de tokens excedida (limite local de %s tokens atingido).',
+        [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
+      Exit;
+    end;
+  end;
+
+  LDoneHandled := False;
+  FRequestInProgress := True;
+  FCancelledByUser := False;
+  UpdateSendButtonVisual;
+  btnSend.Enabled := True;
+
+  LActiveProvider := ProviderTypeToString(FConfig.GetActiveProvider);
+  LActiveModel := FConfig.GetActiveModel(FConfig.GetActiveProvider);
+
+  TLogger.Log(Format('GenerateDTO started. Provider=%s, Model=%s, InputLength=%d, InputType=%s, OutputType=%s',
+    [LActiveProvider, LActiveModel, Length(AInput), AInputType, AOutputType]), 'UI');
+
+  LPromptText := TRadIADTOBuilder.BuildPrompt(AInput, AInputType, AOutputType);
+  LGuard := FLifecycleGuard as ILifecycleGuard;
+
+  try
+    FAIService.SendPromptStream(LPromptText, [],
+      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+      var
+        LChunkCopy: string;
+        LIsDoneCopy: Boolean;
+        LErrorCopy: string;
+      begin
+        LChunkCopy := AChunk;
+        LIsDoneCopy := AIsDone;
+        LErrorCopy := AError;
+        TThread.Queue(nil,
+          TThreadProcedure(
+          procedure
+          var
+            LStats: string;
+            LUsage: TTokenUsage;
+          begin
+            if LDoneHandled then
+              Exit;
+
+            if not LGuard.IsAlive then
+              Exit;
+
+            if FCancelledByUser then
+            begin
+              LDoneHandled := True;
+              FRequestInProgress := False;
+              UpdateSendButtonVisual;
+              btnSend.Enabled := True;
+              PostToWebView('append_generator_code', '', ' [Cancelado pelo usuário]', True);
+              Exit;
+            end;
+
+            if not LErrorCopy.IsEmpty then
+            begin
+              LDoneHandled := True;
+              FRequestInProgress := False;
+              UpdateSendButtonVisual;
+              btnSend.Enabled := True;
+              PostToWebView('append_generator_code', '', #13#10 + '// Error: ' + LErrorCopy, True);
+              Exit;
+            end;
+
+            if not LChunkCopy.IsEmpty then
+            begin
+              PostToWebView('append_generator_code', '', LChunkCopy, False);
+            end;
+
+            if LIsDoneCopy then
+            begin
+              LDoneHandled := True;
+              FRequestInProgress := False;
+              UpdateSendButtonVisual;
+              btnSend.Enabled := True;
+
+              { Estimate and update token usage stats }
+              LUsage.PromptTokens := Length(LPromptText) div 4;
+              LUsage.CompletionTokens := 1000;
+              LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
+
+              if LUsage.TotalTokens > 0 then
+              begin
+                FConfig.AddToQuotaUsage(LUsage);
+                LStats := FAccumulatedUsage.FormatStats;
+                if FConfig.QuotaEnabled then
+                  LStats := LStats + Format(' · Quota %d%%', [Round((FConfig.QuotaUsed / FConfig.QuotaLimit) * 100)]);
+                PostToWebView('update_tokens', '', LStats);
+              end;
+
+              PostToWebView('append_generator_code', '', '', True);
+            end;
+          end));
+      end, rpGeneralChat);
+  except
+    on E: Exception do
+    begin
+      FRequestInProgress := False;
+      UpdateSendButtonVisual;
+      btnSend.Enabled := True;
+      PostToWebView('append_generator_code', '', '// Error: ' + E.Message, True);
     end;
   end;
 end;

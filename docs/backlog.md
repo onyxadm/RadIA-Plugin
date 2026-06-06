@@ -19,7 +19,14 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Orquestrador `TRadIAService.TrimHistory` corta as mensagens mais antigas preservando o prompt de sistema e as mensagens mais recentes.
     *   Validação robusta com 10 testes unitários específicos em `RadIA.Tests.Service.pas`.
 
-### 2. Histórico de Prompts (Navegação ↑/↓) - Item #6
+### 2. Conversor de DTO e Modelos (JSON / DDL ➔ Delphi) - Item #22
+*   **Descrição**: Geração automatizada de classes e records Object Pascal correspondentes a partir de JSON ou scripts SQL DDL, com suporte a DEXT ORM, Aurelius, REST.Json e Vanilla.
+*   **Detalhes**:
+    *   Desenvolvido gerador central `TRadIADTOBuilder` em `RadIA.Core.DTO.Generator.pas` com regras dinâmicas de conversão.
+    *   Integração com DEXT ORM utilizando Smart Properties (`IntType`, `StringType`, etc.) e tratamento de relacionamentos Lazy (`ILazy<T>`, `TValueLazy<T>`) sem getters/setters desnecessários.
+    *   Validação de geração robusta com 96 testes unitários em `RadIA.Tests.DTOGenerator.pas`.
+
+### 3. Histórico de Prompts (Navegação ↑/↓) - Item #6
 *   **Descrição**: Permite que o desenvolvedor navegue pelas últimas consultas enviadas utilizando as setas para cima/para baixo do teclado.
 *   **Detalhes**:
     *   Criado o gerenciador `TPromptHistoryManager` limitando a 50 entradas persistidas em `%APPDATA%\RadIA\prompt_history.json`.
