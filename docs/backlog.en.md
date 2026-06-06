@@ -124,6 +124,14 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Added the `tsOpenRouter` tab with layout design, and implemented dark/light mode paint controls.
     *   Created new unit tests in `RadIA.Tests.ProvidersEx.pas` covering payload generation, responses, and SSE event streaming parsing.
 
+### 17. Dynamic and Simplified Provider Infrastructure (Plugin-like) - Item #21
+*   **Description**: Refactored the AI provider infrastructure to support dynamic auto-registration of AI backends, removing cascaded static couplings and rigid enums.
+*   **Details**:
+    *   Implemented the centralized `TProviderRegistry` registry containing provider metadata (`TProviderMetadata`) and delegation of factory functions.
+    *   Implemented auto-registration for the 7 native providers (Gemini, OpenAI, Claude, Ollama, DeepSeek, Groq, and OpenRouter) within their `initialization` sections.
+    *   Decoupled the orchestrator `TRadIAService` which now dynamically resolves any active provider via `TProviderRegistry.CreateProvider` without static `case` statements.
+    *   Added new unit tests in `RadIA.Tests.Service.pas` covering registry integrity and error handling.
+
 ---
 
 ## 🔲 Pending Items

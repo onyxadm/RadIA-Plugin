@@ -124,6 +124,14 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Adicionada aba `tsOpenRouter` com estilização e suporte de tema VCL para a tela de configurações.
     *   Novos testes unitários em `RadIA.Tests.ProvidersEx.pas` cobrindo geração de payloads, parsing de respostas e buffering SSE.
 
+### 17. Infraestrutura de Provedores Dinâmicos e Simplificados (Plugin-like) - Item #21
+*   **Descrição**: Refatoração da infraestrutura de IA para auto-registro dinâmico de backends de IA, removendo acoplamentos em cascata e enums estáticos.
+*   **Detalhes**:
+    *   Implementado o registro centralizado `TProviderRegistry` contendo metadados de provedores (`TProviderMetadata`) e delegação de factory functions.
+    *   Implementado o auto-registro dos 7 provedores nativos (Gemini, OpenAI, Claude, Ollama, DeepSeek, Groq e OpenRouter) em suas seções `initialization`.
+    *   Desacoplamento do orquestrador `TRadIAService` que agora resolve dinamicamente qualquer provedor a partir do `TProviderRegistry.CreateProvider` sem fallbacks estáticos em loops `case`.
+    *   Adicionados novos testes unitários em `RadIA.Tests.Service.pas` cobrindo a integridade do registro e tratamento de erros.
+
 ---
 
 ## 🔲 Pendentes
