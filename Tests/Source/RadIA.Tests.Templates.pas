@@ -49,7 +49,7 @@ var
   LList: TArray<TPromptTemplate>;
 begin
   LList := FManager.GetTemplates;
-  Assert.IsTrue(Length(LList) >= 4, 'Should contain at least the 4 default templates');
+  Assert.IsTrue(Length(LList) >= 6, 'Should contain at least the 6 default templates');
   Assert.IsTrue(FManager.ResolveTemplate('Review Clean Code Delphi', '').Contains('Delphi Pascal'));
 end;
 

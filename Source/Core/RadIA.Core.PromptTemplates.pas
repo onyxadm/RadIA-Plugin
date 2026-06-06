@@ -78,6 +78,19 @@ begin
     'Identify bottlenecks and memory leaks in the code',
     'Performance analysis: identify potential bottlenecks, memory leaks, or redundancies in the following Delphi code:'#13#10#13#10'{code}'
   );
+  AddTemplate(
+    'Analyze Stack Trace',
+    'Analyze exception stack trace and suggest root cause fixes',
+    'Analyze the following Delphi stack trace/error log:'#13#10#13#10'{stacktrace}'#13#10#13#10'Here is the active unit code context for line reference:'#13#10#13#10'{code}'
+  );
+  AddTemplate(
+    'Review Leaks and SOLID',
+    'Run static analysis on the unit for memory leaks and SOLID principles',
+    'Perform a comprehensive static analysis on the following Delphi code unit. Focus on identifying:'#13#10 +
+    '1. Memory Leaks (missing try..finally blocks on object creations or incorrect deallocations)'#13#10 +
+    '2. SOLID and Clean Code violations'#13#10 +
+    '3. Anti-patterns or potential run-time bugs'#13#10#13#10'{code}'
+  );
 end;
 
 procedure TPromptTemplateManager.Load;

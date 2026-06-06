@@ -18,6 +18,7 @@ type
     procedure OnTestsExecute(Sender: TObject);
     procedure OnBugsExecute(Sender: TObject);
     procedure OnDocExecute(Sender: TObject);
+    procedure OnReviewExecute(Sender: TObject);
     procedure OnFixErrorExecute(Sender: TObject);
     procedure OnShowChatExecute(Sender: TObject);
 
@@ -126,6 +127,13 @@ begin
         'Document Method (XML)',
         'RadIA.Code',
         OnDocExecute
+      );
+
+      AddAction(
+        'actRadIAReview',
+        'Review Active Unit (Leaks/SOLID)',
+        'RadIA.Code',
+        OnReviewExecute
       );
 
       LEditorLocalMenu.RegisterActionList(
@@ -240,6 +248,25 @@ begin
 
   TLogger.Log(Format('OnDocExecute: SelectionLength=%d', [Length(LSelectedText)]), 'EditorHook');
   LPrompt := Format('/doc'#13#10'```pascal'#13#10'%s'#13#10'```', [LSelectedText]);
+  TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
+end;
+
+procedure TRadIAEditorHook.OnReviewExecute(Sender: TObject);
+var
+  LActiveCode: string;
+  LPrompt: string;
+begin
+  if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False) then
+  begin
+    TLogger.Log('OnReviewExecute failed: no active code', 'EditorHook');
+    ShowMessage('No active code file open in the editor.');
+    Exit;
+  end;
+
+  TLogger.Log(Format('OnReviewExecute: CodeLength=%d', [Length(LActiveCode)]), 'EditorHook');
+  ShowRadIAChat;
+
+  LPrompt := Format('/review'#13#10'```pascal'#13#10'%s'#13#10'```', [LActiveCode]);
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 

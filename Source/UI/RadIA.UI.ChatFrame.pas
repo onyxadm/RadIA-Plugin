@@ -1132,6 +1132,8 @@ var
   LActiveCode: string;
   LTemplateName: string;
   LResolved: string;
+  LTemplate: TPromptTemplate;
+  LStackTrace: string;
 begin
   if FRequestInProgress then
   begin
@@ -1171,6 +1173,26 @@ begin
     end;
     
     LText := LResolved;
+  end
+  else if LText.StartsWith('/review', True) then
+  begin
+    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
+      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
+
+    LResolved := FTemplateManager.ResolveTemplate('Review Leaks and SOLID', LActiveCode);
+    if not LResolved.IsEmpty then
+      LText := LResolved;
+  end
+  else if LText.StartsWith('/stacktrace', True) then
+  begin
+    LStackTrace := Trim(LText.Substring(11));
+    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
+      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
+
+    if FTemplateManager.FindTemplate('Analyze Stack Trace', LTemplate) then
+    begin
+      LText := LTemplate.Template.Replace('{stacktrace}', LStackTrace).Replace('{code}', LActiveCode);
+    end;
   end;
 
   { Save to prompt history before clearing the input }
@@ -1264,15 +1286,15 @@ begin
   TLogger.Log(Format('SendPromptToAI started. Provider=%s, Model=%s, PromptLength=%d, Session=%s',
     [LActiveProvider, LActiveModel, Length(APromptText), LSessionId]), 'UI');
 
-  { Infer request profile from slash commands }
+  { Infer request profile from slash commands or resolved template headers }
   LProfile := rpGeneralChat;
   if APromptText.StartsWith('/refactor', True) or APromptText.StartsWith('/optimize', True) then
     LProfile := rpRefactorCode
-  else if APromptText.StartsWith('/bugs', True) then
+  else if APromptText.StartsWith('/bugs', True) or APromptText.StartsWith('Perform a comprehensive static analysis', True) then
     LProfile := rpFindBugs
   else if APromptText.StartsWith('/test', True) then
     LProfile := rpGenerateTests
-  else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) then
+  else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) or APromptText.StartsWith('Analyze the following Delphi stack trace', True) then
     LProfile := rpExplainCode;
   
   { Save user prompt to history immediately to avoid losing it on network failure or IDE exit }

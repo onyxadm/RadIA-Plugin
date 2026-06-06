@@ -48,7 +48,8 @@ uses
   RadIA.Tests.Logger in 'Source\RadIA.Tests.Logger.pas',
   RadIA.Tests.Sessions in 'Source\RadIA.Tests.Sessions.pas',
   RadIA.Tests.Quota in 'Source\RadIA.Tests.Quota.pas',
-  RadIA.Tests.DTOGenerator in 'Source\RadIA.Tests.DTOGenerator.pas';
+  RadIA.Tests.DTOGenerator in 'Source\RadIA.Tests.DTOGenerator.pas',
+  RadIA.Tests.Analysis in 'Source\RadIA.Tests.Analysis.pas';
 
 var
   Runner: ITestRunner;

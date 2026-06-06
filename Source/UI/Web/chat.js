@@ -89,6 +89,21 @@ const sessionsSidebar = document.getElementById('sessions-sidebar');
 const btnNewChatSidebar = document.getElementById('btn-new-chat-sidebar');
 const sessionsList    = document.getElementById('sessions-list');
 
+// Slash Commands Configuration
+const SLASH_COMMANDS = [
+  { name: '/explain', desc: 'Explica o código selecionado no editor', shortcut: 'Ctrl+Shift+E' },
+  { name: '/refactor', desc: 'Otimiza e refatora o código selecionado', shortcut: 'Ctrl+Shift+R' },
+  { name: '/bugs', desc: 'Procura por bugs e memory leaks no código selecionado', shortcut: 'Ctrl+Shift+B' },
+  { name: '/doc', desc: 'Gera documentação XML para o método selecionado', shortcut: 'Ctrl+Shift+D' },
+  { name: '/template', desc: 'Abre a biblioteca de templates de prompt', shortcut: 'Ctrl+Shift+T' },
+  { name: '/stacktrace', desc: 'Analisa um log de erro/stack trace e aponta a causa raiz', shortcut: '' },
+  { name: '/review', desc: 'Análise estática da unit ativa (leaks/SOLID)', shortcut: '' }
+];
+
+let slashPopupVisible = false;
+let slashPopupSelectedIndex = 0;
+let filteredSlashCommands = [];
+
 // Elementos do Gerador
 const chatWrapper          = document.getElementById('chat-wrapper');
 const generatorsWrapper    = document.getElementById('generators-wrapper');
@@ -150,49 +165,80 @@ function postMessageToDelphi(payload) {
 promptTextarea.addEventListener('input', () => {
   promptTextarea.style.height = 'auto';
   promptTextarea.style.height = promptTextarea.scrollHeight + 'px';
+
+  const text = promptTextarea.value;
+  if (text.startsWith('/')) {
+    showSlashPopup(text);
+  } else {
+    hideSlashPopup();
+  }
 });
 
 // Envio por Ctrl+Enter, e navegação no histórico com Seta Cima/Baixo
 promptTextarea.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.ctrlKey) {
-    e.preventDefault();
-    handleSend();
-  } else if (e.key === 'ArrowUp') {
-    // Só navega se o cursor estiver na primeira linha (sem \n antes do cursor)
-    const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
-    if (!textBeforeCursor.includes('\n')) {
-      if (_promptHistory.length > 0) {
-        if (_promptHistoryIndex === -1) {
-          _promptDraft = promptTextarea.value;
-          _promptHistoryIndex = _promptHistory.length - 1;
-        } else if (_promptHistoryIndex > 0) {
-          _promptHistoryIndex--;
-        }
-        promptTextarea.value = _promptHistory[_promptHistoryIndex];
-        setTimeout(() => {
-          promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
-          promptTextarea.dispatchEvent(new Event('input'));
-        }, 0);
-        e.preventDefault();
+  if (slashPopupVisible) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (filteredSlashCommands.length > 0) {
+        slashPopupSelectedIndex = (slashPopupSelectedIndex - 1 + filteredSlashCommands.length) % filteredSlashCommands.length;
+        renderSlashCommands();
       }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (filteredSlashCommands.length > 0) {
+        slashPopupSelectedIndex = (slashPopupSelectedIndex + 1) % filteredSlashCommands.length;
+        renderSlashCommands();
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filteredSlashCommands.length > 0) {
+        insertSlashCommand(filteredSlashCommands[slashPopupSelectedIndex].name);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      hideSlashPopup();
     }
-  } else if (e.key === 'ArrowDown') {
-    // Só navega se o cursor estiver na última linha (sem \n depois do cursor)
-    const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
-    if (!textAfterCursor.includes('\n')) {
-      if (_promptHistoryIndex !== -1) {
-        if (_promptHistoryIndex < _promptHistory.length - 1) {
-          _promptHistoryIndex++;
+  } else {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      handleSend();
+    } else if (e.key === 'ArrowUp') {
+      // Só navega se o cursor estiver na primeira linha (sem \n antes do cursor)
+      const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
+      if (!textBeforeCursor.includes('\n')) {
+        if (_promptHistory.length > 0) {
+          if (_promptHistoryIndex === -1) {
+            _promptDraft = promptTextarea.value;
+            _promptHistoryIndex = _promptHistory.length - 1;
+          } else if (_promptHistoryIndex > 0) {
+            _promptHistoryIndex--;
+          }
           promptTextarea.value = _promptHistory[_promptHistoryIndex];
-        } else {
-          _promptHistoryIndex = -1;
-          promptTextarea.value = _promptDraft;
+          setTimeout(() => {
+            promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+            promptTextarea.dispatchEvent(new Event('input'));
+          }, 0);
+          e.preventDefault();
         }
-        setTimeout(() => {
-          promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
-          promptTextarea.dispatchEvent(new Event('input'));
-        }, 0);
-        e.preventDefault();
+      }
+    } else if (e.key === 'ArrowDown') {
+      // Só navega se o cursor estiver na última linha (sem \n depois do cursor)
+      const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
+      if (!textAfterCursor.includes('\n')) {
+        if (_promptHistoryIndex !== -1) {
+          if (_promptHistoryIndex < _promptHistory.length - 1) {
+            _promptHistoryIndex++;
+            promptTextarea.value = _promptHistory[_promptHistoryIndex];
+          } else {
+            _promptHistoryIndex = -1;
+            promptTextarea.value = _promptDraft;
+          }
+          setTimeout(() => {
+            promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+            promptTextarea.dispatchEvent(new Event('input'));
+          }, 0);
+          e.preventDefault();
+        }
       }
     }
   }
@@ -344,10 +390,77 @@ function filterModels(query) {
   }
 }
 
-// Fechar dropdown ao clicar fora
+// Fechar dropdown e popup de slash commands ao clicar fora
 document.addEventListener('click', () => {
   modelDropdownWrapper.classList.remove('open');
+  hideSlashPopup();
 });
+
+function showSlashPopup(filterText) {
+  filteredSlashCommands = SLASH_COMMANDS.filter(cmd => 
+    cmd.name.toLowerCase().startsWith(filterText.toLowerCase())
+  );
+  
+  if (filteredSlashCommands.length === 0) {
+    hideSlashPopup();
+    return;
+  }
+  
+  const popup = document.getElementById('slash-commands-popup');
+  popup.classList.remove('hidden');
+  slashPopupVisible = true;
+  renderSlashCommands();
+}
+
+function hideSlashPopup() {
+  const popup = document.getElementById('slash-commands-popup');
+  if (popup) {
+    popup.classList.add('hidden');
+  }
+  slashPopupVisible = false;
+}
+
+function renderSlashCommands() {
+  const popup = document.getElementById('slash-commands-popup');
+  popup.innerHTML = '';
+  
+  if (slashPopupSelectedIndex >= filteredSlashCommands.length) {
+    slashPopupSelectedIndex = 0;
+  }
+  
+  filteredSlashCommands.forEach((cmd, idx) => {
+    const item = document.createElement('div');
+    item.classList.add('slash-command-item');
+    if (idx === slashPopupSelectedIndex) {
+      item.classList.add('selected');
+    }
+    
+    item.innerHTML = `
+      <div class="slash-command-info">
+        <span class="slash-command-name">${cmd.name}</span>
+        <span class="slash-command-desc">${cmd.desc}</span>
+      </div>
+      ${cmd.shortcut ? `<span class="slash-command-shortcut">${cmd.shortcut}</span>` : ''}
+    `;
+    
+    // Usar mousedown em vez de click para evitar perda de foco antes do disparo
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      insertSlashCommand(cmd.name);
+    });
+    
+    popup.appendChild(item);
+  });
+}
+
+function insertSlashCommand(name) {
+  promptTextarea.value = name + ' ';
+  promptTextarea.focus();
+  promptTextarea.style.height = 'auto';
+  promptTextarea.style.height = promptTextarea.scrollHeight + 'px';
+  hideSlashPopup();
+}
 
 // ============================================================
 //  Lógica do Chat (Add, Clear, Theme, etc.)
