@@ -66,29 +66,29 @@ Version v0.0.3 introduced critical architectural enhancements for extensibility 
 
 ---
 
-## 🔲 v0.1.0 — Advanced Productivity (Next Version)
+## ✅ v0.0.4 — Advanced Productivity & Static Analysis (Completed)
 
-### 1. DTO and Model Converter (JSON / DDL ➔ Delphi) (✅ Completed)
-*   **Goal**: Paste a JSON payload or SQL table DDL to generate matching Object Pascal data classes (DTOs) or records with a single click.
-*   **Impact**: ⭐⭐⭐⭐⭐ High
-*   **Complexity**: Low
+Version v0.0.4 introduced advanced code analysis tools, test automation support, and panel usability shortcuts:
 
-### 2. Stack Trace Assistant (Debug Companion - Phase 1)
-*   **Goal**: Analyze pasted Stack Traces (from IDE exceptions, MadExcept, or EurekaLog) to pinpoint the failing unit/method and suggest fixes.
-*   **Impact**: ⭐⭐⭐⭐ High
-*   **Complexity**: Medium
+- **DTO and Model Converter (JSON / DDL ➔ Delphi):**
+  * Convert JSON payloads or SQL DDL statements into matching Delphi classes and records, supporting Vanilla, DEXT, Aurelius, and REST.Json.
+- **Stack Trace Assistant:**
+  * Intelligent analysis of exception and error reports (MadExcept, EurekaLog) with root cause mapping within the active IDE source file.
+- **Memory Leak & Anti-pattern Analyzer (Static Analysis):**
+  * Static analysis of the active unit focusing on locating missing try..finally blocks and SOLID violations.
+- **Slash Commands Popup Shortcut Menu (/):**
+  * Interactive prompt menu displaying quick slash command shortcuts (such as `/explain`, `/refactor`, `/bugs`, `/doc`, `/review`, `/stacktrace`) when typing `/`.
 
-### 3. Memory Leak & Anti-pattern Analyzer (Static Analysis)
-*   **Goal**: Asynchronously analyze the active unit in the editor to locate memory leaks (e.g., missing try..finally) and semantic violations of SOLID/Clean Code.
-*   **Impact**: ⭐⭐⭐⭐ High
-*   **Complexity**: Medium
+---
 
-### 4. Automatic Code Review on Save
+## 🔲 v0.1.0 — Automation & Auditing (Next Version)
+
+### 1. Automatic Code Review on Save
 *   **Goal**: Silently analyze the active unit on save and signal in the RadIA panel if the AI found points of attention (e.g., potential bugs, duplicated code, or missing exception handling).
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 5. Applied Refactoring History
+### 2. Applied Refactoring History
 *   **Goal**: Maintain an auditable log of every time the **[Apply Changes]** button was clicked, recording the original snippet, the applied snippet, the date, and the file, allowing future manual review.
 *   **Impact**: ⭐⭐⭐ Medium
 *   **Complexity**: Low

@@ -67,29 +67,29 @@ A versão v0.0.3 trouxe melhorias de arquitetura cruciais para a extensibilidade
 
 ---
 
-## 🔲 v0.1.0 — Produtividade Avançada (Próxima Versão)
+## ✅ v0.0.4 — Produtividade Avançada e Análise Estática (Concluído)
 
-### 1. Conversor de DTO e Modelos (JSON / DDL ➔ Delphi) (✅ Concluído)
-*   **Objetivo**: Colar um payload JSON ou DDL de tabelas SQL e gerar classes de dados (DTOs) ou records em Object Pascal correspondentes com um clique.
-*   **Impacto**: ⭐⭐⭐⭐⭐ Alto
-*   **Complexidade**: Baixa
+A versão v0.0.4 trouxe recursos de análise avançada de código, automação de testes e atalhos de usabilidade no painel:
 
-### 2. Assistente de Stack Trace (Debug Companion - Fase 1)
-*   **Objetivo**: Analisar Stack Traces colados no chat (de exceções da IDE, MadExcept ou EurekaLog), apontando a unidade e o método causador do erro com sugestão de correção.
-*   **Impacto**: ⭐⭐⭐⭐ Alto
-*   **Complexidade**: Média
+- **Conversor de DTO e Modelos (JSON / DDL ➔ Delphi):**
+  * Conversão de payloads JSON ou DDL para classes e records Delphi, com suporte nativo a Vanilla, DEXT, Aurelius e REST.Json.
+- **Assistente de Stack Trace:**
+  * Análise inteligente de relatórios de exceções e erros (MadExcept, EurekaLog) com mapeamento de causa raiz no arquivo aberto na IDE.
+- **Analisador de Memory Leaks e Anti-patterns:**
+  * Análise estática da unit ativa na IDE com foco em detecção de try..finally faltantes e infrações de SOLID.
+- **Popup Menu de Atalhos Barra (Slash Commands - /):**
+  * Caixa de prompt interativa que exibe atalhos rápidos de comandos barra (como `/explain`, `/refactor`, `/bugs`, `/doc`, `/review`, `/stacktrace`) ao digitar `/`.
 
-### 3. Analisador de Memory Leaks e Anti-patterns (Análise Estática)
-*   **Objetivo**: Analisar assincronamente a unit ativa no editor em busca de vazamentos de memória (ausência de try..finally) e violações semânticas de SOLID/Clean Code.
-*   **Impacto**: ⭐⭐⭐⭐ Alto
-*   **Complexidade**: Média
+---
 
-### 4. Revisão Automática de Código no Save
+## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
+
+### 1. Revisão Automática de Código no Save
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção (ex: possíveis bugs, código duplicado ou falta de tratamento de exceção).
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 5. Histórico de Refatorações Aplicadas
+### 2. Histórico de Refatorações Aplicadas
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão **[Aplicar Alteração]** foi acionado, registrando o trecho original, o trecho aplicado, a data e o arquivo, permitindo revisão manual posterior.
 *   **Impacto**: ⭐⭐⭐ Médio
 *   **Complexidade**: Baixa
