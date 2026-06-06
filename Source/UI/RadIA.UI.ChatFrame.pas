@@ -154,7 +154,7 @@ begin
   end;
   
   FLifecycleGuard := TLifecycleGuard.Create;
-  FConfig := TRadIAConfig.Create;
+  FConfig := TRadIAConfig.GetInstance;
   FAIService := TRadIAService.Create(FConfig);
   FPromptHistoryManager := TPromptHistoryManager.Create;
   FAccumulatedUsage := TTokenUsage.Empty;
@@ -410,13 +410,7 @@ begin
     LProvider := FAIService.CreateActiveProvider;
     LProvider.FetchAvailableModelsAsync(
       procedure(AModels: TArray<string>; AError: string)
-      var
-        LProviderRef: IIAProvider;
       begin
-        if not LGuard.IsAlive then
-          Exit;
-          
-        LProviderRef := LProvider;
         TThread.Queue(nil,
           procedure
           var
@@ -431,9 +425,9 @@ begin
             for LModel in AModels do
               cbModel.Items.Add(LModel);
             
-            if Assigned(LProviderRef) then
+            if Assigned(LProvider) then
             begin
-              LProvType := LProviderRef.GetProviderType;
+              LProvType := LProvider.GetProviderType;
               LActiveModel := FConfig.GetActiveModel(LProvType);
               cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
               if cbModel.ItemIndex = -1 then
@@ -555,6 +549,12 @@ var
 begin
   LForm := TFormAIConfig.Create(nil);
   try
+    if Assigned(Vcl.Forms.Application.MainForm) then
+    begin
+      LForm.PopupParent := Vcl.Forms.Application.MainForm;
+      LForm.PopupMode := pmExplicit;
+    end;
+
     LForm.LoadConfig;
     
     if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then

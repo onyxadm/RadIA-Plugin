@@ -81,7 +81,7 @@ var
 begin
   FBrowserInitialized := False;
   FLifecycleGuard := TLifecycleGuard.Create;
-  FConfig := TRadIAConfig.Create;
+  FConfig := TRadIAConfig.GetInstance;
   FAIService := TRadIAService.Create(FConfig);
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   

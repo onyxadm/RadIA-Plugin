@@ -127,7 +127,7 @@ var
   LUseIDETheme: Boolean;
 begin
   inherited Create(AOwner);
-  FConfig := TRadIAConfig.Create;
+  FConfig := TRadIAConfig.GetInstance;
   FTemplateManager := TPromptTemplateManager.Create;
   FTemplateManager.Load;
 
@@ -673,7 +673,7 @@ begin
   FTemplateManager.Save;
 
   LForm := GetParentForm(Self);
-  if LForm <> nil then
+  if (LForm <> nil) and SameText(LForm.ClassName, 'TFormAIConfig') then
     LForm.ModalResult := mrOk;
 end;
 
@@ -683,7 +683,7 @@ var
 begin
   LoadConfig;
   LForm := GetParentForm(Self);
-  if LForm <> nil then
+  if (LForm <> nil) and SameText(LForm.ClassName, 'TFormAIConfig') then
     LForm.ModalResult := mrCancel;
 end;
 

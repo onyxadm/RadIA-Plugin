@@ -77,12 +77,12 @@ end;
 class function TProviderRegistry.GetProviders: TArray<TProviderMetadata>;
 var
   LList: TList<TProviderMetadata>;
-  LMeta: TProviderMetadata;
+  LPair: TPair<string, TProviderMetadata>;
 begin
   LList := TList<TProviderMetadata>.Create;
   try
-    for LMeta in FProviders.Values do
-      LList.Add(LMeta);
+    for LPair in FProviders do
+      LList.Add(LPair.Value);
     Result := LList.ToArray;
   finally
     LList.Free;

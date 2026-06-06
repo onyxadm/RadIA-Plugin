@@ -9,6 +9,7 @@ type
   TRadIAConfig = class(TInterfacedObject, IAIConfig)
   private
     class var FBaseRegistryPath: string;
+    class var FInstance: TRadIAConfig;
     FActiveProvider: TAIProviderType;
     FSystemPrompt: string;
     FOllamaBaseUrl: string;
@@ -24,13 +25,13 @@ type
     FQuotaCycleStart: TDateTime;
     FActiveSessionId: string;
 
-    { Dynamic String-based Dictionaries for settings }
-    FDynamicApiKeys: TDictionary<string, string>;
-    FDynamicModels: TDictionary<string, string>;
-    FDynamicTemperatures: TDictionary<string, Double>;
-    FDynamicMaxTokens: TDictionary<string, Integer>;
-    FDynamicTimeouts: TDictionary<string, Integer>;
-    FDynamicBaseUrls: TDictionary<string, string>;
+    { Dynamic String-based settings (avoiding TDictionary generics due to BPL RTL unloading bugs) }
+    FApiKeysList: TStringList;
+    FModelsList: TStringList;
+    FTemperaturesList: TStringList;
+    FMaxTokensList: TStringList;
+    FTimeoutsList: TStringList;
+    FBaseUrlsList: TStringList;
 
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
@@ -40,9 +41,13 @@ type
     function ReadRegInt(const AReg: TObject; const AKey: string; const ADefault: Integer): Integer;
     function ReadRegDouble(const AReg: TObject; const AKey: string; const ADefault: Double): Double;
     procedure CheckAndResetQuotaCycle;
+  protected
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     constructor Create;
     destructor Destroy; override;
+    class function GetInstance: IAIConfig;
     class procedure SetBaseRegistryPath(const APath: string);
     class function GetRegistryPath: string;
 
@@ -163,12 +168,12 @@ begin
   
   LogDebug('TRadIAConfig.Create: Active path = ' + GetRegistryPath);
 
-  FDynamicApiKeys := TDictionary<string, string>.Create;
-  FDynamicModels := TDictionary<string, string>.Create;
-  FDynamicTemperatures := TDictionary<string, Double>.Create;
-  FDynamicMaxTokens := TDictionary<string, Integer>.Create;
-  FDynamicTimeouts := TDictionary<string, Integer>.Create;
-  FDynamicBaseUrls := TDictionary<string, string>.Create;
+  FApiKeysList := TStringList.Create;
+  FModelsList := TStringList.Create;
+  FTemperaturesList := TStringList.Create;
+  FMaxTokensList := TStringList.Create;
+  FTimeoutsList := TStringList.Create;
+  FBaseUrlsList := TStringList.Create;
 
   FActiveProvider := ptGemini;
   FSystemPrompt := '';
@@ -192,12 +197,12 @@ end;
 
 destructor TRadIAConfig.Destroy;
 begin
-  FDynamicApiKeys.Free;
-  FDynamicModels.Free;
-  FDynamicTemperatures.Free;
-  FDynamicMaxTokens.Free;
-  FDynamicTimeouts.Free;
-  FDynamicBaseUrls.Free;
+  FApiKeysList.Free;
+  FModelsList.Free;
+  FTemperaturesList.Free;
+  FMaxTokensList.Free;
+  FTimeoutsList.Free;
+  FBaseUrlsList.Free;
   inherited Destroy;
 end;
 
@@ -207,8 +212,11 @@ begin
 end;
 
 function TRadIAConfig.GetActiveModel(const AProvider: TAIProviderType): string;
+var
+  LProviderName: string;
 begin
-  Result := GetActiveModel(ProviderTypeToString(AProvider));
+  LProviderName := ProviderTypeToString(AProvider);
+  Result := GetActiveModel(LProviderName);
 end;
 
 function TRadIAConfig.GetActiveProvider: TAIProviderType;
@@ -217,8 +225,11 @@ begin
 end;
 
 function TRadIAConfig.GetApiKey(const AProvider: TAIProviderType): string;
+var
+  LProviderName: string;
 begin
-  Result := GetApiKey(ProviderTypeToString(AProvider));
+  LProviderName := ProviderTypeToString(AProvider);
+  Result := GetApiKey(LProviderName);
 end;
 
 function TRadIAConfig.GetSystemPrompt: string;
@@ -388,13 +399,13 @@ begin
       LogDebug('TRadIAConfig.Load: Failed to open root path ' + APath);
 
     { Initialize default fallback models before loading subkeys }
-    FDynamicModels.AddOrSetValue('gemini', MODEL_GEMINI_15_FLASH);
-    FDynamicModels.AddOrSetValue('openai', MODEL_OPENAI_GPT4O_MINI);
-    FDynamicModels.AddOrSetValue('claude', MODEL_CLAUDE_3_HAIKU);
-    FDynamicModels.AddOrSetValue('ollama', 'llama3:latest');
-    FDynamicModels.AddOrSetValue('deepseek', MODEL_DEEPSEEK_CHAT);
-    FDynamicModels.AddOrSetValue('groq', MODEL_GROQ_LLAMA33);
-    FDynamicModels.AddOrSetValue('openrouter', MODEL_OPENROUTER_GEMINI25_PRO);
+    FModelsList.Values['gemini'] := MODEL_GEMINI_15_FLASH;
+    FModelsList.Values['openai'] := MODEL_OPENAI_GPT4O_MINI;
+    FModelsList.Values['claude'] := MODEL_CLAUDE_3_HAIKU;
+    FModelsList.Values['ollama'] := 'llama3:latest';
+    FModelsList.Values['deepseek'] := MODEL_DEEPSEEK_CHAT;
+    FModelsList.Values['groq'] := MODEL_GROQ_LLAMA33;
+    FModelsList.Values['openrouter'] := MODEL_OPENROUTER_GEMINI25_PRO;
 
     { 2. Ler configurações específicas de cada provedor registrado em suas respectivas subchaves }
     LSubKeys := TStringList.Create;
@@ -415,22 +426,22 @@ begin
           if LReg.ValueExists('ApiKey') then
           begin
             try
-              FDynamicApiKeys.AddOrSetValue(LSubKey.ToLower, UnprotectString(LReg.ReadString('ApiKey')));
+              FApiKeysList.Values[LSubKey.ToLower] := UnprotectString(LReg.ReadString('ApiKey'));
             except
-              FDynamicApiKeys.AddOrSetValue(LSubKey.ToLower, '');
+              FApiKeysList.Values[LSubKey.ToLower] := '';
             end;
           end;
 
           { Load Model }
           if LReg.ValueExists('Model') then
-            FDynamicModels.AddOrSetValue(LSubKey.ToLower, LReg.ReadString('Model'))
+            FModelsList.Values[LSubKey.ToLower] := LReg.ReadString('Model')
           else if LReg.ValueExists('ActiveModel') then
-            FDynamicModels.AddOrSetValue(LSubKey.ToLower, LReg.ReadString('ActiveModel'));
+            FModelsList.Values[LSubKey.ToLower] := LReg.ReadString('ActiveModel');
 
           { Load BaseURL }
           if LReg.ValueExists('BaseURL') then
           begin
-            FDynamicBaseUrls.AddOrSetValue(LSubKey.ToLower, LReg.ReadString('BaseURL'));
+            FBaseUrlsList.Values[LSubKey.ToLower] := LReg.ReadString('BaseURL');
             { Sync BaseURLs to legacy fields for backward compatibility }
             if SameText(LSubKey, 'openai') then
               FOpenAICustomBaseUrl := LReg.ReadString('BaseURL')
@@ -439,9 +450,9 @@ begin
           end;
 
           { Load advanced numeric parameters }
-          FDynamicTemperatures.AddOrSetValue(LSubKey.ToLower, ReadRegDouble(LReg, 'Temperature', 0.7));
-          FDynamicMaxTokens.AddOrSetValue(LSubKey.ToLower, ReadRegInt(LReg, 'MaxTokens', 2048));
-          FDynamicTimeouts.AddOrSetValue(LSubKey.ToLower, ReadRegInt(LReg, 'Timeout', 60));
+          FTemperaturesList.Values[LSubKey.ToLower] := FloatToStr(ReadRegDouble(LReg, 'Temperature', 0.7), TFormatSettings.Invariant);
+          FMaxTokensList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt(LReg, 'MaxTokens', 2048));
+          FTimeoutsList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt(LReg, 'Timeout', 60));
 
           LReg.CloseKey;
         end;
@@ -488,6 +499,7 @@ var
   LReg: TRegistry;
   LKey: string;
   LProvPath: string;
+  LProvider: TAIProviderType;
 begin
   LogDebug('TRadIAConfig.Save starting. Path = ' + APath);
   LReg := TRegistry.Create;
@@ -522,16 +534,17 @@ begin
     SetProviderBaseUrl('openai', FOpenAICustomBaseUrl);
     SetProviderBaseUrl('ollama', FOllamaBaseUrl);
 
-    { 2. Salvar chaves de todos os provedores em subchaves baseados no dicionário de chaves }
-    for LKey in FDynamicApiKeys.Keys do
+    { 2. Salvar chaves de todos os provedores em subchaves dedicadas }
+    for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
     begin
+      LKey := ProviderTypeToString(LProvider);
       LProvPath := APath + '\' + LKey;
       if LReg.OpenKey(LProvPath, True) then
       begin
         LReg.WriteString('ApiKey', ProtectString(GetApiKey(LKey)));
         LReg.WriteString('Model', GetActiveModel(LKey));
 
-        if FDynamicBaseUrls.ContainsKey(LKey) then
+        if FBaseUrlsList.IndexOfName(LKey.ToLower) >= 0 then
           LReg.WriteString('BaseURL', GetProviderBaseUrl(LKey));
 
         LReg.WriteFloat('Temperature', GetTemperature(LKey));
@@ -548,8 +561,11 @@ begin
 end;
 
 procedure TRadIAConfig.SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
+var
+  LProviderName: string;
 begin
-  SetActiveModel(ProviderTypeToString(AProvider), AModel);
+  LProviderName := ProviderTypeToString(AProvider);
+  SetActiveModel(LProviderName, AModel);
 end;
 
 procedure TRadIAConfig.SetActiveProvider(const AProvider: TAIProviderType);
@@ -558,8 +574,11 @@ begin
 end;
 
 procedure TRadIAConfig.SetApiKey(const AProvider: TAIProviderType; const AKey: string);
+var
+  LProviderName: string;
 begin
-  SetApiKey(ProviderTypeToString(AProvider), AKey);
+  LProviderName := ProviderTypeToString(AProvider);
+  SetApiKey(LProviderName, AKey);
 end;
 
 procedure TRadIAConfig.SetSystemPrompt(const AValue: string);
@@ -613,33 +632,51 @@ begin
 end;
 
 function TRadIAConfig.GetTemperature(const AProvider: TAIProviderType): Double;
+var
+  LProviderName: string;
 begin
-  Result := GetTemperature(ProviderTypeToString(AProvider));
+  LProviderName := ProviderTypeToString(AProvider);
+  Result := GetTemperature(LProviderName);
 end;
 
 procedure TRadIAConfig.SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
+var
+  LProviderName: string;
 begin
-  SetTemperature(ProviderTypeToString(AProvider), AValue);
+  LProviderName := ProviderTypeToString(AProvider);
+  SetTemperature(LProviderName, AValue);
 end;
 
 function TRadIAConfig.GetMaxTokens(const AProvider: TAIProviderType): Integer;
+var
+  LProviderName: string;
 begin
-  Result := GetMaxTokens(ProviderTypeToString(AProvider));
+  LProviderName := ProviderTypeToString(AProvider);
+  Result := GetMaxTokens(LProviderName);
 end;
 
 procedure TRadIAConfig.SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
+var
+  LProviderName: string;
 begin
-  SetMaxTokens(ProviderTypeToString(AProvider), AValue);
+  LProviderName := ProviderTypeToString(AProvider);
+  SetMaxTokens(LProviderName, AValue);
 end;
 
 function TRadIAConfig.GetTimeout(const AProvider: TAIProviderType): Integer;
+var
+  LProviderName: string;
 begin
-  Result := GetTimeout(ProviderTypeToString(AProvider));
+  LProviderName := ProviderTypeToString(AProvider);
+  Result := GetTimeout(LProviderName);
 end;
 
 procedure TRadIAConfig.SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
+var
+  LProviderName: string;
 begin
-  SetTimeout(ProviderTypeToString(AProvider), AValue);
+  LProviderName := ProviderTypeToString(AProvider);
+  SetTimeout(LProviderName, AValue);
 end;
 
 { Dynamic String-based getters and setters }
@@ -648,90 +685,93 @@ function TRadIAConfig.GetApiKey(const AProviderName: string): string;
 begin
   if AProviderName.IsEmpty then
     Exit('');
-  if not FDynamicApiKeys.TryGetValue(AProviderName.ToLower, Result) then
-    Result := '';
+  Result := FApiKeysList.Values[AProviderName.ToLower];
 end;
 
 procedure TRadIAConfig.SetApiKey(const AProviderName: string; const AKey: string);
 begin
   if AProviderName.IsEmpty then
     Exit;
-  FDynamicApiKeys.AddOrSetValue(AProviderName.ToLower, CleanApiKey(AKey));
+  FApiKeysList.Values[AProviderName.ToLower] := CleanApiKey(AKey);
 end;
 
 function TRadIAConfig.GetActiveModel(const AProviderName: string): string;
 begin
   if AProviderName.IsEmpty then
     Exit('');
-  if not FDynamicModels.TryGetValue(AProviderName.ToLower, Result) then
-    Result := '';
+  Result := FModelsList.Values[AProviderName.ToLower];
 end;
 
 procedure TRadIAConfig.SetActiveModel(const AProviderName: string; const AModel: string);
 begin
   if AProviderName.IsEmpty then
     Exit;
-  FDynamicModels.AddOrSetValue(AProviderName.ToLower, AModel);
+  FModelsList.Values[AProviderName.ToLower] := AModel;
 end;
 
 function TRadIAConfig.GetTemperature(const AProviderName: string): Double;
+var
+  LStr: string;
 begin
   if AProviderName.IsEmpty then
     Exit(0.7);
-  if not FDynamicTemperatures.TryGetValue(AProviderName.ToLower, Result) then
-    Result := 0.7;
+  LStr := FTemperaturesList.Values[AProviderName.ToLower];
+  Result := StrToFloatDef(LStr, 0.7, TFormatSettings.Invariant);
 end;
 
 procedure TRadIAConfig.SetTemperature(const AProviderName: string; const AValue: Double);
 begin
   if AProviderName.IsEmpty then
     Exit;
-  FDynamicTemperatures.AddOrSetValue(AProviderName.ToLower, AValue);
+  FTemperaturesList.Values[AProviderName.ToLower] := FloatToStr(AValue, TFormatSettings.Invariant);
 end;
 
 function TRadIAConfig.GetMaxTokens(const AProviderName: string): Integer;
+var
+  LStr: string;
 begin
   if AProviderName.IsEmpty then
     Exit(2048);
-  if not FDynamicMaxTokens.TryGetValue(AProviderName.ToLower, Result) then
-    Result := 2048;
+  LStr := FMaxTokensList.Values[AProviderName.ToLower];
+  Result := StrToIntDef(LStr, 2048);
 end;
 
 procedure TRadIAConfig.SetMaxTokens(const AProviderName: string; const AValue: Integer);
 begin
   if AProviderName.IsEmpty then
     Exit;
-  FDynamicMaxTokens.AddOrSetValue(AProviderName.ToLower, AValue);
+  FMaxTokensList.Values[AProviderName.ToLower] := IntToStr(AValue);
 end;
 
 function TRadIAConfig.GetTimeout(const AProviderName: string): Integer;
+var
+  LStr: string;
 begin
   if AProviderName.IsEmpty then
     Exit(60);
-  if not FDynamicTimeouts.TryGetValue(AProviderName.ToLower, Result) then
-    Result := 60;
+  LStr := FTimeoutsList.Values[AProviderName.ToLower];
+  Result := StrToIntDef(LStr, 60);
 end;
 
 procedure TRadIAConfig.SetTimeout(const AProviderName: string; const AValue: Integer);
 begin
   if AProviderName.IsEmpty then
     Exit;
-  FDynamicTimeouts.AddOrSetValue(AProviderName.ToLower, AValue);
+  FTimeoutsList.Values[AProviderName.ToLower] := IntToStr(AValue);
 end;
 
 function TRadIAConfig.GetProviderBaseUrl(const AProviderName: string): string;
 begin
   if AProviderName.IsEmpty then
     Exit('');
-  if not FDynamicBaseUrls.TryGetValue(AProviderName.ToLower, Result) then
-    Result := '';
+  Result := FBaseUrlsList.Values[AProviderName.ToLower];
 end;
 
 procedure TRadIAConfig.SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
 begin
   if AProviderName.IsEmpty then
     Exit;
-  FDynamicBaseUrls.AddOrSetValue(AProviderName.ToLower, AUrl);
+  FBaseUrlsList.Values[AProviderName.ToLower] := AUrl;
 end;
 
 function TRadIAConfig.GetSmartConfigEnabled: Boolean;
@@ -891,5 +931,28 @@ begin
     end;
   end;
 end;
+
+class function TRadIAConfig.GetInstance: IAIConfig;
+begin
+  if FInstance = nil then
+    FInstance := TRadIAConfig.Create;
+  Result := FInstance;
+end;
+
+function TRadIAConfig._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function TRadIAConfig._Release: Integer;
+begin
+  Result := -1;
+end;
+
+initialization
+
+finalization
+  if Assigned(TRadIAConfig.FInstance) then
+    FreeAndNil(TRadIAConfig.FInstance);
 
 end.
