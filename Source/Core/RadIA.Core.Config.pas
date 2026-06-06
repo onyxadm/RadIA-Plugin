@@ -311,8 +311,6 @@ end;
 procedure TRadIAConfig.LoadFromPath(const APath: string);
 var
   LReg: TRegistry;
-  LProv: TAIProviderType;
-  LProvStr: string;
   LProvPath: string;
   LMaxHist: Integer;
   LMigratedPath: string;

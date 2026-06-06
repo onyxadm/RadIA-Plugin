@@ -29,7 +29,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections, System.Math;
+  System.JSON, System.Threading, System.Generics.Collections, System.Math, RadIA.Core.ProviderRegistry;
 
 { TRadIAOllamaProvider }
 
@@ -315,5 +315,21 @@ begin
       Result := LTemp;
     end, ACallback);
 end;
+
+initialization
+  TProviderRegistry.RegisterProvider(
+    TProviderMetadata.Create(
+      'Ollama',
+      'Ollama Local/Network',
+      'http://localhost:11434',
+      False, // HasApiKey
+      True, // HasCustomUrl
+      ['llama3:latest', 'codellama:latest', 'mistral:latest', 'phi3:latest'],
+      function(const ACfg: IAIConfig): IIAProvider
+      begin
+        Result := TRadIAOllamaProvider.Create(ACfg);
+      end
+    )
+  );
 
 end.

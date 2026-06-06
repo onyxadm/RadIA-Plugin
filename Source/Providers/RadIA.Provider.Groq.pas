@@ -24,7 +24,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Math;
+  System.JSON, System.Threading, System.Math, RadIA.Core.ProviderRegistry;
 
 { TRadIAGroqProvider }
 
@@ -66,5 +66,21 @@ procedure TRadIAGroqProvider.FetchAvailableModelsAsync(
 begin
   inherited FetchAvailableModelsAsync(ACallback);
 end;
+
+initialization
+  TProviderRegistry.RegisterProvider(
+    TProviderMetadata.Create(
+      'Groq',
+      'Groq',
+      'https://api.groq.com/openai/v1',
+      True, // HasApiKey
+      False, // HasCustomUrl
+      [MODEL_GROQ_LLAMA33, MODEL_GROQ_MIXTRAL, MODEL_GROQ_GEMMA2],
+      function(const ACfg: IAIConfig): IIAProvider
+      begin
+        Result := TRadIAGroqProvider.Create(ACfg);
+      end
+    )
+  );
 
 end.

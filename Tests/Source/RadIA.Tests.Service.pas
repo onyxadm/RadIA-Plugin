@@ -8,7 +8,8 @@ uses
   RadIA.Core.Types,
   RadIA.Core.Service,
   RadIA.Core.Config,
-  RadIA.Core.TokenUsage;
+  RadIA.Core.TokenUsage,
+  RadIA.Core.ProviderRegistry;
 
 type
   { Mock minimal config for trimming tests — avoids registry I/O }
@@ -131,6 +132,17 @@ type
     procedure TestOpenAICustomBaseUrl_DefaultIsEmpty;
     [Test]
     procedure TestOpenAICustomBaseUrl_Persistence;
+  end;
+
+  [TestFixture]
+  TTestRadIAProviderRegistry = class
+  public
+    [Test]
+    procedure TestRegisteredProvidersExist;
+    [Test]
+    procedure TestResolveProviderNameCaseInsensitive;
+    [Test]
+    procedure TestCreateProviderRaisesExceptionOnUnknown;
   end;
 
 implementation
@@ -654,8 +666,43 @@ begin
   Assert.AreEqual(TEST_URL, FConfig.GetOpenAICustomBaseUrl);
 end;
 
+{ TTestRadIAProviderRegistry }
+
+procedure TTestRadIAProviderRegistry.TestRegisteredProvidersExist;
+begin
+  Assert.IsTrue(TProviderRegistry.HasProvider('Gemini'), 'Gemini should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('OpenAI'), 'OpenAI should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('Claude'), 'Claude should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('Ollama'), 'Ollama should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('DeepSeek'), 'DeepSeek should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('Groq'), 'Groq should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('OpenRouter'), 'OpenRouter should be registered');
+end;
+
+procedure TTestRadIAProviderRegistry.TestResolveProviderNameCaseInsensitive;
+begin
+  Assert.IsTrue(TProviderRegistry.HasProvider('gemini'), 'Resolution should be case insensitive');
+  Assert.IsTrue(TProviderRegistry.HasProvider('GEMINI'), 'Resolution should be case insensitive');
+end;
+
+procedure TTestRadIAProviderRegistry.TestCreateProviderRaisesExceptionOnUnknown;
+var
+  LCfg: IAIConfig;
+begin
+  LCfg := TMockConfig.Create(20);
+  Assert.WillRaise(
+    procedure
+    begin
+      TProviderRegistry.CreateProvider('UnknownProvider_xyz', LCfg);
+    end,
+    Exception,
+    'Should raise Exception on unknown provider'
+  );
+end;
+
 initialization
   TDUnitX.RegisterTestFixture(TTestRadIAService);
   TDUnitX.RegisterTestFixture(TTestRadIAConfigExtended);
+  TDUnitX.RegisterTestFixture(TTestRadIAProviderRegistry);
 
 end.
