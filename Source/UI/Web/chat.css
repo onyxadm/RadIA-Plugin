@@ -848,6 +848,9 @@ body.light-theme .session-action-btn:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0; /* Prevents item from shrinking when there are many items in a flex container */
+  min-height: 32px; /* Ensures a consistent, clickable touch/target height */
+  box-sizing: border-box;
 }
 
 .custom-dropdown-option:hover {
