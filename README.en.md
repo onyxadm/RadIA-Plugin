@@ -18,12 +18,12 @@
 
 This project adopts clear language rules and design standards for both human developers and AI assistants (LLMs/Co-pilots) working on the codebase:
 
-*   **AI Assistant Interface & Interaction:**
+*   **AI & Human Interactions:**
     *   All chat interactions, commit messages, pull request descriptions, task updates, and design discussions must be conducted in **Brazilian Portuguese (pt-BR)**.
-    *   AI assistants must strictly adhere to Clean Code, SOLID, DRY, and KISS principles when proposing changes or new features.
-*   **Source Code:**
+*   **Source Code & Architecture:**
     *   The source code is **100% written in English (en-US)**.
-    *   All identifiers (unit names, variables, classes, methods, records, enums), parameters, data structures (JSON/XML), and inline comments must be written exclusively in English, following the standards and conventions of Object Pascal.
+    *   All identifiers (unit names, variables, classes, methods, records, enums), parameters, data structures (JSON/XML), and inline comments must be written exclusively in English, following object-oriented Pascal naming conventions.
+    *   Strict adherence to **Clean Code**, **SOLID**, **DRY**, and **KISS** with complete thread-safety.
 *   **Official Documentation:**
     *   Available primarily in Portuguese ([README.md](README.md)) with an English translation ([README.en.md](README.en.md)).
 
@@ -105,14 +105,7 @@ PluginDelphiIA/
 └── Tests/                              # Unit Tests (DUnitX)
 ```
 
-### 7. Architecture Principles
-This project strictly enforces:
-*   **SOLID** design principles.
-*   **Clean Code** patterns with complete thread-safety.
-*   **DRY (Don't Repeat Yourself)** & **KISS (Keep It Simple, Stupid)**.
-*   Strictly using **English** for all programming artifacts.
-
-### 8. Terms of Use and Corporate Compliance
+### 7. Terms of Use and Corporate Compliance
 
 For guidelines on corporate compliance (GDPR/LGPD), data privacy, API key encryption using Windows DPAPI, and legal disclaimers regarding AI-generated code, please refer to our:
 

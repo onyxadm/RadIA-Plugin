@@ -18,12 +18,12 @@
 
 Este projeto adota regras claras de idioma e padrões de design para desenvolvedores humanos e assistentes de IA (LLMs/Co-pilots) que trabalham na base de código:
 
-*   **Interface e Interação de IA (AI Prompting & Interaction):**
-    *   Toda interação no chat, commits, descrições de pull requests, tarefas e discussões de design devem ser conduzidas em **Português do Brasil (pt-BR)**.
-    *   Assistentes de IA devem seguir estritamente princípios de Clean Code, SOLID, DRY e KISS ao propor alterações ou novos recursos.
-*   **Código Fonte (Source Code):**
+*   **Interações de IA e Humanos (AI & Human Interactions):**
+    *   Toda conversa no chat, commits, descrições de pull requests, tarefas e discussões de design devem ser conduzidas em **Português do Brasil (pt-BR)**.
+*   **Código Fonte & Arquitetura (Source Code & Architecture):**
     *   O código fonte é **100% escrito em Inglês (en-US)**.
-    *   Todos os identificadores (nomes de units, variáveis, classes, métodos, records, enums), parâmetros, estruturas de dados (JSON/XML) e comentários embutidos no código devem ser escritos exclusivamente em inglês, seguindo os padrões e convenções da linguagem Object Pascal.
+    *   Todos os identificadores (nomes de units, variáveis, classes, métodos, records, enums), parâmetros, estruturas de dados (JSON/XML) e comentários embutidos no código devem ser escritos exclusivamente em inglês, seguindo as convenções e padrões Pascal.
+    *   Adoção rigorosa de **Clean Code**, **SOLID**, **DRY** e **KISS** com total isolamento em threads (thread-safety).
 *   **Documentação Oficial (Documentation):**
     *   Disponível principalmente em Português ([README.md](README.md)) com tradução equivalente em Inglês ([README.en.md](README.en.md)).
 
@@ -103,14 +103,7 @@ PluginDelphiIA/
 └── Tests/                              # Testes de Integração e Unitários (DUnitX)
 ```
 
-### 7. Princípios de Desenvolvimento
-Este projeto adota rigidamente:
-*   Princípios de design **SOLID**.
-*   Práticas de **Clean Code** com total isolamento em threads (thread-safety).
-*   Princípios **DRY** (Don't Repeat Yourself) e **KISS** (Keep It Simple, Stupid).
-*   Uso exclusivo do idioma **Inglês** para todo código fonte do projeto.
-
-### 8. Termos de Uso e Compliance Corporativo
+### 7. Termos de Uso e Compliance Corporativo
 
 Para diretrizes de conformidade corporativa (LGPD/GDPR), privacidade de dados, segurança de credenciais com Windows DPAPI e avisos legais sobre código gerado por IA, consulte o nosso:
 
