@@ -3,7 +3,7 @@ unit RadIA.Core.Config;
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage;
+  System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 type
   TRadIAConfig = class(TInterfacedObject, IAIConfig)
@@ -25,12 +25,12 @@ type
     FActiveSessionId: string;
 
     { Dynamic String-based Dictionaries for settings }
-    FDynamicApiKeys: System.Generics.Collections.TDictionary<string, string>;
-    FDynamicModels: System.Generics.Collections.TDictionary<string, string>;
-    FDynamicTemperatures: System.Generics.Collections.TDictionary<string, Double>;
-    FDynamicMaxTokens: System.Generics.Collections.TDictionary<string, Integer>;
-    FDynamicTimeouts: System.Generics.Collections.TDictionary<string, Integer>;
-    FDynamicBaseUrls: System.Generics.Collections.TDictionary<string, string>;
+    FDynamicApiKeys: TDictionary<string, string>;
+    FDynamicModels: TDictionary<string, string>;
+    FDynamicTemperatures: TDictionary<string, Double>;
+    FDynamicMaxTokens: TDictionary<string, Integer>;
+    FDynamicTimeouts: TDictionary<string, Integer>;
+    FDynamicBaseUrls: TDictionary<string, string>;
 
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
@@ -163,12 +163,12 @@ begin
   
   LogDebug('TRadIAConfig.Create: Active path = ' + GetRegistryPath);
 
-  FDynamicApiKeys := System.Generics.Collections.TDictionary<string, string>.Create;
-  FDynamicModels := System.Generics.Collections.TDictionary<string, string>.Create;
-  FDynamicTemperatures := System.Generics.Collections.TDictionary<string, Double>.Create;
-  FDynamicMaxTokens := System.Generics.Collections.TDictionary<string, Integer>.Create;
-  FDynamicTimeouts := System.Generics.Collections.TDictionary<string, Integer>.Create;
-  FDynamicBaseUrls := System.Generics.Collections.TDictionary<string, string>.Create;
+  FDynamicApiKeys := TDictionary<string, string>.Create;
+  FDynamicModels := TDictionary<string, string>.Create;
+  FDynamicTemperatures := TDictionary<string, Double>.Create;
+  FDynamicMaxTokens := TDictionary<string, Integer>.Create;
+  FDynamicTimeouts := TDictionary<string, Integer>.Create;
+  FDynamicBaseUrls := TDictionary<string, string>.Create;
 
   FActiveProvider := ptGemini;
   FSystemPrompt := '';
