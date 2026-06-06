@@ -23,7 +23,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Math;
+  System.JSON, System.Threading, System.Math, RadIA.Core.ProviderRegistry;
 
 { TRadIAOpenRouterProvider }
 
@@ -58,5 +58,21 @@ procedure TRadIAOpenRouterProvider.FetchAvailableModelsAsync(
 begin
   inherited FetchAvailableModelsAsync(ACallback);
 end;
+
+initialization
+  TProviderRegistry.RegisterProvider(
+    TProviderMetadata.Create(
+      'OpenRouter',
+      'OpenRouter',
+      'https://openrouter.ai/api/v1',
+      True, // HasApiKey
+      False, // HasCustomUrl
+      [MODEL_OPENROUTER_GEMINI25_PRO, MODEL_OPENROUTER_LLAMA33, MODEL_OPENROUTER_DEEPSEEK_R1],
+      function(const ACfg: IAIConfig): IIAProvider
+      begin
+        Result := TRadIAOpenRouterProvider.Create(ACfg);
+      end
+    )
+  );
 
 end.

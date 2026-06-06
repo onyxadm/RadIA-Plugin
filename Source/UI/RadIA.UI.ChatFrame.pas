@@ -154,7 +154,7 @@ begin
   end;
   
   FLifecycleGuard := TLifecycleGuard.Create;
-  FConfig := TRadIAConfig.Create;
+  FConfig := TRadIAConfig.GetInstance;
   FAIService := TRadIAService.Create(FConfig);
   FPromptHistoryManager := TPromptHistoryManager.Create;
   FAccumulatedUsage := TTokenUsage.Empty;
@@ -397,7 +397,6 @@ end;
 
 procedure TFrameAIChat.UpdateModelsCombo;
 var
-  LActiveModel: string;
   LProvider: IIAProvider;
   LGuard: ILifecycleGuard;
 begin
@@ -411,32 +410,41 @@ begin
     LProvider := FAIService.CreateActiveProvider;
     LProvider.FetchAvailableModelsAsync(
       procedure(AModels: TArray<string>; AError: string)
-      var
-        LModel: string;
       begin
-        if not LGuard.IsAlive then
-          Exit;
-          
-        cbModel.Items.Clear;
-        for LModel in AModels do
-        begin
-          cbModel.Items.Add(LModel);
-        end;
-        
-        LActiveModel := FConfig.GetActiveModel(LProvider.GetProviderType);
-        cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
-        if cbModel.ItemIndex = -1 then
-        begin
-          cbModel.ItemIndex := 0;
-          if cbModel.Items.Count > 0 then
+        TThread.Queue(nil,
+          procedure
+          var
+            LModel: string;
+            LActiveModel: string;
+            LProvType: TAIProviderType;
           begin
-            FConfig.SetActiveModel(LProvider.GetProviderType, cbModel.Items[0]);
-            FConfig.Save;
-          end;
-        end;
-          
-        cbModel.Enabled := True;
-        SendModelsUpdateToWeb;
+            if not LGuard.IsAlive then
+              Exit;
+              
+            cbModel.Items.Clear;
+            for LModel in AModels do
+              cbModel.Items.Add(LModel);
+            
+            if Assigned(LProvider) then
+            begin
+              LProvType := LProvider.GetProviderType;
+              LActiveModel := FConfig.GetActiveModel(LProvType);
+              cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
+              if cbModel.ItemIndex = -1 then
+              begin
+                cbModel.ItemIndex := 0;
+                if cbModel.Items.Count > 0 then
+                begin
+                  FConfig.SetActiveModel(LProvType, cbModel.Items[0]);
+                  FConfig.Save;
+                end;
+              end;
+            end;
+              
+            cbModel.Enabled := True;
+            SendModelsUpdateToWeb;
+          end
+        );
       end);
   except
     on E: Exception do
@@ -541,6 +549,12 @@ var
 begin
   LForm := TFormAIConfig.Create(nil);
   try
+    if Assigned(Vcl.Forms.Application.MainForm) then
+    begin
+      LForm.PopupParent := Vcl.Forms.Application.MainForm;
+      LForm.PopupMode := pmExplicit;
+    end;
+
     LForm.LoadConfig;
     
     if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then

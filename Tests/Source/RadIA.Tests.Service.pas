@@ -8,7 +8,8 @@ uses
   RadIA.Core.Types,
   RadIA.Core.Service,
   RadIA.Core.Config,
-  RadIA.Core.TokenUsage;
+  RadIA.Core.TokenUsage,
+  RadIA.Core.ProviderRegistry;
 
 type
   { Mock minimal config for trimming tests — avoids registry I/O }
@@ -34,12 +35,12 @@ type
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
 
-    function GetApiKey(const AProvider: TAIProviderType): string;
-    procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string);
+    function GetApiKey(const AProvider: TAIProviderType): string; overload;
+    procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string); overload;
     function GetActiveProvider: TAIProviderType;
     procedure SetActiveProvider(const AProvider: TAIProviderType);
-    function GetActiveModel(const AProvider: TAIProviderType): string;
-    procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
+    function GetActiveModel(const AProvider: TAIProviderType): string; overload;
+    procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string); overload;
     function GetSystemPrompt: string;
     procedure SetSystemPrompt(const AValue: string);
     function GetOllamaBaseUrl: string;
@@ -48,12 +49,12 @@ type
     procedure SetMaxHistoryMessages(const AValue: Integer);
     function GetOpenAICustomBaseUrl: string;
     procedure SetOpenAICustomBaseUrl(const AValue: string);
-    function GetTemperature(const AProvider: TAIProviderType): Double;
-    procedure SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
-    function GetMaxTokens(const AProvider: TAIProviderType): Integer;
-    procedure SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
-    function GetTimeout(const AProvider: TAIProviderType): Integer;
-    procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
+    function GetTemperature(const AProvider: TAIProviderType): Double; overload;
+    procedure SetTemperature(const AProvider: TAIProviderType; const AValue: Double); overload;
+    function GetMaxTokens(const AProvider: TAIProviderType): Integer; overload;
+    procedure SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer); overload;
+    function GetTimeout(const AProvider: TAIProviderType): Integer; overload;
+    procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer); overload;
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
     function GetLogEnabled: Boolean;
@@ -75,6 +76,20 @@ type
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
+
+    { String-based dynamic provider APIs }
+    function GetApiKey(const AProviderName: string): string; overload;
+    procedure SetApiKey(const AProviderName: string; const AKey: string); overload;
+    function GetActiveModel(const AProviderName: string): string; overload;
+    procedure SetActiveModel(const AProviderName: string; const AModel: string); overload;
+    function GetTemperature(const AProviderName: string): Double; overload;
+    procedure SetTemperature(const AProviderName: string; const AValue: Double); overload;
+    function GetMaxTokens(const AProviderName: string): Integer; overload;
+    procedure SetMaxTokens(const AProviderName: string; const AValue: Integer); overload;
+    function GetTimeout(const AProviderName: string): Integer; overload;
+    procedure SetTimeout(const AProviderName: string; const AValue: Integer); overload;
+    function GetProviderBaseUrl(const AProviderName: string): string;
+    procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
   end;
 
   [TestFixture]
@@ -117,6 +132,17 @@ type
     procedure TestOpenAICustomBaseUrl_DefaultIsEmpty;
     [Test]
     procedure TestOpenAICustomBaseUrl_Persistence;
+  end;
+
+  [TestFixture]
+  TTestRadIAProviderRegistry = class
+  public
+    [Test]
+    procedure TestRegisteredProvidersExist;
+    [Test]
+    procedure TestResolveProviderNameCaseInsensitive;
+    [Test]
+    procedure TestCreateProviderRaisesExceptionOnUnknown;
   end;
 
 implementation
@@ -358,6 +384,60 @@ begin
     FQuotaUsed := FQuotaUsed + AUsage.TotalTokens;
 end;
 
+function TMockConfig.GetApiKey(const AProviderName: string): string;
+begin
+  Result := '';
+end;
+
+procedure TMockConfig.SetApiKey(const AProviderName: string; const AKey: string);
+begin
+end;
+
+function TMockConfig.GetActiveModel(const AProviderName: string): string;
+begin
+  Result := 'test-model';
+end;
+
+procedure TMockConfig.SetActiveModel(const AProviderName: string; const AModel: string);
+begin
+end;
+
+function TMockConfig.GetTemperature(const AProviderName: string): Double;
+begin
+  Result := 0.7;
+end;
+
+procedure TMockConfig.SetTemperature(const AProviderName: string; const AValue: Double);
+begin
+end;
+
+function TMockConfig.GetMaxTokens(const AProviderName: string): Integer;
+begin
+  Result := 2048;
+end;
+
+procedure TMockConfig.SetMaxTokens(const AProviderName: string; const AValue: Integer);
+begin
+end;
+
+function TMockConfig.GetTimeout(const AProviderName: string): Integer;
+begin
+  Result := 60;
+end;
+
+procedure TMockConfig.SetTimeout(const AProviderName: string; const AValue: Integer);
+begin
+end;
+
+function TMockConfig.GetProviderBaseUrl(const AProviderName: string): string;
+begin
+  Result := '';
+end;
+
+procedure TMockConfig.SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
+begin
+end;
+
 { TTestRadIAService helpers }
 
 function TTestRadIAService.MakeHistory(const ACount: Integer): TArray<IChatMessage>;
@@ -586,8 +666,43 @@ begin
   Assert.AreEqual(TEST_URL, FConfig.GetOpenAICustomBaseUrl);
 end;
 
+{ TTestRadIAProviderRegistry }
+
+procedure TTestRadIAProviderRegistry.TestRegisteredProvidersExist;
+begin
+  Assert.IsTrue(TProviderRegistry.HasProvider('Gemini'), 'Gemini should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('OpenAI'), 'OpenAI should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('Claude'), 'Claude should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('Ollama'), 'Ollama should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('DeepSeek'), 'DeepSeek should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('Groq'), 'Groq should be registered');
+  Assert.IsTrue(TProviderRegistry.HasProvider('OpenRouter'), 'OpenRouter should be registered');
+end;
+
+procedure TTestRadIAProviderRegistry.TestResolveProviderNameCaseInsensitive;
+begin
+  Assert.IsTrue(TProviderRegistry.HasProvider('gemini'), 'Resolution should be case insensitive');
+  Assert.IsTrue(TProviderRegistry.HasProvider('GEMINI'), 'Resolution should be case insensitive');
+end;
+
+procedure TTestRadIAProviderRegistry.TestCreateProviderRaisesExceptionOnUnknown;
+var
+  LCfg: IAIConfig;
+begin
+  LCfg := TMockConfig.Create(20);
+  Assert.WillRaise(
+    procedure
+    begin
+      TProviderRegistry.CreateProvider('UnknownProvider_xyz', LCfg);
+    end,
+    Exception,
+    'Should raise Exception on unknown provider'
+  );
+end;
+
 initialization
   TDUnitX.RegisterTestFixture(TTestRadIAService);
   TDUnitX.RegisterTestFixture(TTestRadIAConfigExtended);
+  TDUnitX.RegisterTestFixture(TTestRadIAProviderRegistry);
 
 end.

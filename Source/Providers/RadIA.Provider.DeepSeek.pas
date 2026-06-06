@@ -23,7 +23,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Math;
+  System.JSON, System.Threading, System.Math, RadIA.Core.ProviderRegistry;
 
 { TRadIADeepSeekProvider }
 
@@ -58,5 +58,21 @@ procedure TRadIADeepSeekProvider.FetchAvailableModelsAsync(
 begin
   inherited FetchAvailableModelsAsync(ACallback);
 end;
+
+initialization
+  TProviderRegistry.RegisterProvider(
+    TProviderMetadata.Create(
+      'DeepSeek',
+      'DeepSeek',
+      'https://api.deepseek.com',
+      True, // HasApiKey
+      False, // HasCustomUrl
+      [MODEL_DEEPSEEK_CHAT, MODEL_DEEPSEEK_REASONING],
+      function(const ACfg: IAIConfig): IIAProvider
+      begin
+        Result := TRadIADeepSeekProvider.Create(ACfg);
+      end
+    )
+  );
 
 end.

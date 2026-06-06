@@ -28,7 +28,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Math;
+  System.JSON, System.Threading, System.Math, RadIA.Core.ProviderRegistry;
 
 { TRadIAClaudeProvider }
 
@@ -282,5 +282,21 @@ begin
       Result := LTemp;
     end, ACallback);
 end;
+
+initialization
+  TProviderRegistry.RegisterProvider(
+    TProviderMetadata.Create(
+      'Claude',
+      'Anthropic Claude',
+      'https://api.anthropic.com',
+      True, // HasApiKey
+      False, // HasCustomUrl
+      [MODEL_CLAUDE_3_HAIKU, MODEL_CLAUDE_35_SONNET],
+      function(const ACfg: IAIConfig): IIAProvider
+      begin
+        Result := TRadIAClaudeProvider.Create(ACfg);
+      end
+    )
+  );
 
 end.
