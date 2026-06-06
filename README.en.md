@@ -78,6 +78,7 @@ PluginDelphiIA/
 │   ├── install_config.en.md            # Detailed installation and API keys guide
 │   ├── implementation_plan.md          # Architectural Planning
 │   ├── radia_design_ui.md              # UI Elements & Flow Design
+│   ├── new_provider_guide.en.md        # Guide for adding new AI Providers
 │   └── task.md                         # Checklist of Development Tasks
 │
 ├── RadIA.groupproj                     # Delphi Project Group
