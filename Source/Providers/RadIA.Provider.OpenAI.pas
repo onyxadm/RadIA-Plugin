@@ -24,7 +24,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Math;
+  System.JSON, System.Threading, System.Math, RadIA.Core.ProviderRegistry;
 
 { TRadIAOpenAIProvider }
 
@@ -69,5 +69,21 @@ procedure TRadIAOpenAIProvider.FetchAvailableModelsAsync(
 begin
   inherited FetchAvailableModelsAsync(ACallback);
 end;
+
+initialization
+  TProviderRegistry.RegisterProvider(
+    TProviderMetadata.Create(
+      'OpenAI',
+      'OpenAI ChatGPT',
+      'https://api.openai.com/v1',
+      True, // HasApiKey
+      True, // HasCustomUrl
+      [MODEL_OPENAI_GPT4O_MINI, MODEL_OPENAI_GPT4O],
+      function(const ACfg: IAIConfig): IIAProvider
+      begin
+        Result := TRadIAOpenAIProvider.Create(ACfg);
+      end
+    )
+  );
 
 end.

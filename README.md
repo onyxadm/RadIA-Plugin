@@ -57,6 +57,12 @@ O RadIA pode ser instalado de maneira **automatizada via PowerShell** (recomenda
 
 👉 [**Guia de Instalação e Configuração Completo (docs/install_config.md)**](docs/install_config.md)
 
+### 5.1 Adicionando um Novo Provedor de IA (Arquitetura Plug-in)
+
+O RadIA adota uma arquitetura de registro de provedores orientada a metadados (`TProviderRegistry`). Isso permite adicionar novos backends de IA de forma totalmente dinâmica e desacoplada. Para um tutorial passo a passo de como implementar sua classe de provedor e realizar o auto-registro, consulte o nosso:
+
+👉 [**Guia para Adição de Novos Provedores (docs/new_provider_guide.md)**](docs/new_provider_guide.md)
+
 ---
 
 ### 6. Estrutura do Repositório

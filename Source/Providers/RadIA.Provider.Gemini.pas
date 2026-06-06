@@ -30,7 +30,7 @@ implementation
 
 uses
   System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding,
-  System.Math, RadIA.Core.Logger;
+  System.Math, RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
 
 { TRadIAGeminiProvider }
 
@@ -512,5 +512,21 @@ begin
       Result := LTemp;
     end, ACallback);
 end;
+
+initialization
+  TProviderRegistry.RegisterProvider(
+    TProviderMetadata.Create(
+      'Gemini',
+      'Google Gemini',
+      'https://generativelanguage.googleapis.com',
+      True, // HasApiKey
+      False, // HasCustomUrl
+      [MODEL_GEMINI_15_FLASH, MODEL_GEMINI_15_PRO],
+      function(const ACfg: IAIConfig): IIAProvider
+      begin
+        Result := TRadIAGeminiProvider.Create(ACfg);
+      end
+    )
+  );
 
 end.
