@@ -83,6 +83,7 @@ PluginDelphiIA/
 ├── docs/                               # Documentation & Visuals
 │   ├── images/
 │   │   ├── radia_ui_mockup.png         # IDE Chat Integration Mockup
+│   │   ├── radia_options_mockup.png    # IDE Settings Panel Mockup (Tools -> Options)
 │   │   └── radia_diff_ui_mockup.png    # Side-by-Side Diff View Mockup
 │   ├── install_config.en.md            # Detailed installation and API keys guide
 │   ├── implementation_plan.md          # Architectural Planning
