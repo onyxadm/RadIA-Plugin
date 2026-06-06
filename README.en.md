@@ -44,6 +44,7 @@ This project adopts clear language rules and design standards for both human dev
 *   **Interactive Smart Diff View:** View refactored code recommendations side-by-side (Original vs. Suggested) highlighting changes in red/green with a one-click **[Apply Changes]** button directly into the editor.
 *   **Smart Build Debugger:** Context integration with the Delphi *Messages View*. Right-click on compilation errors to get instant AI fixes and solutions.
 *   **Auto XML Documentation:** Automatically write Delphi-compliant XML help tags (`/// <summary>`) above methods.
+*   **DTO and Model Converter:** Instantly generate Object Pascal classes (DTOs) or records from JSON payloads or SQL DDL scripts, with smart support for DEXT ORM, TMS Aurelius, REST.Json, and Vanilla Delphi.
 *   **Slash Commands:** Quick actions directly in the chat input (e.g., `/doc`, `/explain`, `/refactor`, `/bugs`).
 *   **Secure API Key Registry Storage:** Keys are saved encrypted locally using the Windows Data Protection API (DPAPI) inside the Windows Registry.
 *   **Request Cancellation:** A dynamic circular stop button integrated inside the prompt input to abort active requests instantly and safely.
