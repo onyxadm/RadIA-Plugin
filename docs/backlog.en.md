@@ -116,6 +116,14 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Automated theming and styling following the native IDE theme using individual panel wrappers for style inheritance and preventing inappropriate color contrast in the IDE dark theme.
     *   Automated silent saving when clicking "OK" inside the IDE's options, and explicit success messages shown only on the standalone popup form.
 
+### 16. Native Provider: OpenRouter - Item #20
+*   **Description**: Added direct native support to the OpenRouter provider with SSE streaming, registry persistence, secure credential storage via DPAPI, and model configuration.
+*   **Details**:
+    *   Created the `RadIA.Provider.OpenRouter.pas` unit inheriting from `TRadIAOpenAICompatibleProvider`.
+    *   Mapped `ptOpenRouter` in provider type enum, implemented API key settings, and defined fallback default models (`google/gemini-2.5-pro`, `meta-llama/llama-3.3-70b-instruct`, `deepseek/deepseek-r1`).
+    *   Added the `tsOpenRouter` tab with layout design, and implemented dark/light mode paint controls.
+    *   Created new unit tests in `RadIA.Tests.ProvidersEx.pas` covering payload generation, responses, and SSE event streaming parsing.
+
 ---
 
 ## 🔲 Pending Items

@@ -4,7 +4,7 @@ interface
 
 type
   { Enum representing the supported AI Providers }
-  TAIProviderType = (ptGemini, ptOpenAI, ptClaude, ptOllama, ptDeepSeek, ptGroq);
+  TAIProviderType = (ptGemini, ptOpenAI, ptClaude, ptOllama, ptDeepSeek, ptGroq, ptOpenRouter);
 
   { Enum representing the message role in chat conversations }
   TAIMessageRole = (mrUser, mrAssistant, mrSystem);
@@ -34,6 +34,11 @@ const
   MODEL_GROQ_MIXTRAL       = 'mixtral-8x7b-32768';
   MODEL_GROQ_GEMMA2        = 'gemma2-9b-it';
 
+  { Standard models for OpenRouter }
+  MODEL_OPENROUTER_GEMINI25_PRO = 'google/gemini-2.5-pro';
+  MODEL_OPENROUTER_LLAMA33      = 'meta-llama/llama-3.3-70b-instruct';
+  MODEL_OPENROUTER_DEEPSEEK_R1  = 'deepseek/deepseek-r1';
+
 function ProviderTypeToString(const AProvider: TAIProviderType): string;
 function StringToProviderType(const AString: string): TAIProviderType;
 function MessageRoleToString(const ARole: TAIMessageRole): string;
@@ -53,6 +58,7 @@ begin
     ptOllama: Result := 'Ollama';
     ptDeepSeek: Result := 'DeepSeek';
     ptGroq: Result := 'Groq';
+    ptOpenRouter: Result := 'OpenRouter';
   else
     Result := '';
   end;
@@ -72,6 +78,8 @@ begin
     Result := ptDeepSeek
   else if SameText(AString, 'Groq') then
     Result := ptGroq
+  else if SameText(AString, 'OpenRouter') then
+    Result := ptOpenRouter
   else
     raise EConvertError.CreateFmt('Invalid provider string: %s', [AString]);
 end;

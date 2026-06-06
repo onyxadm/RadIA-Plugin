@@ -28,6 +28,7 @@ uses
   RadIA.Provider.Ollama in '..\Source\Providers\RadIA.Provider.Ollama.pas',
   RadIA.Provider.DeepSeek in '..\Source\Providers\RadIA.Provider.DeepSeek.pas',
   RadIA.Provider.Groq in '..\Source\Providers\RadIA.Provider.Groq.pas',
+  RadIA.Provider.OpenRouter in '..\Source\Providers\RadIA.Provider.OpenRouter.pas',
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',

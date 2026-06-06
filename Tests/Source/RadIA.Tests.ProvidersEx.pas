@@ -4,7 +4,7 @@ interface
 
 uses
   DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Core.TokenUsage, RadIA.Provider.DeepSeek, RadIA.Provider.Groq;
+  RadIA.Core.TokenUsage, RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter;
 
 type
   [TestFixture]
@@ -13,6 +13,7 @@ type
     FConfig: IAIConfig;
     FDeepSeekProv: TRadIADeepSeekProvider;
     FGroqProv: TRadIAGroqProvider;
+    FOpenRouterProv: TRadIAOpenRouterProvider;
     
     function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
       const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
@@ -32,6 +33,10 @@ type
     procedure TestGroq_PayloadAndParsing;
     [Test]
     procedure TestGroq_StreamingSSE;
+    [Test]
+    procedure TestOpenRouter_PayloadAndParsing;
+    [Test]
+    procedure TestOpenRouter_StreamingSSE;
   end;
 
 implementation
@@ -46,12 +51,14 @@ begin
   FConfig := TRadIAConfig.Create;
   FDeepSeekProv := TRadIADeepSeekProvider.Create(FConfig);
   FGroqProv := TRadIAGroqProvider.Create(FConfig);
+  FOpenRouterProv := TRadIAOpenRouterProvider.Create(FConfig);
 end;
 
 procedure TTestRadIAProvidersEx.TearDown;
 begin
   FDeepSeekProv.Free;
   FGroqProv.Free;
+  FOpenRouterProv.Free;
   FConfig := nil;
 end;
 
@@ -266,6 +273,73 @@ begin
 
   Assert.AreEqual(3, LCallbackCount);
   Assert.AreEqual('Groq', LReceivedText);
+  Assert.IsTrue(LIsDone);
+  Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAProvidersEx.TestOpenRouter_PayloadAndParsing;
+var
+  LPayload: string;
+  LHistory: TArray<IChatMessage>;
+  LJsonObj: TJSONObject;
+  LMessages: TJSONArray;
+  LText: string;
+  LUsage: TTokenUsage;
+const
+  MOCK_OPENROUTER_RESPONSE = 
+    '{"choices": [{"message": {"role": "assistant", "content": "OpenRouter response text"}}], ' +
+    '"usage": {"prompt_tokens": 8, "completion_tokens": 12, "total_tokens": 20}}';
+begin
+  // 1. Test Payload Generation
+  LHistory := [TRadIAService.CreateMessage(mrUser, 'OpenRouter Query')];
+  LPayload := InvokeBuildRequestBody(FOpenRouterProv, 'Hello', LHistory, True);
+  
+  Assert.IsNotEmpty(LPayload);
+  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
+  try
+    Assert.IsNotNull(LJsonObj);
+    Assert.AreEqual('google/gemini-2.5-pro', LJsonObj.GetValue('model').Value);
+    Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'));
+    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
+    Assert.IsNotNull(LMessages);
+    Assert.AreEqual(2, LMessages.Count);
+  finally
+    LJsonObj.Free;
+  end;
+
+  // 2. Test Response Parsing
+  LText := InvokeParseResponseBody(FOpenRouterProv, MOCK_OPENROUTER_RESPONSE, LUsage);
+  Assert.AreEqual('OpenRouter response text', LText);
+  Assert.AreEqual(8, LUsage.PromptTokens);
+  Assert.AreEqual(12, LUsage.CompletionTokens);
+  Assert.AreEqual(20, LUsage.TotalTokens);
+end;
+
+procedure TTestRadIAProvidersEx.TestOpenRouter_StreamingSSE;
+var
+  LBuffer: string;
+  LReceivedText: string;
+  LCallbackCount: Integer;
+  LIsDone: Boolean;
+begin
+  LBuffer := 'data: {"choices":[{"delta":{"content":"Open"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"Router"}}]}' + #10 + 'data: [DONE]' + #10;
+  LReceivedText := '';
+  LCallbackCount := 0;
+  LIsDone := False;
+
+  InvokeProcessStreamBuffer(FOpenRouterProv, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      if AIsDone then
+        LIsDone := True
+      else
+        LReceivedText := LReceivedText + AChunk;
+      Assert.IsEmpty(AError);
+    end);
+
+  Assert.AreEqual(3, LCallbackCount);
+  Assert.AreEqual('OpenRouter', LReceivedText);
   Assert.IsTrue(LIsDone);
   Assert.IsEmpty(LBuffer);
 end;

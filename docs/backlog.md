@@ -116,6 +116,14 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Pintura e estilização automatizada seguindo o tema nativo da IDE usando painéis wrappers individuais para herança de estilo e prevenção de contraste inadequado de cores no tema escuro.
     *   Salvamento automatizado silencioso ao pressionar "OK" nas opções da IDE, e aviso explícito de sucesso apenas no formulário popup standalone.
 
+### 16. Provedor Nativo: OpenRouter - Item #20
+*   **Descrição**: Adicionado suporte nativo direto ao OpenRouter com streaming SSE, persistência no registro do Windows, armazenamento seguro de credenciais com DPAPI e listagem de modelos.
+*   **Detalhes**:
+    *   Criada a unit `RadIA.Provider.OpenRouter.pas` herdando de `TRadIAOpenAICompatibleProvider`.
+    *   Mapeamento de `ptOpenRouter` no enum de provedores, configurações de chaves de API e modelos padrão (`google/gemini-2.5-pro`, `meta-llama/llama-3.3-70b-instruct`, `deepseek/deepseek-r1`).
+    *   Adicionada aba `tsOpenRouter` com estilização e suporte de tema VCL para a tela de configurações.
+    *   Novos testes unitários em `RadIA.Tests.ProvidersEx.pas` cobrindo geração de payloads, parsing de respostas e buffering SSE.
+
 ---
 
 ## 🔲 Pendentes
