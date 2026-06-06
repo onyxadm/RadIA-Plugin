@@ -14,9 +14,18 @@
 
 ---
 
-### 1. Padrão de Linguagem
-*   **Documentação (README / Docs):** Disponível em Português (padrão) e Inglês (alternativo).
-*   **Código Fonte:** 100% escrito em **Inglês** (nomes, units, variáveis, classes, métodos e comentários de código) seguindo o clean code e os padrões Pascal.
+### 1. Diretrizes de Desenvolvimento e Padrão de Linguagem
+
+Este projeto adota regras claras de idioma e padrões de design para desenvolvedores humanos e assistentes de IA (LLMs/Co-pilots) que trabalham na base de código:
+
+*   **Interface e Interação de IA (AI Prompting & Interaction):**
+    *   Toda interação no chat, commits, descrições de pull requests, tarefas e discussões de design devem ser conduzidas em **Português do Brasil (pt-BR)**.
+    *   Assistentes de IA devem seguir estritamente princípios de Clean Code, SOLID, DRY e KISS ao propor alterações ou novos recursos.
+*   **Código Fonte (Source Code):**
+    *   O código fonte é **100% escrito em Inglês (en-US)**.
+    *   Todos os identificadores (nomes de units, variáveis, classes, métodos, records, enums), parâmetros, estruturas de dados (JSON/XML) e comentários embutidos no código devem ser escritos exclusivamente em inglês, seguindo os padrões e convenções da linguagem Object Pascal.
+*   **Documentação Oficial (Documentation):**
+    *   Disponível principalmente em Português ([README.md](README.md)) com tradução equivalente em Inglês ([README.en.md](README.en.md)).
 
 ### 2. Funcionalidades
 *   **Chat Lateral Acoplável (Dockable):** Painel integrado à IDE com visual nativo do Delphi, trazendo uma janela de chat em HTML5/JS moderno (WebView2) com suporte a Markdown e realce de sintaxe Pascal.

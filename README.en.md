@@ -14,9 +14,18 @@
 
 ---
 
-### 1. Language Standard
-*   **Documentation (README / Docs):** Available in Portuguese (default) and English (alternative).
-*   **Source Code:** 100% written in **English** (names, units, variables, classes, methods, and code comments) following clean code and Pascal standards.
+### 1. Development Guidelines and Language Standard
+
+This project adopts clear language rules and design standards for both human developers and AI assistants (LLMs/Co-pilots) working on the codebase:
+
+*   **AI Assistant Interface & Interaction:**
+    *   All chat interactions, commit messages, pull request descriptions, task updates, and design discussions must be conducted in **Brazilian Portuguese (pt-BR)**.
+    *   AI assistants must strictly adhere to Clean Code, SOLID, DRY, and KISS principles when proposing changes or new features.
+*   **Source Code:**
+    *   The source code is **100% written in English (en-US)**.
+    *   All identifiers (unit names, variables, classes, methods, records, enums), parameters, data structures (JSON/XML), and inline comments must be written exclusively in English, following the standards and conventions of Object Pascal.
+*   **Official Documentation:**
+    *   Available primarily in Portuguese ([README.md](README.md)) with an English translation ([README.en.md](README.en.md)).
 
 ### 2. Features
 *   **Dockable Sidebar Chat:** A native-looking, dockable panel integrated into the Delphi IDE featuring a high-fidelity web-rendered chat window (Edge/WebView2) with full Markdown rendering and Delphi syntax highlighting.
