@@ -13,9 +13,9 @@ This document describes the evolution roadmap of the RadIA plugin, organized by 
 
 ---
 
-## ✅ v1.0 — Initial Release (Completed)
+## ✅ v0.0.1 — Initial Release (Completed)
 
-Version 1.0 implemented all core plugin features, including:
+Version v0.0.1 implemented all core plugin features, including:
 
 - Dockable sidebar chat with WebView2 (HTML5/JS/CSS)
 - Support for 6 AI providers: Gemini, OpenAI, Claude, DeepSeek, Groq, and Ollama
@@ -36,9 +36,9 @@ Version 1.0 implemented all core plugin features, including:
 
 ---
 
-## ✅ v1.1 — Control & Visibility (Completed)
+## ✅ v0.0.2 — Multiple Sessions & Token Budget Control (Completed)
 
-Version 1.1 focused on context management and local governance over token usage:
+Version v0.0.2 focused on context management, local governance over token usage, and new AI backends:
 
 - **Multiple Chat Sessions (Advanced History):**
   * Local conversation persistence saved inside `%APPDATA%\RadIA\sessions\<guid>.json`.
@@ -48,10 +48,25 @@ Version 1.1 focused on context management and local governance over token usage:
   * Configurable monthly budget limit inside settings.
   * Local persistency accumulator with real-time percentage consumption status inside WebView status bar.
   * Dynamic network request block whenever usage exceeds 100% of the set quota.
+- **OpenRouter Support:**
+  * Integrates OpenRouter provider as a unified gateway to access hundreds of AI models via a single API Key.
 
 ---
 
-## 🔲 v1.2 — Advanced Productivity (Next Version)
+## ✅ v0.0.3 — Dynamic Provider Architecture & Teardown Stability (Completed)
+
+Version v0.0.3 introduced critical architectural enhancements for extensibility and memory stability:
+
+- **Dynamic Provider Architecture:**
+  * Implemented a central, metadata-driven registry (`TProviderRegistry`) allowing dynamic registration and loading of new AI backends without compiler coupling.
+- **Robust Configuration Lifecycle:**
+  * Replaced `TDictionary` with `TStringList` internally and moved `TRadIAConfig` to a Singleton pattern with manual lifetime management (disabled ARC). This prevents package teardown Access Violations and double-free exceptions in the IDE.
+- **WebView2 & Async Request Safety:**
+  * Protected async callbacks using `TThread.Queue` and lifecycle verification wrappers (`ILifecycleGuard`) to prevent crashes when active frames or panels are destroyed during pending HTTP requests.
+
+---
+
+## 🔲 v0.1.0 — Advanced Productivity (Next Version)
 
 ### 3. Automatic Code Review on Save
 *   **Goal**: Silently analyze the active unit on save and signal in the RadIA panel if the AI found points of attention (e.g., potential bugs, duplicated code, or missing exception handling).
@@ -63,7 +78,7 @@ Version 1.1 focused on context management and local governance over token usage:
 
 ---
 
-## 🔲 v1.3 — Administration & Diagnostics
+## 🔲 v0.2.0 — Administration & Diagnostics
 
 ### 5. Cache Management Panel
 *   **Goal**: Display an internal administration screen for the response cache, allowing users to view cached entries, delete specific ones, and see the total cache file size without manually editing JSON.
@@ -71,7 +86,7 @@ Version 1.1 focused on context management and local governance over token usage:
 
 ---
 
-## 💡 Future Ideas (v2.0+)
+## 💡 Future Ideas (v0.3.0+)
 
 The items below are still in the conceptual stage and are being evaluated for technical feasibility with the Open Tools API:
 
