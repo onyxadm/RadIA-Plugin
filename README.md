@@ -4,6 +4,10 @@
 
 </div>
 
+<p align="center">
+  <img src="docs/images/radia_owl_mascot.png" alt="RadIA Mascot" width="160" />
+</p>
+
 # RadIA - Assistente de IA para Delphi IDE
 
 **RadIA** é um plugin assistente de IA avançado projetado especificamente para a IDE do Embarcadero Delphi (usando a Open Tools API). Ele se acopla diretamente à barra lateral da IDE, fornecendo uma interface de chat interativa e integração contextual profunda com o editor de código para acelerar o desenvolvimento, refatoração e depuração.
