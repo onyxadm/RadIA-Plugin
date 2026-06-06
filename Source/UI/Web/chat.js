@@ -91,13 +91,13 @@ const sessionsList    = document.getElementById('sessions-list');
 
 // Slash Commands Configuration
 const SLASH_COMMANDS = [
-  { name: '/explain', desc: 'Explica o código selecionado no editor', shortcut: 'Ctrl+Shift+E' },
-  { name: '/refactor', desc: 'Otimiza e refatora o código selecionado', shortcut: 'Ctrl+Shift+R' },
-  { name: '/bugs', desc: 'Procura por bugs e memory leaks no código selecionado', shortcut: 'Ctrl+Shift+B' },
-  { name: '/doc', desc: 'Gera documentação XML para o método selecionado', shortcut: 'Ctrl+Shift+D' },
-  { name: '/template', desc: 'Abre a biblioteca de templates de prompt', shortcut: 'Ctrl+Shift+T' },
-  { name: '/stacktrace', desc: 'Analisa um log de erro/stack trace e aponta a causa raiz', shortcut: '' },
-  { name: '/review', desc: 'Análise estática da unit ativa (leaks/SOLID)', shortcut: '' }
+  { name: '/explain', desc: 'Explains the selected code in the editor', shortcut: 'Ctrl+Shift+E' },
+  { name: '/refactor', desc: 'Optimizes and refactors the selected code', shortcut: 'Ctrl+Shift+R' },
+  { name: '/bugs', desc: 'Finds bugs and memory leaks in the selected code', shortcut: 'Ctrl+Shift+B' },
+  { name: '/doc', desc: 'Generates XML documentation for the selected method', shortcut: 'Ctrl+Shift+D' },
+  { name: '/template', desc: 'Opens the prompt templates library', shortcut: 'Ctrl+Shift+T' },
+  { name: '/stacktrace', desc: 'Analyzes an error log or stack trace and points out the root cause', shortcut: '' },
+  { name: '/review', desc: 'Performs static analysis on the active unit (leaks/SOLID)', shortcut: '' }
 ];
 
 let slashPopupVisible = false;
