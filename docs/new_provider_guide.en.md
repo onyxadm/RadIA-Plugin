@@ -1,6 +1,9 @@
 # Guide for Adding New AI Providers to RadIA
 
-Thanks to the new **Dynamic Provider Architecture**, adding a new AI backend (such as DeepSeek, Claude, or a custom internal service) has become extremely simple and decoupled. You no longer need to modify global orchestration files or hardcoded switch-case structures.
+Thanks to the new **Dynamic Provider Architecture**, adding a new AI backend (such as DeepSeek, Claude, or a custom internal service) has become extremely simple and decoupled.
+
+> [!IMPORTANT]
+> **You no longer need to modify the global enum `TAIProviderType`** (located in `RadIA.Core.Types.pas`). The new architecture relies entirely on string identifiers for registration, instantiation, and configuration management. The enum `TAIProviderType` is kept only for backward compatibility with the core legacy static providers.
 
 ---
 
@@ -36,7 +39,7 @@ type
 ```
 
 ### 3. Implement the Provider Logic
-In the `implementation` section, supply the base URL, default models, and set the provider type identification:
+In the `implementation` section, supply the base URL, default models, and configure the provider identification by setting `FProviderId`:
 
 ```pascal
 implementation
@@ -47,8 +50,9 @@ uses
 constructor TRadIAMyAwesomeAIProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
-  // Optional: If you need a static mapping for backward compatibility
-  // FProviderType := ptCustom; 
+  // ESSENTIAL: FProviderId must be set to the exact same string identifier
+  // that will be used in the global auto-registration block (step 4).
+  FProviderId := 'AwesomeAI';
 end;
 
 function TRadIAMyAwesomeAIProvider.GetBaseUrl: string;
@@ -102,6 +106,6 @@ contains
 
 ## ⚡ What Happens Next? (Automatic)
 Without changing any other line of code in the plugin:
-1.  **Persistence:** The `TRadIAConfig` class will automatically load and save API keys, models, timeouts, and temperatures for this provider under the `AwesomeAI` subkey in the Windows Registry.
-2.  **Instantiation:** The `TRadIAService` orchestrator will resolve the chat selector choices and invoke your dynamic factory automatically.
-3.  **Wizards and Options:** The new provider will immediately become available for the orchestrator, async execution loops, and SSE text streaming.
+1.  **Persistence:** The `TRadIAConfig` class will automatically load and save API keys, models, timeouts, and temperatures for this provider under the `AwesomeAI` subkey in the Windows Registry using the new string-based APIs (e.g. `GetApiKey('AwesomeAI')`).
+2.  **Instantiation:** The `TRadIAService` orchestrator will automatically intercept chat selector choices and resolve your dynamic factory registered inside `TProviderRegistry`.
+3.  **Wizards and Options:** The new provider will immediately become available in the options frame, orchestrator, async execution loops, and SSE text streaming.

@@ -1,6 +1,9 @@
 # Guia para Adição de Novos Provedores de IA no RadIA
 
-Graças à nova **Arquitetura de Provedores Dinâmicos**, a inclusão de um novo backend de IA (como por exemplo DeepSeek, Claude, ou um serviço interno proprietário) tornou-se extremamente simplificada e desacoplada. Não é mais necessário alterar arquivos globais de orquestração ou fluxos estáticos.
+Graças à nova **Arquitetura de Provedores Dinâmicos**, a inclusão de um novo backend de IA (como por exemplo DeepSeek, Claude, ou um serviço interno proprietário) tornou-se extremamente simplificada e desacoplada. 
+
+> [!IMPORTANT]
+> **Não é mais necessário alterar o enum global `TAIProviderType`** (localizado em `RadIA.Core.Types.pas`). A nova arquitetura utiliza inteiramente identificadores em formato string para registro, instanciação e carregamento de configurações. O enum `TAIProviderType` foi mantido apenas para retrocompatibilidade com os provedores estáticos legados do núcleo.
 
 ---
 
@@ -36,7 +39,7 @@ type
 ```
 
 ### 3. Implementar a Lógica do Provedor
-Na seção `implementation`, forneça a URL base, os modelos padrão, e configure a identificação do provedor:
+Na seção `implementation`, forneça a URL base, os modelos padrão, e configure a identificação do provedor definindo o `FProviderId`:
 
 ```pascal
 implementation
@@ -47,8 +50,9 @@ uses
 constructor TRadIAMyAwesomeAIProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
-  // Opcional: Se precisar de um mapeamento estático para retrocompatibilidade
-  // FProviderType := ptCustom; 
+  // ESSENCIAL: O FProviderId deve ser preenchido exatamente com a mesma string
+  // identificadora que será usada no auto-registro global (passo 4).
+  FProviderId := 'AwesomeAI'; 
 end;
 
 function TRadIAMyAwesomeAIProvider.GetBaseUrl: string;
@@ -102,6 +106,6 @@ contains
 
 ## ⚡ O que acontece a seguir? (Automático)
 Sem alterar mais nenhuma linha de código no plugin:
-1.  **Persistência:** O `TRadIAConfig` passará a salvar e ler as chaves de API, modelos, timeouts e temperaturas deste provedor automaticamente em subchaves do Registro do Windows sob a pasta `AwesomeAI`.
-2.  **Instanciação:** O `TRadIAService` interceptará a escolha no Chat e resolverá o factory dinâmico automaticamente.
-3.  **Wizards e Opções:** O novo provedor estará disponível para uso instantâneo pelo orquestrador e nos fluxos assíncronos e de streaming de texto.
+1.  **Persistência:** O `TRadIAConfig` passará a salvar e ler as chaves de API, modelos, timeouts e temperaturas deste provedor automaticamente em subchaves do Registro do Windows sob a pasta `AwesomeAI` usando as novas APIs baseadas em string (ex: `GetApiKey('AwesomeAI')`).
+2.  **Instanciação:** O `TRadIAService` interceptará a escolha no Chat e resolverá o factory dinâmico a partir do registro do `TProviderRegistry` automaticamente.
+3.  **Wizards e Opções:** O novo provedor estará disponível para uso instantâneo pelo orquestrador e nos fluxos assíncronos e de streaming de texto, sendo listado na interface de configurações.
