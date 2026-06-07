@@ -19,7 +19,7 @@ type
     FSystemPrompt: string;
     FOpenAICustomBaseUrl: string;
     FOllamaBaseUrl: string;
-    FActiveProvider: TAIProviderType;
+    FActiveProvider: string;
     FTemperatures: array[TAIProviderType] of Double;
     FMaxTokens: array[TAIProviderType] of Integer;
     FTimeouts: array[TAIProviderType] of Integer;
@@ -37,8 +37,8 @@ type
 
     function GetApiKey(const AProvider: TAIProviderType): string; overload;
     procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string); overload;
-    function GetActiveProvider: TAIProviderType;
-    procedure SetActiveProvider(const AProvider: TAIProviderType);
+    function GetActiveProvider: string;
+    procedure SetActiveProvider(const AProvider: string);
     function GetActiveModel(const AProvider: TAIProviderType): string; overload;
     procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string); overload;
     function GetSystemPrompt: string;
@@ -90,6 +90,14 @@ type
     procedure SetTimeout(const AProviderName: string; const AValue: Integer); overload;
     function GetProviderBaseUrl(const AProviderName: string): string;
     procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
+    function GetAutocompleteEnabled: Boolean;
+    procedure SetAutocompleteEnabled(const AValue: Boolean);
+    function GetAutocompleteProvider: string;
+    procedure SetAutocompleteProvider(const AProvider: string);
+    function GetAutocompleteModel: string;
+    procedure SetAutocompleteModel(const AModel: string);
+    function GetAutocompleteDelay: Integer;
+    procedure SetAutocompleteDelay(const AValue: Integer);
   end;
 
   [TestFixture]
@@ -161,7 +169,7 @@ begin
   FSystemPrompt := ASystemPrompt;
   FOpenAICustomBaseUrl := '';
   FOllamaBaseUrl := 'http://localhost:11434';
-  FActiveProvider := ptGemini;
+  FActiveProvider := 'Gemini';
   FSmartConfigEnabled := True;
   FLogEnabled := True;
   FLogPath := '';
@@ -188,12 +196,12 @@ procedure TMockConfig.SetApiKey(const AProvider: TAIProviderType; const AKey: st
 begin
 end;
 
-function TMockConfig.GetActiveProvider: TAIProviderType;
+function TMockConfig.GetActiveProvider: string;
 begin
   Result := FActiveProvider;
 end;
 
-procedure TMockConfig.SetActiveProvider(const AProvider: TAIProviderType);
+procedure TMockConfig.SetActiveProvider(const AProvider: string);
 begin
   FActiveProvider := AProvider;
 end;
@@ -404,29 +412,32 @@ end;
 
 function TMockConfig.GetTemperature(const AProviderName: string): Double;
 begin
-  Result := 0.7;
+  Result := FTemperatures[StringToProviderType(AProviderName)];
 end;
 
 procedure TMockConfig.SetTemperature(const AProviderName: string; const AValue: Double);
 begin
+  FTemperatures[StringToProviderType(AProviderName)] := AValue;
 end;
 
 function TMockConfig.GetMaxTokens(const AProviderName: string): Integer;
 begin
-  Result := 2048;
+  Result := FMaxTokens[StringToProviderType(AProviderName)];
 end;
 
 procedure TMockConfig.SetMaxTokens(const AProviderName: string; const AValue: Integer);
 begin
+  FMaxTokens[StringToProviderType(AProviderName)] := AValue;
 end;
 
 function TMockConfig.GetTimeout(const AProviderName: string): Integer;
 begin
-  Result := 60;
+  Result := FTimeouts[StringToProviderType(AProviderName)];
 end;
 
 procedure TMockConfig.SetTimeout(const AProviderName: string; const AValue: Integer);
 begin
+  FTimeouts[StringToProviderType(AProviderName)] := AValue;
 end;
 
 function TMockConfig.GetProviderBaseUrl(const AProviderName: string): string;
@@ -435,6 +446,42 @@ begin
 end;
 
 procedure TMockConfig.SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
+begin
+end;
+
+function TMockConfig.GetAutocompleteEnabled: Boolean;
+begin
+  Result := False;
+end;
+
+procedure TMockConfig.SetAutocompleteEnabled(const AValue: Boolean);
+begin
+end;
+
+function TMockConfig.GetAutocompleteProvider: string;
+begin
+  Result := 'Gemini';
+end;
+
+procedure TMockConfig.SetAutocompleteProvider(const AProvider: string);
+begin
+end;
+
+function TMockConfig.GetAutocompleteModel: string;
+begin
+  Result := '';
+end;
+
+procedure TMockConfig.SetAutocompleteModel(const AModel: string);
+begin
+end;
+
+function TMockConfig.GetAutocompleteDelay: Integer;
+begin
+  Result := 300;
+end;
+
+procedure TMockConfig.SetAutocompleteDelay(const AValue: Integer);
 begin
 end;
 
@@ -590,12 +637,12 @@ begin
     LConfig.SmartConfigEnabled := True;
     
     // Refatorar
-    LService.ResolveParameters(ptGemini, rpRefactorCode, LTemp, LMaxTokens);
+    LService.ResolveParameters('Gemini', rpRefactorCode, LTemp, LMaxTokens);
     Assert.AreEqual(0.1, LTemp, 0.01);
     Assert.AreEqual(16384, LMaxTokens);
     
     // Chat Geral
-    LService.ResolveParameters(ptGemini, rpGeneralChat, LTemp, LMaxTokens);
+    LService.ResolveParameters('Gemini', rpGeneralChat, LTemp, LMaxTokens);
     Assert.AreEqual(0.7, LTemp, 0.01);
     Assert.AreEqual(8192, LMaxTokens);
     
@@ -604,7 +651,7 @@ begin
     LConfig.SetTemperature(ptGemini, 0.4);
     LConfig.SetMaxTokens(ptGemini, 1024);
     
-    LService.ResolveParameters(ptGemini, rpRefactorCode, LTemp, LMaxTokens);
+    LService.ResolveParameters('Gemini', rpRefactorCode, LTemp, LMaxTokens);
     Assert.AreEqual(0.4, LTemp, 0.01);
     Assert.AreEqual(1024, LMaxTokens);
   finally

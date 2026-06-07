@@ -54,11 +54,11 @@ end;
 
 procedure TTestRadIAConfig.TestActiveProviderPersistence;
 begin
-  FConfig.SetActiveProvider(ptGemini);
-  Assert.AreEqual(ptGemini, FConfig.GetActiveProvider);
+  FConfig.SetActiveProvider('Gemini');
+  Assert.AreEqual('Gemini', FConfig.GetActiveProvider);
   
-  FConfig.SetActiveProvider(ptClaude);
-  Assert.AreEqual(ptClaude, FConfig.GetActiveProvider);
+  FConfig.SetActiveProvider('Claude');
+  Assert.AreEqual('Claude', FConfig.GetActiveProvider);
 end;
 
 procedure TTestRadIAConfig.TestApiKeyEncryptionAndDecryption;

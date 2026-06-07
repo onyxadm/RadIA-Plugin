@@ -81,7 +81,7 @@ type
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
     procedure InitializeWebView;
     procedure CopyWebFiles;
-    function IsProviderConfigured(const AProvider: TAIProviderType): Boolean;
+    function IsProviderConfigured(const AProviderId: string): Boolean;
     procedure LoadConfig;
     procedure UpdateModelsCombo;
     procedure SendPromptToAI(const APromptText: string);
@@ -119,7 +119,7 @@ implementation
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
   RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.DTO.Generator;
+  RadIA.Core.DTO.Generator, RadIA.Core.ProviderRegistry;
 
 {$R *.dfm}
 
@@ -129,6 +129,19 @@ type
     Id: string;
     constructor Create(const AId: string);
   end;
+
+type
+  TProviderObject = class
+  public
+    Id: string;
+    constructor Create(const AId: string);
+  end;
+
+constructor TProviderObject.Create(const AId: string);
+begin
+  inherited Create;
+  Id := AId;
+end;
 
 constructor TSessionObject.Create(const AId: string);
 begin
@@ -210,6 +223,15 @@ begin
     begin
       if Assigned(lstSessions.Items.Objects[I]) then
         lstSessions.Items.Objects[I].Free;
+    end;
+  end;
+
+  if Assigned(cbProvider) then
+  begin
+    for I := 0 to cbProvider.Items.Count - 1 do
+    begin
+      if Assigned(cbProvider.Items.Objects[I]) then
+        cbProvider.Items.Objects[I].Free;
     end;
   end;
 
@@ -338,18 +360,18 @@ begin
   EdgeBrowser.Navigate('file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/'));
 end;
 
-function TFrameAIChat.IsProviderConfigured(const AProvider: TAIProviderType): Boolean;
+function TFrameAIChat.IsProviderConfigured(const AProviderId: string): Boolean;
 begin
-  if AProvider = ptOllama then
+  if SameText(AProviderId, 'Ollama') then
     Result := not FConfig.GetOllamaBaseUrl.Trim.IsEmpty
   else
-    Result := not FConfig.GetApiKey(AProvider).Trim.IsEmpty;
+    Result := not FConfig.GetApiKey(AProviderId).Trim.IsEmpty;
 end;
 
 procedure TFrameAIChat.LoadConfig;
 var
-  LProv: TAIProviderType;
-  LActiveProvider: TAIProviderType;
+  LProviders: TArray<TProviderMetadata>;
+  LActiveProvider: string;
   LFoundIndex: Integer;
   I: Integer;
 begin
@@ -358,24 +380,34 @@ begin
     fires cbProviderChange which calls FConfig.Save with partial data. }
   FLoadingConfig := True;
   try
-    cbProvider.Items.Clear;
-    for LProv := Low(TAIProviderType) to High(TAIProviderType) do
+    if Assigned(cbProvider) then
     begin
-      if IsProviderConfigured(LProv) then
-        cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
+      for I := 0 to cbProvider.Items.Count - 1 do
+      begin
+        if Assigned(cbProvider.Items.Objects[I]) then
+          cbProvider.Items.Objects[I].Free;
+      end;
+      cbProvider.Items.Clear;
+    end;
+
+    LProviders := TProviderRegistry.GetProviders;
+    for I := 0 to Length(LProviders) - 1 do
+    begin
+      if IsProviderConfigured(LProviders[I].Id) then
+        cbProvider.Items.AddObject(LProviders[I].DisplayName, TProviderObject.Create(LProviders[I].Id));
     end;
 
     if cbProvider.Items.Count = 0 then
     begin
-      for LProv := Low(TAIProviderType) to High(TAIProviderType) do
-        cbProvider.Items.AddObject(ProviderTypeToString(LProv), TObject(LProv));
+      for I := 0 to Length(LProviders) - 1 do
+        cbProvider.Items.AddObject(LProviders[I].DisplayName, TProviderObject.Create(LProviders[I].Id));
     end;
 
     LActiveProvider := FConfig.GetActiveProvider;
     LFoundIndex := -1;
     for I := 0 to cbProvider.Items.Count - 1 do
     begin
-      if TAIProviderType(cbProvider.Items.Objects[I]) = LActiveProvider then
+      if SameText(TProviderObject(cbProvider.Items.Objects[I]).Id, LActiveProvider) then
       begin
         LFoundIndex := I;
         Break;
@@ -387,8 +419,7 @@ begin
     else if cbProvider.Items.Count > 0 then
     begin
       cbProvider.ItemIndex := 0;
-      { Only update FActiveProvider in memory — Save will happen below if needed }
-      FConfig.SetActiveProvider(TAIProviderType(cbProvider.Items.Objects[0]));
+      FConfig.SetActiveProvider(TProviderObject(cbProvider.Items.Objects[0]).Id);
     end;
 
     UpdateModelsCombo;
@@ -418,7 +449,7 @@ begin
           var
             LModel: string;
             LActiveModel: string;
-            LProvType: TAIProviderType;
+            LProvId: string;
           begin
             if not LGuard.IsAlive then
               Exit;
@@ -429,15 +460,15 @@ begin
             
             if Assigned(LProvider) then
             begin
-              LProvType := LProvider.GetProviderType;
-              LActiveModel := FConfig.GetActiveModel(LProvType);
+              LProvId := LProvider.GetProviderId;
+              LActiveModel := FConfig.GetActiveModel(LProvId);
               cbModel.ItemIndex := cbModel.Items.IndexOf(LActiveModel);
               if cbModel.ItemIndex = -1 then
               begin
                 cbModel.ItemIndex := 0;
                 if cbModel.Items.Count > 0 then
                 begin
-                  FConfig.SetActiveModel(LProvType, cbModel.Items[0]);
+                  FConfig.SetActiveModel(LProvId, cbModel.Items[0]);
                   FConfig.Save;
                 end;
               end;
@@ -461,7 +492,7 @@ end;
 
 procedure TFrameAIChat.cbProviderChange(Sender: TObject);
 var
-  LSelectedProvider: TAIProviderType;
+  LSelectedProvider: string;
 begin
   { Ignore programmatic changes during LoadConfig to prevent premature Save }
   if FLoadingConfig then
@@ -469,7 +500,7 @@ begin
 
   if cbProvider.ItemIndex <> -1 then
   begin
-    LSelectedProvider := TAIProviderType(cbProvider.Items.Objects[cbProvider.ItemIndex]);
+    LSelectedProvider := TProviderObject(cbProvider.Items.Objects[cbProvider.ItemIndex]).Id;
     FConfig.SetActiveProvider(LSelectedProvider);
     FConfig.Save;
     UpdateModelsCombo;
@@ -478,7 +509,7 @@ end;
 
 procedure TFrameAIChat.cbModelChange(Sender: TObject);
 var
-  LSelectedProvider: TAIProviderType;
+  LSelectedProvider: string;
 begin
   { Ignore programmatic changes during LoadConfig to prevent premature Save }
   if FLoadingConfig then
@@ -486,7 +517,7 @@ begin
 
   if cbProvider.ItemIndex <> -1 then
   begin
-    LSelectedProvider := TAIProviderType(cbProvider.Items.Objects[cbProvider.ItemIndex]);
+    LSelectedProvider := TProviderObject(cbProvider.Items.Objects[cbProvider.ItemIndex]).Id;
     FConfig.SetActiveModel(LSelectedProvider, cbModel.Text);
     FConfig.Save;
   end;
@@ -1279,8 +1310,8 @@ begin
   UpdateSendButtonVisual;
   btnSend.Enabled := True;
 
-  LActiveProvider := ProviderTypeToString(FConfig.GetActiveProvider);
-  LActiveModel := FConfig.GetActiveModel(FConfig.GetActiveProvider);
+  LActiveProvider := FConfig.GetActiveProvider;
+  LActiveModel := FConfig.GetActiveModel(LActiveProvider);
   LSessionId := FSessionManager.ActiveSessionId;
 
   TLogger.Log(Format('SendPromptToAI started. Provider=%s, Model=%s, PromptLength=%d, Session=%s',
@@ -1496,8 +1527,8 @@ begin
   UpdateSendButtonVisual;
   btnSend.Enabled := True;
 
-  LActiveProvider := ProviderTypeToString(FConfig.GetActiveProvider);
-  LActiveModel := FConfig.GetActiveModel(FConfig.GetActiveProvider);
+  LActiveProvider := FConfig.GetActiveProvider;
+  LActiveModel := FConfig.GetActiveModel(LActiveProvider);
 
   TLogger.Log(Format('GenerateDTO started. Provider=%s, Model=%s, InputLength=%d, InputType=%s, OutputType=%s',
     [LActiveProvider, LActiveModel, Length(AInput), AInputType, AOutputType]), 'UI');
