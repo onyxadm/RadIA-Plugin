@@ -82,6 +82,20 @@ A versão v0.0.4 trouxe recursos de análise avançada de código, automação d
 
 ---
 
+## ✅ v0.0.5 — Desacoplamento do Provedor e Otimizações de UI (Concluído)
+
+A versão v0.0.5 focou em refatoração estrutural profunda e melhorias na tela de opções:
+
+- **Arquitetura Dinâmica sem Enum:**
+  * Removido o enum global estático `TAIProviderType`. O plugin agora utiliza 100% strings dinâmicas (`FProviderId`) para identificar, salvar configurações e gerenciar o ciclo de vida dos provedores de IA.
+- **Correções Visuais na UI de Configurações:**
+  * Corrigida a aba superior "Templates" que aparecia de forma indesejada em todos os painéis das opções do Delphi.
+  * Ocultação e limpeza das referências do recurso experimental "Inline Autocomplete" nesta branch para mantê-la focada e isolada da branch dedicada ao recurso.
+- **Documentação de Extensibilidade:**
+  * Guias de novos provedores (`new_provider_guide.md` e seu equivalente em inglês) totalmente atualizados refletindo as novidades da API baseada em strings.
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save

@@ -81,6 +81,20 @@ Version v0.0.4 introduced advanced code analysis tools, test automation support,
 
 ---
 
+## ✅ v0.0.5 — Provider Decoupling & UI Optimizations (Completed)
+
+Version v0.0.5 focused on deep structural refactoring and options screen improvements:
+
+- **Dynamic Architecture without Enums:**
+  * Removed the static global enum `TAIProviderType`. The plugin now utilizes 100% dynamic strings (`FProviderId`) to identify, save settings, and manage the lifecycle of AI providers.
+- **Visual Fixes in Settings UI:**
+  * Fixed the top "Templates" tab showing up unintentionally on all option panels in Delphi's Options.
+  * Omitted and cleaned up the experimental "Inline Autocomplete" settings UI in this branch to keep it focused and isolated from the branch dedicated to the feature.
+- **Extensibility Documentation:**
+  * New provider guides (`new_provider_guide.md` and its English translation) fully updated to reflect the new string-based API.
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save
