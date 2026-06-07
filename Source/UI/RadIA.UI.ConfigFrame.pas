@@ -91,21 +91,8 @@ type
     lblQuotaUsed: TLabel;
     btnResetQuota: TButton;
 
-    tsAutocomplete: TTabSheet;
-    pnlAutocomplete: TPanel;
-    chkAutocompleteEnabled: TCheckBox;
-    lblAutocompleteProvider: TLabel;
-    cmbAutocompleteProvider: TComboBox;
-    lblAutocompleteModel: TLabel;
-    cmbAutocompleteModel: TComboBox;
-    lblAutocompleteDelay: TLabel;
-    edtAutocompleteDelay: TEdit;
-    
     procedure btnBrowseLogPathClick(Sender: TObject);
     procedure btnResetQuotaClick(Sender: TObject);
-    procedure chkAutocompleteEnabledClick(Sender: TObject);
-    procedure cmbAutocompleteProviderChange(Sender: TObject);
-    procedure UpdateAutocompleteModels;
     
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
     procedure PopulateTemplatesList;
@@ -261,64 +248,7 @@ begin
   btnResetQuota.Caption := 'Reset Usage';
   btnResetQuota.OnClick := btnResetQuotaClick;
 
-  { Create Inline Autocomplete Tab and controls programmatically }
-  tsAutocomplete := TTabSheet.Create(Self);
-  tsAutocomplete.PageControl := pgcSettings;
-  tsAutocomplete.Caption := 'Inline Autocomplete';
-  tsAutocomplete.TabVisible := False;
 
-  pnlAutocomplete := TPanel.Create(Self);
-  pnlAutocomplete.Parent := tsAutocomplete;
-  pnlAutocomplete.Align := alClient;
-  pnlAutocomplete.BevelOuter := bvNone;
-  pnlAutocomplete.ShowCaption := False;
-
-  chkAutocompleteEnabled := TCheckBox.Create(Self);
-  chkAutocompleteEnabled.Parent := pnlAutocomplete;
-  chkAutocompleteEnabled.Left := 16;
-  chkAutocompleteEnabled.Top := 16;
-  chkAutocompleteEnabled.Width := 300;
-  chkAutocompleteEnabled.Caption := 'Enable Inline Autocomplete (Ghost Text)';
-  chkAutocompleteEnabled.OnClick := chkAutocompleteEnabledClick;
-
-  lblAutocompleteProvider := TLabel.Create(Self);
-  lblAutocompleteProvider.Parent := pnlAutocomplete;
-  lblAutocompleteProvider.Left := 16;
-  lblAutocompleteProvider.Top := 54;
-  lblAutocompleteProvider.Caption := 'Dedicated AI Provider:';
-
-  cmbAutocompleteProvider := TComboBox.Create(Self);
-  cmbAutocompleteProvider.Parent := pnlAutocomplete;
-  cmbAutocompleteProvider.Left := 16;
-  cmbAutocompleteProvider.Top := 72;
-  cmbAutocompleteProvider.Width := 200;
-  cmbAutocompleteProvider.Style := csDropDownList;
-
-  lblAutocompleteModel := TLabel.Create(Self);
-  lblAutocompleteModel.Parent := pnlAutocomplete;
-  lblAutocompleteModel.Left := 16;
-  lblAutocompleteModel.Top := 112;
-  lblAutocompleteModel.Caption := 'Dedicated AI Model:';
-
-  cmbAutocompleteModel := TComboBox.Create(Self);
-  cmbAutocompleteModel.Parent := pnlAutocomplete;
-  cmbAutocompleteModel.Left := 16;
-  cmbAutocompleteModel.Top := 130;
-  cmbAutocompleteModel.Width := 320;
-  cmbAutocompleteModel.Style := csDropDown;
-
-  lblAutocompleteDelay := TLabel.Create(Self);
-  lblAutocompleteDelay.Parent := pnlAutocomplete;
-  lblAutocompleteDelay.Left := 16;
-  lblAutocompleteDelay.Top := 170;
-  lblAutocompleteDelay.Caption := 'Debounce Delay (ms):';
-
-  edtAutocompleteDelay := TEdit.Create(Self);
-  edtAutocompleteDelay.Parent := pnlAutocomplete;
-  edtAutocompleteDelay.Left := 16;
-  edtAutocompleteDelay.Top := 188;
-  edtAutocompleteDelay.Width := 100;
-  edtAutocompleteDelay.NumbersOnly := True;
 
   LActiveTheme := 'light';
   LUseIDETheme := False;
@@ -334,44 +264,11 @@ begin
 
   if not LUseIDETheme then
     UpdateVCLColors(LActiveTheme);
-  cmbAutocompleteProvider.OnChange := cmbAutocompleteProviderChange;
+
   LoadConfig;
 end;
 
-procedure TFrameAIConfig.chkAutocompleteEnabledClick(Sender: TObject);
-begin
-  FConfig.SetAutocompleteEnabled(chkAutocompleteEnabled.Checked);
-  FConfig.Save;
-end;
 
-procedure TFrameAIConfig.cmbAutocompleteProviderChange(Sender: TObject);
-begin
-  UpdateAutocompleteModels;
-  if cmbAutocompleteModel.Items.Count > 0 then
-    cmbAutocompleteModel.ItemIndex := 0;
-end;
-
-procedure TFrameAIConfig.UpdateAutocompleteModels;
-var
-  LProviders: TArray<TProviderMetadata>;
-  LMeta: TProviderMetadata;
-  LModel: string;
-begin
-  if not Assigned(cmbAutocompleteProvider) or not Assigned(cmbAutocompleteModel) then
-    Exit;
-    
-  cmbAutocompleteModel.Items.Clear;
-  if cmbAutocompleteProvider.ItemIndex >= 0 then
-  begin
-    LProviders := TProviderRegistry.GetProviders;
-    if cmbAutocompleteProvider.ItemIndex < Length(LProviders) then
-    begin
-      LMeta := LProviders[cmbAutocompleteProvider.ItemIndex];
-      for LModel in LMeta.DefaultModels do
-        cmbAutocompleteModel.Items.Add(LModel);
-    end;
-  end;
-end;
 
 destructor TFrameAIConfig.Destroy;
 begin
@@ -669,10 +566,6 @@ end;
 procedure TFrameAIConfig.LoadConfig;
 var
   LFormatSettings: TFormatSettings;
-  LProviders: TArray<TProviderMetadata>;
-  LActiveId: string;
-  LSelectedIndex: Integer;
-  I: Integer;
   LPair: TPair<string, TEdit>;
 begin
   LFormatSettings := TFormatSettings.Invariant;
@@ -716,34 +609,7 @@ begin
   if Assigned(tsTemplates) then
     tsTemplates.TabVisible := False;
   
-  { Carregar Autocomplete }
-  if Assigned(chkAutocompleteEnabled) then
-    chkAutocompleteEnabled.Checked := FConfig.GetAutocompleteEnabled;
-    
-  if Assigned(cmbAutocompleteProvider) then
-  begin
-    LProviders := TProviderRegistry.GetProviders;
-    LActiveId := FConfig.GetAutocompleteProvider;
-    cmbAutocompleteProvider.Items.Clear;
-    LSelectedIndex := 0;
-    
-    for I := 0 to Length(LProviders) - 1 do
-    begin
-      cmbAutocompleteProvider.Items.Add(LProviders[I].DisplayName);
-      if SameText(LProviders[I].Id, LActiveId) then
-        LSelectedIndex := I;
-    end;
-    
-    if cmbAutocompleteProvider.Items.Count > 0 then
-      cmbAutocompleteProvider.ItemIndex := LSelectedIndex;
-  end;
 
-  UpdateAutocompleteModels;
-  if Assigned(cmbAutocompleteModel) then
-    cmbAutocompleteModel.Text := FConfig.GetAutocompleteModel;
-
-  if Assigned(edtAutocompleteDelay) then
-    edtAutocompleteDelay.Text := IntToStr(FConfig.GetAutocompleteDelay);
 
   PopulateTemplatesList;
   if lstTemplates.Count > 0 then
@@ -760,8 +626,6 @@ var
   LOpenAIUrl: string;
   LFormatSettings: TFormatSettings;
   LTemp: Double;
-  LProviders: TArray<TProviderMetadata>;
-  LMeta: TProviderMetadata;
   LPair: TPair<string, TEdit>;
 begin
   LOllamaUrl := Trim(edtOllamaUrl.Text);
@@ -822,30 +686,7 @@ begin
   if Assigned(edtQuotaLimit) then
     FConfig.QuotaLimit := StrToInt64Def(edtQuotaLimit.Text, 1000000);
 
-  { Salvar Autocomplete }
-  if Assigned(chkAutocompleteEnabled) then
-    FConfig.SetAutocompleteEnabled(chkAutocompleteEnabled.Checked);
 
-  if Assigned(cmbAutocompleteProvider) and (cmbAutocompleteProvider.ItemIndex >= 0) then
-  begin
-    LProviders := TProviderRegistry.GetProviders;
-    if (cmbAutocompleteProvider.ItemIndex < Length(LProviders)) then
-    begin
-      LMeta := LProviders[cmbAutocompleteProvider.ItemIndex];
-      try
-        FConfig.SetAutocompleteProvider(LMeta.Id);
-      except
-        on E: Exception do
-          TLogger.Log('Error mapping autocomplete provider: ' + E.Message, 'ConfigFrame');
-      end;
-    end;
-  end;
-
-  if Assigned(cmbAutocompleteModel) then
-    FConfig.SetAutocompleteModel(Trim(cmbAutocompleteModel.Text));
-
-  if Assigned(edtAutocompleteDelay) then
-    FConfig.SetAutocompleteDelay(StrToIntDef(edtAutocompleteDelay.Text, 1000));
 
   FConfig.Save;
 
@@ -1037,8 +878,7 @@ begin
     pgcSettings.ActivePage := tsOllama
   else if SameText(ACategoryName, 'OpenRouter') then
     pgcSettings.ActivePage := tsOpenRouter
-  else if SameText(ACategoryName, 'Inline Autocomplete') then
-    pgcSettings.ActivePage := tsAutocomplete;
+
 end;
 
 end.

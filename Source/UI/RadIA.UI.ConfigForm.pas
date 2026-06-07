@@ -76,8 +76,6 @@ begin
   tvCategories.Items.AddChild(LNodeProviders, 'Groq');
   tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
   tvCategories.Items.AddChild(LNodeProviders, 'OpenRouter');
-  // Added node for Inline Autocomplete feature
-  tvCategories.Items.Add(nil, 'Inline Autocomplete');
   
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;
