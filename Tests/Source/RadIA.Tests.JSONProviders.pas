@@ -61,6 +61,7 @@ begin
     LJsonObj.AddPair('id', 'TestDynamic');
     LJsonObj.AddPair('displayName', 'Test Dynamic AI');
     LJsonObj.AddPair('baseUrl', 'https://api.testdynamic.ai/v1');
+    LJsonObj.AddPair('apiKey', 'mock-api-key-12345');
     LJsonObj.AddPair('hasApiKey', TJSONBool.Create(True));
     LJsonObj.AddPair('hasCustomUrl', TJSONBool.Create(True));
 
@@ -96,6 +97,7 @@ begin
     Assert.AreEqual('https://api.testdynamic.ai/v1', LMeta.DefaultBaseUrl, 'DefaultBaseUrl does not match');
     Assert.IsTrue(LMeta.HasApiKey, 'HasApiKey should be True');
     Assert.IsTrue(LMeta.HasCustomUrl, 'HasCustomUrl should be True');
+    Assert.IsTrue(LMeta.IsDynamic, 'IsDynamic should be True');
     Assert.AreEqual(2, Length(LMeta.DefaultModels), 'DefaultModels count does not match');
     Assert.AreEqual('dynamic-model-v1', LMeta.DefaultModels[0], 'First model does not match');
   end
@@ -115,6 +117,9 @@ begin
   Assert.AreEqual('TestDynamic', LProvider.GetProviderId, 'GetProviderId does not match');
   Assert.AreEqual(2, Length(LProvider.GetAvailableModels), 'Models count does not match');
   Assert.AreEqual('dynamic-model-v1', LProvider.GetAvailableModels[0], 'First model does not match');
+  
+  // Testar se a API Key do JSON foi propagada corretamente
+  Assert.AreEqual('mock-api-key-12345', FConfig.GetApiKey('TestDynamic'), 'ApiKey not set in configuration');
 end;
 
 initialization

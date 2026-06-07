@@ -17,7 +17,7 @@ type
     function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
   public
-    constructor Create(const AConfig: IAIConfig; const AProviderId, ADisplayName, ADefaultBaseUrl: string; const ADefaultModels: TArray<string>); reintroduce;
+    constructor Create(const AConfig: IAIConfig; const AProviderId, ADisplayName, ADefaultBaseUrl: string; const ADefaultModels: TArray<string>; const AApiKey: string = ''); reintroduce;
 
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -33,13 +33,24 @@ uses
 
 constructor TRadIAGenericOpenAIProvider.Create(const AConfig: IAIConfig;
   const AProviderId, ADisplayName, ADefaultBaseUrl: string;
-  const ADefaultModels: TArray<string>);
+  const ADefaultModels: TArray<string>; const AApiKey: string);
 begin
   inherited Create(AConfig);
   FProviderId := AProviderId;
   FDisplayName := ADisplayName;
   FDefaultBaseUrl := ADefaultBaseUrl;
   FDefaultModels := ADefaultModels;
+
+  // Grava a API Key no Config para que as chamadas internas do Delphi leiam de forma nativa.
+  if not AApiKey.IsEmpty and AConfig.GetApiKey(FProviderId).IsEmpty then
+  begin
+    AConfig.SetApiKey(FProviderId, AApiKey);
+    try
+      AConfig.Save;
+    except
+      // Silenciar erros de gravação em modo de testes / mock
+    end;
+  end;
 end;
 
 function TRadIAGenericOpenAIProvider.GetBaseUrl: string;

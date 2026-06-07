@@ -134,6 +134,7 @@ O arquivo de configuração deve seguir o formato abaixo:
   "id": "TogetherAI",
   "displayName": "Together AI",
   "baseUrl": "https://api.together.xyz/v1",
+  "apiKey": "sua-chave-de-api-aqui",
   "hasApiKey": true,
   "hasCustomUrl": true,
   "defaultModels": [
@@ -147,6 +148,7 @@ O arquivo de configuração deve seguir o formato abaixo:
 *   `id`: Identificador exclusivo da subchave no registro e no código (sensível a maiúsculas/minúsculas).
 *   `displayName`: Nome amigável que aparecerá na tela de configurações e na barra de seleção de provedores.
 *   `baseUrl`: URL Base padrão da API compatível com OpenAI (terminando geralmente em `/v1` ou no path raiz).
+*   `apiKey`: (Opcional) Chave de API para o provedor. Recomendada para carregar a chave diretamente do arquivo, já que provedores dinâmicos não possuem abas fixas desenhadas na interface VCL de opções.
 *   `hasApiKey`: Indica se a interface do usuário exigirá a inserção de uma API Key para este provedor.
 *   `hasCustomUrl`: Permite que o desenvolvedor altere a URL base na interface de configurações caso deseje redirecionar para um proxy ou servidor local.
 *   `defaultModels`: Lista de strings com os modelos de fallback que serão exibidos no combo-box por padrão.
@@ -154,5 +156,5 @@ O arquivo de configuração deve seguir o formato abaixo:
 ### ⚡ O que acontece a seguir? (Automático)
 Assim que a IDE Delphi for reiniciada:
 1.  **Escaneamento:** O `TProviderRegistry` lerá a pasta de AppData, fará o parsing dos arquivos `.json` e registrará dinamicamente cada provedor usando o provedor genérico `TRadIAGenericOpenAIProvider`.
-2.  **Configurações:** O novo provedor aparecerá automaticamente na aba *Tools -> Options -> RadIA* e no chat lateral.
+2.  **Configurações:** O novo provedor aparecerá automaticamente no combo-box do chat lateral.
 3.  **Persistência:** O `TRadIAConfig` passará a salvar e ler as chaves de API, modelos, timeouts, temperatura e URLs deste provedor dinâmico no Registro do Windows, de forma transparente.

@@ -16,6 +16,7 @@ type
     HasCustomUrl: Boolean;
     DefaultModels: TArray<string>;
     FactoryFunc: TProviderFactoryFunc;
+    IsDynamic: Boolean;
     
     class function Create(const AId, ADisplayName, ADefaultBaseUrl: string;
       AHasApiKey, AHasCustomUrl: Boolean; const ADefaultModels: TArray<string>;
@@ -54,6 +55,7 @@ begin
   Result.HasCustomUrl := AHasCustomUrl;
   Result.DefaultModels := ADefaultModels;
   Result.FactoryFunc := AFactory;
+  Result.IsDynamic := False;
 end;
 
 { TProviderRegistry }
@@ -72,11 +74,13 @@ var
   LJsonStr: string;
   LJsonObj: TJSONObject;
   LId, LDisplayName, LDefaultBaseUrl: string;
+  LApiKey: string;
   LHasApiKey, LHasCustomUrl: Boolean;
   LModelsArray: TJSONArray;
   LModelsList: TList<string>;
   LDefaultModels: TArray<string>;
   I: Integer;
+  LMeta: TProviderMetadata;
 begin
   LProvidersFolder := TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'providers');
   if not TDirectory.Exists(LProvidersFolder) then
@@ -113,6 +117,7 @@ begin
           LId := LJsonObj.GetValue<string>('id', '');
           LDisplayName := LJsonObj.GetValue<string>('displayName', '');
           LDefaultBaseUrl := LJsonObj.GetValue<string>('baseUrl', '');
+          LApiKey := LJsonObj.GetValue<string>('apiKey', '');
           LHasApiKey := LJsonObj.GetValue<Boolean>('hasApiKey', True);
           LHasCustomUrl := LJsonObj.GetValue<Boolean>('hasCustomUrl', False);
 
@@ -135,23 +140,24 @@ begin
             LModelsList.Free;
           end;
 
-          // Registrar o provedor dinamicamente
-          RegisterProvider(
-            TProviderMetadata.Create(
-              LId,
-              LDisplayName,
-              LDefaultBaseUrl,
-              LHasApiKey,
-              LHasCustomUrl,
-              LDefaultModels,
-              function(const ACfg: IAIConfig): IIAProvider
-              begin
-                Result := TRadIAGenericOpenAIProvider.Create(
-                  ACfg, LId, LDisplayName, LDefaultBaseUrl, LDefaultModels
-                );
-              end
-            )
+          // Criar e marcar como dinâmico antes do registro
+          LMeta := TProviderMetadata.Create(
+            LId,
+            LDisplayName,
+            LDefaultBaseUrl,
+            LHasApiKey,
+            LHasCustomUrl,
+            LDefaultModels,
+            function(const ACfg: IAIConfig): IIAProvider
+            begin
+              Result := TRadIAGenericOpenAIProvider.Create(
+                ACfg, LId, LDisplayName, LDefaultBaseUrl, LDefaultModels, LApiKey
+              );
+            end
           );
+          LMeta.IsDynamic := True;
+
+          RegisterProvider(LMeta);
           TLogger.Log(Format('Successfully registered JSON provider "%s" (%s)', [LDisplayName, LId]), 'Registry');
         finally
           LJsonObj.Free;
