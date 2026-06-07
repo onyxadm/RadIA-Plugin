@@ -714,7 +714,7 @@ begin
     lblQuotaUsed.Caption := Format('Monthly Used Tokens: %s', [FormatFloat('#,##0', FConfig.QuotaUsed, LFormatSettings)]);
 
   if Assigned(tsTemplates) then
-    tsTemplates.TabVisible := True;
+    tsTemplates.TabVisible := False;
   
   { Carregar Autocomplete }
   if Assigned(chkAutocompleteEnabled) then
