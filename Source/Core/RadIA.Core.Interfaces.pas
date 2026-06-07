@@ -66,19 +66,14 @@ type
     function GetAvailableModels: TArray<string>;
     function GetName: string;
     function GetProviderId: string;
-    function GetProviderType: TAIProviderType;
     procedure CancelCurrentRequest;
   end;
 
   { Interface representing Configuration Management }
   IAIConfig = interface
     ['{88A9678F-520E-4BF5-BFB4-5C04A5826A6F}']
-    function GetApiKey(const AProvider: TAIProviderType): string; overload;
-    procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string); overload;
     function GetActiveProvider: string;
     procedure SetActiveProvider(const AProvider: string);
-    function GetActiveModel(const AProvider: TAIProviderType): string; overload;
-    procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string); overload;
     function GetSystemPrompt: string;
     procedure SetSystemPrompt(const AValue: string);
     function GetOllamaBaseUrl: string;
@@ -87,24 +82,18 @@ type
     procedure SetMaxHistoryMessages(const AValue: Integer);
     function GetOpenAICustomBaseUrl: string;
     procedure SetOpenAICustomBaseUrl(const AValue: string);
-    function GetTemperature(const AProvider: TAIProviderType): Double; overload;
-    procedure SetTemperature(const AProvider: TAIProviderType; const AValue: Double); overload;
-    function GetMaxTokens(const AProvider: TAIProviderType): Integer; overload;
-    procedure SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer); overload;
-    function GetTimeout(const AProvider: TAIProviderType): Integer; overload;
-    procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer); overload;
 
     { String-based dynamic provider APIs }
-    function GetApiKey(const AProviderName: string): string; overload;
-    procedure SetApiKey(const AProviderName: string; const AKey: string); overload;
-    function GetActiveModel(const AProviderName: string): string; overload;
-    procedure SetActiveModel(const AProviderName: string; const AModel: string); overload;
-    function GetTemperature(const AProviderName: string): Double; overload;
-    procedure SetTemperature(const AProviderName: string; const AValue: Double); overload;
-    function GetMaxTokens(const AProviderName: string): Integer; overload;
-    procedure SetMaxTokens(const AProviderName: string; const AValue: Integer); overload;
-    function GetTimeout(const AProviderName: string): Integer; overload;
-    procedure SetTimeout(const AProviderName: string; const AValue: Integer); overload;
+    function GetApiKey(const AProviderName: string): string;
+    procedure SetApiKey(const AProviderName: string; const AKey: string);
+    function GetActiveModel(const AProviderName: string): string;
+    procedure SetActiveModel(const AProviderName: string; const AModel: string);
+    function GetTemperature(const AProviderName: string): Double;
+    procedure SetTemperature(const AProviderName: string; const AValue: Double);
+    function GetMaxTokens(const AProviderName: string): Integer;
+    procedure SetMaxTokens(const AProviderName: string; const AValue: Integer);
+    function GetTimeout(const AProviderName: string): Integer;
+    procedure SetTimeout(const AProviderName: string; const AValue: Integer);
     function GetProviderBaseUrl(const AProviderName: string): string;
     procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
 

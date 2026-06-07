@@ -70,22 +70,22 @@ var
   LSettings: TFormatSettings;
   LRegPath: string;
 begin
-  FConfig.SetApiKey(ptGemini, TEST_KEY);
+  FConfig.SetApiKey('Gemini', TEST_KEY);
   FConfig.Save;
   
   FConfig.Load;
-  Assert.AreEqual(TEST_KEY, FConfig.GetApiKey(ptGemini));
+  Assert.AreEqual(TEST_KEY, FConfig.GetApiKey('Gemini'));
   
   LSettings := TFormatSettings.Create('en-US');
-  LRegPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA', [CompilerVersion], LSettings);
+  LRegPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA\Gemini', [CompilerVersion], LSettings);
   LReg := TRegistry.Create;
   try
     LReg.RootKey := HKEY_CURRENT_USER;
     if LReg.OpenKeyReadOnly(LRegPath) then
     begin
-      if LReg.ValueExists('Gemini_ApiKey') then
+      if LReg.ValueExists('ApiKey') then
       begin
-        LStoredValue := LReg.ReadString('Gemini_ApiKey');
+        LStoredValue := LReg.ReadString('ApiKey');
         Assert.AreNotEqual(TEST_KEY, LStoredValue, 'API Key should be encrypted in the registry!');
       end;
     end;
@@ -98,22 +98,22 @@ procedure TTestRadIAConfig.TestSpecificUserKeyEncryptionAndDecryption;
 const
   TEST_KEY = 'AQ.A_TEST_KEY_THAT_HAS_EXACTLY_53_CHARS_LONG_FOR_TESTS';
 begin
-  FConfig.SetApiKey(ptGemini, TEST_KEY);
+  FConfig.SetApiKey('Gemini', TEST_KEY);
   FConfig.Save;
   
   FConfig.Load;
-  Assert.AreEqual(TEST_KEY, FConfig.GetApiKey(ptGemini));
+  Assert.AreEqual(TEST_KEY, FConfig.GetApiKey('Gemini'));
 end;
 
 procedure TTestRadIAConfig.TestActiveModelPersistence;
 const
   TEST_MODEL = 'gemini-1.5-pro';
 begin
-  FConfig.SetActiveModel(ptGemini, TEST_MODEL);
+  FConfig.SetActiveModel('Gemini', TEST_MODEL);
   FConfig.Save;
   
   FConfig.Load;
-  Assert.AreEqual(TEST_MODEL, FConfig.GetActiveModel(ptGemini));
+  Assert.AreEqual(TEST_MODEL, FConfig.GetActiveModel('Gemini'));
 end;
 
 procedure TTestRadIAConfig.TestSystemPromptPersistence;
@@ -162,16 +162,16 @@ end;
 
 procedure TTestRadIAConfig.TestAdvancedSettingsPersistence;
 begin
-  FConfig.SetTemperature(ptGemini, 0.4);
-  FConfig.SetMaxTokens(ptGemini, 1024);
-  FConfig.SetTimeout(ptGemini, 30);
+  FConfig.SetTemperature('Gemini', 0.4);
+  FConfig.SetMaxTokens('Gemini', 1024);
+  FConfig.SetTimeout('Gemini', 30);
   FConfig.SmartConfigEnabled := False;
   FConfig.Save;
 
   FConfig.Load;
-  Assert.AreEqual(0.4, FConfig.GetTemperature(ptGemini), 0.01);
-  Assert.AreEqual(1024, FConfig.GetMaxTokens(ptGemini));
-  Assert.AreEqual(30, FConfig.GetTimeout(ptGemini));
+  Assert.AreEqual(0.4, FConfig.GetTemperature('Gemini'), 0.01);
+  Assert.AreEqual(1024, FConfig.GetMaxTokens('Gemini'));
+  Assert.AreEqual(30, FConfig.GetTimeout('Gemini'));
   Assert.IsFalse(FConfig.SmartConfigEnabled);
 end;
 

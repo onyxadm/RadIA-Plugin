@@ -30,7 +30,6 @@ uses
 constructor TRadIADeepSeekProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
-  FProviderType := ptDeepSeek;
   FProviderId := 'DeepSeek';
 end;
 

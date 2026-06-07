@@ -31,7 +31,6 @@ uses
 constructor TRadIAOpenAIProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
-  FProviderType := ptOpenAI;
   FProviderId := 'OpenAI';
 end;
 

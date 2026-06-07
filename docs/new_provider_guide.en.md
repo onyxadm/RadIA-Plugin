@@ -2,8 +2,8 @@
 
 Thanks to the new **Dynamic Provider Architecture**, adding a new AI backend (such as DeepSeek, Claude, or a custom internal service) has become extremely simple and decoupled.
 
-> [!IMPORTANT]
-> **You no longer need to modify the global enum `TAIProviderType`** (located in `RadIA.Core.Types.pas`). The new architecture relies entirely on string identifiers for registration, instantiation, and configuration management. The enum `TAIProviderType` is kept only for backward compatibility with the core legacy static providers.
+> [!NOTE]
+> RadIA adopts a dynamic registration architecture based entirely on strings. There are no global static AI provider enums in the plugin core. Adding a new backend is completely ad-hoc and autonomous, relying only on the auto-registration block of the provider unit itself.
 
 ---
 
@@ -108,4 +108,4 @@ contains
 Without changing any other line of code in the plugin:
 1.  **Persistence:** The `TRadIAConfig` class will automatically load and save API keys, models, timeouts, and temperatures for this provider under the `AwesomeAI` subkey in the Windows Registry using the new string-based APIs (e.g. `GetApiKey('AwesomeAI')`).
 2.  **Instantiation:** The `TRadIAService` orchestrator will automatically intercept chat selector choices and resolve your dynamic factory registered inside `TProviderRegistry`.
-3.  **Wizards and Options:** The new provider will immediately become available in the options frame, orchestrator, async execution loops, and SSE text streaming.
+3.  **Wizards and Options:** The new provider will immediately become available in the options frame, orchestrator, async execution loops, and SSE text streaming in a 100% dynamic way.

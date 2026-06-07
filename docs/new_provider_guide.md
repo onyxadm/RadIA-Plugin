@@ -2,8 +2,8 @@
 
 Graças à nova **Arquitetura de Provedores Dinâmicos**, a inclusão de um novo backend de IA (como por exemplo DeepSeek, Claude, ou um serviço interno proprietário) tornou-se extremamente simplificada e desacoplada. 
 
-> [!IMPORTANT]
-> **Não é mais necessário alterar o enum global `TAIProviderType`** (localizado em `RadIA.Core.Types.pas`). A nova arquitetura utiliza inteiramente identificadores em formato string para registro, instanciação e carregamento de configurações. O enum `TAIProviderType` foi mantido apenas para retrocompatibilidade com os provedores estáticos legados do núcleo.
+> [!NOTE]
+> O RadIA adota uma arquitetura de registro dinâmica baseada inteiramente em strings. Não existem enums estáticos globais de provedores de IA no núcleo do plugin. A inclusão de um novo backend ocorre de forma puramente ad-hoc e autônoma através do bloco de auto-registro da própria unit do provedor.
 
 ---
 
@@ -108,4 +108,4 @@ contains
 Sem alterar mais nenhuma linha de código no plugin:
 1.  **Persistência:** O `TRadIAConfig` passará a salvar e ler as chaves de API, modelos, timeouts e temperaturas deste provedor automaticamente em subchaves do Registro do Windows sob a pasta `AwesomeAI` usando as novas APIs baseadas em string (ex: `GetApiKey('AwesomeAI')`).
 2.  **Instanciação:** O `TRadIAService` interceptará a escolha no Chat e resolverá o factory dinâmico a partir do registro do `TProviderRegistry` automaticamente.
-3.  **Wizards e Opções:** O novo provedor estará disponível para uso instantâneo pelo orquestrador e nos fluxos assíncronos e de streaming de texto, sendo listado na interface de configurações.
+3.  **Wizards e Opções:** O novo provedor estará disponível para uso instantâneo pelo orquestrador e nos fluxos assíncronos e de streaming de texto, sendo listado na interface de configurações de forma 100% dinâmica.

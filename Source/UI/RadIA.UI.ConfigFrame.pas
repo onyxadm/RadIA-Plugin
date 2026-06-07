@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.ComCtrls, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, ToolsAPI,
+  Vcl.ComCtrls, System.Generics.Collections, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, ToolsAPI,
   RadIA.Core.PromptTemplates;
 
 type
@@ -70,9 +70,9 @@ type
     FTemplateManager: TPromptTemplateManager;
     FOnClose: TNotifyEvent;
     
-    FEdtTemperatures: array[TAIProviderType] of TEdit;
-    FEdtMaxTokens: array[TAIProviderType] of TEdit;
-    FEdtTimeouts: array[TAIProviderType] of TEdit;
+    FEdtTemperatures: TDictionary<string, TEdit>;
+    FEdtMaxTokens: TDictionary<string, TEdit>;
+    FEdtTimeouts: TDictionary<string, TEdit>;
     FChkSmartConfig: TCheckBox;
     
     tsGeneral: TTabSheet;
@@ -107,7 +107,7 @@ type
     procedure cmbAutocompleteProviderChange(Sender: TObject);
     procedure UpdateAutocompleteModels;
     
-    procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
+    procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
     procedure PopulateTemplatesList;
   public
     constructor Create(AOwner: TComponent); override;
@@ -145,13 +145,17 @@ begin
   FTemplateManager := TPromptTemplateManager.Create;
   FTemplateManager.Load;
 
-  CreateProviderAdvancedControls(tsGemini, ptGemini);
-  CreateProviderAdvancedControls(tsOpenAI, ptOpenAI);
-  CreateProviderAdvancedControls(tsClaude, ptClaude);
-  CreateProviderAdvancedControls(tsDeepSeek, ptDeepSeek);
-  CreateProviderAdvancedControls(tsGroq, ptGroq);
-  CreateProviderAdvancedControls(tsOllama, ptOllama);
-  CreateProviderAdvancedControls(tsOpenRouter, ptOpenRouter);
+  FEdtTemperatures := TDictionary<string, TEdit>.Create;
+  FEdtMaxTokens := TDictionary<string, TEdit>.Create;
+  FEdtTimeouts := TDictionary<string, TEdit>.Create;
+
+  CreateProviderAdvancedControls(tsGemini, 'Gemini');
+  CreateProviderAdvancedControls(tsOpenAI, 'OpenAI');
+  CreateProviderAdvancedControls(tsClaude, 'Claude');
+  CreateProviderAdvancedControls(tsDeepSeek, 'DeepSeek');
+  CreateProviderAdvancedControls(tsGroq, 'Groq');
+  CreateProviderAdvancedControls(tsOllama, 'Ollama');
+  CreateProviderAdvancedControls(tsOpenRouter, 'OpenRouter');
 
   { Create General/Logs Tab and controls programmatically }
   tsGeneral := TTabSheet.Create(Self);
@@ -372,15 +376,19 @@ end;
 destructor TFrameAIConfig.Destroy;
 begin
   FTemplateManager.Free;
+  FEdtTemperatures.Free;
+  FEdtMaxTokens.Free;
+  FEdtTimeouts.Free;
   inherited Destroy;
 end;
 
-procedure TFrameAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; AProvider: TAIProviderType);
+procedure TFrameAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
 var
   LGroupBox: TGroupBox;
   LLabel: TLabel;
   LParent: TWinControl;
   I: Integer;
+  LEdtTemp, LEdtMax, LEdtTime: TEdit;
 begin
   LParent := ATabSheet;
   for I := 0 to ATabSheet.ControlCount - 1 do
@@ -409,11 +417,12 @@ begin
   LLabel.Top := 24;
   LLabel.Caption := 'Temperature (0.0 - 1.0):';
 
-  FEdtTemperatures[AProvider] := TEdit.Create(Self);
-  FEdtTemperatures[AProvider].Parent := LGroupBox;
-  FEdtTemperatures[AProvider].Left := 16;
-  FEdtTemperatures[AProvider].Top := 42;
-  FEdtTemperatures[AProvider].Width := 100;
+  LEdtTemp := TEdit.Create(Self);
+  LEdtTemp.Parent := LGroupBox;
+  LEdtTemp.Left := 16;
+  LEdtTemp.Top := 42;
+  LEdtTemp.Width := 100;
+  FEdtTemperatures.Add(AProviderId, LEdtTemp);
 
   // Max Tokens
   LLabel := TLabel.Create(Self);
@@ -422,12 +431,13 @@ begin
   LLabel.Top := 24;
   LLabel.Caption := 'Max Output Tokens:';
 
-  FEdtMaxTokens[AProvider] := TEdit.Create(Self);
-  FEdtMaxTokens[AProvider].Parent := LGroupBox;
-  FEdtMaxTokens[AProvider].Left := 140;
-  FEdtMaxTokens[AProvider].Top := 42;
-  FEdtMaxTokens[AProvider].Width := 100;
-  FEdtMaxTokens[AProvider].NumbersOnly := True;
+  LEdtMax := TEdit.Create(Self);
+  LEdtMax.Parent := LGroupBox;
+  LEdtMax.Left := 140;
+  LEdtMax.Top := 42;
+  LEdtMax.Width := 100;
+  LEdtMax.NumbersOnly := True;
+  FEdtMaxTokens.Add(AProviderId, LEdtMax);
 
   // Timeout
   LLabel := TLabel.Create(Self);
@@ -436,19 +446,19 @@ begin
   LLabel.Top := 24;
   LLabel.Caption := 'Timeout (seconds):';
 
-  FEdtTimeouts[AProvider] := TEdit.Create(Self);
-  FEdtTimeouts[AProvider].Parent := LGroupBox;
-  FEdtTimeouts[AProvider].Left := 264;
-  FEdtTimeouts[AProvider].Top := 42;
-  FEdtTimeouts[AProvider].Width := 100;
-  FEdtTimeouts[AProvider].NumbersOnly := True;
+  LEdtTime := TEdit.Create(Self);
+  LEdtTime.Parent := LGroupBox;
+  LEdtTime.Left := 264;
+  LEdtTime.Top := 42;
+  LEdtTime.Width := 100;
+  LEdtTime.NumbersOnly := True;
+  FEdtTimeouts.Add(AProviderId, LEdtTime);
 end;
 
 procedure TFrameAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LColors: TRadIAThemeColors;
   I: Integer;
-  LProvider: TAIProviderType;
 begin
   LColors := TRadIAThemeColors.GetColorsForTheme(AThemeName);
 
@@ -498,7 +508,26 @@ begin
     pnlGeneral.ParentBackground := False;
   end;
 
-  // Memo do System Prompt
+  for var LEdit in FEdtTemperatures.Values do
+  begin
+    LEdit.StyleElements := LEdit.StyleElements - [seClient, seBorder];
+    LEdit.Color := LColors.InputBgColor;
+    LEdit.Font.Color := LColors.TextColor;
+  end;
+
+  for var LEdit in FEdtMaxTokens.Values do
+  begin
+    LEdit.StyleElements := LEdit.StyleElements - [seClient, seBorder];
+    LEdit.Color := LColors.InputBgColor;
+    LEdit.Font.Color := LColors.TextColor;
+  end;
+
+  for var LEdit in FEdtTimeouts.Values do
+  begin
+    LEdit.StyleElements := LEdit.StyleElements - [seClient, seBorder];
+    LEdit.Color := LColors.InputBgColor;
+    LEdit.Font.Color := LColors.TextColor;
+  end;// Memo do System Prompt
   memSystemPrompt.StyleElements := memSystemPrompt.StyleElements - [seClient, seBorder];
   memSystemPrompt.Color := LColors.InputBgColor;
   memSystemPrompt.Font.Color := LColors.TextColor;
@@ -584,28 +613,7 @@ begin
   lblTemplateBody.StyleElements := lblTemplateBody.StyleElements - [seClient, seBorder];
   lblTemplateBody.Font.Color := LColors.TextColor;
 
-  { Paint Advanced Controls }
-  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
-  begin
-    if Assigned(FEdtTemperatures[LProvider]) then
-    begin
-      FEdtTemperatures[LProvider].StyleElements := FEdtTemperatures[LProvider].StyleElements - [seClient, seBorder];
-      FEdtTemperatures[LProvider].Color := LColors.InputBgColor;
-      FEdtTemperatures[LProvider].Font.Color := LColors.TextColor;
-    end;
-    if Assigned(FEdtMaxTokens[LProvider]) then
-    begin
-      FEdtMaxTokens[LProvider].StyleElements := FEdtMaxTokens[LProvider].StyleElements - [seClient, seBorder];
-      FEdtMaxTokens[LProvider].Color := LColors.InputBgColor;
-      FEdtMaxTokens[LProvider].Font.Color := LColors.TextColor;
-    end;
-    if Assigned(FEdtTimeouts[LProvider]) then
-    begin
-      FEdtTimeouts[LProvider].StyleElements := FEdtTimeouts[LProvider].StyleElements - [seClient, seBorder];
-      FEdtTimeouts[LProvider].Color := LColors.InputBgColor;
-      FEdtTimeouts[LProvider].Font.Color := LColors.TextColor;
-    end;
-  end;
+
 
   if Assigned(FChkSmartConfig) then
   begin
@@ -660,37 +668,36 @@ end;
 
 procedure TFrameAIConfig.LoadConfig;
 var
-  LProvider: TAIProviderType;
   LFormatSettings: TFormatSettings;
   LProviders: TArray<TProviderMetadata>;
   LActiveId: string;
   LSelectedIndex: Integer;
   I: Integer;
+  LPair: TPair<string, TEdit>;
 begin
   LFormatSettings := TFormatSettings.Invariant;
   
-  edtGeminiKey.Text := FConfig.GetApiKey(ptGemini);
-  edtOpenAIKey.Text := FConfig.GetApiKey(ptOpenAI);
+  edtGeminiKey.Text := FConfig.GetApiKey('Gemini');
+  edtOpenAIKey.Text := FConfig.GetApiKey('OpenAI');
   edtOpenAICustomUrl.Text := FConfig.OpenAICustomBaseUrl;
-  edtClaudeKey.Text := FConfig.GetApiKey(ptClaude);
-  edtDeepSeekKey.Text := FConfig.GetApiKey(ptDeepSeek);
-  edtGroqKey.Text := FConfig.GetApiKey(ptGroq);
-  edtOpenRouterKey.Text := FConfig.GetApiKey(ptOpenRouter);
+  edtClaudeKey.Text := FConfig.GetApiKey('Claude');
+  edtDeepSeekKey.Text := FConfig.GetApiKey('DeepSeek');
+  edtGroqKey.Text := FConfig.GetApiKey('Groq');
+  edtOpenRouterKey.Text := FConfig.GetApiKey('OpenRouter');
   memSystemPrompt.Text := FConfig.SystemPrompt;
   edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
 
   if Assigned(FChkSmartConfig) then
     FChkSmartConfig.Checked := FConfig.SmartConfigEnabled;
 
-  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
-  begin
-    if Assigned(FEdtTemperatures[LProvider]) then
-      FEdtTemperatures[LProvider].Text := FormatFloat('0.0', FConfig.GetTemperature(LProvider), LFormatSettings);
-    if Assigned(FEdtMaxTokens[LProvider]) then
-      FEdtMaxTokens[LProvider].Text := IntToStr(FConfig.GetMaxTokens(LProvider));
-    if Assigned(FEdtTimeouts[LProvider]) then
-      FEdtTimeouts[LProvider].Text := IntToStr(FConfig.GetTimeout(LProvider));
-  end;
+  for LPair in FEdtTemperatures do
+    LPair.Value.Text := FormatFloat('0.0', FConfig.GetTemperature(LPair.Key), LFormatSettings);
+  for LPair in FEdtMaxTokens do
+    LPair.Value.Text := IntToStr(FConfig.GetMaxTokens(LPair.Key));
+  for LPair in FEdtTimeouts do
+    LPair.Value.Text := IntToStr(FConfig.GetTimeout(LPair.Key));
+  
+  // O loop antigo baseado em TAIProviderType foi totalmente removido daqui
 
   if Assigned(chkLogEnabled) then
     chkLogEnabled.Checked := FConfig.LogEnabled;
@@ -751,11 +758,11 @@ var
   LForm: TCustomForm;
   LOllamaUrl: string;
   LOpenAIUrl: string;
-  LProvider: TAIProviderType;
   LFormatSettings: TFormatSettings;
   LTemp: Double;
   LProviders: TArray<TProviderMetadata>;
   LMeta: TProviderMetadata;
+  LPair: TPair<string, TEdit>;
 begin
   LOllamaUrl := Trim(edtOllamaUrl.Text);
   LOpenAIUrl := Trim(edtOpenAICustomUrl.Text);
@@ -773,34 +780,35 @@ begin
     Exit;
   end;
 
-  FConfig.SetApiKey(ptGemini, Trim(edtGeminiKey.Text));
-  FConfig.SetApiKey(ptOpenAI, Trim(edtOpenAIKey.Text));
+  FConfig.SetApiKey('Gemini', Trim(edtGeminiKey.Text));
+  FConfig.SetApiKey('OpenAI', Trim(edtOpenAIKey.Text));
   FConfig.OpenAICustomBaseUrl := LOpenAIUrl;
-  FConfig.SetApiKey(ptClaude, Trim(edtClaudeKey.Text));
-  FConfig.SetApiKey(ptDeepSeek, Trim(edtDeepSeekKey.Text));
-  FConfig.SetApiKey(ptGroq, Trim(edtGroqKey.Text));
-  FConfig.SetApiKey(ptOpenRouter, Trim(edtOpenRouterKey.Text));
+  FConfig.SetApiKey('Claude', Trim(edtClaudeKey.Text));
+  FConfig.SetApiKey('DeepSeek', Trim(edtDeepSeekKey.Text));
+  FConfig.SetApiKey('Groq', Trim(edtGroqKey.Text));
+  FConfig.SetApiKey('OpenRouter', Trim(edtOpenRouterKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := LOllamaUrl;
 
   if Assigned(FChkSmartConfig) then
     FConfig.SmartConfigEnabled := FChkSmartConfig.Checked;
 
-  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+  for LPair in FEdtTemperatures do
   begin
-    if Assigned(FEdtTemperatures[LProvider]) then
+    if TryStrToFloat(LPair.Value.Text, LTemp, LFormatSettings) then
     begin
-      if TryStrToFloat(FEdtTemperatures[LProvider].Text, LTemp, LFormatSettings) then
-      begin
-        if (LTemp >= 0.0) and (LTemp <= 2.0) then
-          FConfig.SetTemperature(LProvider, LTemp);
-      end;
+      if (LTemp >= 0.0) and (LTemp <= 2.0) then
+        FConfig.SetTemperature(LPair.Key, LTemp);
     end;
-    if Assigned(FEdtMaxTokens[LProvider]) then
-      FConfig.SetMaxTokens(LProvider, StrToIntDef(FEdtMaxTokens[LProvider].Text, 2048));
-    if Assigned(FEdtTimeouts[LProvider]) then
-      FConfig.SetTimeout(LProvider, StrToIntDef(FEdtTimeouts[LProvider].Text, 60));
   end;
+
+  for LPair in FEdtMaxTokens do
+    FConfig.SetMaxTokens(LPair.Key, StrToIntDef(LPair.Value.Text, 2048));
+
+  for LPair in FEdtTimeouts do
+    FConfig.SetTimeout(LPair.Key, StrToIntDef(LPair.Value.Text, 60));
+  
+  // O loop baseado em TAIProviderType foi completamente removido daqui
 
   if Assigned(chkLogEnabled) then
     FConfig.LogEnabled := chkLogEnabled.Checked;

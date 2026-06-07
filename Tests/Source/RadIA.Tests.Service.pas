@@ -4,6 +4,7 @@ interface
 
 uses
   DUnitX.TestFramework,
+  System.Generics.Collections,
   RadIA.Core.Interfaces,
   RadIA.Core.Types,
   RadIA.Core.Service,
@@ -20,9 +21,12 @@ type
     FOpenAICustomBaseUrl: string;
     FOllamaBaseUrl: string;
     FActiveProvider: string;
-    FTemperatures: array[TAIProviderType] of Double;
-    FMaxTokens: array[TAIProviderType] of Integer;
-    FTimeouts: array[TAIProviderType] of Integer;
+    FTemperatures: TDictionary<string, Double>;
+    FMaxTokens: TDictionary<string, Integer>;
+    FTimeouts: TDictionary<string, Integer>;
+    FApiKeys: TDictionary<string, string>;
+    FActiveModels: TDictionary<string, string>;
+    FBaseUrls: TDictionary<string, string>;
     FSmartConfigEnabled: Boolean;
     FLogEnabled: Boolean;
     FLogPath: string;
@@ -34,13 +38,10 @@ type
     FActiveSessionId: string;
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
+    destructor Destroy; override;
 
-    function GetApiKey(const AProvider: TAIProviderType): string; overload;
-    procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string); overload;
     function GetActiveProvider: string;
     procedure SetActiveProvider(const AProvider: string);
-    function GetActiveModel(const AProvider: TAIProviderType): string; overload;
-    procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string); overload;
     function GetSystemPrompt: string;
     procedure SetSystemPrompt(const AValue: string);
     function GetOllamaBaseUrl: string;
@@ -49,12 +50,6 @@ type
     procedure SetMaxHistoryMessages(const AValue: Integer);
     function GetOpenAICustomBaseUrl: string;
     procedure SetOpenAICustomBaseUrl(const AValue: string);
-    function GetTemperature(const AProvider: TAIProviderType): Double; overload;
-    procedure SetTemperature(const AProvider: TAIProviderType; const AValue: Double); overload;
-    function GetMaxTokens(const AProvider: TAIProviderType): Integer; overload;
-    procedure SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer); overload;
-    function GetTimeout(const AProvider: TAIProviderType): Integer; overload;
-    procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer); overload;
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
     function GetLogEnabled: Boolean;
@@ -78,16 +73,16 @@ type
     procedure Load;
 
     { String-based dynamic provider APIs }
-    function GetApiKey(const AProviderName: string): string; overload;
-    procedure SetApiKey(const AProviderName: string; const AKey: string); overload;
-    function GetActiveModel(const AProviderName: string): string; overload;
-    procedure SetActiveModel(const AProviderName: string; const AModel: string); overload;
-    function GetTemperature(const AProviderName: string): Double; overload;
-    procedure SetTemperature(const AProviderName: string; const AValue: Double); overload;
-    function GetMaxTokens(const AProviderName: string): Integer; overload;
-    procedure SetMaxTokens(const AProviderName: string; const AValue: Integer); overload;
-    function GetTimeout(const AProviderName: string): Integer; overload;
-    procedure SetTimeout(const AProviderName: string; const AValue: Integer); overload;
+    function GetApiKey(const AProviderName: string): string;
+    procedure SetApiKey(const AProviderName: string; const AKey: string);
+    function GetActiveModel(const AProviderName: string): string;
+    procedure SetActiveModel(const AProviderName: string; const AModel: string);
+    function GetTemperature(const AProviderName: string): Double;
+    procedure SetTemperature(const AProviderName: string; const AValue: Double);
+    function GetMaxTokens(const AProviderName: string): Integer;
+    procedure SetMaxTokens(const AProviderName: string; const AValue: Integer);
+    function GetTimeout(const AProviderName: string): Integer;
+    procedure SetTimeout(const AProviderName: string; const AValue: Integer);
     function GetProviderBaseUrl(const AProviderName: string): string;
     procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
     function GetAutocompleteEnabled: Boolean;
@@ -161,8 +156,6 @@ uses
 { TMockConfig }
 
 constructor TMockConfig.Create(const AMaxHistory: Integer; const ASystemPrompt: string);
-var
-  LProvider: TAIProviderType;
 begin
   inherited Create;
   FMaxHistoryMessages := AMaxHistory;
@@ -174,12 +167,14 @@ begin
   FLogEnabled := True;
   FLogPath := '';
   FLogMaxSizeKB := 1024;
-  for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
-  begin
-    FTemperatures[LProvider] := 0.7;
-    FMaxTokens[LProvider] := 2048;
-    FTimeouts[LProvider] := 60;
-  end;
+
+  FTemperatures := TDictionary<string, Double>.Create;
+  FMaxTokens := TDictionary<string, Integer>.Create;
+  FTimeouts := TDictionary<string, Integer>.Create;
+  FApiKeys := TDictionary<string, string>.Create;
+  FActiveModels := TDictionary<string, string>.Create;
+  FBaseUrls := TDictionary<string, string>.Create;
+
   FQuotaEnabled := False;
   FQuotaLimit := 1000000;
   FQuotaUsed := 0;
@@ -187,13 +182,15 @@ begin
   FActiveSessionId := '';
 end;
 
-function TMockConfig.GetApiKey(const AProvider: TAIProviderType): string;
+destructor TMockConfig.Destroy;
 begin
-  Result := '';
-end;
-
-procedure TMockConfig.SetApiKey(const AProvider: TAIProviderType; const AKey: string);
-begin
+  FTemperatures.Free;
+  FMaxTokens.Free;
+  FTimeouts.Free;
+  FApiKeys.Free;
+  FActiveModels.Free;
+  FBaseUrls.Free;
+  inherited Destroy;
 end;
 
 function TMockConfig.GetActiveProvider: string;
@@ -204,15 +201,6 @@ end;
 procedure TMockConfig.SetActiveProvider(const AProvider: string);
 begin
   FActiveProvider := AProvider;
-end;
-
-function TMockConfig.GetActiveModel(const AProvider: TAIProviderType): string;
-begin
-  Result := 'test-model';
-end;
-
-procedure TMockConfig.SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
-begin
 end;
 
 function TMockConfig.GetSystemPrompt: string;
@@ -266,35 +254,7 @@ procedure TMockConfig.Load;
 begin
 end;
 
-function TMockConfig.GetTemperature(const AProvider: TAIProviderType): Double;
-begin
-  Result := FTemperatures[AProvider];
-end;
-
-procedure TMockConfig.SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
-begin
-  FTemperatures[AProvider] := AValue;
-end;
-
-function TMockConfig.GetMaxTokens(const AProvider: TAIProviderType): Integer;
-begin
-  Result := FMaxTokens[AProvider];
-end;
-
-procedure TMockConfig.SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
-begin
-  FMaxTokens[AProvider] := AValue;
-end;
-
-function TMockConfig.GetTimeout(const AProvider: TAIProviderType): Integer;
-begin
-  Result := FTimeouts[AProvider];
-end;
-
-procedure TMockConfig.SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
-begin
-  FTimeouts[AProvider] := AValue;
-end;
+// Os overloads obsoletos de GetTemperature, SetTemperature, GetMaxTokens, SetMaxTokens, GetTimeout e SetTimeout com enum foram removidos daqui
 
 function TMockConfig.GetSmartConfigEnabled: Boolean;
 begin
@@ -394,60 +354,70 @@ end;
 
 function TMockConfig.GetApiKey(const AProviderName: string): string;
 begin
-  Result := '';
+  if not FApiKeys.TryGetValue(AProviderName.ToLower, Result) then
+    Result := '';
 end;
 
 procedure TMockConfig.SetApiKey(const AProviderName: string; const AKey: string);
 begin
+  FApiKeys.AddOrSetValue(AProviderName.ToLower, AKey);
 end;
 
 function TMockConfig.GetActiveModel(const AProviderName: string): string;
 begin
-  Result := 'test-model';
+  if not FActiveModels.TryGetValue(AProviderName.ToLower, Result) then
+    Result := 'test-model';
 end;
 
 procedure TMockConfig.SetActiveModel(const AProviderName: string; const AModel: string);
 begin
+  FActiveModels.AddOrSetValue(AProviderName.ToLower, AModel);
 end;
 
 function TMockConfig.GetTemperature(const AProviderName: string): Double;
 begin
-  Result := FTemperatures[StringToProviderType(AProviderName)];
+  if not FTemperatures.TryGetValue(AProviderName.ToLower, Result) then
+    Result := 0.7;
 end;
 
 procedure TMockConfig.SetTemperature(const AProviderName: string; const AValue: Double);
 begin
-  FTemperatures[StringToProviderType(AProviderName)] := AValue;
+  FTemperatures.AddOrSetValue(AProviderName.ToLower, AValue);
 end;
 
 function TMockConfig.GetMaxTokens(const AProviderName: string): Integer;
 begin
-  Result := FMaxTokens[StringToProviderType(AProviderName)];
+  if not FMaxTokens.TryGetValue(AProviderName.ToLower, Result) then
+    Result := 2048;
 end;
 
 procedure TMockConfig.SetMaxTokens(const AProviderName: string; const AValue: Integer);
 begin
-  FMaxTokens[StringToProviderType(AProviderName)] := AValue;
+  FMaxTokens.AddOrSetValue(AProviderName.ToLower, AValue);
 end;
 
 function TMockConfig.GetTimeout(const AProviderName: string): Integer;
 begin
-  Result := FTimeouts[StringToProviderType(AProviderName)];
+  if not FTimeouts.TryGetValue(AProviderName.ToLower, Result) then
+    Result := 60;
 end;
 
 procedure TMockConfig.SetTimeout(const AProviderName: string; const AValue: Integer);
 begin
-  FTimeouts[StringToProviderType(AProviderName)] := AValue;
+  FTimeouts.AddOrSetValue(AProviderName.ToLower, AValue);
 end;
 
 function TMockConfig.GetProviderBaseUrl(const AProviderName: string): string;
 begin
-  Result := '';
+  if not FBaseUrls.TryGetValue(AProviderName.ToLower, Result) then
+    Result := '';
 end;
 
 procedure TMockConfig.SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
 begin
+  FBaseUrls.AddOrSetValue(AProviderName.ToLower, AUrl);
 end;
+
 
 function TMockConfig.GetAutocompleteEnabled: Boolean;
 begin
@@ -648,8 +618,8 @@ begin
     
     { 2. Com Smart Config Disabled (Usa valores da config) }
     LConfig.SmartConfigEnabled := False;
-    LConfig.SetTemperature(ptGemini, 0.4);
-    LConfig.SetMaxTokens(ptGemini, 1024);
+    LConfig.SetTemperature('Gemini', 0.4);
+    LConfig.SetMaxTokens('Gemini', 1024);
     
     LService.ResolveParameters('Gemini', rpRefactorCode, LTemp, LMaxTokens);
     Assert.AreEqual(0.4, LTemp, 0.01);

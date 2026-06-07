@@ -36,7 +36,6 @@ uses
 constructor TRadIAOllamaProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
-  FProviderType := ptOllama;
   FProviderId := 'Ollama';
 end;
 
@@ -179,7 +178,7 @@ begin
                  LErrorMsg: string;
                begin
                  System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-                 LProviderRef.GetProviderType;
+                 LProviderRef.GetProviderId;
                  LModelsList := TList<string>.Create;
                  try
                    try
@@ -215,20 +214,26 @@ begin
                        LModelsArray := LModelsList.ToArray;
                        
                      TThread.Queue(nil,
-                       procedure
-                       begin
-                         ACallback(LModelsArray, '');
-                       end);
+                       TThreadProcedure(
+                         procedure
+                         begin
+                           ACallback(LModelsArray, '');
+                         end
+                       )
+                     );
                    except
                      on E: Exception do
                      begin
                        LErrorMsg := E.ClassName + ': ' + E.Message;
                        LModelsArray := GetAvailableModels;
                        TThread.Queue(nil,
-                         procedure
-                         begin
-                           ACallback(LModelsArray, LErrorMsg);
-                         end);
+                         TThreadProcedure(
+                           procedure
+                           begin
+                             ACallback(LModelsArray, LErrorMsg);
+                           end
+                         )
+                       );
                      end;
                    end;
                  finally

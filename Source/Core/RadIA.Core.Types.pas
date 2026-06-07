@@ -3,9 +3,6 @@ unit RadIA.Core.Types;
 interface
 
 type
-  { Enum representing the supported AI Providers }
-  TAIProviderType = (ptGemini, ptOpenAI, ptClaude, ptOllama, ptDeepSeek, ptGroq, ptOpenRouter);
-
   { Enum representing the message role in chat conversations }
   TAIMessageRole = (mrUser, mrAssistant, mrSystem);
   
@@ -39,8 +36,6 @@ const
   MODEL_OPENROUTER_LLAMA33      = 'meta-llama/llama-3.3-70b-instruct';
   MODEL_OPENROUTER_DEEPSEEK_R1  = 'deepseek/deepseek-r1';
 
-function ProviderTypeToString(const AProvider: TAIProviderType): string;
-function StringToProviderType(const AString: string): TAIProviderType;
 function MessageRoleToString(const ARole: TAIMessageRole): string;
 function StringToMessageRole(const AString: string): TAIMessageRole;
 
@@ -48,41 +43,6 @@ implementation
 
 uses
   System.SysUtils;
-
-function ProviderTypeToString(const AProvider: TAIProviderType): string;
-begin
-  case AProvider of
-    ptGemini: Result := 'Gemini';
-    ptOpenAI: Result := 'OpenAI';
-    ptClaude: Result := 'Claude';
-    ptOllama: Result := 'Ollama';
-    ptDeepSeek: Result := 'DeepSeek';
-    ptGroq: Result := 'Groq';
-    ptOpenRouter: Result := 'OpenRouter';
-  else
-    Result := '';
-  end;
-end;
-
-function StringToProviderType(const AString: string): TAIProviderType;
-begin
-  if SameText(AString, 'Gemini') then
-    Result := ptGemini
-  else if SameText(AString, 'OpenAI') then
-    Result := ptOpenAI
-  else if SameText(AString, 'Claude') then
-    Result := ptClaude
-  else if SameText(AString, 'Ollama') then
-    Result := ptOllama
-  else if SameText(AString, 'DeepSeek') then
-    Result := ptDeepSeek
-  else if SameText(AString, 'Groq') then
-    Result := ptGroq
-  else if SameText(AString, 'OpenRouter') then
-    Result := ptOpenRouter
-  else
-    raise EConvertError.CreateFmt('Invalid provider string: %s', [AString]);
-end;
 
 function MessageRoleToString(const ARole: TAIMessageRole): string;
 begin

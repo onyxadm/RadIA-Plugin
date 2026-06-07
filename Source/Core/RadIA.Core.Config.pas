@@ -56,12 +56,8 @@ type
     class function GetRegistryPath: string;
 
     { IAIConfig implementation }
-    function GetApiKey(const AProvider: TAIProviderType): string; overload;
-    procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string); overload;
     function GetActiveProvider: string;
     procedure SetActiveProvider(const AProvider: string);
-    function GetActiveModel(const AProvider: TAIProviderType): string; overload;
-    procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string); overload;
     function GetSystemPrompt: string;
     procedure SetSystemPrompt(const AValue: string);
     function GetOllamaBaseUrl: string;
@@ -70,24 +66,18 @@ type
     procedure SetMaxHistoryMessages(const AValue: Integer);
     function GetOpenAICustomBaseUrl: string;
     procedure SetOpenAICustomBaseUrl(const AValue: string);
-    function GetTemperature(const AProvider: TAIProviderType): Double; overload;
-    procedure SetTemperature(const AProvider: TAIProviderType; const AValue: Double); overload;
-    function GetMaxTokens(const AProvider: TAIProviderType): Integer; overload;
-    procedure SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer); overload;
-    function GetTimeout(const AProvider: TAIProviderType): Integer; overload;
-    procedure SetTimeout(const AProvider: TAIProviderType; const AValue: Integer); overload;
 
     { String-based dynamic provider APIs }
-    function GetApiKey(const AProviderName: string): string; overload;
-    procedure SetApiKey(const AProviderName: string; const AKey: string); overload;
-    function GetActiveModel(const AProviderName: string): string; overload;
-    procedure SetActiveModel(const AProviderName: string; const AModel: string); overload;
-    function GetTemperature(const AProviderName: string): Double; overload;
-    procedure SetTemperature(const AProviderName: string; const AValue: Double); overload;
-    function GetMaxTokens(const AProviderName: string): Integer; overload;
-    procedure SetMaxTokens(const AProviderName: string; const AValue: Integer); overload;
-    function GetTimeout(const AProviderName: string): Integer; overload;
-    procedure SetTimeout(const AProviderName: string; const AValue: Integer); overload;
+    function GetApiKey(const AProviderName: string): string;
+    procedure SetApiKey(const AProviderName: string; const AKey: string);
+    function GetActiveModel(const AProviderName: string): string;
+    procedure SetActiveModel(const AProviderName: string; const AModel: string);
+    function GetTemperature(const AProviderName: string): Double;
+    procedure SetTemperature(const AProviderName: string; const AValue: Double);
+    function GetMaxTokens(const AProviderName: string): Integer;
+    procedure SetMaxTokens(const AProviderName: string; const AValue: Integer);
+    function GetTimeout(const AProviderName: string): Integer;
+    procedure SetTimeout(const AProviderName: string; const AValue: Integer);
     function GetProviderBaseUrl(const AProviderName: string): string;
     procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
 
@@ -127,7 +117,7 @@ implementation
 
 uses
   Winapi.Windows, System.Win.Registry, System.NetEncoding, System.Math, System.IOUtils, ToolsAPI,
-  RadIA.Core.Logger;
+  RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
 
 { Windows DPAPI Declarations }
 type
@@ -229,25 +219,9 @@ begin
   FBaseRegistryPath := APath;
 end;
 
-function TRadIAConfig.GetActiveModel(const AProvider: TAIProviderType): string;
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  Result := GetActiveModel(LProviderName);
-end;
-
 function TRadIAConfig.GetActiveProvider: string;
 begin
   Result := FActiveProvider;
-end;
-
-function TRadIAConfig.GetApiKey(const AProvider: TAIProviderType): string;
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  Result := GetApiKey(LProviderName);
 end;
 
 function TRadIAConfig.GetSystemPrompt: string;
@@ -393,9 +367,7 @@ begin
       FActiveProvider := 'Gemini';
       if LReg.ValueExists('ActiveProvider') then
       begin
-        if LReg.GetDataType('ActiveProvider') = rdInteger then
-          FActiveProvider := ProviderTypeToString(TAIProviderType(LReg.ReadInteger('ActiveProvider')))
-        else
+        if LReg.GetDataType('ActiveProvider') = rdString then
           FActiveProvider := LReg.ReadString('ActiveProvider');
       end;
       FSystemPrompt      := ReadRegString(LReg, 'SystemPrompt', '');
@@ -420,9 +392,7 @@ begin
       FAutocompleteProvider := 'Gemini';
       if LReg.ValueExists('AutocompleteProvider') then
       begin
-        if LReg.GetDataType('AutocompleteProvider') = rdInteger then
-          FAutocompleteProvider := ProviderTypeToString(TAIProviderType(LReg.ReadInteger('AutocompleteProvider')))
-        else
+        if LReg.GetDataType('AutocompleteProvider') = rdString then
           FAutocompleteProvider := LReg.ReadString('AutocompleteProvider');
       end;
       FAutocompleteModel := ReadRegString(LReg, 'AutocompleteModel', 'gemini-1.5-flash');
@@ -537,7 +507,8 @@ var
   LReg: TRegistry;
   LKey: string;
   LProvPath: string;
-  LProvider: TAIProviderType;
+  LProviders: TArray<TProviderMetadata>;
+  LMeta: TProviderMetadata;
 begin
   LogDebug('TRadIAConfig.Save starting. Path = ' + APath);
   LReg := TRegistry.Create;
@@ -578,9 +549,10 @@ begin
     SetProviderBaseUrl('ollama', FOllamaBaseUrl);
 
     { 2. Salvar chaves de todos os provedores em subchaves dedicadas }
-    for LProvider := Low(TAIProviderType) to High(TAIProviderType) do
+    LProviders := TProviderRegistry.GetProviders;
+    for LMeta in LProviders do
     begin
-      LKey := ProviderTypeToString(LProvider);
+      LKey := LMeta.Id;
       LProvPath := APath + '\' + LKey;
       if LReg.OpenKey(LProvPath, True) then
       begin
@@ -603,25 +575,9 @@ begin
   end;
 end;
 
-procedure TRadIAConfig.SetActiveModel(const AProvider: TAIProviderType; const AModel: string);
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  SetActiveModel(LProviderName, AModel);
-end;
-
 procedure TRadIAConfig.SetActiveProvider(const AProvider: string);
 begin
   FActiveProvider := AProvider;
-end;
-
-procedure TRadIAConfig.SetApiKey(const AProvider: TAIProviderType; const AKey: string);
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  SetApiKey(LProviderName, AKey);
 end;
 
 procedure TRadIAConfig.SetSystemPrompt(const AValue: string);
@@ -672,54 +628,6 @@ begin
     LVal := LVal.Substring(0, LVal.Length - 1);
   FOpenAICustomBaseUrl := LVal;
   SetProviderBaseUrl('openai', LVal);
-end;
-
-function TRadIAConfig.GetTemperature(const AProvider: TAIProviderType): Double;
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  Result := GetTemperature(LProviderName);
-end;
-
-procedure TRadIAConfig.SetTemperature(const AProvider: TAIProviderType; const AValue: Double);
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  SetTemperature(LProviderName, AValue);
-end;
-
-function TRadIAConfig.GetMaxTokens(const AProvider: TAIProviderType): Integer;
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  Result := GetMaxTokens(LProviderName);
-end;
-
-procedure TRadIAConfig.SetMaxTokens(const AProvider: TAIProviderType; const AValue: Integer);
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  SetMaxTokens(LProviderName, AValue);
-end;
-
-function TRadIAConfig.GetTimeout(const AProvider: TAIProviderType): Integer;
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  Result := GetTimeout(LProviderName);
-end;
-
-procedure TRadIAConfig.SetTimeout(const AProvider: TAIProviderType; const AValue: Integer);
-var
-  LProviderName: string;
-begin
-  LProviderName := ProviderTypeToString(AProvider);
-  SetTimeout(LProviderName, AValue);
 end;
 
 { Dynamic String-based getters and setters }
