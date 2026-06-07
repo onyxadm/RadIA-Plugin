@@ -31,6 +31,7 @@ uses
   RadIA.Provider.DeepSeek in '..\Source\Providers\RadIA.Provider.DeepSeek.pas',
   RadIA.Provider.Groq in '..\Source\Providers\RadIA.Provider.Groq.pas',
   RadIA.Provider.OpenRouter in '..\Source\Providers\RadIA.Provider.OpenRouter.pas',
+  RadIA.Provider.Generic in '..\Source\Providers\RadIA.Provider.Generic.pas',
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',
@@ -49,6 +50,7 @@ uses
   RadIA.Tests.Sessions in 'Source\RadIA.Tests.Sessions.pas',
   RadIA.Tests.Quota in 'Source\RadIA.Tests.Quota.pas',
   RadIA.Tests.DTOGenerator in 'Source\RadIA.Tests.DTOGenerator.pas',
+  RadIA.Tests.JSONProviders in 'Source\RadIA.Tests.JSONProviders.pas',
   RadIA.Tests.Analysis in 'Source\RadIA.Tests.Analysis.pas';
 
 var

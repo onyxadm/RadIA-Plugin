@@ -109,3 +109,52 @@ Sem alterar mais nenhuma linha de código no plugin:
 1.  **Persistência:** O `TRadIAConfig` passará a salvar e ler as chaves de API, modelos, timeouts e temperaturas deste provedor automaticamente em subchaves do Registro do Windows sob a pasta `AwesomeAI` usando as novas APIs baseadas em string (ex: `GetApiKey('AwesomeAI')`).
 2.  **Instanciação:** O `TRadIAService` interceptará a escolha no Chat e resolverá o factory dinâmico a partir do registro do `TProviderRegistry` automaticamente.
 3.  **Wizards e Opções:** O novo provedor estará disponível para uso instantâneo pelo orquestrador e nos fluxos assíncronos e de streaming de texto, sendo listado na interface de configurações de forma 100% dinâmica.
+
+---
+
+## 🔌 Adição de Provedores Dinâmicos via JSON (Plug-ins sem Recompilação)
+
+Caso o provedor de IA que você deseja adicionar seja **compatível com a API da OpenAI** (o que inclui a grande maioria dos serviços em nuvem como Together AI, DeepInfra, OpenRouter, e servidores locais como LM Studio, vLLM e LocalAI), você **não precisa codificar nada em Delphi nem recompilar o plugin**. 
+
+Basta criar um arquivo de configuração JSON na pasta de provedores do usuário.
+
+### 📂 Onde colocar o arquivo JSON
+Salve o arquivo com a extensão `.json` no seguinte diretório:
+`%APPDATA%\RadIA\providers\`
+*(Exemplo: `C:\Users\NomeDoUsuario\AppData\Roaming\RadIA\providers\togetherai.json`)*
+
+> [!NOTE]
+> Se a pasta `providers` dentro de `%APPDATA%\RadIA\` não existir, ela será criada automaticamente na inicialização da IDE.
+
+### 📝 Estrutura do arquivo JSON
+O arquivo de configuração deve seguir o formato abaixo:
+
+```json
+{
+  "id": "TogetherAI",
+  "displayName": "Together AI",
+  "baseUrl": "https://api.together.xyz/v1",
+  "apiKey": "sua-chave-de-api-aqui",
+  "hasApiKey": true,
+  "hasCustomUrl": true,
+  "defaultModels": [
+    "meta-llama/Llama-3-70b-chat-hf",
+    "mistralai/Mixtral-8x7B-Instruct-v0.1"
+  ]
+}
+```
+
+#### Descrição dos campos:
+*   `id`: Identificador exclusivo da subchave no registro e no código (sensível a maiúsculas/minúsculas).
+*   `displayName`: Nome amigável que aparecerá na tela de configurações e na barra de seleção de provedores.
+*   `baseUrl`: URL Base padrão da API compatível com OpenAI (terminando geralmente em `/v1` ou no path raiz).
+*   `apiKey`: (Opcional) Chave de API para o provedor. Recomendada para carregar a chave diretamente do arquivo, já que provedores dinâmicos não possuem abas fixas desenhadas na interface VCL de opções.
+*   `hasApiKey`: Indica se a interface do usuário exigirá a inserção de uma API Key para este provedor.
+*   `hasCustomUrl`: Permite que o desenvolvedor altere a URL base na interface de configurações caso deseje redirecionar para um proxy ou servidor local.
+*   `defaultModels`: Lista de strings com os modelos de fallback que serão exibidos no combo-box por padrão.
+
+### ⚡ O que acontece a seguir? (Automático)
+Assim que a IDE Delphi for reiniciada:
+1.  **Escaneamento:** O `TProviderRegistry` lerá a pasta de AppData, fará o parsing dos arquivos `.json` e registrará dinamicamente cada provedor usando o provedor genérico `TRadIAGenericOpenAIProvider`.
+2.  **Configurações:** O novo provedor aparecerá automaticamente no combo-box do chat lateral.
+3.  **Persistência:** O `TRadIAConfig` passará a salvar e ler as chaves de API, modelos, timeouts, temperatura e URLs deste provedor dinâmico no Registro do Windows, de forma transparente.

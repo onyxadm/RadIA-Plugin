@@ -361,11 +361,18 @@ begin
 end;
 
 function TFrameAIChat.IsProviderConfigured(const AProviderId: string): Boolean;
+var
+  LMeta: TProviderMetadata;
 begin
   if SameText(AProviderId, 'Ollama') then
     Result := not FConfig.GetOllamaBaseUrl.Trim.IsEmpty
   else
+  begin
+    if TProviderRegistry.GetProvider(AProviderId, LMeta) and LMeta.IsDynamic then
+      Exit(True);
+
     Result := not FConfig.GetApiKey(AProviderId).Trim.IsEmpty;
+  end;
 end;
 
 procedure TFrameAIChat.LoadConfig;

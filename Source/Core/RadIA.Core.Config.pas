@@ -320,6 +320,8 @@ var
   LParentPath: string;
   LSubKeys: TStringList;
   LSubKey: string;
+  LProviders: TArray<TProviderMetadata>;
+  LMeta: TProviderMetadata;
 begin
   LogDebug('TRadIAConfig.Load starting. Path = ' + APath);
   LReg := TRegistry.Create;
@@ -407,13 +409,12 @@ begin
       LogDebug('TRadIAConfig.Load: Failed to open root path ' + APath);
 
     { Initialize default fallback models before loading subkeys }
-    FModelsList.Values['gemini'] := MODEL_GEMINI_15_FLASH;
-    FModelsList.Values['openai'] := MODEL_OPENAI_GPT4O_MINI;
-    FModelsList.Values['claude'] := MODEL_CLAUDE_3_HAIKU;
-    FModelsList.Values['ollama'] := 'llama3:latest';
-    FModelsList.Values['deepseek'] := MODEL_DEEPSEEK_CHAT;
-    FModelsList.Values['groq'] := MODEL_GROQ_LLAMA33;
-    FModelsList.Values['openrouter'] := MODEL_OPENROUTER_GEMINI25_PRO;
+    LProviders := TProviderRegistry.GetProviders;
+    for LMeta in LProviders do
+    begin
+      if Length(LMeta.DefaultModels) > 0 then
+        FModelsList.Values[LMeta.Id.ToLower] := LMeta.DefaultModels[0];
+    end;
 
     { 2. Ler configurações específicas de cada provedor registrado em suas respectivas subchaves }
     LSubKeys := TStringList.Create;

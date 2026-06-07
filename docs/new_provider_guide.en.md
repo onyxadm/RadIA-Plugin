@@ -109,3 +109,52 @@ Without changing any other line of code in the plugin:
 1.  **Persistence:** The `TRadIAConfig` class will automatically load and save API keys, models, timeouts, and temperatures for this provider under the `AwesomeAI` subkey in the Windows Registry using the new string-based APIs (e.g. `GetApiKey('AwesomeAI')`).
 2.  **Instantiation:** The `TRadIAService` orchestrator will automatically intercept chat selector choices and resolve your dynamic factory registered inside `TProviderRegistry`.
 3.  **Wizards and Options:** The new provider will immediately become available in the options frame, orchestrator, async execution loops, and SSE text streaming in a 100% dynamic way.
+
+---
+
+## 🔌 Adding Dynamic Providers via JSON (No Recompilation Plug-ins)
+
+If the AI provider you want to add is **compatible with the OpenAI API** (which includes the vast majority of cloud services like Together AI, DeepInfra, OpenRouter, and local servers like LM Studio, vLLM, and LocalAI), you **do not need to write any Delphi code or compile the plugin**.
+
+Simply create a JSON configuration file in the user's providers folder.
+
+### 📂 Where to Place the JSON File
+Save the file with a `.json` extension in the following directory:
+`%APPDATA%\RadIA\providers\`
+*(Example: `C:\Users\Username\AppData\Roaming\RadIA\providers\togetherai.json`)*
+
+> [!NOTE]
+> If the `providers` folder inside `%APPDATA%\RadIA\` does not exist, it will be automatically created when the Delphi IDE starts.
+
+### 📝 JSON Structure
+The configuration file must follow the format below:
+
+```json
+{
+  "id": "TogetherAI",
+  "displayName": "Together AI",
+  "baseUrl": "https://api.together.xyz/v1",
+  "apiKey": "your-api-key-here",
+  "hasApiKey": true,
+  "hasCustomUrl": true,
+  "defaultModels": [
+    "meta-llama/Llama-3-70b-chat-hf",
+    "mistralai/Mixtral-8x7B-Instruct-v0.1"
+  ]
+}
+```
+
+#### Fields Description:
+*   `id`: Unique identifier key in the registry and code (case-sensitive).
+*   `displayName`: Friendly name that will appear on the settings screen and the provider selector.
+*   `baseUrl`: Default base URL of the OpenAI-compatible API (typically ending in `/v1` or the root path).
+*   `apiKey`: (Optional) API key for the provider. Recommended to load the key directly from the file, since dynamic providers do not have dedicated tab sheets designed in the options VCL interface.
+*   `hasApiKey`: Indicates if the settings UI will require entering an API Key for this provider.
+*   `hasCustomUrl`: Allows developers to override the base URL in the settings UI to redirect to a local proxy or custom server.
+*   `defaultModels`: List of strings representing the default fallback models shown in the combo-box.
+
+### ⚡ What Happens Next? (Automatic)
+As soon as the Delphi IDE is restarted:
+1.  **Scanning:** The `TProviderRegistry` will read the AppData folder, parse the `.json` files, and dynamically register each provider using the generic `TRadIAGenericOpenAIProvider` client class.
+2.  **Configuration:** The new provider will automatically appear in the sidebar chat combo-box.
+3.  **Persistence:** The `TRadIAConfig` class will automatically load and save API keys, models, timeouts, temperature, and custom URLs for this dynamic provider in the Windows Registry under the defined ID.
