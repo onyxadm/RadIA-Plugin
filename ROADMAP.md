@@ -96,6 +96,17 @@ A versão v0.0.5 focou em refatoração estrutural profunda e melhorias na tela 
 
 ---
 
+## ✅ v0.0.6 — Provedores Dinâmicos via JSON e Suporte ao Copilot (Concluído)
+
+A versão v0.0.6 expandiu drasticamente a extensibilidade do plugin ao permitir adição ad-hoc de novos modelos sem recompilação e suporte a IAs corporativas:
+
+- **Provedores Dinâmicos via JSON (Plug-ins sem Recompilação):**
+  * Suporte para adicionar qualquer provedor compatível com OpenAI criando arquivos `.json` na pasta `%APPDATA%\RadIA\providers\`.
+- **Suporte ao GitHub Copilot (Proxy Local - Fase 1):**
+  * Integração documentada passo a passo para conectar assinaturas corporativas ou pessoais do Copilot via utilitários de proxy local (como o `copilot-gpt4-service`), viabilizando o compliance e economia de custos em empresas.
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save
@@ -131,7 +142,7 @@ Os itens abaixo ainda estão em fase de concepção e avaliação de viabilidade
 - **Autocompletar Inline Inteligente (Ghost Text):** Sugestões de código em tempo real no editor de código com texto acinzentado estilo Copilot (Complexidade: Alta).
 - **Integração Automática com Depurador da IDE:** Captura dinâmica e análise automática de exceções ativas durante sessões de depuração de código (Complexidade: Alta).
 - **Geração automática de documentação de projeto** (varrer units e gerar um `docs/API.md` completo).
-- **Integração com GitHub Copilot / GitLab Duo** (bridging via protocolo LSP).
+- **Integração Nativa com GitHub Copilot / GitLab Duo (Fase 2):** Login OAuth integrado e renovação automática de tokens (Complexidade: Alta).
 - **Suporte nativo a macOS/Linux** via FPC/Lazarus (análise de viabilidade).
 
 ---

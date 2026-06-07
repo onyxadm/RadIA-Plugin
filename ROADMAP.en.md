@@ -95,6 +95,17 @@ Version v0.0.5 focused on deep structural refactoring and options screen improve
 
 ---
 
+## ✅ v0.0.6 — Dynamic JSON Providers & Copilot Support (Completed)
+
+Version v0.0.6 drastically expanded plugin extensibility by allowing ad-hoc additions of new models without recompilation and support for enterprise AIs:
+
+- **Dynamic JSON Providers (Plugins without Recompilation):**
+  * Support for adding any OpenAI-compatible provider by creating `.json` files in the `%APPDATA%\RadIA\providers\` directory.
+- **GitHub Copilot Support (Local Proxy - Phase 1):**
+  * Step-by-step documented integration to connect enterprise/personal Copilot subscriptions using local proxy tools (such as `copilot-gpt4-service`), enabling compliance and cost savings.
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save
@@ -130,7 +141,7 @@ The items below are still in the conceptual stage and are being evaluated for te
 - **Smart Inline Autocomplete (Ghost Text):** Real-time gray text code suggestions inside the editor similar to Copilot (Complexity: High).
 - **IDE Debugger Auto Hook:** Dynamic capture and automatic explanation of active exceptions raised during debug sessions (Complexity: High).
 - **Automatic project documentation generation** (scan units and generate a complete `docs/API.md`).
-- **GitHub Copilot / GitLab Duo integration** (bridging via LSP protocol).
+- **Native GitHub Copilot / GitLab Duo Integration (Phase 2):** Integrated OAuth login flow and automated token refresh mechanics (Complexity: High).
 - **Native macOS/Linux support** via FPC/Lazarus (feasibility analysis).
 
 ---

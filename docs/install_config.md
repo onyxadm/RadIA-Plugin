@@ -84,6 +84,8 @@ Insira as chaves obtidas nas configurações do plugin (**Settings** no topo do 
    * **Como obter:** Acesse o [Groq Console](https://console.groq.com/).
    * **Instruções:** Acesse **API Keys**, clique em **Create API Key** e copie o token (iniciado em `gsk_`).
 
+> **Nota sobre Provedores Dinâmicos e Corporativos:** Você também pode adicionar de forma dinâmica novos provedores compatíveis com a API OpenAI (incluindo o GitHub Copilot ou proxies de terceiros) salvando arquivos JSON em `%APPDATA%\RadIA\providers\`. Para mais detalhes, consulte o [Guia para Adição de Novos Provedores (docs/new_provider_guide.md)](new_provider_guide.md) e o [Guia de Configuração do GitHub Copilot (docs/copilot_proxy_guide.md)](copilot_proxy_guide.md).
+
 ---
 
 ## 4. Script de Build PowerShell (Opções Avançadas)
