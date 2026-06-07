@@ -139,6 +139,14 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Desacoplamento do orquestrador `TRadIAService` que agora resolve dinamicamente qualquer provedor a partir do `TProviderRegistry.CreateProvider` sem fallbacks estáticos em loops `case`.
     *   Adicionados novos testes unitários em `RadIA.Tests.Service.pas` cobrindo a integridade do registro e tratamento de erros.
 
+### 18. Provedores Dinâmicos via JSON (Plug-ins sem Recompilação) - Item #21b
+*   **Descrição**: Suporte para adicionar novos provedores compatíveis com a API OpenAI apenas colocando arquivos de configuração `.json` no AppData do RadIA, sem necessidade de recompilar o plugin.
+*   **Detalhes**:
+    *   Implementado escaneamento automático de diretório no `TProviderRegistry.LoadJsonProviders` lendo de `%APPDATA%\RadIA\providers\`.
+    *   Criação de classe genérica polimórfica `TRadIAGenericOpenAIProvider` servindo como client universal de OpenAI.
+    *   Tratamento de fallback da chave de API configurada opcionalmente no JSON e marcação do status dinâmico para listagem incondicional de provedores carregados no chat lateral.
+    *   Nova suíte de testes unitários integrada em `RadIA.Tests.JSONProviders.pas`.
+
 ---
 
 ## ⏳ Em Desenvolvimento

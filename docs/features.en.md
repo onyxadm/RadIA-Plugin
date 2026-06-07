@@ -27,6 +27,7 @@ This document contains the complete checklist, categorization, and development s
 | **OpenRouter** | Provider | Native OpenRouter support with SSE streaming, dynamic model selection, and complete settings integration. | ✅ Completed |
 | **Custom Base URL** | Provider | Route OpenAI API payload to other endpoints like Groq, DeepSeek, or LM Studio. | ✅ Completed |
 | **Dynamic Providers** | Provider | Metadata-driven plugin-like architecture for registering new models and AI backends dynamically. | ✅ Completed |
+| **Dynamic JSON Providers** | Provider | Add new OpenAI-compatible providers by saving JSON files into `%APPDATA%\RadIA\providers\`. | ✅ Completed |
 | **Project Context** | Intelligence | Automatic project context loading (system prompts/custom files) via `.radia`. | ✅ Completed |
 | **Tokens & Cost Tracking** | Control | Status bar counter for session token usage and USD estimated cost. | ✅ Completed |
 | **Local Quota Control** | Control | Define a monthly token limit with request blocking and a manual reset button. | ✅ Completed |

@@ -139,6 +139,14 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Decoupled the orchestrator `TRadIAService` which now dynamically resolves any active provider via `TProviderRegistry.CreateProvider` without static `case` statements.
     *   Added new unit tests in `RadIA.Tests.Service.pas` covering registry integrity and error handling.
 
+### 18. Dynamic Providers via JSON (No Recompilation Plug-ins) - Item #21b
+*   **Description**: Support for adding new OpenAI-compatible AI providers simply by placing `.json` configuration files inside RadIA's AppData, without compiling the plugin.
+*   **Details**:
+    *   Implemented automatic directory scanning in `TProviderRegistry.LoadJsonProviders` reading from `%APPDATA%\RadIA\providers\`.
+    *   Developed the generic polymorphic class `TRadIAGenericOpenAIProvider` acting as a universal OpenAI client wrapper.
+    *   Implemented API key fallback settings configured inside the JSON, and dynamic status marking for listing loaded JSON providers in the chat interface.
+    *   New unit test suite integrated in `RadIA.Tests.JSONProviders.pas`.
+
 ---
 
 ## ⏳ In Development
