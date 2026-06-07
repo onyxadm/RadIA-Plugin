@@ -65,6 +65,7 @@ type
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
     function GetAvailableModels: TArray<string>;
     function GetName: string;
+    function GetProviderId: string;
     function GetProviderType: TAIProviderType;
     procedure CancelCurrentRequest;
   end;
@@ -74,8 +75,8 @@ type
     ['{88A9678F-520E-4BF5-BFB4-5C04A5826A6F}']
     function GetApiKey(const AProvider: TAIProviderType): string; overload;
     procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string); overload;
-    function GetActiveProvider: TAIProviderType;
-    procedure SetActiveProvider(const AProvider: TAIProviderType);
+    function GetActiveProvider: string;
+    procedure SetActiveProvider(const AProvider: string);
     function GetActiveModel(const AProvider: TAIProviderType): string; overload;
     procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string); overload;
     function GetSystemPrompt: string;
@@ -107,6 +108,15 @@ type
     function GetProviderBaseUrl(const AProviderName: string): string;
     procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
 
+    function GetAutocompleteEnabled: Boolean;
+    procedure SetAutocompleteEnabled(const AValue: Boolean);
+    function GetAutocompleteProvider: string;
+    procedure SetAutocompleteProvider(const AProvider: string);
+    function GetAutocompleteModel: string;
+    procedure SetAutocompleteModel(const AModel: string);
+    function GetAutocompleteDelay: Integer;
+    procedure SetAutocompleteDelay(const AValue: Integer);
+
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
     function GetLogEnabled: Boolean;
@@ -132,6 +142,10 @@ type
     property OllamaBaseUrl: string read GetOllamaBaseUrl write SetOllamaBaseUrl;
     property MaxHistoryMessages: Integer read GetMaxHistoryMessages write SetMaxHistoryMessages;
     property OpenAICustomBaseUrl: string read GetOpenAICustomBaseUrl write SetOpenAICustomBaseUrl;
+    property AutocompleteEnabled: Boolean read GetAutocompleteEnabled write SetAutocompleteEnabled;
+    property AutocompleteProvider: string read GetAutocompleteProvider write SetAutocompleteProvider;
+    property AutocompleteModel: string read GetAutocompleteModel write SetAutocompleteModel;
+    property AutocompleteDelay: Integer read GetAutocompleteDelay write SetAutocompleteDelay;
     property SmartConfigEnabled: Boolean read GetSmartConfigEnabled write SetSmartConfigEnabled;
     property LogEnabled: Boolean read GetLogEnabled write SetLogEnabled;
     property LogPath: string read GetLogPath write SetLogPath;

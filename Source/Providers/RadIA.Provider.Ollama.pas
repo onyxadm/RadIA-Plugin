@@ -37,6 +37,7 @@ constructor TRadIAOllamaProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
   FProviderType := ptOllama;
+  FProviderId := 'Ollama';
 end;
 
 function TRadIAOllamaProvider.GetAvailableModels: TArray<string>;

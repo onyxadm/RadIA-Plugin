@@ -10,7 +10,7 @@ type
   private
     class var FBaseRegistryPath: string;
     class var FInstance: TRadIAConfig;
-    FActiveProvider: TAIProviderType;
+    FActiveProvider: string;
     FSystemPrompt: string;
     FOllamaBaseUrl: string;
     FMaxHistoryMessages: Integer;
@@ -24,6 +24,10 @@ type
     FQuotaUsed: Int64;
     FQuotaCycleStart: TDateTime;
     FActiveSessionId: string;
+    FAutocompleteEnabled: Boolean;
+    FAutocompleteProvider: string;
+    FAutocompleteModel: string;
+    FAutocompleteDelay: Integer;
 
     { Dynamic String-based settings (avoiding TDictionary generics due to BPL RTL unloading bugs) }
     FApiKeysList: TStringList;
@@ -54,8 +58,8 @@ type
     { IAIConfig implementation }
     function GetApiKey(const AProvider: TAIProviderType): string; overload;
     procedure SetApiKey(const AProvider: TAIProviderType; const AKey: string); overload;
-    function GetActiveProvider: TAIProviderType;
-    procedure SetActiveProvider(const AProvider: TAIProviderType);
+    function GetActiveProvider: string;
+    procedure SetActiveProvider(const AProvider: string);
     function GetActiveModel(const AProvider: TAIProviderType): string; overload;
     procedure SetActiveModel(const AProvider: TAIProviderType; const AModel: string); overload;
     function GetSystemPrompt: string;
@@ -86,6 +90,15 @@ type
     procedure SetTimeout(const AProviderName: string; const AValue: Integer); overload;
     function GetProviderBaseUrl(const AProviderName: string): string;
     procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
+
+    function GetAutocompleteEnabled: Boolean;
+    procedure SetAutocompleteEnabled(const AValue: Boolean);
+    function GetAutocompleteProvider: string;
+    procedure SetAutocompleteProvider(const AProvider: string);
+    function GetAutocompleteModel: string;
+    procedure SetAutocompleteModel(const AModel: string);
+    function GetAutocompleteDelay: Integer;
+    procedure SetAutocompleteDelay(const AValue: Integer);
 
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
@@ -175,7 +188,7 @@ begin
   FTimeoutsList := TStringList.Create;
   FBaseUrlsList := TStringList.Create;
 
-  FActiveProvider := ptGemini;
+  FActiveProvider := 'Gemini';
   FSystemPrompt := '';
   FOllamaBaseUrl := 'http://localhost:11434';
   FMaxHistoryMessages := 20;
@@ -191,6 +204,11 @@ begin
   FQuotaUsed := 0;
   FQuotaCycleStart := Now;
   FActiveSessionId := '';
+  
+  FAutocompleteEnabled := True;
+  FAutocompleteProvider := 'Gemini';
+  FAutocompleteModel := 'gemini-1.5-flash';
+  FAutocompleteDelay := 300;
   
   Load;
 end;
@@ -219,7 +237,7 @@ begin
   Result := GetActiveModel(LProviderName);
 end;
 
-function TRadIAConfig.GetActiveProvider: TAIProviderType;
+function TRadIAConfig.GetActiveProvider: string;
 begin
   Result := FActiveProvider;
 end;
@@ -372,7 +390,14 @@ begin
     if LReg.OpenKeyReadOnly(APath) then
     begin
       LogDebug('TRadIAConfig.Load: Opened root path ' + APath);
-      FActiveProvider    := TAIProviderType(ReadRegInt(LReg, 'ActiveProvider', Integer(ptGemini)));
+      FActiveProvider := 'Gemini';
+      if LReg.ValueExists('ActiveProvider') then
+      begin
+        if LReg.GetDataType('ActiveProvider') = rdInteger then
+          FActiveProvider := ProviderTypeToString(TAIProviderType(LReg.ReadInteger('ActiveProvider')))
+        else
+          FActiveProvider := LReg.ReadString('ActiveProvider');
+      end;
       FSystemPrompt      := ReadRegString(LReg, 'SystemPrompt', '');
       
       { Fallback temporário das chaves legadas da raiz caso o usuário ainda não as tenha salvado nas subchaves }
@@ -390,6 +415,19 @@ begin
       FQuotaUsed := StrToInt64Def(ReadRegString(LReg, 'QuotaUsed', '0'), 0);
       FQuotaCycleStart := ReadRegDouble(LReg, 'QuotaCycleStart', Now);
       FActiveSessionId := ReadRegString(LReg, 'ActiveSessionId', '');
+      
+      FAutocompleteEnabled := ReadRegInt(LReg, 'AutocompleteEnabled', 1) <> 0;
+      FAutocompleteProvider := 'Gemini';
+      if LReg.ValueExists('AutocompleteProvider') then
+      begin
+        if LReg.GetDataType('AutocompleteProvider') = rdInteger then
+          FAutocompleteProvider := ProviderTypeToString(TAIProviderType(LReg.ReadInteger('AutocompleteProvider')))
+        else
+          FAutocompleteProvider := LReg.ReadString('AutocompleteProvider');
+      end;
+      FAutocompleteModel := ReadRegString(LReg, 'AutocompleteModel', 'gemini-1.5-flash');
+      FAutocompleteDelay := ReadRegInt(LReg, 'AutocompleteDelay', 300);
+      
       LReg.CloseKey;
 
       CheckAndResetQuotaCycle;
@@ -509,7 +547,7 @@ begin
     { 1. Salvar chaves globais na raiz }
     if LReg.OpenKey(APath, True) then
     begin
-      LReg.WriteInteger('ActiveProvider', Integer(FActiveProvider));
+      LReg.WriteString('ActiveProvider', FActiveProvider);
       LReg.WriteString('SystemPrompt', FSystemPrompt);
       LReg.WriteInteger('MaxHistoryMessages', FMaxHistoryMessages);
       LReg.WriteInteger('SmartConfigEnabled', IfThen(FSmartConfigEnabled, 1, 0));
@@ -521,6 +559,11 @@ begin
       LReg.WriteString('QuotaUsed', FQuotaUsed.ToString);
       LReg.WriteFloat('QuotaCycleStart', FQuotaCycleStart);
       LReg.WriteString('ActiveSessionId', FActiveSessionId);
+      
+      LReg.WriteInteger('AutocompleteEnabled', IfThen(FAutocompleteEnabled, 1, 0));
+      LReg.WriteString('AutocompleteProvider', FAutocompleteProvider);
+      LReg.WriteString('AutocompleteModel', FAutocompleteModel);
+      LReg.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
       
       { Sync legacy BaseURLs to root just in case }
       LReg.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
@@ -568,7 +611,7 @@ begin
   SetActiveModel(LProviderName, AModel);
 end;
 
-procedure TRadIAConfig.SetActiveProvider(const AProvider: TAIProviderType);
+procedure TRadIAConfig.SetActiveProvider(const AProvider: string);
 begin
   FActiveProvider := AProvider;
 end;
@@ -772,6 +815,46 @@ begin
   if AProviderName.IsEmpty then
     Exit;
   FBaseUrlsList.Values[AProviderName.ToLower] := AUrl;
+end;
+
+function TRadIAConfig.GetAutocompleteEnabled: Boolean;
+begin
+  Result := FAutocompleteEnabled;
+end;
+
+procedure TRadIAConfig.SetAutocompleteEnabled(const AValue: Boolean);
+begin
+  FAutocompleteEnabled := AValue;
+end;
+
+function TRadIAConfig.GetAutocompleteProvider: string;
+begin
+  Result := FAutocompleteProvider;
+end;
+
+procedure TRadIAConfig.SetAutocompleteProvider(const AProvider: string);
+begin
+  FAutocompleteProvider := AProvider;
+end;
+
+function TRadIAConfig.GetAutocompleteModel: string;
+begin
+  Result := FAutocompleteModel;
+end;
+
+procedure TRadIAConfig.SetAutocompleteModel(const AModel: string);
+begin
+  FAutocompleteModel := AModel;
+end;
+
+function TRadIAConfig.GetAutocompleteDelay: Integer;
+begin
+  Result := FAutocompleteDelay;
+end;
+
+procedure TRadIAConfig.SetAutocompleteDelay(const AValue: Integer);
+begin
+  FAutocompleteDelay := AValue;
 end;
 
 function TRadIAConfig.GetSmartConfigEnabled: Boolean;

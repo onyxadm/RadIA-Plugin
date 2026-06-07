@@ -32,6 +32,7 @@ constructor TRadIAGroqProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
   FProviderType := ptGroq;
+  FProviderId := 'Groq';
 end;
 
 function TRadIAGroqProvider.GetBaseUrl: string;

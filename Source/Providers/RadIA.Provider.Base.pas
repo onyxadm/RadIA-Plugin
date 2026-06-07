@@ -28,6 +28,7 @@ type
   protected
     FConfig: IAIConfig;
     FProviderType: TAIProviderType;
+    FProviderId: string;
     FHTTPClient: THTTPClient;
     FCancelled: Boolean;
 
@@ -79,6 +80,7 @@ type
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); virtual;
     function GetAvailableModels: TArray<string>; virtual; abstract;
     function GetName: string; virtual; abstract;
+    function GetProviderId: string;
     function GetProviderType: TAIProviderType;
     procedure CancelCurrentRequest; virtual;
   end;
@@ -170,6 +172,7 @@ begin
   FConfig := AConfig;
   FHTTPClient := THTTPClient.Create;
   FHTTPClient.OnReceiveData := HTTPClientReceiveData;
+  FProviderId := '';
 end;
 
 destructor TRadIAProviderBase.Destroy;
@@ -190,12 +193,23 @@ end;
 
 function TRadIAProviderBase.GetApiKey: string;
 begin
-  Result := FConfig.GetApiKey(FProviderType);
+  if not FProviderId.IsEmpty then
+    Result := FConfig.GetApiKey(FProviderId)
+  else
+    Result := FConfig.GetApiKey(FProviderType);
 end;
 
 function TRadIAProviderBase.GetActiveModel: string;
 begin
-  Result := FConfig.GetActiveModel(FProviderType);
+  if not FProviderId.IsEmpty then
+    Result := FConfig.GetActiveModel(FProviderId)
+  else
+    Result := FConfig.GetActiveModel(FProviderType);
+end;
+
+function TRadIAProviderBase.GetProviderId: string;
+begin
+  Result := FProviderId;
 end;
 
 function TRadIAProviderBase.GetProviderType: TAIProviderType;
@@ -218,7 +232,10 @@ begin
   TLogger.Log(Format('DoGetRequest: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
   
   FCancelled := False;
-  LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
+  if not FProviderId.IsEmpty then
+    LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000
+  else
+    LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
   if LTimeoutMs <= 0 then LTimeoutMs := 60000;
 
   FHTTPClient.ConnectionTimeout := LTimeoutMs;
@@ -263,7 +280,10 @@ begin
   FCancelled := False;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   try
-    LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
+    if not FProviderId.IsEmpty then
+      LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000
+    else
+      LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
     if LTimeoutMs <= 0 then LTimeoutMs := 60000;
 
     FHTTPClient.ConnectionTimeout := LTimeoutMs;
@@ -314,7 +334,10 @@ begin
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   LTargetStream := TStreamingTargetStream.Create(AOnWrite);
   try
-    LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
+    if not FProviderId.IsEmpty then
+      LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000
+    else
+      LTimeoutMs := FConfig.GetTimeout(FProviderType) * 1000;
     if LTimeoutMs <= 0 then LTimeoutMs := 60000;
 
     FHTTPClient.ConnectionTimeout := LTimeoutMs;

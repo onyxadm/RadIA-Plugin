@@ -36,6 +36,7 @@ constructor TRadIAClaudeProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
   FProviderType := ptClaude;
+  FProviderId := 'Claude';
 end;
 
 function TRadIAClaudeProvider.GetAvailableModels: TArray<string>;

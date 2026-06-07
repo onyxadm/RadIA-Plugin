@@ -31,6 +31,7 @@ constructor TRadIAOpenRouterProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
   FProviderType := ptOpenRouter;
+  FProviderId := 'OpenRouter';
 end;
 
 function TRadIAOpenRouterProvider.GetBaseUrl: string;

@@ -38,6 +38,7 @@ constructor TRadIAGeminiProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
   FProviderType := ptGemini;
+  FProviderId := 'Gemini';
 end;
 
 function TRadIAGeminiProvider.GetAvailableModels: TArray<string>;

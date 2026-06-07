@@ -48,7 +48,7 @@ type
     constructor Create(const AConfig: IAIConfig);
     destructor Destroy; override;
 
-    procedure ResolveParameters(const AProvider: TAIProviderType; const AProfile: TAIRequestProfile;
+    procedure ResolveParameters(const AProviderName: string; const AProfile: TAIRequestProfile;
       out ATemperature: Double; out AMaxTokens: Integer);
 
     function CreateActiveProvider: IIAProvider;
@@ -181,11 +181,9 @@ end;
 
 function TRadIAService.CreateActiveProvider: IIAProvider;
 var
-  LProviderType: TAIProviderType;
   LProviderName: string;
 begin
-  LProviderType := FConfig.GetActiveProvider;
-  LProviderName := ProviderTypeToString(LProviderType);
+  LProviderName := FConfig.GetActiveProvider;
   Result := TProviderRegistry.CreateProvider(LProviderName, FConfig);
 end;
 
@@ -254,8 +252,8 @@ var
   LModelName: string;
   LHistoryStr: string;
 begin
-  LProviderName := ProviderTypeToString(FConfig.GetActiveProvider);
-  LModelName    := FConfig.GetActiveModel(FConfig.GetActiveProvider);
+  LProviderName := FConfig.GetActiveProvider;
+  LModelName    := FConfig.GetActiveModel(LProviderName);
   LHistoryStr   := SerializeHistoryToJson(ATrimmedHistory);
   Result := TRadIACacheManager.GenerateHash(LProviderName, LModelName, ASystemPrompt, APrompt, LHistoryStr);
 end;
@@ -317,7 +315,7 @@ begin
         LHistory := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
 
         { Resolve parameters based on config and profile }
-        ResolveParameters(LProvider.GetProviderType, AProfile, LTemperature, LMaxTokens);
+        ResolveParameters(LProvider.GetProviderId, AProfile, LTemperature, LMaxTokens);
 
         { Perform the actual async prompt request }
         LProvider.SendPromptAsync(APrompt, LHistory,
@@ -395,7 +393,7 @@ begin
           TMonitor.Exit(Self);
         end;
 
-        LogService('SendPromptStream: ActiveProvider=' + ProviderTypeToString(FConfig.GetActiveProvider) +
+        LogService('SendPromptStream: ActiveProvider=' + FConfig.GetActiveProvider +
           ' Model=' + FConfig.GetActiveModel(FConfig.GetActiveProvider) +
           ' SmartConfig=' + BoolToStr(FConfig.SmartConfigEnabled, True));
         LSystemPrompt   := GetEffectiveSystemPrompt;
@@ -427,7 +425,7 @@ begin
         LAccumulator := '';
 
         { Resolve parameters based on config and profile }
-        ResolveParameters(LProvider.GetProviderType, AProfile, LTemperature, LMaxTokens);
+        ResolveParameters(LProvider.GetProviderId, AProfile, LTemperature, LMaxTokens);
         LogService(Format('SendPromptStream: Params resolved: Temp=%0.2f MaxTokens=%d', [LTemperature, LMaxTokens]));
 
         { R2 FIX: Wrap callback to accumulate chunks and persist to cache on completion }
@@ -502,7 +500,7 @@ begin
     LogService('CancelCurrentRequest: No active provider request to cancel.');
 end;
 
-procedure TRadIAService.ResolveParameters(const AProvider: TAIProviderType; const AProfile: TAIRequestProfile;
+procedure TRadIAService.ResolveParameters(const AProviderName: string; const AProfile: TAIRequestProfile;
   out ATemperature: Double; out AMaxTokens: Integer);
 begin
   if FConfig.SmartConfigEnabled then
@@ -535,8 +533,8 @@ begin
   end
   else
   begin
-    ATemperature := FConfig.GetTemperature(AProvider);
-    AMaxTokens := FConfig.GetMaxTokens(AProvider);
+    ATemperature := FConfig.GetTemperature(AProviderName);
+    AMaxTokens := FConfig.GetMaxTokens(AProviderName);
     if AMaxTokens <= 0 then
       AMaxTokens := 8192;
   end;
