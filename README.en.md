@@ -79,6 +79,12 @@ RadIA employs a metadata-driven provider registry system (`TProviderRegistry`). 
 
 👉 [**Guide for Adding New Providers (docs/new_provider_guide.en.md)**](docs/new_provider_guide.en.md)
 
+### 5.2 Using GitHub Copilot via Local Proxy (Phase 1)
+
+RadIA supports integrating GitHub Copilot (and other enterprise assistants) through local proxies compatible with the OpenAI API. To learn how to configure the local proxy, acquire your token securely, and register your dynamic JSON provider, please refer to our:
+
+👉 [**GitHub Copilot Configuration Guide (docs/copilot_proxy_guide.en.md)**](docs/copilot_proxy_guide.en.md)
+
 ---
 
 ### 6. Repository Structure

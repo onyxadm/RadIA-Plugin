@@ -77,6 +77,12 @@ O RadIA adota uma arquitetura de registro de provedores orientada a metadados (`
 
 👉 [**Guia para Adição de Novos Provedores (docs/new_provider_guide.md)**](docs/new_provider_guide.md)
 
+### 5.2 Usando GitHub Copilot via Proxy Local (Fase 1)
+
+O RadIA suporta a integração com o GitHub Copilot (e outros assistentes corporativos) através de proxies locais compatíveis com a API da OpenAI. Para aprender a configurar o proxy local, obter seu token com segurança e registrar seu arquivo JSON dinâmico, consulte o nosso:
+
+👉 [**Guia de Configuração do GitHub Copilot (docs/copilot_proxy_guide.md)**](docs/copilot_proxy_guide.md)
+
 ---
 
 ### 6. Estrutura do Repositório
