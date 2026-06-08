@@ -2118,8 +2118,10 @@ begin
   LAuthType := FConfig.GetProviderAuthType(LActiveProvider);
   LIsWebLogin := SameText(LAuthType, 'web_login');
 
-  pnlInput.Visible := not LIsWebLogin;
-  cbModel.Visible := not LIsWebLogin;
+  // O painel nativo VCL de input e seletores permanece oculto,
+  // pois a interface Web Premium (chat.html) já possui seus próprios controles integrados.
+  pnlInput.Visible := False;
+  cbModel.Visible := False;
   
   if LIsWebLogin then
   begin

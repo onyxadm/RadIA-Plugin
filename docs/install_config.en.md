@@ -12,7 +12,7 @@ The plugin can be installed in two ways:
 
 ### Option A: Automated Installation (PowerShell) - Recommended
 
-This option automatically compiles the plugin, runs unit tests (if the **DUnitX** framework is installed in the IDE; otherwise, tests are automatically and transparently ignored), copies the binaries to the official public Delphi directories, and registers the plugin in the Windows Registry.
+This option automatically compiles the plugin, copies the binaries to the official public Delphi directories, and registers the plugin in the Windows Registry. By default, running unit tests is skipped during installation to speed up the process.
 
 1. Open the Windows PowerShell console.
 2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
@@ -92,12 +92,12 @@ Enter the obtained keys in the plugin settings (**Settings** at the top of the c
 
 The `.\build.ps1` script supports the following switches:
 
-* `-Install`: Builds the plugin, runs unit tests, copies binaries to public Delphi paths, and registers the package.
+* `-Install`: Builds the plugin, copies binaries to public Delphi paths, and registers the package. Running unit tests is automatically skipped to speed up installation.
 * `-Uninstall`: Clean uninstalls the plugin, deleting files and registry keys.
 * `-Release`: Enables compiler optimizations and outputs a smaller BPL binary.
 * `-IDE64`: Compiles and installs specifically for the 64-bit Delphi IDE in Delphi 13 Florence.
 * `-DelphiVersion "<version>"`: Optional. Allows forcing a specific Delphi version installed in the system (e.g., `"23.0"`, `"37.0"`, `"Athens"`).
-* `-SkipTests`: Optional. Skips building and running the unit test suite (DUnitX). Recommended for end-users who only want a quick plugin installation.
+* `-SkipTests`: Optional. Skips building and running the unit test suite (DUnitX) when the script is run without the `-Install` switch (where tests run by default).
 
 > [!TIP]
 > **Multiple IDE Versions Support:** If you have more than one Delphi version installed on Windows and execute the script with `-Install` or `-Uninstall` without passing the `-DelphiVersion` parameter, the script will automatically list all valid installations found in the Registry and display a console menu for interactive selection.

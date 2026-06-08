@@ -252,6 +252,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 6.1 Verificar disponibilidade do DUnitX caso os testes nao tenham sido explicitamente ignorados
+if ($Install -and -not $SkipTests) {
+    Write-Host "Instalacao detectada (-Install). Pulando execucao de testes unitarios..." -ForegroundColor Yellow
+    $SkipTests = $true
+}
+
 if (-not $SkipTests) {
     $dunitxPath = ""
     if ($selectedInstall) {
