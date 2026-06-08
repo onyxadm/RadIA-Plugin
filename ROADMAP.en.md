@@ -106,6 +106,17 @@ Version v0.0.6 drastically expanded plugin extensibility by allowing ad-hoc addi
 
 ---
 
+## ✅ v0.0.7 — Default System Prompt & Configuration Fine-tuning (Completed)
+
+Version v0.0.7 introduced usability improvements in the assistant's initial out-of-the-box configuration:
+
+- **Optimized Default System Prompt:**
+  * Integration of a structured default fallback instruction that guides the AI to always reply in Brazilian Portuguese (pt-BR) and output only clean, specific Pascal code snippets, preventing verbose answers containing full Delphi units.
+- **Developer Choices Respected:**
+  * The new prompt acts non-intrusively as an out-of-the-box default fallback value and will not override or modify system prompt customizations already saved by the developer in the Windows Registry.
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save

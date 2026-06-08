@@ -119,6 +119,16 @@ uses
   Winapi.Windows, System.Win.Registry, System.NetEncoding, System.Math, System.IOUtils, ToolsAPI,
   RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
 
+const
+  CDefaultSystemPrompt =
+    'You are a Delphi Senior Software Architect. Always reply in Brazilian Portuguese (pt-BR).' + sLineBreak +
+    'When generating, refactoring, or optimizing code:' + sLineBreak +
+    '1. Output ONLY the specific Pascal code block requested (e.g., a procedure, function, class, or code snippet).' + sLineBreak +
+    '2. Do NOT wrap the code in a complete Delphi unit (no "unit", "interface", "implementation", or "end.") unless I explicitly ask you to create a full file.' + sLineBreak +
+    '3. Do NOT include any conversational preamble, intro, or concluding remarks before or after the code block.' + sLineBreak +
+    '4. If technical explanation is necessary, keep it extremely brief, bulleted, and placed after the code.' + sLineBreak +
+    '5. Adhere strictly to Clean Code, SOLID principles, and proper Delphi resource management (e.g., try..finally).';
+
 { Windows DPAPI Declarations }
 type
   TDataBlob = record
@@ -179,7 +189,7 @@ begin
   FBaseUrlsList := TStringList.Create;
 
   FActiveProvider := 'Gemini';
-  FSystemPrompt := '';
+  FSystemPrompt := CDefaultSystemPrompt;
   FOllamaBaseUrl := 'http://localhost:11434';
   FMaxHistoryMessages := 20;
   FOpenAICustomBaseUrl := '';
@@ -372,7 +382,7 @@ begin
         if LReg.GetDataType('ActiveProvider') = rdString then
           FActiveProvider := LReg.ReadString('ActiveProvider');
       end;
-      FSystemPrompt      := ReadRegString(LReg, 'SystemPrompt', '');
+      FSystemPrompt      := ReadRegString(LReg, 'SystemPrompt', CDefaultSystemPrompt);
       
       { Fallback temporário das chaves legadas da raiz caso o usuário ainda não as tenha salvado nas subchaves }
       FOllamaBaseUrl     := ReadRegString(LReg, 'OllamaBaseUrl', 'http://localhost:11434');
