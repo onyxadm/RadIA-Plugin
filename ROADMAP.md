@@ -118,6 +118,21 @@ A versão v0.0.7 introduziu melhorias e otimizações nas configurações inicia
 
 ---
 
+## ✅ v0.0.8 — Provedor Local LM Studio e Estabilidade de Testes (Concluído)
+
+A versão v0.0.8 adicionou suporte nativo e opcional para o LM Studio como provedor local de IA e refinou a robustez dos testes unitários:
+
+- **Provedor Nativo LM Studio:**
+  * Integração direta da classe `TRadIALMStudioProvider` herdando de `TRadIAOpenAICompatibleProvider`.
+  * URL padrão local definida em `http://localhost:1234/v1`.
+  * Comportamento 100% opcional (assim como o Ollama): o provedor só é exibido no combo de chat se possuir URL ativa configurada nas opções, mantendo a lista limpa para quem não o utiliza.
+- **Tela de Opções da IDE:**
+  * Nova aba dedicada para o LM Studio na tela de opções (`Tools -> Options -> Third Party -> RadIA`) com tratamento de temas nativos Claro e Escuro da IDE.
+- **Suite de Testes Automatizada:**
+  * Criação de testes unitários em `RadIA.Tests.ProvidersEx.pas` cobrindo payload, resposta e streaming SSE do LM Studio (totalizando 103 testes DUnitX aprovados na suite).
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save

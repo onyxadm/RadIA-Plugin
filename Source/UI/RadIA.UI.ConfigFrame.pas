@@ -26,6 +26,8 @@ type
     pnlOllama: TPanel;
     tsOpenRouter: TTabSheet;
     pnlOpenRouter: TPanel;
+    tsLMStudio: TTabSheet;
+    pnlLMStudio: TPanel;
     tsSystemPrompt: TTabSheet;
     pnlSystemPrompt: TPanel;
     lblGeminiKey: TLabel;
@@ -44,6 +46,8 @@ type
     edtGroqKey: TEdit;
     lblOpenRouterKey: TLabel;
     edtOpenRouterKey: TEdit;
+    lblLMStudioUrl: TLabel;
+    edtLMStudioUrl: TEdit;
     memSystemPrompt: TMemo;
     tsTemplates: TTabSheet;
     pnlTemplatesLeft: TPanel;
@@ -143,6 +147,7 @@ begin
   CreateProviderAdvancedControls(tsGroq, 'Groq');
   CreateProviderAdvancedControls(tsOllama, 'Ollama');
   CreateProviderAdvancedControls(tsOpenRouter, 'OpenRouter');
+  CreateProviderAdvancedControls(tsLMStudio, 'LMStudio');
 
   { Create General/Logs Tab and controls programmatically }
   tsGeneral := TTabSheet.Create(Self);
@@ -394,6 +399,9 @@ begin
   pnlOpenRouter.StyleElements := pnlOpenRouter.StyleElements - [seClient, seBorder];
   pnlOpenRouter.Color := LColors.BgBase;
   pnlOpenRouter.ParentBackground := False;
+  pnlLMStudio.StyleElements := pnlLMStudio.StyleElements - [seClient, seBorder];
+  pnlLMStudio.Color := LColors.BgBase;
+  pnlLMStudio.ParentBackground := False;
   pnlSystemPrompt.StyleElements := pnlSystemPrompt.StyleElements - [seClient, seBorder];
   pnlSystemPrompt.Color := LColors.BgBase;
   pnlSystemPrompt.ParentBackground := False;
@@ -460,6 +468,9 @@ begin
   edtOpenRouterKey.StyleElements := edtOpenRouterKey.StyleElements - [seClient, seBorder];
   edtOpenRouterKey.Color := LColors.InputBgColor;
   edtOpenRouterKey.Font.Color := LColors.TextColor;
+  edtLMStudioUrl.StyleElements := edtLMStudioUrl.StyleElements - [seClient, seBorder];
+  edtLMStudioUrl.Color := LColors.InputBgColor;
+  edtLMStudioUrl.Font.Color := LColors.TextColor;
 
   // Labels
   lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
@@ -478,6 +489,8 @@ begin
   lblOllamaUrl.Font.Color := LColors.TextColor;
   lblOpenRouterKey.StyleElements := lblOpenRouterKey.StyleElements - [seClient, seBorder];
   lblOpenRouterKey.Font.Color := LColors.TextColor;
+  lblLMStudioUrl.StyleElements := lblLMStudioUrl.StyleElements - [seClient, seBorder];
+  lblLMStudioUrl.Font.Color := LColors.TextColor;
 
   // Aba de Templates
   pnlTemplatesLeft.StyleElements := pnlTemplatesLeft.StyleElements - [seClient, seBorder];
@@ -579,6 +592,10 @@ begin
   edtOpenRouterKey.Text := FConfig.GetApiKey('OpenRouter');
   memSystemPrompt.Text := FConfig.SystemPrompt;
   edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
+  
+  edtLMStudioUrl.Text := FConfig.GetProviderBaseUrl('LMStudio');
+  if edtLMStudioUrl.Text = '' then
+    edtLMStudioUrl.Text := 'http://localhost:1234/v1';
 
   if Assigned(FChkSmartConfig) then
     FChkSmartConfig.Checked := FConfig.SmartConfigEnabled;
@@ -630,6 +647,7 @@ var
 begin
   LOllamaUrl := Trim(edtOllamaUrl.Text);
   LOpenAIUrl := Trim(edtOpenAICustomUrl.Text);
+  var LLMStudioUrl := Trim(edtLMStudioUrl.Text);
   LFormatSettings := TFormatSettings.Invariant;
 
   if not LOllamaUrl.IsEmpty and not (LOllamaUrl.StartsWith('http://', True) or LOllamaUrl.StartsWith('https://', True)) then
@@ -644,6 +662,12 @@ begin
     Exit;
   end;
 
+  if not LLMStudioUrl.IsEmpty and not (LLMStudioUrl.StartsWith('http://', True) or LLMStudioUrl.StartsWith('https://', True)) then
+  begin
+    ShowMessage('LM Studio URL must start with http:// or https://');
+    Exit;
+  end;
+
   FConfig.SetApiKey('Gemini', Trim(edtGeminiKey.Text));
   FConfig.SetApiKey('OpenAI', Trim(edtOpenAIKey.Text));
   FConfig.OpenAICustomBaseUrl := LOpenAIUrl;
@@ -653,6 +677,7 @@ begin
   FConfig.SetApiKey('OpenRouter', Trim(edtOpenRouterKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := LOllamaUrl;
+  FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
 
   if Assigned(FChkSmartConfig) then
     FConfig.SmartConfigEnabled := FChkSmartConfig.Checked;
@@ -878,6 +903,8 @@ begin
     pgcSettings.ActivePage := tsOllama
   else if SameText(ACategoryName, 'OpenRouter') then
     pgcSettings.ActivePage := tsOpenRouter
+  else if SameText(ACategoryName, 'LM Studio') then
+    pgcSettings.ActivePage := tsLMStudio
 
 end;
 

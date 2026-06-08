@@ -76,6 +76,7 @@ begin
   tvCategories.Items.AddChild(LNodeProviders, 'Groq');
   tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
   tvCategories.Items.AddChild(LNodeProviders, 'OpenRouter');
+  tvCategories.Items.AddChild(LNodeProviders, 'LM Studio');
   
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;

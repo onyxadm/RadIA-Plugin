@@ -147,6 +147,14 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Implemented API key fallback settings configured inside the JSON, and dynamic status marking for listing loaded JSON providers in the chat interface.
     *   New unit test suite integrated in `RadIA.Tests.JSONProviders.pas`.
 
+### 19. Native Provider: LM Studio - Item #21c
+*   **Description**: Added complete and optional native support for the local LM Studio provider with SSE streaming, local models auto-discovery, and settings page tab.
+*   **Details**:
+    *   Created `RadIA.Provider.LMStudio.pas` unit containing the provider client class and its auto-registration in `TProviderRegistry`.
+    *   Created a dedicated LM Studio tab inside the options page Frame with custom server URL settings and IDE theme color adaptation.
+    *   Refactored the sidebar chat detection to handle LM Studio as an optional provider (visible only if a server URL is saved in options).
+    *   Developed new unit tests inside `RadIA.Tests.ProvidersEx.pas` validating LM Studio payloads, response parsing, and SSE streaming.
+
 ---
 
 ## ⏳ In Development

@@ -25,6 +25,7 @@ This document contains the complete checklist, categorization, and development s
 | **Groq** | Provider | Native BYOK integration for Llama, Mixtral, and Gemma models via Groq's high-speed cloud. | ✅ Completed |
 | **Ollama Local/Network** | Provider | Connects to local open-source models with no paid API keys and dynamic tags discovery. | ✅ Completed |
 | **OpenRouter** | Provider | Native OpenRouter support with SSE streaming, dynamic model selection, and complete settings integration. | ✅ Completed |
+| **LM Studio** | Provider | Native LM Studio support with SSE streaming, local models auto-discovery, and customizable server URL. | ✅ Completed |
 | **Custom Base URL** | Provider | Route OpenAI API payload to other endpoints like Groq, DeepSeek, or LM Studio. | ✅ Completed |
 | **Dynamic Providers** | Provider | Metadata-driven plugin-like architecture for registering new models and AI backends dynamically. | ✅ Completed |
 | **Dynamic JSON Providers** | Provider | Add new OpenAI-compatible providers by saving JSON files into `%APPDATA%\RadIA\providers\`. | ✅ Completed |

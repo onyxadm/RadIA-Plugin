@@ -147,6 +147,14 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Tratamento de fallback da chave de API configurada opcionalmente no JSON e marcação do status dinâmico para listagem incondicional de provedores carregados no chat lateral.
     *   Nova suíte de testes unitários integrada em `RadIA.Tests.JSONProviders.pas`.
 
+### 19. Provedor Nativo LM Studio - Item #21c
+*   **Descrição**: Adicionado suporte nativo completo e opcional para o provedor local LM Studio com streaming SSE, autodescoberta de modelos locais e interface de opções.
+*   **Detalhes**:
+    *   Criada unit `RadIA.Provider.LMStudio.pas` contendo a classe do provedor e seu auto-registro no `TProviderRegistry`.
+    *   Criada a aba dedicada do LM Studio no Frame de opções com estilização baseada no tema da IDE e persistência de URL.
+    *   Refatorada a detecção no chat lateral para carregar o LM Studio dinamicamente como opcional (aparecendo se a URL for configurada no registro).
+    *   Desenvolvidos novos testes unitários cobrindo a modelagem e streaming SSE da chamada no LM Studio em `RadIA.Tests.ProvidersEx.pas`.
+
 ---
 
 ## ⏳ Em Desenvolvimento

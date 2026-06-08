@@ -117,6 +117,21 @@ Version v0.0.7 introduced usability improvements in the assistant's initial out-
 
 ---
 
+## ✅ v0.0.8 — Local LM Studio Provider & Test Suite Stability (Completed)
+
+Version v0.0.8 added native and optional support for LM Studio as a local AI provider and refined the robustness of the unit test suite:
+
+- **Native LM Studio Provider:**
+  * Direct integration of `TRadIALMStudioProvider` class inheriting from `TRadIAOpenAICompatibleProvider`.
+  * Default local URL set to `http://localhost:1234/v1`.
+  * 100% optional behavior (just like Ollama): the provider is only listed in the chat dropdown if a valid URL is saved in options, keeping the list clean for users who don't need it.
+- **IDE Options Screen:**
+  * Dedicated settings tab for LM Studio (`Tools -> Options -> Third Party -> RadIA`) with native support for IDE Light and Dark themes.
+- **Automated Test Suite:**
+  * Created unit tests inside `RadIA.Tests.ProvidersEx.pas` covering LM Studio payloads, responses, and SSE streaming (totaling 103 successful DUnitX tests in the suite).
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save

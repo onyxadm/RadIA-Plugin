@@ -366,6 +366,8 @@ var
 begin
   if SameText(AProviderId, 'Ollama') then
     Result := not FConfig.GetOllamaBaseUrl.Trim.IsEmpty
+  else if SameText(AProviderId, 'LMStudio') then
+    Result := not FConfig.GetProviderBaseUrl('LMStudio').Trim.IsEmpty
   else
   begin
     if TProviderRegistry.GetProvider(AProviderId, LMeta) and LMeta.IsDynamic then

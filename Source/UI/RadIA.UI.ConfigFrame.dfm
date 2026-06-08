@@ -227,6 +227,34 @@ object FrameAIConfig: TFrameAIConfig
         end
       end
     end
+    object tsLMStudio: TTabSheet
+      Caption = 'LM Studio'
+      TabVisible = False
+      object pnlLMStudio: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
+        TabOrder = 0
+        object lblLMStudioUrl: TLabel
+          Left = 16
+          Top = 24
+          Width = 62
+          Height = 15
+          Caption = 'Server URL:'
+        end
+        object edtLMStudioUrl: TEdit
+          Left = 16
+          Top = 43
+          Width = 580
+          Height = 23
+          TabOrder = 0
+        end
+      end
+    end
     object tsSystemPrompt: TTabSheet
       Caption = 'System'
       TabVisible = False
