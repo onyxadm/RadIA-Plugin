@@ -93,6 +93,8 @@ type
     procedure SetAutocompleteModel(const AModel: string);
     function GetAutocompleteDelay: Integer;
     procedure SetAutocompleteDelay(const AValue: Integer);
+    function GetProviderAuthType(const AProviderName: string): string;
+    procedure SetProviderAuthType(const AProviderName: string; const AValue: string);
   end;
 
   [TestFixture]
@@ -455,6 +457,15 @@ procedure TMockConfig.SetAutocompleteDelay(const AValue: Integer);
 begin
 end;
 
+function TMockConfig.GetProviderAuthType(const AProviderName: string): string;
+begin
+  Result := 'api_key';
+end;
+
+procedure TMockConfig.SetProviderAuthType(const AProviderName: string; const AValue: string);
+begin
+end;
+
 { TTestRadIAService helpers }
 
 function TTestRadIAService.MakeHistory(const ACount: Integer): TArray<IChatMessage>;
@@ -705,16 +716,17 @@ end;
 procedure TTestRadIAProviderRegistry.TestCreateProviderRaisesExceptionOnUnknown;
 var
   LCfg: IAIConfig;
+  LExceptRaised: Boolean;
 begin
   LCfg := TMockConfig.Create(20);
-  Assert.WillRaise(
-    procedure
-    begin
-      TProviderRegistry.CreateProvider('UnknownProvider_xyz', LCfg);
-    end,
-    Exception,
-    'Should raise Exception on unknown provider'
-  );
+  LExceptRaised := False;
+  try
+    TProviderRegistry.CreateProvider('UnknownProvider_xyz', LCfg);
+  except
+    on E: Exception do
+      LExceptRaised := True;
+  end;
+  Assert.IsTrue(LExceptRaised, 'Should raise Exception on unknown provider');
 end;
 
 initialization

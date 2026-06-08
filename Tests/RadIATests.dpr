@@ -33,6 +33,7 @@ uses
   RadIA.Provider.OpenRouter in '..\Source\Providers\RadIA.Provider.OpenRouter.pas',
   RadIA.Provider.Generic in '..\Source\Providers\RadIA.Provider.Generic.pas',
   RadIA.Provider.LMStudio in '..\Source\Providers\RadIA.Provider.LMStudio.pas',
+  RadIA.Provider.WebViewBridge in '..\Source\Providers\RadIA.Provider.WebViewBridge.pas',
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',

@@ -2111,9 +2111,6 @@ var
   LTargetUrl: string;
   LIsWebLogin: Boolean;
 begin
-  if not FBrowserInitialized then
-    Exit;
-
   LActiveProvider := FConfig.GetActiveProvider;
   LAuthType := FConfig.GetProviderAuthType(LActiveProvider);
   LIsWebLogin := SameText(LAuthType, 'web_login');
