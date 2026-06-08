@@ -2126,6 +2126,14 @@ begin
   // pois a interface Web Premium (chat.html) já possui seus próprios controles integrados.
   pnlInput.Visible := False;
   cbModel.Visible := False;
+
+  // A barra de ferramentas nativa VCL deve ser exibida apenas no modo Web Login
+  // para permitir que o usuário mude de provedor ou acesse as configurações.
+  pnlToolbar.Visible := LIsWebLogin;
+  btnNewSession.Visible := not LIsWebLogin;
+  btnClear.Visible := not LIsWebLogin;
+  btnExport.Visible := not LIsWebLogin;
+  btnTemplates.Visible := not LIsWebLogin;
   
   if LIsWebLogin then
   begin
