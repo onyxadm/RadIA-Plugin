@@ -58,6 +58,8 @@ begin
 end;
 
 procedure TRadIAEditorHook.Install;
+var
+  LActiveForm: TCustomForm;
 begin
   if FInstalled then
     Exit;
@@ -67,8 +69,19 @@ begin
   Screen.OnActiveFormChange := ActiveFormChange;
   FInstalled := True;
   
-  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
-    InjectMenuIntoForm(Screen.ActiveForm);
+  if Assigned(Screen) then
+  begin
+    LActiveForm := Screen.ActiveForm;
+    if Assigned(LActiveForm) then
+    begin
+      TThread.ForceQueue(nil,
+        procedure
+        begin
+          if FInstalled and Assigned(Screen) and (Screen.ActiveForm = LActiveForm) then
+            InjectMenuIntoForm(LActiveForm);
+        end);
+    end;
+  end;
 end;
 
 procedure TRadIAEditorHook.Uninstall;
@@ -91,9 +104,24 @@ begin
 end;
 
 procedure TRadIAEditorHook.ActiveFormChange(Sender: TObject);
+var
+  LActiveForm: TCustomForm;
 begin
-  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
-    InjectMenuIntoForm(Screen.ActiveForm);
+  if Assigned(Screen) then
+  begin
+    LActiveForm := Screen.ActiveForm;
+    if Assigned(LActiveForm) and SameText(LActiveForm.ClassName, 'TEditWindow') then
+    begin
+      // Adia a injeção do menu para o próximo ciclo de mensagens, garantindo que
+      // o formulário e suas subviews estejam completamente construídos e estáveis.
+      TThread.ForceQueue(nil,
+        procedure
+        begin
+          if FInstalled and Assigned(Screen) and (Screen.ActiveForm = LActiveForm) then
+            InjectMenuIntoForm(LActiveForm);
+        end);
+    end;
+  end;
     
   if Assigned(FOldActiveFormChange) then
     FOldActiveFormChange(Sender);
