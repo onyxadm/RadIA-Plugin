@@ -13,9 +13,12 @@ type
     FInstalled: Boolean;
     
     procedure ActiveFormChange(Sender: TObject);
-    procedure InjectMenuIntoForm(AForm: TCustomForm);
-    procedure RemoveMenuFromForm(AForm: TCustomForm);
+    procedure HookPopupMenu(AForm: TCustomForm);
+    procedure UnhookPopupMenu(AForm: TCustomForm);
     function FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
+    procedure EditorMenuPopup(Sender: TObject);
+    procedure InjectMenuIntoPopupMenu(APopupMenu: TPopupMenu);
+    procedure RemoveMenuFromPopupMenu(APopupMenu: TPopupMenu);
 
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
@@ -39,8 +42,13 @@ type
 implementation
 
 uses
+  System.Generics.Collections,
   RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
   RadIA.Core.Mediator, RadIA.OTA.DockableForm, RadIA.Core.Logger;
+
+var
+  // Global dictionary to track original OnPopup events for intercepted menus
+  FInterceptedMenus: TDictionary<TPopupMenu, TNotifyEvent> = nil;
 
 { TRadIAEditorHook }
 
@@ -58,35 +66,28 @@ begin
 end;
 
 procedure TRadIAEditorHook.Install;
-var
-  LActiveForm: TCustomForm;
 begin
   if FInstalled then
     Exit;
 
   TLogger.Log('Installing editor local menu hooks via VCL injection', 'EditorHook');
+  
+  if not Assigned(FInterceptedMenus) then
+    FInterceptedMenus := TDictionary<TPopupMenu, TNotifyEvent>.Create;
+
   FOldActiveFormChange := Screen.OnActiveFormChange;
   Screen.OnActiveFormChange := ActiveFormChange;
   FInstalled := True;
   
-  if Assigned(Screen) then
-  begin
-    LActiveForm := Screen.ActiveForm;
-    if Assigned(LActiveForm) then
-    begin
-      TThread.ForceQueue(nil,
-        procedure
-        begin
-          if FInstalled and Assigned(Screen) and (Screen.ActiveForm = LActiveForm) then
-            InjectMenuIntoForm(LActiveForm);
-        end);
-    end;
-  end;
+  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+    HookPopupMenu(Screen.ActiveForm);
 end;
 
 procedure TRadIAEditorHook.Uninstall;
 var
   I: Integer;
+  LMenu: TPopupMenu;
+  LOldOnPopup: TNotifyEvent;
 begin
   if not FInstalled then
     Exit;
@@ -94,34 +95,33 @@ begin
   TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
   if Assigned(Screen) then
     Screen.OnActiveFormChange := FOldActiveFormChange;
+  
   FInstalled := False;
     
   if Assigned(Screen) then
   begin
     for I := 0 to Screen.FormCount - 1 do
-      RemoveMenuFromForm(Screen.Forms[I]);
+      UnhookPopupMenu(Screen.Forms[I]);
+  end;
+
+  if Assigned(FInterceptedMenus) then
+  begin
+    // Restore all original OnPopup handlers
+    for LMenu in FInterceptedMenus.Keys do
+    begin
+      LOldOnPopup := FInterceptedMenus.Items[LMenu];
+      LMenu.OnPopup := LOldOnPopup;
+      RemoveMenuFromPopupMenu(LMenu);
+    end;
+    FInterceptedMenus.Clear;
+    FreeAndNil(FInterceptedMenus);
   end;
 end;
 
 procedure TRadIAEditorHook.ActiveFormChange(Sender: TObject);
-var
-  LActiveForm: TCustomForm;
 begin
-  if Assigned(Screen) then
-  begin
-    LActiveForm := Screen.ActiveForm;
-    if Assigned(LActiveForm) and SameText(LActiveForm.ClassName, 'TEditWindow') then
-    begin
-      // Adia a injeção do menu para o próximo ciclo de mensagens, garantindo que
-      // o formulário e suas subviews estejam completamente construídos e estáveis.
-      TThread.ForceQueue(nil,
-        procedure
-        begin
-          if FInstalled and Assigned(Screen) and (Screen.ActiveForm = LActiveForm) then
-            InjectMenuIntoForm(LActiveForm);
-        end);
-    end;
-  end;
+  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+    HookPopupMenu(Screen.ActiveForm);
     
   if Assigned(FOldActiveFormChange) then
     FOldActiveFormChange(Sender);
@@ -154,11 +154,9 @@ begin
   end;
 end;
 
-procedure TRadIAEditorHook.InjectMenuIntoForm(AForm: TCustomForm);
+procedure TRadIAEditorHook.HookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
-  LRootItem: TMenuItem;
-  LSubItem: TMenuItem;
 begin
   if not Assigned(AForm) or not SameText(AForm.ClassName, 'TEditWindow') then
     Exit;
@@ -167,77 +165,121 @@ begin
   if not Assigned(LPopupMenu) then
     Exit;
 
-  // Evita duplicidade se o menu ja estiver injetado nesta janela de edicao
-  if Assigned(LPopupMenu.Items.Find('mnuRadIARoot')) then
-    Exit;
-
-  TLogger.Log(Format('Injecting RadIA menu into local menu of editor: %s', [AForm.Name]), 'EditorHook');
-
-  // Cria o item de submenu raiz
-  LRootItem := TMenuItem.Create(LPopupMenu);
-  LRootItem.Name := 'mnuRadIARoot';
-  LRootItem.Caption := 'RadIA';
-
-  // Cria e aninha os subitens de acao
-  LSubItem := TMenuItem.Create(LPopupMenu);
-  LSubItem.Caption := 'Explain Selected Code';
-  LSubItem.OnClick := OnExplainExecute;
-  LRootItem.Add(LSubItem);
-
-  LSubItem := TMenuItem.Create(LPopupMenu);
-  LSubItem.Caption := 'Optimize/Refactor Code';
-  LSubItem.OnClick := OnOptimizeExecute;
-  LRootItem.Add(LSubItem);
-
-  LSubItem := TMenuItem.Create(LPopupMenu);
-  LSubItem.Caption := 'Generate Unit Tests (DUnitX)';
-  LSubItem.OnClick := OnTestsExecute;
-  LRootItem.Add(LSubItem);
-
-  LSubItem := TMenuItem.Create(LPopupMenu);
-  LSubItem.Caption := 'Locate Bugs/Memory Leaks';
-  LSubItem.OnClick := OnBugsExecute;
-  LRootItem.Add(LSubItem);
-
-  LSubItem := TMenuItem.Create(LPopupMenu);
-  LSubItem.Caption := 'Document Method (XML)';
-  LSubItem.OnClick := OnDocExecute;
-  LRootItem.Add(LSubItem);
-
-  LSubItem := TMenuItem.Create(LPopupMenu);
-  LSubItem.Caption := 'Review Active Unit (Leaks/SOLID)';
-  LSubItem.OnClick := OnReviewExecute;
-  LRootItem.Add(LSubItem);
-
-  // Adiciona um separador visual antes do item RadIA
-  LSubItem := TMenuItem.Create(LPopupMenu);
-  LSubItem.Caption := '-';
-  LSubItem.Name := 'mnuRadIASeparator';
-  LPopupMenu.Items.Add(LSubItem);
-
-  // Adiciona o RadIA ao menu de contexto da IDE
-  LPopupMenu.Items.Add(LRootItem);
+  if Assigned(FInterceptedMenus) and not FInterceptedMenus.ContainsKey(LPopupMenu) then
+  begin
+    TLogger.Log(Format('Hooking OnPopup of EditorLocalMenu for %s', [AForm.Name]), 'EditorHook');
+    FInterceptedMenus.Add(LPopupMenu, LPopupMenu.OnPopup);
+    LPopupMenu.OnPopup := EditorMenuPopup;
+  end;
 end;
 
-procedure TRadIAEditorHook.RemoveMenuFromForm(AForm: TCustomForm);
+procedure TRadIAEditorHook.UnhookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
-  LItem: TMenuItem;
+  LOldOnPopup: TNotifyEvent;
 begin
   if not Assigned(AForm) or not SameText(AForm.ClassName, 'TEditWindow') then
     Exit;
 
   LPopupMenu := FindEditorPopupMenu(AForm);
-  if Assigned(LPopupMenu) then
+  if Assigned(LPopupMenu) and Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) then
   begin
-    LItem := LPopupMenu.Items.Find('mnuRadIARoot');
-    if Assigned(LItem) then
-      LPopupMenu.Items.Remove(LItem);
-
-    LItem := LPopupMenu.Items.Find('mnuRadIASeparator');
-    if Assigned(LItem) then
-      LPopupMenu.Items.Remove(LItem);
+    TLogger.Log(Format('Unhooking OnPopup of EditorLocalMenu for %s', [AForm.Name]), 'EditorHook');
+    LPopupMenu.OnPopup := LOldOnPopup;
+    FInterceptedMenus.Remove(LPopupMenu);
+    RemoveMenuFromPopupMenu(LPopupMenu);
   end;
+end;
+
+procedure TRadIAEditorHook.EditorMenuPopup(Sender: TObject);
+var
+  LPopupMenu: TPopupMenu;
+  LOldOnPopup: TNotifyEvent;
+begin
+  if Sender is TPopupMenu then
+  begin
+    LPopupMenu := TPopupMenu(Sender);
+    InjectMenuIntoPopupMenu(LPopupMenu);
+    
+    if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) and Assigned(LOldOnPopup) then
+      LOldOnPopup(Sender);
+  end;
+end;
+
+procedure TRadIAEditorHook.InjectMenuIntoPopupMenu(APopupMenu: TPopupMenu);
+var
+  LRootItem: TMenuItem;
+  LSubItem: TMenuItem;
+begin
+  if not Assigned(APopupMenu) then
+    Exit;
+
+  // Prevent duplicate menus
+  if Assigned(APopupMenu.Items.Find('mnuRadIARoot')) then
+    Exit;
+
+  TLogger.Log('Injecting RadIA menu items into EditorLocalMenu', 'EditorHook');
+
+  // Root Submenu Item
+  LRootItem := TMenuItem.Create(APopupMenu);
+  LRootItem.Name := 'mnuRadIARoot';
+  LRootItem.Caption := 'RadIA';
+
+  // Action Submenu Items
+  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem.Caption := 'Explain Selected Code';
+  LSubItem.OnClick := OnExplainExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem.Caption := 'Optimize/Refactor Code';
+  LSubItem.OnClick := OnOptimizeExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem.Caption := 'Generate Unit Tests (DUnitX)';
+  LSubItem.OnClick := OnTestsExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem.Caption := 'Locate Bugs/Memory Leaks';
+  LSubItem.OnClick := OnBugsExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem.Caption := 'Document Method (XML)';
+  LSubItem.OnClick := OnDocExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem.Caption := 'Review Active Unit (Leaks/SOLID)';
+  LSubItem.OnClick := OnReviewExecute;
+  LRootItem.Add(LSubItem);
+
+  // Separator visual
+  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem.Caption := '-';
+  LSubItem.Name := 'mnuRadIASeparator';
+  APopupMenu.Items.Add(LSubItem);
+
+  // Add RadIA menu to the VCL PopupMenu
+  APopupMenu.Items.Add(LRootItem);
+end;
+
+procedure TRadIAEditorHook.RemoveMenuFromPopupMenu(APopupMenu: TPopupMenu);
+var
+  LItem: TMenuItem;
+begin
+  if not Assigned(APopupMenu) then
+    Exit;
+
+  LItem := APopupMenu.Items.Find('mnuRadIARoot');
+  if Assigned(LItem) then
+    APopupMenu.Items.Remove(LItem);
+
+  LItem := APopupMenu.Items.Find('mnuRadIASeparator');
+  if Assigned(LItem) then
+    APopupMenu.Items.Remove(LItem);
 end;
 
 procedure TRadIAEditorHook.PopulateToolsMenu(const AMenuItem: TMenuItem);
@@ -376,5 +418,16 @@ begin
 
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
+
+initialization
+  // Ensure the FInterceptedMenus dictionary is nil at startup
+  FInterceptedMenus := nil;
+
+finalization
+  if Assigned(FInterceptedMenus) then
+  begin
+    FInterceptedMenus.Clear;
+    FreeAndNil(FInterceptedMenus);
+  end;
 
 end.
