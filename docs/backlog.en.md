@@ -155,6 +155,14 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Refactored the sidebar chat detection to handle LM Studio as an optional provider (visible only if a server URL is saved in options).
     *   Developed new unit tests inside `RadIA.Tests.ProvidersEx.pas` validating LM Studio payloads, response parsing, and SSE streaming.
 
+### 20. Support for Multiple Delphi Versions in Build - Item #27
+*   **Description**: Improved the robustness of the build and installation script (`build.ps1`) for environments with multiple Delphi versions installed, allowing selection via interactive menu or command-line parameters.
+*   **Details**:
+    *   Implemented the `-DelphiVersion` parameter to force the compilation and registration targeting a specific Delphi version.
+    *   Implemented dynamic scanning of the Windows Registry (`HKCU:\Software\Embarcadero\BDS`) to map actual installation paths (`RootDir`) and friendly names.
+    *   Developed an interactive console menu in PowerShell for selecting the version if multiple active IDEs are detected during installation or uninstallation.
+    *   Dynamicized all internal IDE folders and build paths using `$rootDir` instead of global hardcoded paths on the C: drive.
+
 ---
 
 ## ⏳ In Development

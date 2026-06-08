@@ -67,7 +67,7 @@ A interface utiliza uma arquitetura híbrida:
 *   **Web Engine:** *Microsoft Edge WebView2 Runtime* instalado no sistema Windows (pré-instalado em versões modernas do Windows). **Importante:** A DLL `WebView2Loader.dll` correspondente à arquitetura da IDE (32-bit para Delphi 10.4, 64-bit para Delphi 11 e 12) deve estar presente na pasta `bin` da instalação do Delphi (ex: `C:\Program Files (x86)\Embarcadero\Studio\<versao>\bin`) ou no PATH do sistema.
 ### 5. Instalação e Configuração
 
-O RadIA pode ser instalado de maneira **automatizada via PowerShell** (recomendado) ou **manualmente através da IDE**. Para instruções detalhadas de compilação, registro e configuração de chaves de API para todos os provedores ou uso local com o Ollama, consulte o nosso:
+O RadIA pode ser instalado de maneira **automatizada via PowerShell** (recomendado, com suporte a autodetecção de múltiplos ambientes Delphi e seleção interativa) ou **manualmente através da IDE**. Para instruções detalhadas de compilação, registro e configuração de chaves de API para todos os provedores ou uso local com o Ollama, consulte o nosso:
 
 👉 [**Guia de Instalação e Configuração Completo (docs/install_config.md)**](docs/install_config.md)
 

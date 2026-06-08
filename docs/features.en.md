@@ -41,3 +41,4 @@ This document contains the complete checklist, categorization, and development s
 | **Stack Trace Assistant** | Integration | Error log/stack trace analyzer integrated with active unit context. | ✅ Completed |
 | **Static Code Analysis** | Integration | Code scan for memory leaks (missing try..finally) and SOLID/Clean Code anti-patterns. | ✅ Completed |
 | **Secure Credentials** | Security | API Keys saved securely inside the Windows Registry using DPAPI. | ✅ Completed |
+| **Multi-IDE Build & Install** | Infrastructure | PowerShell script supporting multiple registry Delphi environments and interactive selection menu. | ✅ Completed |

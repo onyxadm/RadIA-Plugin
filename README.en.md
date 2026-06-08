@@ -69,7 +69,7 @@ The user interface uses a hybrid architecture:
 
 ### 5. Installation and Configuration
 
-RadIA can be installed in two ways: **Automated via PowerShell** (recommended) or **manually through the IDE**. For detailed compilation, registry registration, and API key acquisition instructions for all providers or local Ollama usage, please refer to our:
+RadIA can be installed in two ways: **Automated via PowerShell** (recommended, supporting autodetect of multiple installed Delphi environments and interactive selection menu) or **manually through the IDE**. For detailed compilation, registry registration, and API key acquisition instructions for all providers or local Ollama usage, please refer to our:
 
 👉 [**Complete Installation and Configuration Guide (docs/install_config.en.md)**](docs/install_config.en.md)
 

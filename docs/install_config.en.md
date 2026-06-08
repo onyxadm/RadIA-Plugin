@@ -96,3 +96,7 @@ The `.\build.ps1` script supports the following switches:
 * `-Uninstall`: Clean uninstalls the plugin, deleting files and registry keys.
 * `-Release`: Enables compiler optimizations and outputs a smaller BPL binary.
 * `-IDE64`: Compiles and installs specifically for the 64-bit Delphi IDE in Delphi 13 Florence.
+* `-DelphiVersion "<version>"`: Optional. Allows forcing a specific Delphi version installed in the system (e.g., `"23.0"`, `"37.0"`, `"Athens"`).
+
+> [!TIP]
+> **Multiple IDE Versions Support:** If you have more than one Delphi version installed on Windows and execute the script with `-Install` or `-Uninstall` without passing the `-DelphiVersion` parameter, the script will automatically list all valid installations found in the Registry and display a console menu for interactive selection.

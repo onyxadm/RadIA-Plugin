@@ -41,3 +41,4 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Assistente de Stack Trace** | Integração | Analisador de logs de erro/stack trace integrado ao contexto da unit aberta. | ✅ Concluído |
 | **Análise Estática de Código** | Integração | Varredura de código em busca de memory leaks (ausência de try..finally) e anti-padrões SOLID/Clean Code. | ✅ Concluído |
 | **Armazenamento Seguro** | Segurança | Chaves de API salvas localmente criptografadas usando a API do Windows DPAPI. | ✅ Concluído |
+| **Build e Instalação Multi-IDE** | Infraestrutura | Script PowerShell com suporte a múltiplos ambientes Delphi no registro e seleção interativa. | ✅ Concluído |
