@@ -77,7 +77,7 @@ end;
 procedure TAwsEventStreamParser.ProcessBytes(const ANewBytes: TBytes);
 var
   LOldLen, LNewLen: Integer;
-  LTotalLength, LHeadersLength: Cardinal;
+  LTotalLength: Cardinal;
   LFrameBytes: TBytes;
   LRemaining: Integer;
   LTemp: TBytes;
@@ -93,7 +93,6 @@ begin
   while Length(FBuffer) >= 12 do
   begin
     LTotalLength := ReadBigEndian32(0);
-    LHeadersLength := ReadBigEndian32(4);
 
     if Cardinal(Length(FBuffer)) < LTotalLength then
       Break; // Wait for more data
@@ -112,7 +111,7 @@ begin
       end;
     end;
 
-    LRemaining := Length(FBuffer) - LTotalLength;
+    LRemaining := Length(FBuffer) - Integer(LTotalLength);
     if LRemaining > 0 then
     begin
       SetLength(LTemp, LRemaining);
