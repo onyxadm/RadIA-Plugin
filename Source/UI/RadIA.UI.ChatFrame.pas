@@ -137,8 +137,8 @@ implementation
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
   RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.DTO.Generator, RadIA.Core.ProviderRegistry, RadIA.Provider.WebViewBridge,
-  RadIA.UI.WebLoginForm;
+  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Core.ProviderRegistry, 
+  RadIA.Provider.WebViewBridge, RadIA.UI.WebLoginForm;
 
 {$R *.dfm}
 
@@ -944,8 +944,35 @@ begin
 
     LJson := LParsed as TJSONObject;
     LAction := LJson.GetValue<string>('action', '');
-    
-    if LAction = 'apply_code' then
+    if LAction = 'create_project' then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        var
+          LJsonFiles: TJSONArray;
+          LJsonFilesStr: string;
+          LErrorMsg: string;
+        begin
+          LJsonFiles := LJson.GetValue('files') as TJSONArray;
+          if Assigned(LJsonFiles) then
+          begin
+            LJsonFilesStr := LJsonFiles.ToJSON;
+            if not TRadIAProjectGenerator.GenerateFromJSON(LJsonFilesStr, LErrorMsg) then
+            begin
+              if not LErrorMsg.IsEmpty then
+              begin
+                Application.MessageBox(PChar(LErrorMsg), 'RadIA', MB_OK or MB_ICONWARNING);
+              end;
+            end;
+          end
+          else
+          begin
+            Application.MessageBox('No files data received.', 'RadIA', MB_OK or MB_ICONWARNING);
+          end;
+        end));
+    end
+    else if LAction = 'apply_code' then
     begin
       LCode := LJson.GetValue<string>('code', '');
       { Normalize line endings to CRLF (#13#10) for Windows OTA editor compatibility. }
