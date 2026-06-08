@@ -119,9 +119,14 @@ begin
 end;
 
 procedure TRadIAEditorHook.ActiveFormChange(Sender: TObject);
+var
+  I: Integer;
 begin
-  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
-    HookPopupMenu(Screen.ActiveForm);
+  if Assigned(Screen) then
+  begin
+    for I := 0 to Screen.FormCount - 1 do
+      HookPopupMenu(Screen.Forms[I]);
+  end;
     
   if Assigned(FOldActiveFormChange) then
     FOldActiveFormChange(Sender);
@@ -129,28 +134,14 @@ end;
 
 function TRadIAEditorHook.FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
 var
-  I: Integer;
   LComp: TComponent;
 begin
   Result := nil;
-  if not Assigned(AParent) then
-    Exit;
-    
-  for I := 0 to AParent.ComponentCount - 1 do
+  if Assigned(AParent) then
   begin
-    LComp := AParent.Components[I];
-    if LComp is TPopupMenu then
-    begin
-      if SameText(LComp.Name, 'EditorLocalMenu') then
-      begin
-        Result := TPopupMenu(LComp);
-        Exit;
-      end;
-    end;
-    
-    Result := FindEditorPopupMenu(LComp);
-    if Assigned(Result) then
-      Exit;
+    LComp := AParent.FindComponent('EditorLocalMenu');
+    if Assigned(LComp) and (LComp is TPopupMenu) then
+      Result := TPopupMenu(LComp);
   end;
 end;
 
@@ -158,7 +149,7 @@ procedure TRadIAEditorHook.HookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
 begin
-  if not Assigned(AForm) or not SameText(AForm.ClassName, 'TEditWindow') then
+  if not Assigned(AForm) then
     Exit;
 
   LPopupMenu := FindEditorPopupMenu(AForm);
@@ -167,7 +158,7 @@ begin
 
   if Assigned(FInterceptedMenus) and not FInterceptedMenus.ContainsKey(LPopupMenu) then
   begin
-    TLogger.Log(Format('Hooking OnPopup of EditorLocalMenu for %s', [AForm.Name]), 'EditorHook');
+    TLogger.Log(Format('Hooking OnPopup of EditorLocalMenu for %s (%s)', [AForm.Name, AForm.ClassName]), 'EditorHook');
     FInterceptedMenus.Add(LPopupMenu, LPopupMenu.OnPopup);
     LPopupMenu.OnPopup := EditorMenuPopup;
   end;
@@ -178,13 +169,13 @@ var
   LPopupMenu: TPopupMenu;
   LOldOnPopup: TNotifyEvent;
 begin
-  if not Assigned(AForm) or not SameText(AForm.ClassName, 'TEditWindow') then
+  if not Assigned(AForm) then
     Exit;
 
   LPopupMenu := FindEditorPopupMenu(AForm);
   if Assigned(LPopupMenu) and Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) then
   begin
-    TLogger.Log(Format('Unhooking OnPopup of EditorLocalMenu for %s', [AForm.Name]), 'EditorHook');
+    TLogger.Log(Format('Unhooking OnPopup of EditorLocalMenu for %s (%s)', [AForm.Name, AForm.ClassName]), 'EditorHook');
     LPopupMenu.OnPopup := LOldOnPopup;
     FInterceptedMenus.Remove(LPopupMenu);
     RemoveMenuFromPopupMenu(LPopupMenu);

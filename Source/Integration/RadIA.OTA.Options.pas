@@ -8,7 +8,7 @@ uses
 
 type
   { Provider page configuration tag }
-  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOllama, ptOpenRouter, ptSystem, ptTemplates);
+  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOpenRouter, ptOllama, ptLMStudio, ptSystem, ptTemplates);
 
   { INTAAddInOptions implementation for RadIA Options }
   TRadIAAddInOptions = class(TInterfacedObject, INTAAddInOptions)
@@ -57,7 +57,7 @@ begin
     ptNone: Result := 'RadIA.General';
     ptSystem: Result := 'RadIA.System Prompt';
     ptTemplates: Result := 'RadIA.Templates';
-    ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOllama, ptOpenRouter: 
+    ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOpenRouter, ptOllama, ptLMStudio: 
       Result := 'RadIA.AI Providers.' + FTitle;
   else
     Result := 'RadIA.' + FTitle;
@@ -79,15 +79,17 @@ begin
     // Selecionar a aba adequada
     case FTag of
       ptNone: FFrame.SelectCategoryByName('General / Logs');
+      ptSystem: FFrame.SelectCategoryByName('System Prompt');
+      ptTemplates: FFrame.SelectCategoryByName('Templates');
       ptGemini: FFrame.SelectCategoryByName('Gemini');
       ptOpenAI: FFrame.SelectCategoryByName('OpenAI');
       ptClaude: FFrame.SelectCategoryByName('Claude');
       ptDeepSeek: FFrame.SelectCategoryByName('DeepSeek');
       ptGroq: FFrame.SelectCategoryByName('Groq');
-      ptOllama: FFrame.SelectCategoryByName('Ollama');
       ptOpenRouter: FFrame.SelectCategoryByName('OpenRouter');
-      ptSystem: FFrame.SelectCategoryByName('System Prompt');
-      ptTemplates: FFrame.SelectCategoryByName('Templates');
+      ptOllama: FFrame.SelectCategoryByName('Ollama');
+      ptLMStudio: FFrame.SelectCategoryByName('LM Studio');
+
     end;
   end;
 end;

@@ -228,15 +228,16 @@ begin
   if Supports(BorlandIDEServices, INTAEnvironmentOptionsServices, LOptionsServices) then
   begin
     AddPage('General', ptNone);
+    AddPage('System Prompt', ptSystem);
+    AddPage('Templates', ptTemplates);
     AddPage('Gemini', ptGemini);
     AddPage('OpenAI', ptOpenAI);
     AddPage('Claude', ptClaude);
     AddPage('DeepSeek', ptDeepSeek);
     AddPage('Groq', ptGroq);
-    AddPage('Ollama', ptOllama);
     AddPage('OpenRouter', ptOpenRouter);
-    AddPage('System Prompt', ptSystem);
-    AddPage('Templates', ptTemplates);
+    AddPage('Ollama', ptOllama);
+    AddPage('LM Studio', ptLMStudio);
   end;
 end;
 
