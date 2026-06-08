@@ -31,6 +31,21 @@ object FrameAIConfig: TFrameAIConfig
           Height = 15
           Caption = 'API Key:'
         end
+        object lnkGeminiGetKey: TLabel
+          Left = 520
+          Top = 100
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'Obter API Key'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkGeminiGetKeyClick
+        end
         object grpGeminiAuthType: TRadioGroup
           Left = 16
           Top = 16
@@ -72,6 +87,21 @@ object FrameAIConfig: TFrameAIConfig
           Width = 43
           Height = 15
           Caption = 'API Key:'
+        end
+        object lnkOpenAIGetKey: TLabel
+          Left = 520
+          Top = 100
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'Obter API Key'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkOpenAIGetKeyClick
         end
         object lblOpenAICustomUrl: TLabel
           Left = 16
@@ -134,6 +164,21 @@ object FrameAIConfig: TFrameAIConfig
           Height = 15
           Caption = 'API Key:'
         end
+        object lnkClaudeGetKey: TLabel
+          Left = 520
+          Top = 24
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'Obter API Key'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkClaudeGetKeyClick
+        end
         object edtClaudeKey: TEdit
           Left = 16
           Top = 43
@@ -162,6 +207,21 @@ object FrameAIConfig: TFrameAIConfig
           Height = 15
           Caption = 'API Key:'
         end
+        object lnkDeepSeekGetKey: TLabel
+          Left = 520
+          Top = 24
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'Obter API Key'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkDeepSeekGetKeyClick
+        end
         object edtDeepSeekKey: TEdit
           Left = 16
           Top = 43
@@ -189,6 +249,21 @@ object FrameAIConfig: TFrameAIConfig
           Width = 43
           Height = 15
           Caption = 'API Key:'
+        end
+        object lnkGroqGetKey: TLabel
+          Left = 520
+          Top = 24
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'Obter API Key'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkGroqGetKeyClick
         end
         object edtGroqKey: TEdit
           Left = 16
@@ -246,6 +321,21 @@ object FrameAIConfig: TFrameAIConfig
           Height = 15
           Caption = 'API Key:'
         end
+        object lnkOpenRouterGetKey: TLabel
+          Left = 520
+          Top = 24
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'Obter API Key'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkOpenRouterGetKeyClick
+        end
         object edtOpenRouterKey: TEdit
           Left = 16
           Top = 43
@@ -280,6 +370,52 @@ object FrameAIConfig: TFrameAIConfig
           Width = 580
           Height = 23
           TabOrder = 0
+        end
+      end
+    end
+    object tsGithubCopilot: TTabSheet
+      Caption = 'GitHub Copilot'
+      TabVisible = False
+      object pnlGithubCopilot: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
+        TabOrder = 0
+        object lblGithubCopilotKey: TLabel
+          Left = 16
+          Top = 100
+          Width = 320
+          Height = 15
+          Caption = 'GitHub User Token (ghu_... or gho_...):'
+        end
+        object edtGithubCopilotKey: TEdit
+          Left = 16
+          Top = 119
+          Width = 580
+          Height = 23
+          TabOrder = 0
+        end
+        object btnConnectGithub: TButton
+          Left = 16
+          Top = 24
+          Width = 200
+          Height = 30
+          Caption = 'Conectar Conta do GitHub'
+          TabOrder = 1
+          OnClick = btnConnectGithubClick
+        end
+        object btnImportVSCode: TButton
+          Left = 230
+          Top = 24
+          Width = 180
+          Height = 30
+          Caption = 'Importar do VS Code'
+          TabOrder = 2
+          OnClick = btnImportVSCodeClick
         end
       end
     end
