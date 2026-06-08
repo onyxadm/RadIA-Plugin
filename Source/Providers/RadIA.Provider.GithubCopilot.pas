@@ -314,7 +314,7 @@ begin
     LParams.Add('scope=read:user');
 
     try
-      LResponse := LClient.Post('https://github.com/login/device/code', LParams, nil, LHeaders);
+      LResponse := LClient.Post('https://github.com/login/device/code', LParams, TStream(nil), LHeaders);
       if LResponse.StatusCode <> 200 then
       begin
         AErrorMsg := Format('HTTP %d: %s', [LResponse.StatusCode, LResponse.StatusText]);
@@ -407,7 +407,7 @@ begin
       end;
 
       try
-        LResponse := LClient.Post('https://github.com/login/oauth/access_token', LParams, nil, LHeaders);
+        LResponse := LClient.Post('https://github.com/login/oauth/access_token', LParams, TStream(nil), LHeaders);
         if LResponse.StatusCode = 200 then
         begin
           LJson := TJSONObject.ParseJSONValue(LResponse.ContentAsString(TEncoding.UTF8)) as TJSONObject;
