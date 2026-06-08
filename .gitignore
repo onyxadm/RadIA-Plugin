@@ -39,3 +39,7 @@ test-results.xml
 !/Redist/Win64/
 !/Redist/Win32/*.dll
 !/Redist/Win64/*.dll
+
+# Compiled Resources
+RadIA.RES
+RadIA.res
