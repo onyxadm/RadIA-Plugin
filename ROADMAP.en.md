@@ -174,6 +174,11 @@ Version v0.0.10 introduced native and official support for direct remote connect
 *   **Impact**: ⭐⭐⭐ Medium
 *   **Complexity**: Low
 
+### 3. Native Alibaba Qwen Support (ModelStudio)
+*   **Goal**: Direct and native integration with the Alibaba Cloud ModelStudio API to consume models from the **Qwen 2.5** family (such as *Qwen 2.5 Coder*), including a dedicated settings tab, hyperlink shortcuts to generate official keys on the Alibaba Cloud dashboard, and model auto-discovery.
+*   **Impact**: ⭐⭐⭐⭐⭐ Very High
+*   **Complexity**: Low (compatible with the OpenAI protocol)
+
 ---
 
 ## 🔲 v0.2.0 — Administration & Diagnostics

@@ -207,3 +207,6 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
 ### 4. Autocompletar Inline Inteligente (Ghost Text) (Item #26)
 *   **Objetivo**: Sugestões de código em tempo real no editor de código com texto acinzentado estilo Copilot/Cursor.
 *   **Nota de Arquitetura**: A pesquisa técnica e prototipagem na ToolsAPI (utilizando `INTAEditViewNotifier.PaintLine`, isolamento de Canvas GDI com `SaveDC`/`RestoreDC`, debounce síncrono e interceptação de teclas VK_TAB/VK_ESCAPE com `IOTAKeyboardBinding`) foram concluídas. O desenvolvimento foi temporariamente pausado devido a restrições no ciclo de repaints síncronos da IDE que afetam a estabilidade do cursor nativo em High DPI. Os módulos foram arquivados para futura evolução quando novas APIs de pintura assíncrona da Embarcadero forem avaliadas.
+
+### 5. Provedor Nativo Alibaba Qwen (ModelStudio) (Item #30)
+*   **Objetivo**: Adicionar suporte direto e nativo à API oficial do Alibaba Cloud ModelStudio para consumo dos modelos da família **Qwen 2.5** (como o *Qwen 2.5 Coder*), incluindo aba dedicada de configurações, links rápidos para chaves de API oficiais e listagem dinâmica de modelos.

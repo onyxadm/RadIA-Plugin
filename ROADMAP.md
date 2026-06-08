@@ -175,6 +175,11 @@ A versão v0.0.10 introduziu o suporte nativo e oficial para conexão direta com
 *   **Impacto**: ⭐⭐⭐ Médio
 *   **Complexidade**: Baixa
 
+### 3. Provedor Nativo Alibaba Qwen (ModelStudio)
+*   **Objetivo**: Integração direta e nativa com a API do Alibaba Cloud ModelStudio para consumo dos modelos da família **Qwen 2.5** (como o *Qwen 2.5 Coder*), incluindo aba dedicada de configurações, atalhos rápidos para geração de chaves oficiais na nuvem da Alibaba e autodescoberta de modelos.
+*   **Impacto**: ⭐⭐⭐⭐⭐ Muito Alto
+*   **Complexidade**: Baixa (comunicação compatível com o protocolo da OpenAI)
+
 ---
 
 ## 🔲 v0.2.0 — Administração e Diagnóstico
