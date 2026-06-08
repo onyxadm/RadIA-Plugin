@@ -131,6 +131,21 @@ A versão v0.0.8 adicionou suporte nativo e opcional para o LM Studio como prove
 - **Suite de Testes Automatizada:**
   * Criação de testes unitários em `RadIA.Tests.ProvidersEx.pas` cobrindo payload, resposta e streaming SSE do LM Studio (totalizando 103 testes DUnitX aprovados na suite).
 
+
+---
+
+## ✅ v0.0.9 — Suporte Multi-IDE e Acentuação de Build (Concluído)
+
+A versão v0.0.9 refinou a infraestrutura de compilação e suporte a múltiplos ambientes de desenvolvimento Delphi no Windows:
+
+- **Instalador Multi-IDE Dinâmico:**
+  * O script `build.ps1` agora descobre todas as versões instaladas do Delphi varrendo a chave `HKCU:\Software\Embarcadero\BDS` no Registro.
+  * Inclusão do parâmetro `-DelphiVersion` para definir qual IDE utilizar.
+  * Exibição de menu interativo no terminal PowerShell para escolha quando múltiplas versões forem detectadas (com opção de Cancelar de forma segura).
+  * Injeção dinâmica do compilador (`dcc32` correspondente) e dinamicização de caminhos da IDE através de `$rootDir`.
+- **Compatibilidade do Console:**
+  * Remoção completa de caracteres acentuados nas strings de console PowerShell para prevenir problemas de codificação de console (UTF-8/CP1252/CP850) em diferentes sistemas.
+
 ---
 
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)

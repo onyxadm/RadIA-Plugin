@@ -130,6 +130,21 @@ Version v0.0.8 added native and optional support for LM Studio as a local AI pro
 - **Automated Test Suite:**
   * Created unit tests inside `RadIA.Tests.ProvidersEx.pas` covering LM Studio payloads, responses, and SSE streaming (totaling 103 successful DUnitX tests in the suite).
 
+
+---
+
+## ✅ v0.0.9 — Multi-IDE Support and Console Compatibility (Completed)
+
+Version v0.0.9 refined the build infrastructure and support for environments running multiple Delphi IDE installations simultaneously:
+
+- **Dynamic Multi-IDE Installer:**
+  * The `build.ps1` script now dynamically scans for all installed Delphi versions under `HKCU:\Software\Embarcadero\BDS` in the Windows Registry.
+  * Added the `-DelphiVersion` parameter to target a specific Delphi IDE.
+  * Interactive PowerShell console menu displays version options if multiple IDEs are found (including a safe Cancel option).
+  * Automatically sets temporary PATH variable using the selected version's compiler (`dcc32`) and maps IDE folders dynamically using `$rootDir`.
+- **Console Compatibility:**
+  * Replaced all accented characters inside PowerShell output strings with standard ASCII characters to prevent encoding distortion across different Windows system locales (UTF-8/CP1252/CP850).
+
 ---
 
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
