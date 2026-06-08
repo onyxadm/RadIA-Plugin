@@ -104,3 +104,21 @@ O script `.\build.ps1` aceita os seguintes parâmetros:
 
 > [!NOTE]
 > **Autodetecção do DUnitX:** O instalador verifica automaticamente se o framework DUnitX está instalado no Delphi selecionado. Se o DUnitX não for encontrado (instalação básica/mínima da IDE), o script exibirá um aviso no console e desativará os testes unitários de forma automática, prosseguindo com a compilação e a instalação bem-sucedida do plugin principal sem a necessidade de intervenção do usuário.
+
+---
+
+## 5. Login Híbrido (Web Login Plus/Pro vs BYOK)
+
+O RadIA permite que você opte por dois métodos de conexão para os provedores **Google Gemini** e **OpenAI ChatGPT**:
+1. **API Key (BYOK)**: Utiliza chaves de API oficiais e cobra por token consumido diretamente do seu saldo de desenvolvedor nas plataformas OpenAI Platform/Google AI Studio.
+2. **Web Login (Plus/Pro)**: Permite que você faça login diretamente nas suas contas pessoais ou corporativas de consumidor (ChatGPT Plus/Pro e Gemini Advanced) utilizando a interface oficial deles no WebView2 integrado do RadIA.
+
+### Como Ativar e Usar o Web Login
+1. Acesse as Configurações (**Settings** no painel de chat ou o menu **Tools ➔ Options ➔ Third Party > RadIA**).
+2. Selecione a aba do provedor (**Gemini** ou **OpenAI**).
+3. No campo **Connection Method**, selecione a opção **Web Login (Plus/Pro)**.
+4. Clique em **Save**.
+5. No painel de chat do RadIA, selecione o provedor correspondente. O WebView2 carregará a tela oficial de login da plataforma.
+6. Faça login na sua conta. O WebView2 salvará os cookies e a sessão localmente em `%APPDATA%\RadIA\WebView2Data` de forma segura, mantendo você conectado.
+7. As barras superiores e laterais oficiais dos sites serão limpas automaticamente por injeção de CSS para dar a aparência de uma janela de chat embutida limpa.
+8. Ao interagir com o editor de código (como clicar com o botão direito e selecionar *Explain Selected Code*), a IDE Delphi transmitirá os comandos e prompts diretamente para a janela Web e lerá a resposta de volta automaticamente em tempo real!

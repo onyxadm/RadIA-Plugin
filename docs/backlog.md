@@ -163,6 +163,14 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Desenvolvido menu interativo no console PowerShell para seleção de versão quando múltiplas IDEs forem detectadas durante a instalação/desinstalação.
     *   Dinamicização de todos os diretórios internos e caminhos da IDE baseados em `$rootDir` ao invés de caminhos estáticos globais no drive C:.
 
+### 21. Conexão Híbrida e Login Web (Plus/Pro) - Item #28
+*   **Descrição**: Implementação de modo complementar de conexão via Login Web em contas de consumidor (ChatGPT Plus/Pro e Gemini Advanced) com automação DOM e ponte JS, convivendo harmoniosamente com o modelo BYOK tradicional (API Keys).
+*   **Detalhes**:
+    *   Criação de chaves de configuração e seletor na interface de configurações ("Tools -> Options") por provedor.
+    *   Desenvolvimento do script `bridge.js` para controle de input/output do DOM, injeção de CSS para ocultação de elementos desnecessários do site oficial e monitoramento de stream.
+    *   Criação do provedor virtual `TRadIAWebViewBridgeProvider` para orquestração síncrona/assíncrona de requisições de IA para a janela ativa do WebView2.
+    *   Configuração do User-Agent seguro do Chromium para prevenção de bloqueios OAuth durante o fluxo de autenticação do Google.
+
 ---
 
 ## ⏳ Em Desenvolvimento
