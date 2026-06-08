@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Interfaces;
+unit RadIA.Core.Interfaces;
 
 interface
 
@@ -126,6 +126,8 @@ type
     procedure SetQuotaCycleStart(const AValue: TDateTime);
     function GetActiveSessionId: string;
     procedure SetActiveSessionId(const AValue: string);
+    function GetAzureApiVersion: string;
+    procedure SetAzureApiVersion(const AValue: string);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -133,6 +135,7 @@ type
     property OllamaBaseUrl: string read GetOllamaBaseUrl write SetOllamaBaseUrl;
     property MaxHistoryMessages: Integer read GetMaxHistoryMessages write SetMaxHistoryMessages;
     property OpenAICustomBaseUrl: string read GetOpenAICustomBaseUrl write SetOpenAICustomBaseUrl;
+    property AzureApiVersion: string read GetAzureApiVersion write SetAzureApiVersion;
     property AutocompleteEnabled: Boolean read GetAutocompleteEnabled write SetAutocompleteEnabled;
     property AutocompleteProvider: string read GetAutocompleteProvider write SetAutocompleteProvider;
     property AutocompleteModel: string read GetAutocompleteModel write SetAutocompleteModel;

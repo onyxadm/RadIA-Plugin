@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ConfigForm;
+unit RadIA.UI.ConfigForm;
 
 interface
 
@@ -78,6 +78,9 @@ begin
   tvCategories.Items.AddChild(LNodeProviders, 'OpenRouter');
   tvCategories.Items.AddChild(LNodeProviders, 'LM Studio');
   tvCategories.Items.AddChild(LNodeProviders, 'GitHub Copilot');
+  tvCategories.Items.AddChild(LNodeProviders, 'Azure OpenAI');
+  tvCategories.Items.AddChild(LNodeProviders, 'Alibaba Qwen');
+  tvCategories.Items.AddChild(LNodeProviders, 'Mistral AI');
   
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;

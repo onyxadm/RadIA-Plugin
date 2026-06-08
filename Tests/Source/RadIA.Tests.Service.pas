@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Service;
+unit RadIA.Tests.Service;
 
 interface
 
@@ -36,6 +36,7 @@ type
     FQuotaUsed: Int64;
     FQuotaCycleStart: TDateTime;
     FActiveSessionId: string;
+    FAzureApiVersion: string;
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
     destructor Destroy; override;
@@ -68,6 +69,8 @@ type
     procedure SetQuotaCycleStart(const AValue: TDateTime);
     function GetActiveSessionId: string;
     procedure SetActiveSessionId(const AValue: string);
+    function GetAzureApiVersion: string;
+    procedure SetAzureApiVersion(const AValue: string);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -182,6 +185,7 @@ begin
   FQuotaUsed := 0;
   FQuotaCycleStart := Now;
   FActiveSessionId := '';
+  FAzureApiVersion := '2024-02-15-preview';
 end;
 
 destructor TMockConfig.Destroy;
@@ -346,6 +350,18 @@ end;
 procedure TMockConfig.SetActiveSessionId(const AValue: string);
 begin
   FActiveSessionId := AValue;
+end;
+
+function TMockConfig.GetAzureApiVersion: string;
+begin
+  Result := FAzureApiVersion;
+  if Result.IsEmpty then
+    Result := '2024-02-15-preview';
+end;
+
+procedure TMockConfig.SetAzureApiVersion(const AValue: string);
+begin
+  FAzureApiVersion := AValue;
 end;
 
 procedure TMockConfig.AddToQuotaUsage(const AUsage: TTokenUsage);

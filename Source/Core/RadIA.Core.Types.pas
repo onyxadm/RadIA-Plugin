@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Types;
+unit RadIA.Core.Types;
 
 interface
 
@@ -35,6 +35,16 @@ const
   MODEL_OPENROUTER_GEMINI25_PRO = 'google/gemini-2.5-pro';
   MODEL_OPENROUTER_LLAMA33      = 'meta-llama/llama-3.3-70b-instruct';
   MODEL_OPENROUTER_DEEPSEEK_R1  = 'deepseek/deepseek-r1';
+
+  { Standard models for Alibaba Qwen }
+  MODEL_QWEN_25_CODER_32B = 'qwen2.5-coder-32b-instruct';
+  MODEL_QWEN_25_CODER_7B  = 'qwen2.5-coder-7b-instruct';
+  MODEL_QWEN_25_PLUS      = 'qwen2.5-plus';
+
+  { Standard models for Mistral AI }
+  MODEL_MISTRAL_CODESTRAL = 'codestral-latest';
+  MODEL_MISTRAL_LARGE     = 'mistral-large-latest';
+  MODEL_MISTRAL_OPEN_7B   = 'open-codestral-7b';
 
 function MessageRoleToString(const ARole: TAIMessageRole): string;
 function StringToMessageRole(const AString: string): TAIMessageRole;

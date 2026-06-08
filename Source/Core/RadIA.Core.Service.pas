@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Service;
+unit RadIA.Core.Service;
 
 interface
 
@@ -70,7 +70,8 @@ uses
   System.IOUtils, System.JSON, System.Threading, System.Math, RadIA.OTA.Helper, RadIA.Core.ProjectContext,
   RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama,
   RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter, RadIA.Provider.LMStudio,
-  RadIA.Provider.WebViewBridge, RadIA.Core.ProviderRegistry, RadIA.Core.Logger;
+  RadIA.Provider.WebViewBridge, RadIA.Provider.AzureOpenAI, RadIA.Provider.Qwen, RadIA.Provider.Mistral,
+  RadIA.Core.ProviderRegistry, RadIA.Core.Logger;
 
 procedure LogService(const AMsg: string);
 begin

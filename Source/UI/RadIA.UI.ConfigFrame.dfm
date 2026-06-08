@@ -419,6 +419,162 @@ object FrameAIConfig: TFrameAIConfig
         end
       end
     end
+    object tsAzureOpenAI: TTabSheet
+      Caption = 'Azure OpenAI'
+      TabVisible = False
+      object pnlAzureOpenAI: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
+        TabOrder = 0
+        object lblAzureKey: TLabel
+          Left = 16
+          Top = 24
+          Width = 43
+          Height = 15
+          Caption = 'API Key:'
+        end
+        object lblAzureUrl: TLabel
+          Left = 16
+          Top = 74
+          Width = 130
+          Height = 15
+          Caption = 'Endpoint Base URL:'
+        end
+        object lblAzureModel: TLabel
+          Left = 16
+          Top = 124
+          Width = 105
+          Height = 15
+          Caption = 'Deployment Name:'
+        end
+        object lblAzureApiVersion: TLabel
+          Left = 16
+          Top = 174
+          Width = 64
+          Height = 15
+          Caption = 'API Version:'
+        end
+        object edtAzureKey: TEdit
+          Left = 16
+          Top = 43
+          Width = 580
+          Height = 23
+          TabOrder = 0
+        end
+        object edtAzureUrl: TEdit
+          Left = 16
+          Top = 93
+          Width = 580
+          Height = 23
+          TabOrder = 1
+        end
+        object edtAzureModel: TEdit
+          Left = 16
+          Top = 143
+          Width = 580
+          Height = 23
+          TabOrder = 2
+        end
+        object edtAzureApiVersion: TEdit
+          Left = 16
+          Top = 193
+          Width = 580
+          Height = 23
+          TabOrder = 3
+        end
+      end
+    end
+    object tsQwen: TTabSheet
+      Caption = 'Alibaba Qwen'
+      TabVisible = False
+      object pnlQwen: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
+        TabOrder = 0
+        object lblQwenKey: TLabel
+          Left = 16
+          Top = 24
+          Width = 43
+          Height = 15
+          Caption = 'API Key:'
+        end
+        object lnkQwenGetKey: TLabel
+          Left = 520
+          Top = 24
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'Obter API Key'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkQwenGetKeyClick
+        end
+        object edtQwenKey: TEdit
+          Left = 16
+          Top = 43
+          Width = 580
+          Height = 23
+          TabOrder = 0
+        end
+      end
+    end
+    object tsMistral: TTabSheet
+      Caption = 'Mistral AI'
+      TabVisible = False
+      object pnlMistral: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
+        TabOrder = 0
+        object lblMistralKey: TLabel
+          Left = 16
+          Top = 24
+          Width = 43
+          Height = 15
+          Caption = 'API Key:'
+        end
+        object lnkMistralGetKey: TLabel
+          Left = 520
+          Top = 24
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'Obter API Key'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkMistralGetKeyClick
+        end
+        object edtMistralKey: TEdit
+          Left = 16
+          Top = 43
+          Width = 580
+          Height = 23
+          TabOrder = 0
+        end
+      end
+    end
     object tsSystemPrompt: TTabSheet
       Caption = 'System'
       TabVisible = False

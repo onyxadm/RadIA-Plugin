@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Config;
+unit RadIA.Core.Config;
 
 interface
 
@@ -28,6 +28,7 @@ type
     FAutocompleteProvider: string;
     FAutocompleteModel: string;
     FAutocompleteDelay: Integer;
+    FAzureApiVersion: string;
 
     { Dynamic String-based settings (avoiding TDictionary generics due to BPL RTL unloading bugs) }
     FApiKeysList: TStringList;
@@ -67,6 +68,8 @@ type
     procedure SetMaxHistoryMessages(const AValue: Integer);
     function GetOpenAICustomBaseUrl: string;
     procedure SetOpenAICustomBaseUrl(const AValue: string);
+    function GetAzureApiVersion: string;
+    procedure SetAzureApiVersion(const AValue: string);
 
     { String-based dynamic provider APIs }
     function GetApiKey(const AProviderName: string): string;
@@ -198,6 +201,7 @@ begin
   FOllamaBaseUrl := 'http://localhost:11434';
   FMaxHistoryMessages := 20;
   FOpenAICustomBaseUrl := '';
+  FAzureApiVersion := '2024-02-15-preview';
   
   FSmartConfigEnabled := True;
   FLogEnabled := True;
@@ -415,6 +419,7 @@ begin
       end;
       FAutocompleteModel := ReadRegString(LReg, 'AutocompleteModel', 'gemini-1.5-flash');
       FAutocompleteDelay := ReadRegInt(LReg, 'AutocompleteDelay', 300);
+      FAzureApiVersion   := ReadRegString(LReg, 'AzureApiVersion', '2024-02-15-preview');
       
       LReg.CloseKey;
 
@@ -553,6 +558,7 @@ begin
       LReg.WriteString('AutocompleteProvider', FAutocompleteProvider);
       LReg.WriteString('AutocompleteModel', FAutocompleteModel);
       LReg.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
+      LReg.WriteString('AzureApiVersion', FAzureApiVersion);
       
       { Sync legacy BaseURLs to root just in case }
       LReg.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
@@ -647,6 +653,18 @@ begin
     LVal := LVal.Substring(0, LVal.Length - 1);
   FOpenAICustomBaseUrl := LVal;
   SetProviderBaseUrl('openai', LVal);
+end;
+
+function TRadIAConfig.GetAzureApiVersion: string;
+begin
+  Result := FAzureApiVersion;
+  if Result.IsEmpty then
+    Result := '2024-02-15-preview';
+end;
+
+procedure TRadIAConfig.SetAzureApiVersion(const AValue: string);
+begin
+  FAzureApiVersion := AValue.Trim;
 end;
 
 { Dynamic String-based getters and setters }

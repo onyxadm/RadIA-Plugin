@@ -34,6 +34,9 @@ uses
   RadIA.Provider.Generic in '..\Source\Providers\RadIA.Provider.Generic.pas',
   RadIA.Provider.LMStudio in '..\Source\Providers\RadIA.Provider.LMStudio.pas',
   RadIA.Provider.WebViewBridge in '..\Source\Providers\RadIA.Provider.WebViewBridge.pas',
+  RadIA.Provider.AzureOpenAI in '..\Source\Providers\RadIA.Provider.AzureOpenAI.pas',
+  RadIA.Provider.Qwen in '..\Source\Providers\RadIA.Provider.Qwen.pas',
+  RadIA.Provider.Mistral in '..\Source\Providers\RadIA.Provider.Mistral.pas',
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',

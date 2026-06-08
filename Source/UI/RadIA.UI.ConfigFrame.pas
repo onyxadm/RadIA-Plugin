@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ConfigFrame;
+unit RadIA.UI.ConfigFrame;
 
 interface
 
@@ -37,6 +37,29 @@ type
     edtGithubCopilotKey: TEdit;
     btnConnectGithub: TButton;
     btnImportVSCode: TButton;
+
+    tsAzureOpenAI: TTabSheet;
+    pnlAzureOpenAI: TPanel;
+    lblAzureKey: TLabel;
+    edtAzureKey: TEdit;
+    lblAzureUrl: TLabel;
+    edtAzureUrl: TEdit;
+    lblAzureModel: TLabel;
+    edtAzureModel: TEdit;
+    lblAzureApiVersion: TLabel;
+    edtAzureApiVersion: TEdit;
+
+    tsQwen: TTabSheet;
+    pnlQwen: TPanel;
+    lblQwenKey: TLabel;
+    edtQwenKey: TEdit;
+    lnkQwenGetKey: TLabel;
+
+    tsMistral: TTabSheet;
+    pnlMistral: TPanel;
+    lblMistralKey: TLabel;
+    edtMistralKey: TEdit;
+    lnkMistralGetKey: TLabel;
 
     lnkGeminiGetKey: TLabel;
     lnkOpenAIGetKey: TLabel;
@@ -94,6 +117,8 @@ type
     procedure lnkDeepSeekGetKeyClick(Sender: TObject);
     procedure lnkGroqGetKeyClick(Sender: TObject);
     procedure lnkOpenRouterGetKeyClick(Sender: TObject);
+    procedure lnkQwenGetKeyClick(Sender: TObject);
+    procedure lnkMistralGetKeyClick(Sender: TObject);
     procedure btnConnectGithubClick(Sender: TObject);
     procedure btnImportVSCodeClick(Sender: TObject);
   private
@@ -177,6 +202,9 @@ begin
   CreateProviderAdvancedControls(tsOpenRouter, 'OpenRouter');
   CreateProviderAdvancedControls(tsLMStudio, 'LMStudio');
   CreateProviderAdvancedControls(tsGithubCopilot, 'GithubCopilot');
+  CreateProviderAdvancedControls(tsAzureOpenAI, 'AzureOpenAI');
+  CreateProviderAdvancedControls(tsQwen, 'Qwen');
+  CreateProviderAdvancedControls(tsMistral, 'Mistral');
 
   { Create General/Logs Tab and controls programmatically }
   tsGeneral := TTabSheet.Create(Self);
@@ -434,6 +462,15 @@ begin
   pnlGithubCopilot.StyleElements := pnlGithubCopilot.StyleElements - [seClient, seBorder];
   pnlGithubCopilot.Color := LColors.BgBase;
   pnlGithubCopilot.ParentBackground := False;
+  pnlAzureOpenAI.StyleElements := pnlAzureOpenAI.StyleElements - [seClient, seBorder];
+  pnlAzureOpenAI.Color := LColors.BgBase;
+  pnlAzureOpenAI.ParentBackground := False;
+  pnlQwen.StyleElements := pnlQwen.StyleElements - [seClient, seBorder];
+  pnlQwen.Color := LColors.BgBase;
+  pnlQwen.ParentBackground := False;
+  pnlMistral.StyleElements := pnlMistral.StyleElements - [seClient, seBorder];
+  pnlMistral.Color := LColors.BgBase;
+  pnlMistral.ParentBackground := False;
   pnlSystemPrompt.StyleElements := pnlSystemPrompt.StyleElements - [seClient, seBorder];
   pnlSystemPrompt.Color := LColors.BgBase;
   pnlSystemPrompt.ParentBackground := False;
@@ -512,6 +549,27 @@ begin
   edtGithubCopilotKey.StyleElements := edtGithubCopilotKey.StyleElements - [seClient, seBorder];
   edtGithubCopilotKey.Color := LColors.InputBgColor;
   edtGithubCopilotKey.Font.Color := LColors.TextColor;
+  
+  edtAzureKey.StyleElements := edtAzureKey.StyleElements - [seClient, seBorder];
+  edtAzureKey.Color := LColors.InputBgColor;
+  edtAzureKey.Font.Color := LColors.TextColor;
+  edtAzureUrl.StyleElements := edtAzureUrl.StyleElements - [seClient, seBorder];
+  edtAzureUrl.Color := LColors.InputBgColor;
+  edtAzureUrl.Font.Color := LColors.TextColor;
+  edtAzureModel.StyleElements := edtAzureModel.StyleElements - [seClient, seBorder];
+  edtAzureModel.Color := LColors.InputBgColor;
+  edtAzureModel.Font.Color := LColors.TextColor;
+  edtAzureApiVersion.StyleElements := edtAzureApiVersion.StyleElements - [seClient, seBorder];
+  edtAzureApiVersion.Color := LColors.InputBgColor;
+  edtAzureApiVersion.Font.Color := LColors.TextColor;
+
+  edtQwenKey.StyleElements := edtQwenKey.StyleElements - [seClient, seBorder];
+  edtQwenKey.Color := LColors.InputBgColor;
+  edtQwenKey.Font.Color := LColors.TextColor;
+
+  edtMistralKey.StyleElements := edtMistralKey.StyleElements - [seClient, seBorder];
+  edtMistralKey.Color := LColors.InputBgColor;
+  edtMistralKey.Font.Color := LColors.TextColor;
 
   // Labels Link
   lnkGeminiGetKey.StyleElements := lnkGeminiGetKey.StyleElements - [seClient, seBorder];
@@ -526,6 +584,11 @@ begin
   lnkGroqGetKey.Font.Color := LColors.AccentColor;
   lnkOpenRouterGetKey.StyleElements := lnkOpenRouterGetKey.StyleElements - [seClient, seBorder];
   lnkOpenRouterGetKey.Font.Color := LColors.AccentColor;
+  
+  lnkQwenGetKey.StyleElements := lnkQwenGetKey.StyleElements - [seClient, seBorder];
+  lnkQwenGetKey.Font.Color := LColors.AccentColor;
+  lnkMistralGetKey.StyleElements := lnkMistralGetKey.StyleElements - [seClient, seBorder];
+  lnkMistralGetKey.Font.Color := LColors.AccentColor;
 
   // Labels
   lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
@@ -546,6 +609,20 @@ begin
   lblOpenRouterKey.Font.Color := LColors.TextColor;
   lblLMStudioUrl.StyleElements := lblLMStudioUrl.StyleElements - [seClient, seBorder];
   lblLMStudioUrl.Font.Color := LColors.TextColor;
+  
+  lblAzureKey.StyleElements := lblAzureKey.StyleElements - [seClient, seBorder];
+  lblAzureKey.Font.Color := LColors.TextColor;
+  lblAzureUrl.StyleElements := lblAzureUrl.StyleElements - [seClient, seBorder];
+  lblAzureUrl.Font.Color := LColors.TextColor;
+  lblAzureModel.StyleElements := lblAzureModel.StyleElements - [seClient, seBorder];
+  lblAzureModel.Font.Color := LColors.TextColor;
+  lblAzureApiVersion.StyleElements := lblAzureApiVersion.StyleElements - [seClient, seBorder];
+  lblAzureApiVersion.Font.Color := LColors.TextColor;
+
+  lblQwenKey.StyleElements := lblQwenKey.StyleElements - [seClient, seBorder];
+  lblQwenKey.Font.Color := LColors.TextColor;
+  lblMistralKey.StyleElements := lblMistralKey.StyleElements - [seClient, seBorder];
+  lblMistralKey.Font.Color := LColors.TextColor;
 
   // Aba de Templates
   pnlTemplatesLeft.StyleElements := pnlTemplatesLeft.StyleElements - [seClient, seBorder];
@@ -666,6 +743,14 @@ begin
 
   edtGithubCopilotKey.Text := FConfig.GetApiKey('GithubCopilot');
 
+  edtAzureKey.Text := FConfig.GetApiKey('AzureOpenAI');
+  edtAzureUrl.Text := FConfig.GetProviderBaseUrl('AzureOpenAI');
+  edtAzureModel.Text := FConfig.GetActiveModel('AzureOpenAI');
+  edtAzureApiVersion.Text := FConfig.AzureApiVersion;
+
+  edtQwenKey.Text := FConfig.GetApiKey('Qwen');
+  edtMistralKey.Text := FConfig.GetApiKey('Mistral');
+
   if Assigned(FChkSmartConfig) then
     FChkSmartConfig.Checked := FConfig.SmartConfigEnabled;
 
@@ -737,6 +822,13 @@ begin
     Exit;
   end;
 
+  var LAzureUrl := Trim(edtAzureUrl.Text);
+  if not LAzureUrl.IsEmpty and not (LAzureUrl.StartsWith('http://', True) or LAzureUrl.StartsWith('https://', True)) then
+  begin
+    ShowMessage('Azure OpenAI Endpoint URL must start with http:// or https://');
+    Exit;
+  end;
+
   if grpGeminiAuthType.ItemIndex = 1 then
     FConfig.SetProviderAuthType('Gemini', 'web_login')
   else
@@ -755,6 +847,15 @@ begin
   FConfig.SetApiKey('Groq', Trim(edtGroqKey.Text));
   FConfig.SetApiKey('OpenRouter', Trim(edtOpenRouterKey.Text));
   FConfig.SetApiKey('GithubCopilot', Trim(edtGithubCopilotKey.Text));
+  
+  FConfig.SetApiKey('AzureOpenAI', Trim(edtAzureKey.Text));
+  FConfig.SetProviderBaseUrl('AzureOpenAI', LAzureUrl);
+  FConfig.SetActiveModel('AzureOpenAI', Trim(edtAzureModel.Text));
+  FConfig.AzureApiVersion := Trim(edtAzureApiVersion.Text);
+
+  FConfig.SetApiKey('Qwen', Trim(edtQwenKey.Text));
+  FConfig.SetApiKey('Mistral', Trim(edtMistralKey.Text));
+
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := LOllamaUrl;
   FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
@@ -987,6 +1088,12 @@ begin
     pgcSettings.ActivePage := tsLMStudio
   else if SameText(ACategoryName, 'GitHub Copilot') then
     pgcSettings.ActivePage := tsGithubCopilot
+  else if SameText(ACategoryName, 'Azure OpenAI') then
+    pgcSettings.ActivePage := tsAzureOpenAI
+  else if SameText(ACategoryName, 'Alibaba Qwen') then
+    pgcSettings.ActivePage := tsQwen
+  else if SameText(ACategoryName, 'Mistral AI') then
+    pgcSettings.ActivePage := tsMistral
 
 end;
 
@@ -1050,6 +1157,16 @@ end;
 procedure TFrameAIConfig.lnkOpenRouterGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://openrouter.ai/keys');
+end;
+
+procedure TFrameAIConfig.lnkQwenGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://bailian.console.aliyun.com/');
+end;
+
+procedure TFrameAIConfig.lnkMistralGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://console.mistral.ai/api-keys/');
 end;
 
 procedure TFrameAIConfig.btnConnectGithubClick(Sender: TObject);
