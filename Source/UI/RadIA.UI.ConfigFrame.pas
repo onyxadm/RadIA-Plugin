@@ -65,8 +65,6 @@ type
     edtGroqKey: TEdit;
     lblOpenRouterKey: TLabel;
     edtOpenRouterKey: TEdit;
-    lblLMStudioUrl: TLabel;
-    edtLMStudioUrl: TEdit;
     memSystemPrompt: TMemo;
     tsTemplates: TTabSheet;
     pnlTemplatesLeft: TPanel;
@@ -129,6 +127,7 @@ type
     
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
     procedure PopulateTemplatesList;
+    procedure OpenUrl(const AUrl: string);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;

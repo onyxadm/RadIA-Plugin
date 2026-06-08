@@ -151,7 +151,19 @@ begin
 end;
 
 procedure TFormGithubAuth.StartPolling;
+var
+  LForm: TFormGithubAuth;
+  LDeviceCode: string;
+  LInterval: Integer;
+  LExpiresIn: Integer;
+  LCancelledPtr: PBoolean;
 begin
+  LForm := Self;
+  LDeviceCode := FDeviceCode;
+  LInterval := FInterval;
+  LExpiresIn := FExpiresIn;
+  LCancelledPtr := @FCancelled;
+
   lblStatus.Caption := 'Waiting for authorization in your browser...';
   TTask.Run(
     procedure
@@ -160,7 +172,7 @@ begin
       LSuccess: Boolean;
     begin
       LSuccess := TRadIAGithubCopilotProvider.PollForAccessToken(
-        FDeviceCode, FInterval, FExpiresIn, @FCancelled, LAccessToken, LErrorMsg
+        LDeviceCode, LInterval, LExpiresIn, LCancelledPtr, LAccessToken, LErrorMsg
       );
 
       TThread.Queue(nil,
@@ -168,15 +180,15 @@ begin
         begin
           if LSuccess then
           begin
-            FAccessToken := LAccessToken;
-            ModalResult := mrOk;
+            LForm.FAccessToken := LAccessToken;
+            LForm.ModalResult := mrOk;
           end
           else
           begin
-            if not FCancelled then
+            if not LForm.FCancelled then
             begin
               MessageDlg('Authentication failed: ' + LErrorMsg, mtError, [mbOK], 0);
-              ModalResult := mrCancel;
+              LForm.ModalResult := mrCancel;
             end;
           end;
         end);

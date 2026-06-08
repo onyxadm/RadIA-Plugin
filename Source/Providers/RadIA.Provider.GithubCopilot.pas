@@ -287,9 +287,10 @@ var
   LClient: THTTPClient;
   LResponse: IHTTPResponse;
   LHeaders: TNetHeaders;
-  LParams: TStringList;
+  LSourceStream: TStringStream;
   LJson: TJSONObject;
   LVal: TJSONValue;
+  LRequestBody: string;
 begin
   Result := False;
   AErrorMsg := '';
@@ -300,64 +301,66 @@ begin
   AExpiresIn := 900;
 
   LClient := THTTPClient.Create;
-  LParams := TStringList.Create;
   try
     LClient.ConnectionTimeout := 10000;
     LClient.SendTimeout := 10000;
     LClient.ResponseTimeout := 10000;
     LClient.AcceptCharSet := 'utf-8';
     
-    SetLength(LHeaders, 1);
+    SetLength(LHeaders, 2);
     LHeaders[0] := TNetHeader.Create('Accept', 'application/json');
+    LHeaders[1] := TNetHeader.Create('Content-Type', 'application/x-www-form-urlencoded');
 
-    LParams.Add('client_id=' + COPILOT_CLIENT_ID);
-    LParams.Add('scope=read:user');
-
+    LRequestBody := 'client_id=' + COPILOT_CLIENT_ID + '&scope=read:user';
+    LSourceStream := TStringStream.Create(LRequestBody, TEncoding.UTF8);
     try
-      LResponse := LClient.Post('https://github.com/login/device/code', LParams, TStream(nil), LHeaders);
-      if LResponse.StatusCode <> 200 then
-      begin
-        AErrorMsg := Format('HTTP %d: %s', [LResponse.StatusCode, LResponse.StatusText]);
-        Exit;
-      end;
-
-      LJson := TJSONObject.ParseJSONValue(LResponse.ContentAsString(TEncoding.UTF8)) as TJSONObject;
-      if not Assigned(LJson) then
-      begin
-        AErrorMsg := 'Invalid response format from GitHub.';
-        Exit;
-      end;
-
       try
-        LVal := LJson.GetValue('device_code');
-        if Assigned(LVal) then ADeviceCode := LVal.Value;
-        
-        LVal := LJson.GetValue('user_code');
-        if Assigned(LVal) then AUserCode := LVal.Value;
-        
-        LVal := LJson.GetValue('verification_uri');
-        if Assigned(LVal) then AVerificationUri := LVal.Value;
-        
-        LVal := LJson.GetValue('interval');
-        if Assigned(LVal) then AInterval := StrToIntDef(LVal.Value, 5);
-        
-        LVal := LJson.GetValue('expires_in');
-        if Assigned(LVal) then AExpiresIn := StrToIntDef(LVal.Value, 900);
+        LResponse := LClient.Post('https://github.com/login/device/code', LSourceStream, nil, LHeaders);
+        if LResponse.StatusCode <> 200 then
+        begin
+          AErrorMsg := Format('HTTP %d: %s', [LResponse.StatusCode, LResponse.StatusText]);
+          Exit;
+        end;
 
-        Result := (not ADeviceCode.IsEmpty) and (not AUserCode.IsEmpty);
-        if not Result then
-          AErrorMsg := 'GitHub response did not contain required authentication codes.';
-      finally
-        LJson.Free;
+        LJson := TJSONObject.ParseJSONValue(LResponse.ContentAsString(TEncoding.UTF8)) as TJSONObject;
+        if not Assigned(LJson) then
+        begin
+          AErrorMsg := 'Invalid response format from GitHub.';
+          Exit;
+        end;
+
+        try
+          LVal := LJson.GetValue('device_code');
+          if Assigned(LVal) then ADeviceCode := LVal.Value;
+          
+          LVal := LJson.GetValue('user_code');
+          if Assigned(LVal) then AUserCode := LVal.Value;
+          
+          LVal := LJson.GetValue('verification_uri');
+          if Assigned(LVal) then AVerificationUri := LVal.Value;
+          
+          LVal := LJson.GetValue('interval');
+          if Assigned(LVal) then AInterval := StrToIntDef(LVal.Value, 5);
+          
+          LVal := LJson.GetValue('expires_in');
+          if Assigned(LVal) then AExpiresIn := StrToIntDef(LVal.Value, 900);
+
+          Result := (not ADeviceCode.IsEmpty) and (not AUserCode.IsEmpty);
+          if not Result then
+            AErrorMsg := 'GitHub response did not contain required authentication codes.';
+        finally
+          LJson.Free;
+        end;
+      except
+        on E: Exception do
+        begin
+          AErrorMsg := E.Message;
+        end;
       end;
-    except
-      on E: Exception do
-      begin
-        AErrorMsg := E.Message;
-      end;
+    finally
+      LSourceStream.Free;
     end;
   finally
-    LParams.Free;
     LClient.Free;
   end;
 end;
@@ -369,11 +372,12 @@ var
   LClient: THTTPClient;
   LResponse: IHTTPResponse;
   LHeaders: TNetHeaders;
-  LParams: TStringList;
+  LSourceStream: TStringStream;
   LJson: TJSONObject;
   LVal, LErrVal: TJSONValue;
   LElapsed: Integer;
   LIntervalMs: Integer;
+  LRequestBody: string;
 begin
   Result := False;
   AAccessToken := '';
@@ -383,19 +387,19 @@ begin
   if LIntervalMs <= 0 then LIntervalMs := 5000;
 
   LClient := THTTPClient.Create;
-  LParams := TStringList.Create;
   try
     LClient.ConnectionTimeout := 10000;
     LClient.SendTimeout := 10000;
     LClient.ResponseTimeout := 10000;
     LClient.AcceptCharSet := 'utf-8';
     
-    SetLength(LHeaders, 1);
+    SetLength(LHeaders, 2);
     LHeaders[0] := TNetHeader.Create('Accept', 'application/json');
+    LHeaders[1] := TNetHeader.Create('Content-Type', 'application/x-www-form-urlencoded');
 
-    LParams.Add('client_id=' + COPILOT_CLIENT_ID);
-    LParams.Add('device_code=' + ADeviceCode);
-    LParams.Add('grant_type=urn:ietf:params:oauth:grant-type:device_code');
+    LRequestBody := 'client_id=' + COPILOT_CLIENT_ID +
+                    '&device_code=' + ADeviceCode +
+                    '&grant_type=urn:ietf:params:oauth:grant-type:device_code';
 
     while LElapsed < AExpiresIn do
     begin
@@ -406,61 +410,66 @@ begin
         Exit;
       end;
 
+      LSourceStream := TStringStream.Create(LRequestBody, TEncoding.UTF8);
       try
-        LResponse := LClient.Post('https://github.com/login/oauth/access_token', LParams, TStream(nil), LHeaders);
-        if LResponse.StatusCode = 200 then
-        begin
-          LJson := TJSONObject.ParseJSONValue(LResponse.ContentAsString(TEncoding.UTF8)) as TJSONObject;
-          if Assigned(LJson) then
+        try
+          LResponse := LClient.Post('https://github.com/login/oauth/access_token', LSourceStream, nil, LHeaders);
+          if LResponse.StatusCode = 200 then
           begin
-            try
-              LVal := LJson.GetValue('access_token');
-              if Assigned(LVal) then
-              begin
-                AAccessToken := LVal.Value;
-                Result := not AAccessToken.IsEmpty;
-                Exit;
-              end;
-
-              { Check for errors }
-              LErrVal := LJson.GetValue('error');
-              if Assigned(LErrVal) then
-              begin
-                if SameText(LErrVal.Value, 'authorization_pending') then
+            LJson := TJSONObject.ParseJSONValue(LResponse.ContentAsString(TEncoding.UTF8)) as TJSONObject;
+            if Assigned(LJson) then
+            begin
+              try
+                LVal := LJson.GetValue('access_token');
+                if Assigned(LVal) then
                 begin
-                  { Still waiting, continue loop }
-                end
-                else if SameText(LErrVal.Value, 'slow_down') then
-                begin
-                  { Increase interval slightly }
-                  LIntervalMs := LIntervalMs + 5000;
-                end
-                else
-                begin
-                  { Other errors (e.g. expired_token, access_denied) mean we must abort }
-                  LVal := LJson.GetValue('error_description');
-                  if Assigned(LVal) then
-                    AErrorMsg := LVal.Value
-                  else
-                    AErrorMsg := LErrVal.Value;
+                  AAccessToken := LVal.Value;
+                  Result := not AAccessToken.IsEmpty;
                   Exit;
                 end;
+
+                { Check for errors }
+                LErrVal := LJson.GetValue('error');
+                if Assigned(LErrVal) then
+                begin
+                  if SameText(LErrVal.Value, 'authorization_pending') then
+                  begin
+                    { Still waiting, continue loop }
+                  end
+                  else if SameText(LErrVal.Value, 'slow_down') then
+                  begin
+                    { Increase interval slightly }
+                    LIntervalMs := LIntervalMs + 5000;
+                  end
+                  else
+                  begin
+                    { Other errors (e.g. expired_token, access_denied) mean we must abort }
+                    LVal := LJson.GetValue('error_description');
+                    if Assigned(LVal) then
+                      AErrorMsg := LVal.Value
+                    else
+                      AErrorMsg := LErrVal.Value;
+                    Exit;
+                  end;
+                end;
+              finally
+                LJson.Free;
               end;
-            finally
-              LJson.Free;
             end;
+          end
+          else
+          begin
+            AErrorMsg := Format('HTTP error %d: %s', [LResponse.StatusCode, LResponse.StatusText]);
+            Exit;
           end;
-        end
-        else
-        begin
-          AErrorMsg := Format('HTTP error %d: %s', [LResponse.StatusCode, LResponse.StatusText]);
-          Exit;
+        except
+          on E: Exception do
+          begin
+            { Network issues, wait and retry }
+          end;
         end;
-      except
-        on E: Exception do
-        begin
-          { Network issues, wait and retry }
-        end;
+      finally
+        LSourceStream.Free;
       end;
 
       { Wait for the next poll interval }
@@ -470,7 +479,6 @@ begin
 
     AErrorMsg := 'Authentication request expired. Please try again.';
   finally
-    LParams.Free;
     LClient.Free;
   end;
 end;
