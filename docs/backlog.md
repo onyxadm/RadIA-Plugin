@@ -172,3 +172,7 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
 
 ### 3. Histórico de Refatorações Aplicadas (Item #16)
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão [Aplicar Alteração] foi acionado, permitindo revisão e desfazimento manual.
+
+### 4. Autocompletar Inline Inteligente (Ghost Text) (Item #26)
+*   **Objetivo**: Sugestões de código em tempo real no editor de código com texto acinzentado estilo Copilot/Cursor.
+*   **Nota de Arquitetura**: A pesquisa técnica e prototipagem na ToolsAPI (utilizando `INTAEditViewNotifier.PaintLine`, isolamento de Canvas GDI com `SaveDC`/`RestoreDC`, debounce síncrono e interceptação de teclas VK_TAB/VK_ESCAPE com `IOTAKeyboardBinding`) foram concluídas. O desenvolvimento foi temporariamente pausado devido a restrições no ciclo de repaints síncronos da IDE que afetam a estabilidade do cursor nativo em High DPI. Os módulos foram arquivados para futura evolução quando novas APIs de pintura assíncrona da Embarcadero forem avaliadas.
