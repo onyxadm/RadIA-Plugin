@@ -178,6 +178,16 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Developed the VCL modal auth form `RadIA.UI.GithubAuthForm.pas` for background device login polling.
     *   Updated the options frame to include the Copilot tab with login/import buttons and "Get API Key" hyperlink shortcuts for cloud-based providers.
 
+### 23. Additional Native Providers (Azure OpenAI, Alibaba Qwen and Mistral AI) - Items #30, #31, #32
+*   **Description**: Added direct native support for the official APIs of Azure OpenAI, Alibaba Qwen (ModelStudio), and Mistral AI, featuring dedicated configuration tabs, API key shortcut links, SSE streaming support, and custom provider sorting in the user interface.
+*   **Details**:
+    *   Developed the provider classes `TRadIAAzureOpenAIProvider`, `TRadIAQwenProvider`, and `TRadIAMistralProvider` dynamically integrated into `TProviderRegistry`.
+    *   Mapped secure API keys using Windows DPAPI and provider-specific configurations (such as `AzureApiVersion`).
+    *   Created dynamic light/dark themed VCL settings tabs for each provider within the IDE options (`Tools -> Options`) and config form.
+    *   Implemented custom provider ordering within `TProviderRegistry.GetProviders` to keep **Ollama** and **LM Studio** strictly at the end of all client-facing listings.
+    *   Validated with new unit tests in `RadIA.Tests.ProvidersEx.pas` and configuration mock updates in `RadIA.Tests.Service.pas`.
+
+
 ---
 
 ## ⏳ In Development
@@ -208,5 +218,4 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
 *   **Goal**: Real-time code completion suggestions directly onto the code editor with ghost text styling like Copilot/Cursor.
 *   **Architecture Note**: Technical research and prototyping on the ToolsAPI (utilizing `INTAEditViewNotifier.PaintLine`, GDI Canvas isolation with `SaveDC`/`RestoreDC`, synchronous debounce, and key interception VK_TAB/VK_ESCAPE with `IOTAKeyboardBinding`) have been completed. Development has been temporarily paused due to restrictions in the IDE's synchronous repaint cycle that affect the native cursor's stability in High DPI. Modules have been archived for future evolution when new asynchronous painting APIs from Embarcadero are evaluated.
 
-### 5. Native Alibaba Qwen Support (ModelStudio) (Item #30)
-*   **Goal**: Add direct and native support for the official Alibaba Cloud ModelStudio API to consume models from the **Qwen 2.5** family (such as *Qwen 2.5 Coder*), including a dedicated settings tab, hyperlink shortcuts to obtain official API keys, and dynamic model listing.
+

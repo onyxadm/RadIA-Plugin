@@ -84,6 +84,18 @@ Insira as chaves obtidas nas configurações do plugin (**Settings** no topo do 
    * **Como obter:** Acesse o [Groq Console](https://console.groq.com/).
    * **Instruções:** Acesse **API Keys**, clique em **Create API Key** e copie o token (iniciado em `gsk_`).
 
+6. **Azure OpenAI**
+   * **Como obter:** Através do portal de gerenciamento da nuvem Microsoft Azure.
+   * **Instruções:** Acesse o recurso do Azure OpenAI criado, vá na seção **Keys and Endpoint**, e copie o Endpoint e uma das chaves (Key 1 ou Key 2). Nas opções do RadIA, configure a API Key, a URL do Endpoint, o Deployment Name mapeado para o modelo ativo e a versão da API (padrão: `2024-02-15-preview`).
+
+7. **Alibaba Qwen**
+   * **Como obter:** Acesse o console [DashScope/ModelStudio da Alibaba Cloud](https://bailian.console.aliyun.com/).
+   * **Instruções:** Crie sua chave na seção de API Keys e copie o token.
+
+8. **Mistral AI**
+   * **Como obter:** Acesse o console do [Mistral AI Console](https://console.mistral.ai/).
+   * **Instruções:** Acesse a seção **API Keys**, crie uma nova chave e copie o token gerado.
+
 > **Nota sobre Provedores Dinâmicos e Corporativos:** Você também pode adicionar de forma dinâmica novos provedores compatíveis com a API OpenAI (incluindo o GitHub Copilot ou proxies de terceiros) salvando arquivos JSON em `%APPDATA%\RadIA\providers\`. Para mais detalhes, consulte o [Guia para Adição de Novos Provedores (docs/new_provider_guide.md)](new_provider_guide.md) e o [Guia de Configuração do GitHub Copilot (docs/copilot_proxy_guide.md)](copilot_proxy_guide.md).
 
 ---

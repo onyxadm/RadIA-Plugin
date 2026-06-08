@@ -162,6 +162,25 @@ Version v0.0.10 introduced native and official support for direct remote connect
 
 ---
 
+## ✅ v0.0.11 — Additional Native Providers (Completed)
+
+Version v0.0.11 expanded the plugin's direct BYOK integrations by introducing native and optimized support for three key AI providers:
+
+- **Native Azure OpenAI:**
+  * Implemented the `TRadIAAzureOpenAIProvider` class with `AzureApiVersion` mapping, dynamic endpoint URLs, and DPAPI-encrypted credential management.
+- **Native Alibaba Qwen (ModelStudio):**
+  * Direct communication with the official Alibaba Cloud ModelStudio API to consume the **Qwen 2.5** model family (including *Qwen 2.5 Coder*).
+- **Native Mistral AI:**
+  * Native integration with Mistral AI's official endpoints and model listings.
+- **Settings Tab & UI Enhancements:**
+  * Created custom light/dark VCL settings tabs for all three providers, along with direct hyperlink shortcuts to obtain official API Keys.
+- **Custom Provider Sorting:**
+  * Implemented custom sorting in the chat sidebar and WebView dropdown listings, ensuring local providers (**Ollama** and **LM Studio**) are strictly positioned at the end of all menus.
+- **Unit Test Suite Coverage:**
+  * Expanded tests to cover payload schemas and SSE streaming for the new APIs, achieving 109 successful unit tests (DUnitX).
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save
@@ -173,11 +192,6 @@ Version v0.0.10 introduced native and official support for direct remote connect
 *   **Goal**: Maintain an auditable log of every time the **[Apply Changes]** button was clicked, recording the original snippet, the applied snippet, the date, and the file, allowing future manual review.
 *   **Impact**: ⭐⭐⭐ Medium
 *   **Complexity**: Low
-
-### 3. Native Alibaba Qwen Support (ModelStudio)
-*   **Goal**: Direct and native integration with the Alibaba Cloud ModelStudio API to consume models from the **Qwen 2.5** family (such as *Qwen 2.5 Coder*), including a dedicated settings tab, hyperlink shortcuts to generate official keys on the Alibaba Cloud dashboard, and model auto-discovery.
-*   **Impact**: ⭐⭐⭐⭐⭐ Very High
-*   **Complexity**: Low (compatible with the OpenAI protocol)
 
 ---
 

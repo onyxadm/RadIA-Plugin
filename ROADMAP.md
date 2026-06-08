@@ -163,6 +163,25 @@ A versão v0.0.10 introduziu o suporte nativo e oficial para conexão direta com
 
 ---
 
+## ✅ v0.0.11 — Provedores Nativos Adicionais (Concluído)
+
+A versão v0.0.11 expandiu as conexões diretas BYOK do plugin ao introduzir suporte nativo e otimizado para três grandes provedores de IA:
+
+- **Azure OpenAI Nativo:**
+  * Implementação da classe de provedor `TRadIAAzureOpenAIProvider` com mapeamento do parâmetro `AzureApiVersion` e suporte a URLs personalizadas e chaves criptografadas via DPAPI.
+- **Alibaba Qwen (ModelStudio) Nativo:**
+  * Comunicação direta com a API oficial do Alibaba Cloud ModelStudio para acesso à família de modelos **Qwen 2.5** (incluindo o *Qwen 2.5 Coder*).
+- **Mistral AI Nativo:**
+  * Integração nativa com os endpoints oficiais e modelos da Mistral AI.
+- **Aba de Configurações e UI:**
+  * Criação de abas VCL com suporte nativo a temas Claro e Escuro da IDE do Delphi para os três provedores, bem como links de atalho para obtenção das API Keys.
+- **Ordenação Customizada de Provedores:**
+  * Implementação de ordenação personalizada na listagem de provedores do chat e WebView, garantindo que os provedores locais **Ollama** e **LM Studio** fiquem estritamente localizados no final de todas as listas.
+- **Suite de Testes Unitários:**
+  * Atualização da suite de testes para cobrir a modelagem de payloads e streaming SSE das novas APIs com 109 testes verdes (DUnitX).
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save
@@ -174,11 +193,6 @@ A versão v0.0.10 introduziu o suporte nativo e oficial para conexão direta com
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão **[Aplicar Alteração]** foi acionado, registrando o trecho original, o trecho aplicado, a data e o arquivo, permitindo revisão manual posterior.
 *   **Impacto**: ⭐⭐⭐ Médio
 *   **Complexidade**: Baixa
-
-### 3. Provedor Nativo Alibaba Qwen (ModelStudio)
-*   **Objetivo**: Integração direta e nativa com a API do Alibaba Cloud ModelStudio para consumo dos modelos da família **Qwen 2.5** (como o *Qwen 2.5 Coder*), incluindo aba dedicada de configurações, atalhos rápidos para geração de chaves oficiais na nuvem da Alibaba e autodescoberta de modelos.
-*   **Impacto**: ⭐⭐⭐⭐⭐ Muito Alto
-*   **Complexidade**: Baixa (comunicação compatível com o protocolo da OpenAI)
 
 ---
 
