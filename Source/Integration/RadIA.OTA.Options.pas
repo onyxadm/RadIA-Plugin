@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.Options;
+unit RadIA.OTA.Options;
 
 interface
 
@@ -8,7 +8,7 @@ uses
 
 type
   { Provider page configuration tag }
-  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOpenRouter, ptOllama, ptLMStudio, ptSystem, ptTemplates);
+  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptOllama, ptLMStudio, ptSystem, ptTemplates);
 
   { INTAAddInOptions implementation for RadIA Options }
   TRadIAAddInOptions = class(TInterfacedObject, INTAAddInOptions)
@@ -57,7 +57,7 @@ begin
     ptNone: Result := 'RadIA.General';
     ptSystem: Result := 'RadIA.System Prompt';
     ptTemplates: Result := 'RadIA.Templates';
-    ptGemini, ptOpenAI, ptClaude, ptDeepSeek, ptGroq, ptOpenRouter, ptOllama, ptLMStudio: 
+    ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptOllama, ptLMStudio: 
       Result := 'RadIA.AI Providers.' + FTitle;
   else
     Result := 'RadIA.' + FTitle;
@@ -83,10 +83,14 @@ begin
       ptTemplates: FFrame.SelectCategoryByName('Templates');
       ptGemini: FFrame.SelectCategoryByName('Gemini');
       ptOpenAI: FFrame.SelectCategoryByName('OpenAI');
+      ptAzureOpenAI: FFrame.SelectCategoryByName('Azure OpenAI');
       ptClaude: FFrame.SelectCategoryByName('Claude');
       ptDeepSeek: FFrame.SelectCategoryByName('DeepSeek');
       ptGroq: FFrame.SelectCategoryByName('Groq');
+      ptQwen: FFrame.SelectCategoryByName('Alibaba Qwen');
+      ptMistral: FFrame.SelectCategoryByName('Mistral AI');
       ptOpenRouter: FFrame.SelectCategoryByName('OpenRouter');
+      ptGithubCopilot: FFrame.SelectCategoryByName('GitHub Copilot');
       ptOllama: FFrame.SelectCategoryByName('Ollama');
       ptLMStudio: FFrame.SelectCategoryByName('LM Studio');
 

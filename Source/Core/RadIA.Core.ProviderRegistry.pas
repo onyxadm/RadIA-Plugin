@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.ProviderRegistry;
+unit RadIA.Core.ProviderRegistry;
 
 interface
 
@@ -40,7 +40,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, RadIA.Provider.Generic, RadIA.Core.Logger;
+  System.IOUtils, System.JSON, System.Generics.Defaults, RadIA.Provider.Generic, RadIA.Core.Logger;
 
 { TProviderMetadata }
 
@@ -196,6 +196,26 @@ begin
   try
     for LPair in FProviders do
       LList.Add(LPair.Value);
+
+    LList.Sort(TComparer<TProviderMetadata>.Construct(
+      function(const Left, Right: TProviderMetadata): Integer
+      var
+        LLeftIsEnd, LRightIsEnd: Boolean;
+      begin
+        LLeftIsEnd := SameText(Left.Id, 'Ollama') or SameText(Left.Id, 'LMStudio');
+        LRightIsEnd := SameText(Right.Id, 'Ollama') or SameText(Right.Id, 'LMStudio');
+
+        if LLeftIsEnd and not LRightIsEnd then
+          Exit(1)
+        else if not LLeftIsEnd and LRightIsEnd then
+          Exit(-1)
+        else if LLeftIsEnd and LRightIsEnd then
+          Exit(CompareText(Left.DisplayName, Right.DisplayName));
+
+        Exit(CompareText(Left.DisplayName, Right.DisplayName));
+      end
+    ));
+
     Result := LList.ToArray;
   finally
     LList.Free;

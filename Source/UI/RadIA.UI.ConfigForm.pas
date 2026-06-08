@@ -71,16 +71,16 @@ begin
   
   tvCategories.Items.AddChild(LNodeProviders, 'Gemini');
   tvCategories.Items.AddChild(LNodeProviders, 'OpenAI');
+  tvCategories.Items.AddChild(LNodeProviders, 'Azure OpenAI');
   tvCategories.Items.AddChild(LNodeProviders, 'Claude');
   tvCategories.Items.AddChild(LNodeProviders, 'DeepSeek');
   tvCategories.Items.AddChild(LNodeProviders, 'Groq');
-  tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
-  tvCategories.Items.AddChild(LNodeProviders, 'OpenRouter');
-  tvCategories.Items.AddChild(LNodeProviders, 'LM Studio');
-  tvCategories.Items.AddChild(LNodeProviders, 'GitHub Copilot');
-  tvCategories.Items.AddChild(LNodeProviders, 'Azure OpenAI');
   tvCategories.Items.AddChild(LNodeProviders, 'Alibaba Qwen');
   tvCategories.Items.AddChild(LNodeProviders, 'Mistral AI');
+  tvCategories.Items.AddChild(LNodeProviders, 'OpenRouter');
+  tvCategories.Items.AddChild(LNodeProviders, 'GitHub Copilot');
+  tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
+  tvCategories.Items.AddChild(LNodeProviders, 'LM Studio');
   
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;

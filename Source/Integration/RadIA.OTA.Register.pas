@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.Register;
+unit RadIA.OTA.Register;
 
 interface
 
@@ -232,10 +232,14 @@ begin
     AddPage('Templates', ptTemplates);
     AddPage('Gemini', ptGemini);
     AddPage('OpenAI', ptOpenAI);
+    AddPage('Azure OpenAI', ptAzureOpenAI);
     AddPage('Claude', ptClaude);
     AddPage('DeepSeek', ptDeepSeek);
     AddPage('Groq', ptGroq);
+    AddPage('Alibaba Qwen', ptQwen);
+    AddPage('Mistral AI', ptMistral);
     AddPage('OpenRouter', ptOpenRouter);
+    AddPage('GitHub Copilot', ptGithubCopilot);
     AddPage('Ollama', ptOllama);
     AddPage('LM Studio', ptLMStudio);
   end;
