@@ -42,15 +42,27 @@ renderer.code = function(codeOrToken, lang) {
     language = lang || 'pascal';
   }
 
+  const FILEPATH_REGEX = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*([^\r\n]+?)(?:\s*\}|\s*\*\}|\s*-->)?(?:\r?\n|$)/i;
+  const fileMatch = code.match(FILEPATH_REGEX);
+  let filepath = '';
+  let isProjectFile = false;
+
+  if (fileMatch) {
+    filepath = fileMatch[1].trim();
+    isProjectFile = true;
+    code = code.replace(FILEPATH_REGEX, '');
+  }
+
   const id = 'cb_' + (++_codeRegistryCounter);
   _codeRegistry[id] = code;
 
   const isPascal = ['pascal', 'delphi', 'objectpascal'].includes(language.toLowerCase());
+  const headerTitle = isProjectFile ? `${language.toUpperCase()} • ${filepath}` : language.toUpperCase();
 
   return `
-    <div class="code-block-container">
+    <div class="code-block-container" ${isProjectFile ? `data-filepath="${filepath}" data-project-file="true"` : ''}>
       <div class="code-header">
-        <span>${language.toUpperCase()}</span>
+        <span>${headerTitle}</span>
         <div class="code-header-actions">
           <button class="copy-btn" title="Copy Code" onclick="copyCode(this, '${id}')">${SVG_ICONS.copy}</button>
           ${isPascal ? `<button class="apply-btn" title="Apply to Editor" onclick="applyCode('${id}')">${SVG_ICONS.apply}</button>` : ''}
