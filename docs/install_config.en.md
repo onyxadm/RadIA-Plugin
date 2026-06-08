@@ -118,7 +118,7 @@ RadIA allows you to choose between two connection methods for both **Google Gemi
 2. Select the provider tab (**Gemini** or **OpenAI**).
 3. Under **Connection Method**, select **Web Login (Plus/Pro)**.
 4. Click **Save**.
-5. In the RadIA chat panel, select the corresponding provider. WebView2 will load the platform's official login page.
-6. Log in to your account. WebView2 will save cookies and session info securely under `%APPDATA%\RadIA\WebView2Data`, keeping you connected.
-7. Official top bars and sidebars will be cleaned automatically using custom CSS injection to give the appearance of an embedded clean chat window.
-8. When interacting with the code editor (e.g., right-clicking and selecting *Explain Selected Code*), the Delphi IDE will transmit commands and prompts directly to the web window and read responses back in real time!
+5. In the RadIA chat panel, select the corresponding provider. A lock login button 🔐 will appear in the top-right corner of the chat header.
+6. Click the lock button 🔐. This will open a native Delphi login popup window (`TFormWebLogin`).
+7. Log in to your account in the popup window. Your session and cookies will be securely saved under `%APPDATA%\RadIA\WebView2Data` to keep you logged in. Once authenticated, you can close the popup.
+8. That's it! You can now chat normally inside RadIA's unified local chat interface (or use right-click editor actions). The plugin will use a background, hidden WebView2 instance to send prompts and stream responses back in real time, keeping a unified premium experience.

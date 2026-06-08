@@ -74,6 +74,7 @@ contains
   RadIA.UI.ConfigFrame in 'Source\UI\RadIA.UI.ConfigFrame.pas' {FrameAIConfig: TFrame},
   RadIA.UI.ConfigForm in 'Source\UI\RadIA.UI.ConfigForm.pas' {FormAIConfig},
   RadIA.UI.DiffForm in 'Source\UI\RadIA.UI.DiffForm.pas' {FormAIDiff},
+  RadIA.UI.WebLoginForm in 'Source\UI\RadIA.UI.WebLoginForm.pas' {FormWebLogin},
   RadIA.UI.Resources in 'Source\UI\RadIA.UI.Resources.pas';
 
 end.

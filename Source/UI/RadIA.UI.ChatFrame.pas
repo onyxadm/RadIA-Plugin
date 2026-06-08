@@ -73,6 +73,19 @@ type
     FRequestInProgress: Boolean;
     FCancelledByUser: Boolean;
     EdgeBrowser: TEdgeBrowser;
+    FEdgeBrowserWeb: TEdgeBrowser;
+    FpnlBrowserWeb: TPanel;
+    FbtnWebLoginConnect: TSpeedButton;
+    FBrowserWebInitialized: Boolean;
+
+    procedure CreateEdgeBrowserWeb;
+    procedure OnbtnWebLoginConnectClick(Sender: TObject);
+    procedure EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    {$IF CompilerVersion >= 35.0}
+    procedure EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+    {$ELSE}
+    procedure EdgeBrowserWebWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
+    {$ENDIF}
 
     procedure UpdateWebViewNavigation;
     procedure OnWebViewBridgeSendPrompt(const APrompt: string);
@@ -123,7 +136,8 @@ implementation
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
   RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.DTO.Generator, RadIA.Core.ProviderRegistry, RadIA.Provider.WebViewBridge;
+  RadIA.Core.DTO.Generator, RadIA.Core.ProviderRegistry, RadIA.Provider.WebViewBridge,
+  RadIA.UI.WebLoginForm;
 
 {$R *.dfm}
 
@@ -1118,6 +1132,34 @@ begin
           SendSessionsUpdateToWeb;
         end));
     end
+    else if LAction = 'web_login_connect' then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          OnbtnWebLoginConnectClick(nil);
+        end));
+    end
+    else if LAction = 'update_stream' then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        var
+          LText: string;
+          LIsDone: Boolean;
+          LActiveProvider: string;
+          LActiveModel: string;
+        begin
+          LText := LJson.GetValue<string>('text', '');
+          LIsDone := LJson.GetValue<Boolean>('isDone', False);
+          LActiveProvider := FConfig.GetActiveProvider;
+          LActiveModel := FConfig.GetActiveModel(LActiveProvider);
+          
+          PostToWebView('update_message', 'assistant', LText, LIsDone, LActiveProvider, LActiveModel);
+        end));
+    end
     else if LAction = 'send_prompt' then
     begin
       LText := LJson.GetValue<string>('text', '');
@@ -1999,8 +2041,15 @@ var
   LModels: TJSONArray;
   LProvObj: TJSONObject;
   I: Integer;
+  LActiveProvider: string;
+  LAuthType: string;
+  LIsWebLogin: Boolean;
 begin
   if not FWebViewReady then Exit;
+
+  LActiveProvider := cbProvider.Text;
+  LAuthType := FConfig.GetProviderAuthType(LActiveProvider);
+  LIsWebLogin := SameText(LAuthType, 'web_login');
 
   LJson := TJSONObject.Create;
   LProviders := TJSONArray.Create;
@@ -2024,6 +2073,7 @@ begin
     LJson.AddPair('models', LModels);
     LJson.AddPair('activeProvider', cbProvider.Text);
     LJson.AddPair('activeModel', cbModel.Text);
+    LJson.AddPair('isWebLogin', TJSONBool.Create(LIsWebLogin));
 
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
@@ -2133,17 +2183,15 @@ begin
     pnlSessions.Visible := False;
     splitterSessions.Visible := False;
 
-    // Move o combo de provedores para a barra superior para permitir a troca direta de provedor
-    cbProvider.Parent := pnlToolbar;
-    cbProvider.Align := alNone;
-    cbProvider.Anchors := [akTop, akRight];
-    cbProvider.Width := 130;
-    cbProvider.Top := (pnlToolbar.Height - cbProvider.Height) div 2;
-    cbProvider.Left := btnSettings.Left - cbProvider.Width - 10;
-    cbProvider.Visible := True;
+    // Esconde o botão de login VCL se existir (o botão 🔐 agora fica dentro do chat.html)
+    if Assigned(FbtnWebLoginConnect) then
+      FbtnWebLoginConnect.Visible := False;
 
-    // Exibe a barra de ferramentas superior VCL apenas com o título, combo de provedor e configurações
-    pnlToolbar.Visible := True;
+    // Mantém o combobox de provedores invisível
+    cbProvider.Visible := False;
+
+    // Esconde a barra de ferramentas nativa VCL (o chat.html cuidará de seus próprios controles Premium)
+    pnlToolbar.Visible := False;
     btnToggleSessions.Visible := False;
     btnNewSession.Visible := False;
     btnClear.Visible := False;
@@ -2155,11 +2203,22 @@ begin
     else
       LTargetUrl := 'https://chatgpt.com';
 
-    TLogger.Log('UpdateWebViewNavigation: Navigating to external web: ' + LTargetUrl, 'UI');
+    // Garante a criação da WebView de background e inicia navegação
+    CreateEdgeBrowserWeb;
+    TLogger.Log('UpdateWebViewNavigation: Navigating background web to: ' + LTargetUrl, 'UI');
+    FEdgeBrowserWeb.Navigate(LTargetUrl);
+
+    // Navega a WebView principal visível sempre para o chat nativo Premium local
+    LTargetUrl := 'file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/');
+    TLogger.Log('UpdateWebViewNavigation: Navigating visible web to local chat: ' + LTargetUrl, 'UI');
     EdgeBrowser.Navigate(LTargetUrl);
   end
   else
   begin
+    // Esconde o botão de login se existir
+    if Assigned(FbtnWebLoginConnect) then
+      FbtnWebLoginConnect.Visible := False;
+
     // Restaura o combo de provedores para a sua posição e parent original no painel de input nativo
     cbProvider.Parent := pnlInput;
     cbProvider.Align := alNone;
@@ -2187,16 +2246,21 @@ procedure TFrameAIChat.OnWebViewBridgeSendPrompt(const APrompt: string);
 var
   LJson: TJSONObject;
 begin
-  if not FBrowserInitialized then
+  CreateEdgeBrowserWeb; // Garante que a WebView de background está criada
+  
+  if not FBrowserWebInitialized then
+  begin
+    TLogger.Log('OnWebViewBridgeSendPrompt: Background browser is not initialized yet.', 'UI');
     Exit;
+  end;
 
-  TLogger.Log('OnWebViewBridgeSendPrompt: Dispatching prompt to web view.', 'UI');
+  TLogger.Log('OnWebViewBridgeSendPrompt: Dispatching prompt to background web view.', 'UI');
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'send_prompt');
     LJson.AddPair('text', APrompt);
-    if Assigned(EdgeBrowser.DefaultInterface) then
-      EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+    if Assigned(FEdgeBrowserWeb.DefaultInterface) then
+      FEdgeBrowserWeb.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
   finally
     LJson.Free;
   end;
@@ -2206,18 +2270,144 @@ procedure TFrameAIChat.OnWebViewBridgeCancel;
 var
   LJson: TJSONObject;
 begin
-  if not FBrowserInitialized then
+  if not FBrowserWebInitialized then
     Exit;
 
-  TLogger.Log('OnWebViewBridgeCancel: Dispatching cancellation to web view.', 'UI');
+  TLogger.Log('OnWebViewBridgeCancel: Dispatching cancellation to background web view.', 'UI');
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'cancel_request');
-    if Assigned(EdgeBrowser.DefaultInterface) then
-      EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+    if Assigned(FEdgeBrowserWeb.DefaultInterface) then
+      FEdgeBrowserWeb.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
   finally
     LJson.Free;
   end;
 end;
+
+procedure TFrameAIChat.CreateEdgeBrowserWeb;
+begin
+  if not Assigned(FpnlBrowserWeb) then
+  begin
+    FpnlBrowserWeb := TPanel.Create(Self);
+    FpnlBrowserWeb.Parent := Self;
+    FpnlBrowserWeb.BevelOuter := bvNone;
+    FpnlBrowserWeb.Caption := '';
+    FpnlBrowserWeb.Left := -5000;
+    FpnlBrowserWeb.Top := 0;
+    FpnlBrowserWeb.Width := 10;
+    FpnlBrowserWeb.Height := 10;
+    FpnlBrowserWeb.Visible := True;
+  end;
+
+  if not Assigned(FEdgeBrowserWeb) then
+  begin
+    FEdgeBrowserWeb := TEdgeBrowser.Create(Self);
+    FEdgeBrowserWeb.Parent := FpnlBrowserWeb;
+    FEdgeBrowserWeb.Align := alClient;
+    FEdgeBrowserWeb.OnCreateWebViewCompleted := EdgeBrowserWebCreateWebViewCompleted;
+    {$IF CompilerVersion >= 35.0}
+    FEdgeBrowserWeb.OnWebMessageReceived := EdgeBrowserWebWebMessageReceived;
+    {$ELSE}
+    FEdgeBrowserWeb.OnWebMessageReceived := EdgeBrowserWebWebMessageReceivedLegacy;
+    {$ENDIF}
+    
+    FEdgeBrowserWeb.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2Web');
+  end;
+end;
+
+procedure TFrameAIChat.OnbtnWebLoginConnectClick(Sender: TObject);
+var
+  LActiveProvider: string;
+  LUrl: string;
+begin
+  LActiveProvider := FConfig.GetActiveProvider;
+  if SameText(LActiveProvider, 'Gemini') then
+    LUrl := 'https://gemini.google.com'
+  else
+    LUrl := 'https://chatgpt.com';
+
+  TLogger.Log('OnbtnWebLoginConnectClick: Opening popup form for ' + LActiveProvider, 'UI');
+  
+  TFormWebLogin.ShowLogin(Self, LUrl,
+    procedure
+    begin
+      TLogger.Log('OnbtnWebLoginConnectClick: Login completed successfully. Refreshing background browser.', 'UI');
+      // Recarrega a WebView oculta para garantir que ela pegue os novos cookies de sessão
+      if Assigned(FEdgeBrowserWeb) then
+        FEdgeBrowserWeb.Navigate(LUrl);
+    end);
+end;
+
+procedure TFrameAIChat.EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+var
+  LSettings: ICoreWebView2Settings;
+  LSettings2: ICoreWebView2Settings2_Local;
+  LScriptFile: string;
+  LScriptContent: string;
+begin
+  if Succeeded(AResult) then
+  begin
+    FBrowserWebInitialized := True;
+    if Assigned(FEdgeBrowserWeb.DefaultInterface) then
+    begin
+      if Succeeded(FEdgeBrowserWeb.DefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
+      begin
+        LSettings.Set_AreDevToolsEnabled(1);
+        LSettings.Set_AreDefaultContextMenusEnabled(1);
+        
+        if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
+        begin
+          LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        end;
+      end;
+
+      LScriptFile := TPath.Combine(FWebFilesDir, 'bridge.js');
+      if TFile.Exists(LScriptFile) then
+      begin
+        try
+          LScriptContent := TFile.ReadAllText(LScriptFile, TEncoding.UTF8);
+          FEdgeBrowserWeb.DefaultInterface.AddScriptToExecuteOnDocumentCreated(PWideChar(LScriptContent), nil);
+        except
+          on E: Exception do
+            TLogger.Log('Error reading or injecting bridge script to Web view: ' + E.Message, 'UI');
+        end;
+      end;
+    end;
+  end;
+end;
+
+{$IF CompilerVersion >= 35.0}
+procedure TFrameAIChat.EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+var
+  LStr: PWideChar;
+  LJsonStr: PWideChar;
+begin
+  if Assigned(Args.ArgsInterface) then
+  begin
+    if Succeeded(Args.ArgsInterface.TryGetWebMessageAsString(LStr)) then
+    begin
+      try
+        ProcessWebMessage(string(LStr));
+      finally
+        CoTaskMemFree(LStr);
+      end;
+    end
+    else
+    begin
+      Args.ArgsInterface.Get_webMessageAsJson(LJsonStr);
+      try
+        ProcessWebMessage(string(LJsonStr));
+      finally
+        CoTaskMemFree(LJsonStr);
+      end;
+    end;
+  end;
+end;
+{$ELSE}
+procedure TFrameAIChat.EdgeBrowserWebWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
+begin
+  ProcessWebMessage(AMessage);
+end;
+{$ENDIF}
 
 end.

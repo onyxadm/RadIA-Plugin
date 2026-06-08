@@ -70,6 +70,7 @@ const btnNewChat      = document.getElementById('btn-new-chat');
 const btnClearChat    = document.getElementById('btn-clear-chat');
 const btnHistory      = document.getElementById('btn-history');
 const btnSettings     = document.getElementById('btn-settings');
+const btnWebLogin     = document.getElementById('btn-web-login');
 const promptTextarea  = document.getElementById('prompt-textarea');
 const btnSendPrompt   = document.getElementById('btn-send-prompt');
 const selectProvider  = document.getElementById('select-provider');
@@ -308,6 +309,9 @@ btnHistory.addEventListener('click', () => {
 });
 
 btnSettings.addEventListener('click', () => postMessageToDelphi({ action: 'open_settings' }));
+if (btnWebLogin) {
+  btnWebLogin.addEventListener('click', () => postMessageToDelphi({ action: 'web_login_connect' }));
+}
 
 // Novo chat pela sidebar
 btnNewChatSidebar.addEventListener('click', () => {
@@ -684,6 +688,14 @@ function initializeConfig(data) {
   });
 
   updateModelsList(data.models, data.activeModel);
+
+  if (btnWebLogin) {
+    if (data.isWebLogin) {
+      btnWebLogin.classList.remove('hidden');
+    } else {
+      btnWebLogin.classList.add('hidden');
+    }
+  }
 }
 
 function updateModelsList(models, activeModel) {
@@ -896,6 +908,52 @@ function appendGeneratorCode(text, isDone) {
   }
 }
 
+function updateMessage(text, isDone, provider, model) {
+  hideTypingIndicator();
+  if (text === undefined || text === null) text = '';
+  
+  if (!currentAssistantWrapper) {
+    const info = SENDER_INFO.assistant;
+    currentAssistantWrapper = document.createElement('div');
+    currentAssistantWrapper.classList.add('message-wrapper');
+
+    const avatar = document.createElement('div');
+    avatar.classList.add('message-avatar', info.avatarClass);
+    avatar.innerHTML = info.icon;
+
+    const body = document.createElement('div');
+    body.classList.add('message-body');
+
+    const header = document.createElement('div');
+    header.classList.add('message-header', info.headerClass);
+    let headerText = info.name;
+    if (provider && model) {
+      headerText += ` • ${provider} (${model})`;
+    }
+    header.textContent = headerText;
+
+    currentAssistantContent = document.createElement('div');
+    currentAssistantContent.classList.add('message-content');
+
+    body.appendChild(header);
+    body.appendChild(currentAssistantContent);
+    currentAssistantWrapper.appendChild(avatar);
+    currentAssistantWrapper.appendChild(body);
+    chatContainer.appendChild(currentAssistantWrapper);
+  }
+  
+  currentAssistantText = text;
+  currentAssistantContent.innerHTML = marked.parse(currentAssistantText);
+  Prism.highlightAllUnder(currentAssistantContent);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  
+  if (isDone) {
+    currentAssistantWrapper = null;
+    currentAssistantContent  = null;
+    currentAssistantText     = '';
+  }
+}
+
 // ============================================================
 //  Listener de mensagens do Delphi (WebView2)
 // ============================================================
@@ -904,6 +962,7 @@ if (window.chrome && window.chrome.webview) {
     const data = event.data;
     switch (data.action) {
       case 'add_message':           addMessage(data.role, data.text, data.provider, data.model); break;
+      case 'update_message':        updateMessage(data.text, data.isDone, data.provider, data.model); break;
       case 'clear_chat':            clearChat();                                                 break;
       case 'set_theme':             setTheme(data);                                              break;
       case 'update_tokens':         updateTokens(data.text);                                     break;

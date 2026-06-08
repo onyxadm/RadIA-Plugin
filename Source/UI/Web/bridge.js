@@ -8,30 +8,7 @@
   const CONFIGS = {
     chatgpt: {
       domain: 'chatgpt.com',
-      css: `
-        /* Oculta painel lateral esquerdo */
-        [data-testid="profile-button"],
-        [data-testid="sidebar"] {
-          display: none !important;
-        }
-        /* Oculta botão de toggle da sidebar */
-        span[data-state] button.absolute {
-          display: none !important;
-        }
-        /* Oculta barra superior/cabeçalho */
-        header, .sticky.top-0 {
-          display: none !important;
-        }
-        /* Ajusta margens do container principal */
-        main {
-          padding-top: 0 !important;
-        }
-        /* Oculta rodapé de termos/limites */
-        .text-xs.text-center, 
-        footer {
-          display: none !important;
-        }
-      `,
+      css: ``,
       getInput: () => document.getElementById('prompt-textarea'),
       getSendButton: () => {
         return document.querySelector('button[data-testid="send-button"]') ||
@@ -40,47 +17,26 @@
       },
       isGenerating: () => {
         return !!(document.querySelector('button[data-testid="stop-button"]') ||
-                  document.querySelector('button[aria-label="Stop generating"]'));
+                  document.querySelector('button[aria-label="Stop generating"]') ||
+                  document.querySelector('button[aria-label*="stop" i]') ||
+                  document.querySelector('button[aria-label*="parar" i]'));
       },
-      getLastResponseText: () => {
+      getLastResponseElement: () => {
         const turnElements = document.querySelectorAll('[data-testid^="conversation-turn-"]');
-        if (turnElements.length === 0) return '';
-        // Pega o último turn do assistente (normalmente turns ímpares ou com classe específica)
-        // Uma abordagem mais segura é buscar de trás para frente
+        if (turnElements.length === 0) return null;
         for (let i = turnElements.length - 1; i >= 0; i--) {
           const turn = turnElements[i];
-          // ChatGPT identifica o autor no atributo ou classe, mas podemos verificar se contém o conteúdo da resposta
-          // Geralmente, o turn do usuário tem classes diferentes ou contém o prompt
-          // No ChatGPT moderno, a classe "agent-turn" ou elemento com classe "markdown" está na resposta
           const md = turn.querySelector('.markdown');
           if (md) {
-            return md.innerText;
+            return md;
           }
         }
-        return '';
+        return null;
       }
     },
     gemini: {
       domain: 'gemini.google.com',
-      css: `
-        /* Oculta barra superior de navegação e usuário */
-        header, .header-container, .top-nav, sign-in-button {
-          display: none !important;
-        }
-        /* Oculta menu lateral */
-        side-navigation, .side-nav, .left-rail {
-          display: none !important;
-        }
-        /* Oculta dicas e rodapés de disclaimer */
-        .disclaimer, footer, .footer-container, .policy-links {
-          display: none !important;
-        }
-        /* Ajusta margem principal para ocupar o espaço do header removido */
-        main, .main-container, .chat-view {
-          padding-top: 0 !important;
-          margin-top: 0 !important;
-        }
-      `,
+      css: ``,
       getInput: () => {
         return document.querySelector('div[contenteditable="true"]') ||
                document.querySelector('.ql-editor') ||
@@ -95,13 +51,15 @@
         // Verifica se há alguma animação de carregamento ativa ou se o botão de parar geração está visível
         return !!(document.querySelector('stop-button') ||
                   document.querySelector('.loading-spinner') ||
-                  document.querySelector('button[aria-label="Stop"]'));
+                  document.querySelector('button[aria-label="Stop"]') ||
+                  document.querySelector('button[aria-label*="stop" i]') ||
+                  document.querySelector('button[aria-label*="parar" i]') ||
+                  document.querySelector('button[aria-label*="interromper" i]'));
       },
-      getLastResponseText: () => {
+      getLastResponseElement: () => {
         const chatElements = document.querySelectorAll('message-content, .message-content, .response-content');
-        if (chatElements.length === 0) return '';
-        const lastEl = chatElements[chatElements.length - 1];
-        return lastEl.innerText;
+        if (chatElements.length === 0) return null;
+        return chatElements[chatElements.length - 1];
       }
     }
   };
@@ -124,11 +82,21 @@
 
   // Injeta CSS customizado para limpar a tela
   function injectCSS() {
-    const style = document.createElement('style');
-    style.id = 'radia-clean-css';
-    style.innerHTML = currentSite.css;
-    document.head.appendChild(style);
-    log('CSS limpo injetado.');
+    try {
+      const head = document.head || document.getElementsByTagName('head')[0];
+      if (!head) {
+        log('Erro: document.head não encontrado para injeção de CSS.');
+        return;
+      }
+      if (document.getElementById('radia-clean-css')) return;
+      const style = document.createElement('style');
+      style.id = 'radia-clean-css';
+      style.innerHTML = currentSite.css;
+      head.appendChild(style);
+      log('CSS limpo injetado.');
+    } catch (err) {
+      log('Erro ao injetar CSS de limpeza:', err);
+    }
   }
 
 
@@ -183,51 +151,109 @@
     }
   }
 
+  // --- RECONSTRUÇÃO DE MARKDOWN E FORMATOS ---
+  function getMarkdownFromElement(el) {
+    if (!el) return '';
+    try {
+      const clone = el.cloneNode(true);
+      
+      // Remove botões internos (como botões de copiar ou o botão 'Inserir no Delphi' injetado)
+      const buttons = clone.querySelectorAll('button, .radia-insert-btn, [class*="copy" i]');
+      buttons.forEach(btn => btn.remove());
+      
+      // Localiza todos os elementos de bloco de código pre/code
+      const preElements = clone.querySelectorAll('pre');
+      preElements.forEach(pre => {
+        const codeEl = pre.querySelector('code') || pre;
+        let lang = 'pascal';
+        
+        // Tenta extrair a linguagem das classes do code ou do pre
+        const classes = (codeEl.getAttribute('class') || '') + ' ' + (pre.getAttribute('class') || '');
+        const langMatch = classes.match(/language-(\w+)/i);
+        if (langMatch) {
+          lang = langMatch[1];
+        } else {
+          // Fallback: tenta buscar no cabeçalho do bloco de código na página original
+          const parent = pre.parentElement;
+          if (parent) {
+            const header = parent.querySelector('.code-header') || parent.querySelector('[class*="header" i]');
+            if (header) {
+              const headerText = header.innerText.trim().toLowerCase();
+              if (headerText && headerText.length < 20) {
+                lang = headerText;
+              }
+            }
+          }
+        }
+        
+        // Obtém o texto do código puro mantendo todas as quebras de linha (textContent)
+        const codeText = codeEl.textContent || '';
+        
+        // Cria a representação do bloco em Markdown clássico
+        const markdownText = `\n\`\`\`${lang}\n${codeText.trim()}\n\`\`\`\n`;
+        
+        const textNode = document.createTextNode(markdownText);
+        pre.parentNode.replaceChild(textNode, pre);
+      });
+      
+      return clone.innerText || '';
+    } catch (err) {
+      log('Erro ao formatar Markdown do elemento:', err);
+      return el.innerText || '';
+    }
+  }
+
   // --- MONITORAMENTO DA RESPOSTA (Scraping & Stream) ---
   let monitorInterval = null;
-  let lastSentLength = 0;
   let lastText = '';
   let generatingTimeout = 0;
+  let previousResponseElement = null;
 
   function startMonitoring() {
     log('Iniciando monitoramento de resposta...');
-    lastSentLength = 0;
     lastText = '';
     generatingTimeout = 0;
+    
+    // Captura o elemento da última resposta existente ANTES de começar a nova
+    previousResponseElement = currentSite.getLastResponseElement();
+    log('Elemento de resposta anterior:', previousResponseElement);
     
     if (monitorInterval) clearInterval(monitorInterval);
 
     monitorInterval = setInterval(() => {
-      const text = currentSite.getLastResponseText();
+      const currentEl = currentSite.getLastResponseElement();
+      
+      // Se ainda não temos um elemento novo, ignoramos (espera o site criar o elemento de resposta do prompt atual)
+      if (!currentEl || currentEl === previousResponseElement) {
+        log('Aguardando criação da nova bolha de resposta no DOM...');
+        return;
+      }
+
+      const text = getMarkdownFromElement(currentEl);
       const isGenerating = currentSite.isGenerating();
 
       if (text && text !== lastText) {
-        // Obtém apenas a fatia nova gerada para enviar como chunk de stream
-        const chunk = text.substring(lastSentLength);
-        if (chunk.length > 0) {
-          log('Enviando chunk de streaming:', chunk.length, 'bytes');
-          sendToDelphi({
-            action: 'stream_chunk',
-            text: chunk,
-            isDone: false
-          });
-          lastSentLength = text.length;
-          lastText = text;
-        }
+        log('Enviando resposta completa de streaming:', text.length, 'bytes');
+        sendToDelphi({
+          action: 'update_stream',
+          text: text,
+          isDone: false
+        });
+        lastText = text;
       }
 
       if (!isGenerating && lastText.length > 0) {
-        // Damos uma pequena margem (2 ciclos de verificação) para ter certeza de que a geração terminou
+        // Damos uma margem de segurança de 8 ciclos (2.4 segundos) para ter certeza de que a geração terminou
         generatingTimeout++;
-        if (generatingTimeout >= 3) {
+        if (generatingTimeout >= 8) {
           log('Geração concluída.');
           clearInterval(monitorInterval);
           monitorInterval = null;
 
-          // Envia o fechamento
+          // Envia o fechamento final com a resposta consolidada
           sendToDelphi({
-            action: 'stream_chunk',
-            text: '',
+            action: 'update_stream',
+            text: lastText,
             isDone: true
           });
         }
@@ -239,118 +265,201 @@
 
   // --- INJEÇÃO DE BOTÕES "INSERIR NO DELPHI" ---
 
+  let observer = null;
+  let injectTimeout = null;
+
   function injectInsertBtnCSS() {
-    const style = document.createElement('style');
-    style.id = 'radia-insert-btn-css';
-    style.innerHTML = `
-      .radia-insert-btn {
-        background: rgba(0, 122, 204, 0.85) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 4px !important;
-        padding: 4px 8px !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-        font-size: 11px !important;
-        font-weight: 600 !important;
-        cursor: pointer !important;
-        z-index: 9999 !important;
-        transition: all 0.2s ease !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 4px !important;
-        line-height: 1 !important;
-      }
-      .radia-insert-btn:hover {
-        background: rgba(0, 122, 204, 1.0) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
-      }
-      .radia-insert-btn:active {
-        transform: translateY(0) !important;
-      }
-    `;
-    document.head.appendChild(style);
+    try {
+      const head = document.head || document.getElementsByTagName('head')[0];
+      if (!head) return;
+      if (document.getElementById('radia-insert-btn-css')) return;
+
+      const style = document.createElement('style');
+      style.id = 'radia-insert-btn-css';
+      style.innerHTML = `
+        .radia-insert-btn {
+          background: rgba(0, 122, 204, 0.85) !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          border-radius: 4px !important;
+          padding: 4px 8px !important;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+          font-size: 11px !important;
+          font-weight: 600 !important;
+          cursor: pointer !important;
+          z-index: 9999 !important;
+          transition: all 0.2s ease !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 4px !important;
+          line-height: 1 !important;
+        }
+        .radia-insert-btn:hover {
+          background: rgba(0, 122, 204, 1.0) !important;
+          transform: translateY(-1px) !important;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+        }
+        .radia-insert-btn:active {
+          transform: translateY(0) !important;
+        }
+      `;
+      head.appendChild(style);
+    } catch (err) {
+      log('Erro ao injetar CSS do botão:', err);
+    }
   }
 
   function injectDelphiButtons() {
-    const preElements = document.querySelectorAll('pre');
-    preElements.forEach(pre => {
-      if (pre.getAttribute('data-radia-injected') === 'true') return;
-      
-      const code = pre.querySelector('code');
-      if (!code) return;
-
-      const computedStyle = window.getComputedStyle(pre);
-      if (computedStyle.position === 'static') {
-        pre.style.position = 'relative';
-      }
-
-      const btn = document.createElement('button');
-      btn.className = 'radia-insert-btn';
-      btn.title = 'Inserir este código diretamente no editor do Delphi';
-      btn.innerHTML = `
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; width:12px; height:12px;">
-          <polyline points="16 18 22 12 16 6"></polyline>
-          <polyline points="8 6 2 12 8 18"></polyline>
-        </svg>
-        <span>Inserir no Delphi</span>
-      `;
-
-      btn.style.position = 'absolute';
-      btn.style.top = '8px';
-      btn.style.right = '85px';
-
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    try {
+      const preElements = document.querySelectorAll('pre');
+      preElements.forEach(pre => {
+        if (pre.getAttribute('data-radia-injected') === 'true') return;
         
-        let codeText = code.innerText;
-        codeText = codeText.trim();
-        
-        log('Solicitando aplicação de código no Delphi:', codeText.length, 'bytes');
-        sendToDelphi({
-          action: 'apply_code',
-          code: codeText
+        const code = pre.querySelector('code');
+        if (!code) return;
+
+        const computedStyle = window.getComputedStyle(pre);
+        if (computedStyle.position === 'static') {
+          pre.style.position = 'relative';
+        }
+
+        const btn = document.createElement('button');
+        btn.className = 'radia-insert-btn';
+        btn.title = 'Inserir este código diretamente no editor do Delphi';
+        btn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; width:12px; height:12px;">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          <span>Inserir no Delphi</span>
+        `;
+
+        btn.style.position = 'absolute';
+        btn.style.top = '8px';
+        btn.style.right = '85px';
+
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          let codeText = code.innerText;
+          codeText = codeText.trim();
+          
+          log('Solicitando aplicação de código no Delphi:', codeText.length, 'bytes');
+          sendToDelphi({
+            action: 'apply_code',
+            code: codeText
+          });
+
+          const span = btn.querySelector('span');
+          const originalText = span.innerText;
+          span.innerText = 'Inserido!';
+          btn.style.background = '#4CAF50';
+          setTimeout(() => {
+            span.innerText = originalText;
+            btn.style.background = '';
+          }, 1500);
         });
 
-        const span = btn.querySelector('span');
-        const originalText = span.innerText;
-        span.innerText = 'Inserido!';
-        btn.style.background = '#4CAF50';
-        setTimeout(() => {
-          span.innerText = originalText;
-          btn.style.background = '';
-        }, 1500);
+        pre.appendChild(btn);
+        pre.setAttribute('data-radia-injected', 'true');
       });
+    } catch (err) {
+      log('Erro ao injetar botões nos elementos pre:', err);
+    }
+  }
 
-      pre.appendChild(btn);
-      pre.setAttribute('data-radia-injected', 'true');
-    });
+  function scheduleInjection() {
+    if (injectTimeout) {
+      clearTimeout(injectTimeout);
+    }
+    injectTimeout = setTimeout(() => {
+      if (observer) {
+        try {
+          observer.disconnect();
+        } catch (err) {
+          log('Erro ao desconectar observer:', err);
+        }
+      }
+      
+      injectDelphiButtons();
+      
+      if (observer && document.body) {
+        try {
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+        } catch (err) {
+          log('Erro ao reconectar observer:', err);
+        }
+      }
+    }, 300);
+  }
+
+  let loginSignaled = false;
+  function checkLoginComplete() {
+    if (loginSignaled) return true;
+    try {
+      const inputEl = currentSite.getInput();
+      if (inputEl) {
+        log('Login concluído! Avisando o Delphi.');
+        sendToDelphi({ action: 'login_complete' });
+        loginSignaled = true;
+        return true;
+      }
+    } catch (err) {
+      log('Erro ao checar estado de login:', err);
+    }
+    return false;
   }
 
   function initBridge() {
+    checkLoginComplete();
     injectCSS();
     injectInsertBtnCSS();
     injectDelphiButtons();
 
-    const observer = new MutationObserver((mutations) => {
-      let shouldCheck = false;
-      for (let mutation of mutations) {
-        if (mutation.addedNodes.length > 0) {
-          shouldCheck = true;
-          break;
-        }
-      }
-      if (shouldCheck) {
-        injectDelphiButtons();
-      }
-    });
+    try {
+      if (typeof MutationObserver !== 'undefined') {
+        observer = new MutationObserver((mutations) => {
+          checkLoginComplete();
+          let shouldCheck = false;
+          for (let mutation of mutations) {
+            // Ignora se a mutação foi originada por nossa injeção direta de botões
+            let isOurBtn = false;
+            mutation.addedNodes.forEach(node => {
+              if (node.classList && (node.classList.contains('radia-insert-btn') || node.classList.contains('radia-insert-btn-css'))) {
+                isOurBtn = true;
+              }
+            });
+            if (isOurBtn) continue;
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-    log('Observer de injeção de botões e bridge ativado.');
+            if (mutation.addedNodes.length > 0) {
+              shouldCheck = true;
+              break;
+            }
+          }
+          if (shouldCheck) {
+            scheduleInjection();
+          }
+        });
+
+        if (document.body) {
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+          log('Observer de injeção de botões e bridge ativado com sucesso.');
+        } else {
+          log('Erro: document.body ausente ao tentar ativar o observer.');
+        }
+      } else {
+        log('Aviso: MutationObserver não é suportado neste ambiente.');
+      }
+    } catch (err) {
+      log('Erro ao inicializar MutationObserver:', err);
+    }
   }
 
   if (document.body && document.head) {

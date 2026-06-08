@@ -118,7 +118,7 @@ O RadIA permite que você opte por dois métodos de conexão para os provedores 
 2. Selecione a aba do provedor (**Gemini** ou **OpenAI**).
 3. No campo **Connection Method**, selecione a opção **Web Login (Plus/Pro)**.
 4. Clique em **Save**.
-5. No painel de chat do RadIA, selecione o provedor correspondente. O WebView2 carregará a tela oficial de login da plataforma.
-6. Faça login na sua conta. O WebView2 salvará os cookies e a sessão localmente em `%APPDATA%\RadIA\WebView2Data` de forma segura, mantendo você conectado.
-7. As barras superiores e laterais oficiais dos sites serão limpas automaticamente por injeção de CSS para dar a aparência de uma janela de chat embutida limpa.
-8. Ao interagir com o editor de código (como clicar com o botão direito e selecionar *Explain Selected Code*), a IDE Delphi transmitirá os comandos e prompts diretamente para a janela Web e lerá a resposta de volta automaticamente em tempo real!
+5. No painel de chat do RadIA, selecione o provedor correspondente. Um botão de login em formato de cadeado 🔐 aparecerá no cabeçalho superior direito do chat.
+6. Clique no botão de cadeado 🔐. Isso abrirá um popup de autenticação nativo (`TFormWebLogin`).
+7. Faça login na sua conta na janela que se abre. A sessão e os cookies serão salvos de forma segura no diretório `%APPDATA%\RadIA\WebView2Data`, mantendo você conectado. Após o login bem-sucedido, você pode fechar o popup.
+8. Pronto! Agora você pode conversar normalmente pela própria interface nativa do chat do RadIA (ou disparar ações no editor de código). O plugin usará uma WebView2 oculta em segundo plano para enviar os prompts e ler as respostas via streaming em tempo real, mantendo a experiência fluida e o design unificado.
