@@ -59,8 +59,8 @@ if ($DelphiVersion) {
     }
 }
 
-# Se for instalar ou desinstalar e nao houver versao pre-definida, resolvemos dinamicamente
-if (-not $selectedInstall -and ($Install -or $Uninstall)) {
+# Se nao houver versao pre-definida, resolvemos dinamicamente
+if (-not $selectedInstall) {
     if ($installations.Count -eq 0) {
         Write-Host "Nenhuma instalacao do Delphi encontrada no Registro do Windows. Tentando prosseguir com o PATH padrao." -ForegroundColor Yellow
     } elseif ($installations.Count -eq 1) {
