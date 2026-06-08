@@ -67,6 +67,17 @@ begin
 end;
 
 class procedure TProviderRegistry.LoadJsonProviders;
+  function CreateFactory(const AId, ADisplayName, ABaseUrl: string;
+    const AModels: TArray<string>; const AApiKey: string): TProviderFactoryFunc;
+  begin
+    Result :=
+      function(const ACfg: IAIConfig): IIAProvider
+      begin
+        Result := TRadIAGenericOpenAIProvider.Create(
+          ACfg, AId, ADisplayName, ABaseUrl, AModels, AApiKey
+        );
+      end;
+  end;
 var
   LProvidersFolder: string;
   LFiles: TArray<string>;
@@ -81,6 +92,7 @@ var
   LDefaultModels: TArray<string>;
   I: Integer;
   LMeta: TProviderMetadata;
+  LRegApiKey: string;
 begin
   LProvidersFolder := TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'providers');
   if not TDirectory.Exists(LProvidersFolder) then
@@ -140,6 +152,10 @@ begin
             LModelsList.Free;
           end;
 
+          LRegApiKey := LApiKey;
+          if (not LHasApiKey) and LRegApiKey.IsEmpty then
+            LRegApiKey := 'dummy';
+
           // Criar e marcar como dinâmico antes do registro
           LMeta := TProviderMetadata.Create(
             LId,
@@ -148,12 +164,7 @@ begin
             LHasApiKey,
             LHasCustomUrl,
             LDefaultModels,
-            function(const ACfg: IAIConfig): IIAProvider
-            begin
-              Result := TRadIAGenericOpenAIProvider.Create(
-                ACfg, LId, LDisplayName, LDefaultBaseUrl, LDefaultModels, LApiKey
-              );
-            end
+            CreateFactory(LId, LDisplayName, LDefaultBaseUrl, LDefaultModels, LRegApiKey)
           );
           LMeta.IsDynamic := True;
 
