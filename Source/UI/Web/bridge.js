@@ -131,11 +131,7 @@
     log('CSS limpo injetado.');
   }
 
-  if (document.head) {
-    injectCSS();
-  } else {
-    document.addEventListener('DOMContentLoaded', injectCSS);
-  }
+
 
   // --- COMUNICAÇÃO DE ENTRADA (Delphi -> WebView) ---
   if (window.chrome && window.chrome.webview) {
@@ -239,5 +235,127 @@
         generatingTimeout = 0;
       }
     }, 300);
+  }
+
+  // --- INJEÇÃO DE BOTÕES "INSERIR NO DELPHI" ---
+
+  function injectInsertBtnCSS() {
+    const style = document.createElement('style');
+    style.id = 'radia-insert-btn-css';
+    style.innerHTML = `
+      .radia-insert-btn {
+        background: rgba(0, 122, 204, 0.85) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 4px !important;
+        padding: 4px 8px !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        z-index: 9999 !important;
+        transition: all 0.2s ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        line-height: 1 !important;
+      }
+      .radia-insert-btn:hover {
+        background: rgba(0, 122, 204, 1.0) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+      }
+      .radia-insert-btn:active {
+        transform: translateY(0) !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function injectDelphiButtons() {
+    const preElements = document.querySelectorAll('pre');
+    preElements.forEach(pre => {
+      if (pre.getAttribute('data-radia-injected') === 'true') return;
+      
+      const code = pre.querySelector('code');
+      if (!code) return;
+
+      const computedStyle = window.getComputedStyle(pre);
+      if (computedStyle.position === 'static') {
+        pre.style.position = 'relative';
+      }
+
+      const btn = document.createElement('button');
+      btn.className = 'radia-insert-btn';
+      btn.title = 'Inserir este código diretamente no editor do Delphi';
+      btn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; width:12px; height:12px;">
+          <polyline points="16 18 22 12 16 6"></polyline>
+          <polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+        <span>Inserir no Delphi</span>
+      `;
+
+      btn.style.position = 'absolute';
+      btn.style.top = '8px';
+      btn.style.right = '85px';
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        let codeText = code.innerText;
+        codeText = codeText.trim();
+        
+        log('Solicitando aplicação de código no Delphi:', codeText.length, 'bytes');
+        sendToDelphi({
+          action: 'apply_code',
+          code: codeText
+        });
+
+        const span = btn.querySelector('span');
+        const originalText = span.innerText;
+        span.innerText = 'Inserido!';
+        btn.style.background = '#4CAF50';
+        setTimeout(() => {
+          span.innerText = originalText;
+          btn.style.background = '';
+        }, 1500);
+      });
+
+      pre.appendChild(btn);
+      pre.setAttribute('data-radia-injected', 'true');
+    });
+  }
+
+  function initBridge() {
+    injectCSS();
+    injectInsertBtnCSS();
+    injectDelphiButtons();
+
+    const observer = new MutationObserver((mutations) => {
+      let shouldCheck = false;
+      for (let mutation of mutations) {
+        if (mutation.addedNodes.length > 0) {
+          shouldCheck = true;
+          break;
+        }
+      }
+      if (shouldCheck) {
+        injectDelphiButtons();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    log('Observer de injeção de botões e bridge ativado.');
+  }
+
+  if (document.body && document.head) {
+    initBridge();
+  } else {
+    document.addEventListener('DOMContentLoaded', initBridge);
   }
 })();
