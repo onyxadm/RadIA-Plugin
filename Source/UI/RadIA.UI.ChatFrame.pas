@@ -73,6 +73,10 @@ type
     FRequestInProgress: Boolean;
     FCancelledByUser: Boolean;
     EdgeBrowser: TEdgeBrowser;
+
+    procedure UpdateWebViewNavigation;
+    procedure OnWebViewBridgeSendPrompt(const APrompt: string);
+    procedure OnWebViewBridgeCancel;
     
     procedure UpdateSendButtonVisual;
     function ColorToHex(AColor: TColor): string;
@@ -119,9 +123,16 @@ implementation
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
   RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.DTO.Generator, RadIA.Core.ProviderRegistry;
+  RadIA.Core.DTO.Generator, RadIA.Core.ProviderRegistry, RadIA.Provider.WebViewBridge;
 
 {$R *.dfm}
+
+type
+  ICoreWebView2Settings2_Local = interface(IUnknown)
+    ['{ee9a0f68-f96c-4e24-9c00-fd6c778988b4}']
+    function Get_UserAgent(out userAgent: PWideChar): HResult; stdcall;
+    function Put_UserAgent(userAgent: PWideChar): HResult; stdcall;
+  end;
 
 type
   TSessionObject = class
@@ -201,6 +212,9 @@ begin
 
   memPrompt.OnKeyDown := Self.memPromptKeyDown;
   TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
+
+  TRadIAWebViewBridgeProvider.OnSendPrompt := Self.OnWebViewBridgeSendPrompt;
+  TRadIAWebViewBridgeProvider.OnCancel := Self.OnWebViewBridgeCancel;
 end;
 
 destructor TFrameAIChat.Destroy;
@@ -234,6 +248,9 @@ begin
         cbProvider.Items.Objects[I].Free;
     end;
   end;
+
+  TRadIAWebViewBridgeProvider.OnSendPrompt := nil;
+  TRadIAWebViewBridgeProvider.OnCancel := nil;
 
   FPromptHistoryManager.Free;
   FreeAndNil(FTemplateManager);
@@ -344,7 +361,7 @@ begin
     
   LFilesToCopy := TArray<string>.Create('chat.html', 'chat.css', 'chat.js', 'diff.html',
     'marked.min.js', 'prism.min.js', 'prism-pascal.min.js', 'prism-tomorrow.min.css',
-    'diff2html.min.css', 'diff2html.min.js', 'diff.min.js');
+    'diff2html.min.css', 'diff2html.min.js', 'diff.min.js', 'bridge.js');
   for LFile in LFilesToCopy do
   begin
     if TFile.Exists(TPath.Combine(LSourceDir, LFile)) then
@@ -357,7 +374,7 @@ end;
 procedure TFrameAIChat.InitializeWebView;
 begin
   EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
-  EdgeBrowser.Navigate('file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/'));
+  UpdateWebViewNavigation;
 end;
 
 function TFrameAIChat.IsProviderConfigured(const AProviderId: string): Boolean;
@@ -432,6 +449,7 @@ begin
     end;
 
     UpdateModelsCombo;
+    UpdateWebViewNavigation;
   finally
     FLoadingConfig := False;
   end;
@@ -513,6 +531,7 @@ begin
     FConfig.SetActiveProvider(LSelectedProvider);
     FConfig.Save;
     UpdateModelsCombo;
+    UpdateWebViewNavigation;
   end;
 end;
 
@@ -848,6 +867,9 @@ end;
 procedure TFrameAIChat.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
 var
   LSettings: ICoreWebView2Settings;
+  LSettings2: ICoreWebView2Settings2_Local;
+  LScriptFile: string;
+  LScriptContent: string;
 begin
   if Succeeded(AResult) then
   begin
@@ -859,10 +881,28 @@ begin
       begin
         LSettings.Set_AreDevToolsEnabled(1);
         LSettings.Set_AreDefaultContextMenusEnabled(1);
+        
+        if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
+        begin
+          LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        end;
+      end;
+
+      LScriptFile := TPath.Combine(FWebFilesDir, 'bridge.js');
+      if TFile.Exists(LScriptFile) then
+      begin
+        try
+          LScriptContent := TFile.ReadAllText(LScriptFile, TEncoding.UTF8);
+          EdgeBrowser.DefaultInterface.AddScriptToExecuteOnDocumentCreated(PWideChar(LScriptContent), nil);
+        except
+          on E: Exception do
+            TLogger.Log('Error reading or injecting bridge script: ' + E.Message, 'UI');
+        end;
       end;
     end;
     
     ApplyIDETheme;
+    UpdateWebViewNavigation;
   end;
 end;
 
@@ -1122,6 +1162,23 @@ begin
         procedure
         begin
           btnClearClick(nil);
+        end));
+    end
+    else if LAction = 'stream_chunk' then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        var
+          LChunk: string;
+          LIsDone: Boolean;
+          LError: string;
+        begin
+          LChunk := LJson.GetValue<string>('text', '');
+          LIsDone := LJson.GetValue<Boolean>('isDone', False);
+          LError := LJson.GetValue<string>('error', '');
+          
+          TRadIAWebViewBridgeProvider.ReceiveChunk(LChunk, LIsDone, LError);
         end));
     end;
   finally
@@ -2040,6 +2097,78 @@ begin
     LJson.AddPair('sessions', LArr);
     LJson.AddPair('activeSessionId', FSessionManager.ActiveSessionId);
 
+    if Assigned(EdgeBrowser.DefaultInterface) then
+      EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+  finally
+    LJson.Free;
+  end;
+end;
+
+procedure TFrameAIChat.UpdateWebViewNavigation;
+var
+  LActiveProvider: string;
+  LAuthType: string;
+  LTargetUrl: string;
+  LIsWebLogin: Boolean;
+begin
+  if not FBrowserInitialized then
+    Exit;
+
+  LActiveProvider := FConfig.GetActiveProvider;
+  LAuthType := FConfig.GetProviderAuthType(LActiveProvider);
+  LIsWebLogin := SameText(LAuthType, 'web_login');
+
+  pnlInput.Visible := not LIsWebLogin;
+  cbModel.Visible := not LIsWebLogin;
+  
+  if LIsWebLogin then
+  begin
+    if SameText(LActiveProvider, 'Gemini') then
+      LTargetUrl := 'https://gemini.google.com'
+    else
+      LTargetUrl := 'https://chatgpt.com';
+
+    TLogger.Log('UpdateWebViewNavigation: Navigating to external web: ' + LTargetUrl, 'UI');
+    EdgeBrowser.Navigate(LTargetUrl);
+  end
+  else
+  begin
+    LTargetUrl := 'file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/');
+    TLogger.Log('UpdateWebViewNavigation: Navigating to local chat: ' + LTargetUrl, 'UI');
+    EdgeBrowser.Navigate(LTargetUrl);
+  end;
+end;
+
+procedure TFrameAIChat.OnWebViewBridgeSendPrompt(const APrompt: string);
+var
+  LJson: TJSONObject;
+begin
+  if not FBrowserInitialized then
+    Exit;
+
+  TLogger.Log('OnWebViewBridgeSendPrompt: Dispatching prompt to web view.', 'UI');
+  LJson := TJSONObject.Create;
+  try
+    LJson.AddPair('action', 'send_prompt');
+    LJson.AddPair('text', APrompt);
+    if Assigned(EdgeBrowser.DefaultInterface) then
+      EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+  finally
+    LJson.Free;
+  end;
+end;
+
+procedure TFrameAIChat.OnWebViewBridgeCancel;
+var
+  LJson: TJSONObject;
+begin
+  if not FBrowserInitialized then
+    Exit;
+
+  TLogger.Log('OnWebViewBridgeCancel: Dispatching cancellation to web view.', 'UI');
+  LJson := TJSONObject.Create;
+  try
+    LJson.AddPair('action', 'cancel_request');
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
   finally
