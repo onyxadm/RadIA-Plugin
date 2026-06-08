@@ -148,6 +148,21 @@ A versão v0.0.9 refinou a infraestrutura de compilação e suporte a múltiplos
 
 ---
 
+## ✅ v0.0.10 — Suporte Nativo ao GitHub Copilot (Concluído)
+
+A versão v0.0.10 introduziu o suporte nativo e oficial para conexão direta com o GitHub Copilot remoto na nuvem e atalhos na UI para obtenção de chaves de API:
+
+- **Provedor Nativo GitHub Copilot (Fase 2):**
+  * Classe `TRadIAGithubCopilotProvider` integrada herdando de `TRadIAOpenAICompatibleProvider` para comunicação 100% remota com a nuvem do GitHub Copilot (`https://api.githubcopilot.com`) sem a necessidade de proxies locais.
+  * Gerenciamento e renovação em background de tokens de sessão temporários via `https://api.github.com/copilot_internal/v2/token` a partir da chave permanente.
+- **UX de Autenticação Facilitada:**
+  * Login por código PIN integrado diretamente na tela de opções (OAuth Device Flow) com abertura automática do navegador do sistema.
+  * Botão de importação rápida de token do VS Code em um clique (leitura do arquivo `hosts.json`).
+- **Links Rápidos para API Keys:**
+  * Atalhos no formato de hyperlink ao lado dos campos de chave na UI (Gemini, OpenAI, Claude, DeepSeek, Groq e OpenRouter) apontando direto para os consoles de desenvolvedores oficiais.
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save
@@ -183,7 +198,6 @@ Os itens abaixo ainda estão em fase de concepção e avaliação de viabilidade
 - **Autocompletar Inline Inteligente (Ghost Text):** Sugestões de código em tempo real no editor de código com texto acinzentado estilo Copilot (Complexidade: Alta).
 - **Integração Automática com Depurador da IDE:** Captura dinâmica e análise automática de exceções ativas durante sessões de depuração de código (Complexidade: Alta).
 - **Geração automática de documentação de projeto** (varrer units e gerar um `docs/API.md` completo).
-- **Integração Nativa com GitHub Copilot / GitLab Duo (Fase 2):** Login OAuth integrado e renovação automática de tokens (Complexidade: Alta).
 - **Suporte nativo a macOS/Linux** via FPC/Lazarus (análise de viabilidade).
 
 ---

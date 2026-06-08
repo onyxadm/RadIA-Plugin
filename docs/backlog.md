@@ -171,6 +171,13 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Criação do provedor virtual `TRadIAWebViewBridgeProvider` para orquestração síncrona/assíncrona de requisições de IA para a janela ativa do WebView2.
     *   Configuração do User-Agent seguro do Chromium para prevenção de bloqueios OAuth durante o fluxo de autenticação do Google.
 
+### 22. Provedor Nativo GitHub Copilot (Fase 2) - Item #29
+*   **Descrição**: Suporte nativo à nuvem do GitHub Copilot com autenticação integrada (Device Flow por PIN) e importação em um clique de chaves do VS Code, além de atalhos rápidos de hyperlink para obtenção de API Keys dos demais provedores.
+*   **Detalhes**:
+    *   Desenvolvimento da unit `RadIA.Provider.GithubCopilot.pas` contendo a classe do provedor e seu auto-registro, além do gerenciamento thread-safe do token de sessão temporário obtido de `https://api.github.com/copilot_internal/v2/token`.
+    *   Desenvolvimento da unit de UI `RadIA.UI.GithubAuthForm.pas` para o fluxo de autenticação por PIN em segundo plano.
+    *   Modificações no frame e formulário de configurações VCL para inclusão da aba do Copilot com botões de login/importação e dos links rápidos de atalho para as demais plataformas.
+
 ---
 
 ## ⏳ Em Desenvolvimento

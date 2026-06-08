@@ -33,7 +33,8 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
 
 ### 2. Funcionalidades
 *   **Chat Lateral Acoplável (Dockable):** Painel integrado à IDE com visual nativo do Delphi, trazendo uma janela de chat em HTML5/JS moderno (WebView2) com suporte a Markdown e realce de sintaxe Pascal.
-*   **Suporte a Múltiplas IAs & Conexão Híbrida:** Modelo híbrido flexível de conexão. Permite usar chaves de API próprias (BYOK) para **Google Gemini**, **OpenAI ChatGPT**, **Anthropic Claude**, **DeepSeek**, **Groq**, **OpenRouter**, **LM Studio** e **Ollama** local, OU conectar-se diretamente às suas contas pessoais/corporativas de consumo (**ChatGPT Plus/Pro** e **Gemini Advanced**) via login oficial no WebView2, contornando bloqueios de rede com injeção inteligente de DOM/CSS e ponte JS-Delphi.
+*   **Suporte a Múltiplas IAs & Conexão Híbrida:** Modelo híbrido flexível de conexão. Permite usar chaves de API próprias (BYOK) para **Google Gemini**, **OpenAI ChatGPT**, **Anthropic Claude**, **GitHub Copilot**, **DeepSeek**, **Groq**, **OpenRouter**, **LM Studio** e **Ollama** local, OU conectar-se diretamente às suas contas pessoais/corporativas de consumo (**ChatGPT Plus/Pro** e **Gemini Advanced**) via login oficial no WebView2, contornando bloqueios de rede com injeção inteligente de DOM/CSS e ponte JS-Delphi.
+*   **Integração Nativa com GitHub Copilot:** Suporte oficial para conectar-se diretamente aos servidores do GitHub Copilot (pessoal ou corporativo) na nuvem, com fluxo de autenticação do dispositivo embutido (OAuth Device Flow) e importação em um clique das credenciais ativas do VS Code.
 *   **Histórico de Chat Persistente:** O histórico de conversas é salvo automaticamente localmente em formato JSON, restaurando o contexto ao fechar e abrir a IDE.
 *   **Atalhos e Histórico de Prompts:** Atalhos integrados para aumentar a produtividade: `Ctrl + Enter` para enviar prompts, `Enter` para quebra de linha, e uso das setas `↑` (para cima) e `↓` (para baixo) na área de digitação para navegar rapidamente pelo histórico dos prompts que já foram digitados e enviados.
 *   **Ações de Contexto no Editor:** Clique com o botão direito em qualquer trecho de código selecionado para:
@@ -77,9 +78,11 @@ O RadIA adota uma arquitetura de registro de provedores orientada a metadados (`
 
 👉 [**Guia para Adição de Novos Provedores (docs/new_provider_guide.md)**](docs/new_provider_guide.md)
 
-### 5.2 Usando GitHub Copilot via Proxy Local (Fase 1)
+### 5.2 Usando GitHub Copilot Remoto (Nativo - Fase 2) ou via Proxy Local (Fase 1)
 
-O RadIA suporta a integração com o GitHub Copilot (e outros assistentes corporativos) através de proxies locais compatíveis com a API da OpenAI. Para aprender a configurar o proxy local, obter seu token com segurança e registrar seu arquivo JSON dinâmico, consulte o nosso:
+O RadIA suporta a integração direta e remota com o **GitHub Copilot** na nuvem (sem necessidade de rodar proxies locais) a partir das opções do plugin, incluindo facilidades de login integrado por PIN e importação de chave do VS Code em um clique. 
+
+Caso prefira rodar um proxy local compatível com a API da OpenAI (Fase 1), isso também continua suportado através do registro de provedor dinâmico em arquivo JSON. Para mais detalhes, consulte:
 
 👉 [**Guia de Configuração do GitHub Copilot (docs/copilot_proxy_guide.md)**](docs/copilot_proxy_guide.md)
 

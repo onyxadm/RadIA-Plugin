@@ -27,6 +27,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Ollama Local/Rede** | Provedor | Integração com modelos locais open-source sem chaves pagas e autodescoberta de tags. | ✅ Concluído |
 | **OpenRouter** | Provedor | Suporte nativo ao OpenRouter com streaming SSE, carregamento de modelos dinâmico e integração completa. | ✅ Concluído |
 | **LM Studio** | Provedor | Suporte nativo ao LM Studio com streaming SSE, autodescoberta de modelos locais e URL customizável. | ✅ Concluído |
+| **GitHub Copilot Nativo** | Provedor | Suporte oficial direto à nuvem do Copilot com Device Flow integrado e importação de chaves do VS Code em um clique. | ✅ Concluído |
 | **Custom Base URL** | Provedor | Suporte a qualquer endpoint compatível com OpenAI (Groq, DeepSeek, LM Studio). | ✅ Concluído |
 | **Provedores Dinâmicos** | Provedor | Arquitetura plugin-like orientada a metadados para registro dinâmico de novos modelos/backends de IA. | ✅ Concluído |
 | **Provedores Dinâmicos via JSON** | Provedor | Inclusão de novos provedores compatíveis com a API OpenAI salvando arquivos JSON em `%APPDATA%\RadIA\providers\`. | ✅ Concluído |

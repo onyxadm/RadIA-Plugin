@@ -33,7 +33,8 @@ This project adopts clear language rules and design standards for both human dev
 
 ### 2. Features
 *   **Dockable Sidebar Chat:** A native-looking, dockable panel integrated into the Delphi IDE featuring a high-fidelity web-rendered chat window (Edge/WebView2) with full Markdown rendering and Delphi syntax highlighting.
-*   **Multi-Provider AI Support & Hybrid Connection:** Flexible hybrid connection model. Allows using your own API keys (BYOK) for **Google Gemini**, **OpenAI ChatGPT**, **Anthropic Claude**, **DeepSeek**, **Groq**, **OpenRouter**, **LM Studio**, and local **Ollama**, OR connecting directly to consumer personal/corporate accounts (**ChatGPT Plus/Pro** and **Gemini Advanced**) via official login inside WebView2, bypassing network blocks using smart DOM/CSS injection and JS-Delphi bridge.
+*   **Multi-Provider AI Support & Hybrid Connection:** Flexible hybrid connection model. Allows using your own API keys (BYOK) for **Google Gemini**, **OpenAI ChatGPT**, **Anthropic Claude**, **GitHub Copilot**, **DeepSeek**, **Groq**, **OpenRouter**, **LM Studio**, and local **Ollama**, OR connecting directly to consumer personal/corporate accounts (**ChatGPT Plus/Pro** and **Gemini Advanced**) via official login inside WebView2, bypassing network blocks using smart DOM/CSS injection and JS-Delphi bridge.
+*   **Native GitHub Copilot Integration:** Official support to connect directly to GitHub Copilot servers in the cloud (both personal and corporate subscriptions) with an integrated OAuth Device Flow and one-click importing of active VS Code credentials.
 *   **Persistent Chat History:** Chat conversations are automatically saved locally in JSON format, restoring previous context whenever the IDE is closed and reopened.
 *   **Shortcuts and Prompt History:** Integrated productivity shortcuts: use `Ctrl + Enter` to send prompts, `Enter` for line breaks, and keyboard arrows `↑` (up) and `↓` (down) inside the text input area to quickly cycle through previously typed and sent prompts.
 *   **Context-Aware Editor Actions:** Right-click on any code selection to:
@@ -79,9 +80,11 @@ RadIA employs a metadata-driven provider registry system (`TProviderRegistry`). 
 
 👉 [**Guide for Adding New Providers (docs/new_provider_guide.en.md)**](docs/new_provider_guide.en.md)
 
-### 5.2 Using GitHub Copilot via Local Proxy (Phase 1)
+### 5.2 Using GitHub Copilot Remotely (Native - Phase 2) or via Local Proxy (Phase 1)
 
-RadIA supports integrating GitHub Copilot (and other enterprise assistants) through local proxies compatible with the OpenAI API. To learn how to configure the local proxy, acquire your token securely, and register your dynamic JSON provider, please refer to our:
+RadIA supports direct and remote integration with **GitHub Copilot** on the cloud (no local proxies required) through the plugin settings, including an integrated PIN-based login (OAuth Device Flow) and one-click VS Code credential importing.
+
+If you prefer to run a local proxy compatible with the OpenAI API (Phase 1), this also remains supported via dynamic JSON provider registration. For more details, check out:
 
 👉 [**GitHub Copilot Configuration Guide (docs/copilot_proxy_guide.en.md)**](docs/copilot_proxy_guide.en.md)
 

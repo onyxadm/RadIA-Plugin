@@ -147,6 +147,21 @@ Version v0.0.9 refined the build infrastructure and support for environments run
 
 ---
 
+## ✅ v0.0.10 — Native GitHub Copilot Support (Completed)
+
+Version v0.0.10 introduced native and official support for direct remote connections to GitHub Copilot cloud servers and settings UI shortcuts for API key acquisition:
+
+- **Native GitHub Copilot Provider (Phase 2):**
+  * Integrated `TRadIAGithubCopilotProvider` class inheriting from `TRadIAOpenAICompatibleProvider` to communicate directly with the GitHub Copilot cloud (`https://api.githubcopilot.com`) without local proxies.
+  * Automated session token acquisition and refresh via `https://api.github.com/copilot_internal/v2/token` using the persistent user token.
+- **Enhanced Authentication UX:**
+  * Integrated PIN-based device login directly inside options (OAuth Device Flow) with automated system browser redirection.
+  * One-click credential importer to parse and extract active Copilot tokens from local VS Code configurations (`hosts.json`).
+- **API Key Shortcut Links:**
+  * Hyperlink shortcuts next to key input fields (Gemini, OpenAI, Claude, DeepSeek, Groq, OpenRouter) pointing directly to developer dashboards.
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save
@@ -182,7 +197,6 @@ The items below are still in the conceptual stage and are being evaluated for te
 - **Smart Inline Autocomplete (Ghost Text):** Real-time gray text code suggestions inside the editor similar to Copilot (Complexity: High).
 - **IDE Debugger Auto Hook:** Dynamic capture and automatic explanation of active exceptions raised during debug sessions (Complexity: High).
 - **Automatic project documentation generation** (scan units and generate a complete `docs/API.md`).
-- **Native GitHub Copilot / GitLab Duo Integration (Phase 2):** Integrated OAuth login flow and automated token refresh mechanics (Complexity: High).
 - **Native macOS/Linux support** via FPC/Lazarus (feasibility analysis).
 
 ---

@@ -171,6 +171,13 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Created the virtual provider `TRadIAWebViewBridgeProvider` for synchronous/asynchronous AI request orchestration targeting the active WebView2 window.
     *   Configured a secure Chromium User-Agent to prevent OAuth blocks during Google's authentication flow.
 
+### 22. Native GitHub Copilot Support (Phase 2) - Item #29
+*   **Description**: Native support for the GitHub Copilot cloud with integrated OAuth Device Flow and one-click VS Code credential importing, along with settings UI shortcut links to obtain API keys for other providers.
+*   **Details**:
+    *   Developed the `RadIA.Provider.GithubCopilot.pas` unit featuring the provider class and thread-safe session token management from `https://api.github.com/copilot_internal/v2/token`.
+    *   Developed the VCL modal auth form `RadIA.UI.GithubAuthForm.pas` for background device login polling.
+    *   Updated the options frame to include the Copilot tab with login/import buttons and "Get API Key" hyperlink shortcuts for cloud-based providers.
+
 ---
 
 ## ⏳ In Development
