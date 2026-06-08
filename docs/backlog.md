@@ -188,6 +188,16 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Validação com novos testes unitários em `RadIA.Tests.ProvidersEx.pas` e correções de mocks de configuração em `RadIA.Tests.Service.pas`.
 
 
+### 24. Provedor Nativo AWS Bedrock com Assinatura SigV4 e Parser EventStream - Item #33
+*   **Descrição**: Suporte nativo completo ao provedor AWS Bedrock, utilizando assinaturas criptográficas AWS Signature Version 4 (SigV4) e decodificação sob demanda do stream binário no padrão AWS EventStream.
+*   **Detalhes**:
+    *   Desenvolvimento da classe do provedor `TRadIABedrockProvider` na unit `RadIA.Provider.Bedrock.pas` integrado ao barramento central.
+    *   Desenvolvimento do utilitário criptográfico `TAwsSigV4Signer` na unit `RadIA.Core.AwsSigner.pas` para cálculo SHA-256 e HMAC-SHA-256 das assinaturas SigV4 exigidas pelos cabeçalhos da Amazon.
+    *   Implementação do parser binário `TAwsEventStreamParser` para ler de forma incremental e decodificar payloads binários do tipo EventStream transmitidos nas respostas assíncronas do Bedrock.
+    *   Criação da aba VCL correspondente na interface de opções da IDE do Delphi com campos persistidos criptograficamente para as chaves IAM da AWS (Access Key, Secret Key, Region e Session Token).
+    *   Inclusão de novos testes unitários em `RadIA.Tests.ProvidersEx.pas`, totalizando a aprovação de **112 testes verdes** na suite completa de testes.
+
+
 ---
 
 ## ⏳ Em Desenvolvimento

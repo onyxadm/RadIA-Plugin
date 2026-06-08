@@ -24,13 +24,14 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Anthropic Claude** | Provedor | Suporte nativo aos modelos Claude 3 Haiku e Claude 3.5 Sonnet. | ✅ Concluído |
 | **DeepSeek** | Provedor | Suporte nativo aos modelos DeepSeek Chat e Reasoning via chaves próprias (BYOK). | ✅ Concluído |
 | **Groq** | Provedor | Suporte nativo aos modelos Llama, Mixtral e Gemma na nuvem ultrarrápida da Groq via chaves próprias (BYOK). | ✅ Concluído |
-| **Ollama Local/Rede** | Provedor | Integração com modelos locais open-source sem chaves pagas e autodescoberta de tags. | ✅ Concluído |
 | **OpenRouter** | Provedor | Suporte nativo ao OpenRouter com streaming SSE, carregamento de modelos dinâmico e integração completa. | ✅ Concluído |
-| **LM Studio** | Provedor | Suporte nativo ao LM Studio com streaming SSE, autodescoberta de modelos locais e URL customizável. | ✅ Concluído |
 | **GitHub Copilot Nativo** | Provedor | Suporte oficial direto à nuvem do Copilot com Device Flow integrado e importação de chaves do VS Code em um clique. | ✅ Concluído |
 | **Azure OpenAI** | Provedor | Suporte nativo ao Azure OpenAI para compliance de TI corporativo, com URL de endpoint, deployment name e versão da API configuráveis. | ✅ Concluído |
 | **Alibaba Qwen** | Provedor | Suporte nativo aos modelos Alibaba Qwen (ModelStudio/DashScope) via chaves próprias (BYOK). | ✅ Concluído |
 | **Mistral AI** | Provedor | Suporte nativo aos modelos Mistral AI (Codestral, Mistral Large) via chaves próprias (BYOK). | ✅ Concluído |
+| **AWS Bedrock** | Provedor | Suporte nativo ao AWS Bedrock com assinatura SigV4, desfragmentador EventStream e autenticação segura (IAM/DPAPI). | ✅ Concluído |
+| **Ollama Local/Rede** | Provedor | Integração com modelos locais open-source sem chaves pagas e autodescoberta de tags. | ✅ Concluído |
+| **LM Studio** | Provedor | Suporte nativo ao LM Studio com streaming SSE, autodescoberta de modelos locais e URL customizável. | ✅ Concluído |
 | **Custom Base URL** | Provedor | Suporte a qualquer endpoint compatível com OpenAI (Groq, DeepSeek, LM Studio). | ✅ Concluído |
 | **Provedores Dinâmicos** | Provedor | Arquitetura plugin-like orientada a metadados para registro dinâmico de novos modelos/backends de IA. | ✅ Concluído |
 | **Provedores Dinâmicos via JSON** | Provedor | Inclusão de novos provedores compatíveis com a API OpenAI salvando arquivos JSON em `%APPDATA%\RadIA\providers\`. | ✅ Concluído |

@@ -96,6 +96,10 @@ Enter the obtained keys in the plugin settings (**Settings** at the top of the c
    * **How to obtain:** Access the [Mistral AI Console](https://console.mistral.ai/).
    * **Instructions:** Go to the **API Keys** section, create a new key, and copy the token.
 
+9. **AWS Bedrock**
+   * **How to obtain:** Through the AWS Console (Amazon Web Services).
+   * **Instructions:** Enable access to your desired models (such as Anthropic Claude or Meta Llama) inside the Bedrock console. Create IAM access credentials inside the AWS console to obtain an **Access Key ID** and a **Secret Access Key**. In the RadIA options frame, configure these fields, enter the AWS **Region** where Bedrock is provisioned (e.g., `us-east-1`), and optionally provide the **Session Token** if you are using temporary IAM credentials.
+
 > **Note on Dynamic and Enterprise Providers:** You can also dynamically add new OpenAI-compatible API providers (such as GitHub Copilot or third-party proxies) by saving JSON configuration files under `%APPDATA%\RadIA\providers\`. For more details, check our [Guide for Adding New Providers (docs/new_provider_guide.en.md)](new_provider_guide.en.md) and the [GitHub Copilot Configuration Guide (docs/copilot_proxy_guide.en.md)](copilot_proxy_guide.en.md).
 
 ---

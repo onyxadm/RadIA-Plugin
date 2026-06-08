@@ -182,6 +182,23 @@ A versão v0.0.11 expandiu as conexões diretas BYOK do plugin ao introduzir sup
 
 ---
 
+## ✅ v0.0.12 — Provedor AWS Bedrock e Estabilização (Concluído)
+
+A versão v0.0.12 adicionou suporte oficial para o provedor AWS Bedrock, incluindo assinatura criptográfica segura SigV4 e decodificação incremental de streaming EventStream:
+
+- **Provedor AWS Bedrock Nativo:**
+  * Implementação da classe `TRadIABedrockProvider` em `RadIA.Provider.Bedrock.pas` integrada ao barramento de registro central.
+  * Criação do utilitário `TAwsSigV4Signer` em `RadIA.Core.AwsSigner.pas` para cálculo e assinatura criptográfica de cabeçalhos de requisição seguindo a especificação AWS Signature Version 4.
+  * Implementação do parser binário `TAwsEventStreamParser` para processar incrementalmente frames de streaming no formato binário AWS EventStream, convertendo-os em blocos de texto SSE em tempo real.
+- **Aba de Configurações e Persistência:**
+  * Criação de aba de configurações específica para o AWS Bedrock na UI (`Tools -> Options`), com persistência segura das credenciais AWS Access Key, Secret Key, Region e Session Token via Windows DPAPI.
+- **Resolução de Bugs e Testes:**
+  * Correção de vazamento/loop infinito de processamento de bytes no parser EventStream.
+  * Correção de conflito de resolução RTTI nos testes unitários e coerção de parâmetros reais.
+  * Atualização da suite de testes unitários (`RadIA.Tests.ProvidersEx.pas`), alcançando **112 testes DUnitX aprovados**.
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save
