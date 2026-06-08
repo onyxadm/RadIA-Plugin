@@ -59,7 +59,10 @@ LFormatRules :=
         'Generate a complete Delphi class structure mapped for DEXT ORM using the following rules:' + sLineBreak +
         '1. Uses Clause: Must include: System.SysUtils, System.Classes, Dext.Entity, Dext.Entity.Collections, Dext.Types.Nullable, Dext.Types.Lazy, Dext.Core.SmartTypes.' + sLineBreak +
         '2. Properties: Map database columns via public properties, not private/public fields. Private backing fields must start with F (e.g., FId, FName).' + sLineBreak +
-        '3. No Unnecessary Getters/Setters: For regular columns (including standard Smart Properties and nullable columns), do NOT create getter/setter methods. Use direct read/write access to the backing fields (e.g., property Name: StringType read FName write FName;). Getters and setters should only be created for relationship properties (BelongsTo/HasMany).' + sLineBreak +
+        '3. No Unnecessary Getters/Setters: For regular columns (including standard Smart Properties and nullable columns), ' +
+        'do NOT create getter/setter methods. Use direct read/write access to the backing fields ' +
+        '(e.g., property Name: StringType read FName write FName;). Getters and setters should ' +
+        'only be created for relationship properties (BelongsTo/HasMany).' + sLineBreak +
         '4. Smart Properties: Use native aliases for columns: IntType, StringType, DoubleType, BoolType.' + sLineBreak +
         '5. Class Attributes: Apply [Table(''table_name'')] directly above the class definition.' + sLineBreak +
         '6. Primary Keys: Annotate properties with [PK] or [PK, AutoInc] for auto-incrementing fields.' + sLineBreak +

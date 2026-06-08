@@ -255,6 +255,15 @@ try {
     } else {
         $dccParamsTests += @('-$D+', '-$L+', '-O-', '-DDEBUG')
     }
+    
+    # Inclui o path do DUnitX nativo do Delphi para evitar erros se nao estiver no dcc32.cfg global
+    if ($selectedInstall) {
+        $dunitxPath = Join-Path $selectedInstall.RootDir "source\DUnitX"
+        if (Test-Path $dunitxPath) {
+            $dccParamsTests += "-U$dunitxPath"
+        }
+    }
+    
     & dcc32 $dccParamsTests RadIATests.dpr
 } finally {
     Pop-Location
