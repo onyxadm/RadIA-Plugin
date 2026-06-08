@@ -390,6 +390,10 @@ begin
     if TProviderRegistry.GetProvider(AProviderId, LMeta) and LMeta.IsDynamic then
       Exit(True);
 
+    // Provedores configurados para usar Web Login (Plus/Pro) nao exigem API Key
+    if SameText(FConfig.GetProviderAuthType(AProviderId), 'web_login') then
+      Exit(True);
+
     Result := not FConfig.GetApiKey(AProviderId).Trim.IsEmpty;
   end;
 end;
