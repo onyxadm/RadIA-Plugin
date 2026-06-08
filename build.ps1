@@ -251,6 +251,20 @@ if ($LASTEXITCODE -ne 0) {
     throw "Compilacao do pacote principal falhou."
 }
 
+# 6.1 Verificar disponibilidade do DUnitX caso os testes nao tenham sido explicitamente ignorados
+if (-not $SkipTests) {
+    $dunitxPath = ""
+    if ($selectedInstall) {
+        $dunitxPath = Join-Path $selectedInstall.RootDir "source\DUnitX"
+    }
+    
+    if (-not $dunitxPath -or -not (Test-Path $dunitxPath)) {
+        Write-Host "AVISO: O framework DUnitX nao foi detectado na sua instalacao do Delphi." -ForegroundColor Yellow
+        Write-Host "       Os testes unitarios serao desativados automaticamente e o instalador prosseguira." -ForegroundColor Yellow
+        $SkipTests = $true
+    }
+}
+
 if (-not $SkipTests) {
     # 7. Compilar Suite de Testes (Tests/RadIATests.dpr)
     Write-Host "Compilando suite de testes RadIATests.dpr em modo $configName..." -ForegroundColor Yellow
