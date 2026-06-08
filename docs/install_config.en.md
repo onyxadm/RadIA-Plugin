@@ -12,7 +12,7 @@ The plugin can be installed in two ways:
 
 ### Option A: Automated Installation (PowerShell) - Recommended
 
-This option automatically compiles the plugin, runs unit tests, copies the binaries to the official public Delphi directories, and registers the plugin in the Windows Registry.
+This option automatically compiles the plugin, runs unit tests (if the **DUnitX** framework is installed in the IDE; otherwise, tests are automatically and transparently ignored), copies the binaries to the official public Delphi directories, and registers the plugin in the Windows Registry.
 
 1. Open the Windows PowerShell console.
 2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
@@ -101,3 +101,6 @@ The `.\build.ps1` script supports the following switches:
 
 > [!TIP]
 > **Multiple IDE Versions Support:** If you have more than one Delphi version installed on Windows and execute the script with `-Install` or `-Uninstall` without passing the `-DelphiVersion` parameter, the script will automatically list all valid installations found in the Registry and display a console menu for interactive selection.
+
+> [!NOTE]
+> **DUnitX Auto-Detection:** The installer automatically detects if the DUnitX framework is present in your selected Delphi installation. If DUnitX is missing (typical in basic/minimal IDE installations), the script will display a warning and automatically disable the unit tests suite, continuing with the compilation and successful installation of the main plugin without requiring user intervention.
