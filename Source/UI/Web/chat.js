@@ -98,7 +98,8 @@ const SLASH_COMMANDS = [
   { name: '/doc', desc: 'Generates XML documentation for the selected method', shortcut: 'Ctrl+Shift+D' },
   { name: '/template', desc: 'Opens the prompt templates library', shortcut: 'Ctrl+Shift+T' },
   { name: '/stacktrace', desc: 'Analyzes an error log or stack trace and points out the root cause', shortcut: '' },
-  { name: '/review', desc: 'Performs static analysis on the active unit (leaks/SOLID)', shortcut: '' }
+  { name: '/review', desc: 'Performs static analysis on the active unit (leaks/SOLID)', shortcut: '' },
+  { name: '/createproject', desc: 'Generates a complete Delphi project from specification', shortcut: '' }
 ];
 
 let slashPopupVisible = false;
