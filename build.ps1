@@ -282,6 +282,7 @@ try {
         $dunitxPath = Join-Path $selectedInstall.RootDir "source\DUnitX"
         if (Test-Path $dunitxPath) {
             $dccParamsTests += "-U$dunitxPath"
+            $dccParamsTests += "-U$(Join-Path $dunitxPath 'src')"
         }
     }
     
