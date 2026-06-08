@@ -36,6 +36,7 @@ type
     FMaxTokensList: TStringList;
     FTimeoutsList: TStringList;
     FBaseUrlsList: TStringList;
+    FAuthTypesList: TStringList;
 
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
@@ -80,6 +81,8 @@ type
     procedure SetTimeout(const AProviderName: string; const AValue: Integer);
     function GetProviderBaseUrl(const AProviderName: string): string;
     procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
+    function GetProviderAuthType(const AProviderName: string): string;
+    procedure SetProviderAuthType(const AProviderName: string; const AValue: string);
 
     function GetAutocompleteEnabled: Boolean;
     procedure SetAutocompleteEnabled(const AValue: Boolean);
@@ -187,6 +190,7 @@ begin
   FMaxTokensList := TStringList.Create;
   FTimeoutsList := TStringList.Create;
   FBaseUrlsList := TStringList.Create;
+  FAuthTypesList := TStringList.Create;
 
   FActiveProvider := 'Gemini';
   FSystemPrompt := CDefaultSystemPrompt;
@@ -221,6 +225,7 @@ begin
   FMaxTokensList.Free;
   FTimeoutsList.Free;
   FBaseUrlsList.Free;
+  FAuthTypesList.Free;
   inherited Destroy;
 end;
 
@@ -472,6 +477,7 @@ begin
           FTemperaturesList.Values[LSubKey.ToLower] := FloatToStr(ReadRegDouble(LReg, 'Temperature', 0.7), TFormatSettings.Invariant);
           FMaxTokensList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt(LReg, 'MaxTokens', 2048));
           FTimeoutsList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt(LReg, 'Timeout', 60));
+          FAuthTypesList.Values[LSubKey.ToLower] := ReadRegString(LReg, 'AuthType', 'api_key');
 
           LReg.CloseKey;
         end;
@@ -576,6 +582,7 @@ begin
         LReg.WriteFloat('Temperature', GetTemperature(LKey));
         LReg.WriteInteger('MaxTokens', GetMaxTokens(LKey));
         LReg.WriteInteger('Timeout', GetTimeout(LKey));
+        LReg.WriteString('AuthType', GetProviderAuthType(LKey));
 
         LReg.CloseKey;
         LogDebug('TRadIAConfig.Save: Saved ApiKey and Model (' + GetActiveModel(LKey) + ') for ' + LKey);
@@ -734,6 +741,22 @@ begin
   if AProviderName.IsEmpty then
     Exit;
   FBaseUrlsList.Values[AProviderName.ToLower] := AUrl;
+end;
+
+function TRadIAConfig.GetProviderAuthType(const AProviderName: string): string;
+begin
+  if AProviderName.IsEmpty then
+    Exit('api_key');
+  Result := FAuthTypesList.Values[AProviderName.ToLower];
+  if Result.IsEmpty then
+    Result := 'api_key';
+end;
+
+procedure TRadIAConfig.SetProviderAuthType(const AProviderName: string; const AValue: string);
+begin
+  if AProviderName.IsEmpty then
+    Exit;
+  FAuthTypesList.Values[AProviderName.ToLower] := AValue;
 end;
 
 function TRadIAConfig.GetAutocompleteEnabled: Boolean;

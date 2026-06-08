@@ -96,6 +96,8 @@ type
     procedure SetTimeout(const AProviderName: string; const AValue: Integer);
     function GetProviderBaseUrl(const AProviderName: string): string;
     procedure SetProviderBaseUrl(const AProviderName: string; const AUrl: string);
+    function GetProviderAuthType(const AProviderName: string): string;
+    procedure SetProviderAuthType(const AProviderName: string; const AValue: string);
 
     function GetAutocompleteEnabled: Boolean;
     procedure SetAutocompleteEnabled(const AValue: Boolean);

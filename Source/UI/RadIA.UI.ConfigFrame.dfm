@@ -26,17 +26,31 @@ object FrameAIConfig: TFrameAIConfig
         TabOrder = 0
         object lblGeminiKey: TLabel
           Left = 16
-          Top = 24
+          Top = 100
           Width = 43
           Height = 15
           Caption = 'API Key:'
         end
+        object grpGeminiAuthType: TRadioGroup
+          Left = 16
+          Top = 16
+          Width = 580
+          Height = 65
+          Caption = ' Connection Method '
+          Columns = 2
+          ItemIndex = 0
+          Items.Strings = (
+            'API Key (BYOK)'
+            'Web Login (Plus/Pro)')
+          TabOrder = 0
+          OnClick = grpGeminiAuthTypeClick
+        end
         object edtGeminiKey: TEdit
           Left = 16
-          Top = 43
+          Top = 119
           Width = 580
           Height = 23
-          TabOrder = 0
+          TabOrder = 1
         end
       end
     end
@@ -54,28 +68,42 @@ object FrameAIConfig: TFrameAIConfig
         TabOrder = 0
         object lblOpenAIKey: TLabel
           Left = 16
-          Top = 24
+          Top = 100
           Width = 43
           Height = 15
           Caption = 'API Key:'
         end
         object lblOpenAICustomUrl: TLabel
           Left = 16
-          Top = 80
+          Top = 160
           Width = 151
           Height = 15
           Caption = 'Custom Base URL (optional):'
         end
+        object grpOpenAIAuthType: TRadioGroup
+          Left = 16
+          Top = 16
+          Width = 580
+          Height = 65
+          Caption = ' Connection Method '
+          Columns = 2
+          ItemIndex = 0
+          Items.Strings = (
+            'API Key (BYOK)'
+            'Web Login (Plus/Pro)')
+          TabOrder = 0
+          OnClick = grpOpenAIAuthTypeClick
+        end
         object edtOpenAIKey: TEdit
           Left = 16
-          Top = 43
+          Top = 119
           Width = 580
           Height = 23
-          TabOrder = 0
+          TabOrder = 1
         end
         object edtOpenAICustomUrl: TEdit
           Left = 16
-          Top = 99
+          Top = 179
           Width = 575
           Height = 23
           Hint = 
@@ -83,7 +111,7 @@ object FrameAIConfig: TFrameAIConfig
             '/openai/v1 (Groq)'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 1
+          TabOrder = 2
         end
       end
     end

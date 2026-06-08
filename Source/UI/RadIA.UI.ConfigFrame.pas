@@ -32,10 +32,12 @@ type
     pnlSystemPrompt: TPanel;
     lblGeminiKey: TLabel;
     edtGeminiKey: TEdit;
+    grpGeminiAuthType: TRadioGroup;
     lblOpenAIKey: TLabel;
     edtOpenAIKey: TEdit;
     lblOpenAICustomUrl: TLabel;
     edtOpenAICustomUrl: TEdit;
+    grpOpenAIAuthType: TRadioGroup;
     lblClaudeKey: TLabel;
     edtClaudeKey: TEdit;
     lblOllamaUrl: TLabel;
@@ -69,6 +71,8 @@ type
     procedure btnDeleteTemplateClick(Sender: TObject);
     procedure btnSaveTemplateClick(Sender: TObject);
     procedure btnRestoreDefaultsClick(Sender: TObject);
+    procedure grpGeminiAuthTypeClick(Sender: TObject);
+    procedure grpOpenAIAuthTypeClick(Sender: TObject);
   private
     FConfig: IAIConfig;
     FTemplateManager: TPromptTemplateManager;
@@ -437,6 +441,12 @@ begin
   memSystemPrompt.Color := LColors.InputBgColor;
   memSystemPrompt.Font.Color := LColors.TextColor;
 
+  // Auth Type Radio Groups
+  grpGeminiAuthType.StyleElements := grpGeminiAuthType.StyleElements - [seClient, seBorder];
+  grpGeminiAuthType.Font.Color := LColors.TextColor;
+  grpOpenAIAuthType.StyleElements := grpOpenAIAuthType.StyleElements - [seClient, seBorder];
+  grpOpenAIAuthType.Font.Color := LColors.TextColor;
+
   // Inputs
   edtGeminiKey.StyleElements := edtGeminiKey.StyleElements - [seClient, seBorder];
   edtGeminiKey.Color := LColors.InputBgColor;
@@ -583,6 +593,18 @@ var
 begin
   LFormatSettings := TFormatSettings.Invariant;
   
+  if FConfig.GetProviderAuthType('Gemini') = 'web_login' then
+    grpGeminiAuthType.ItemIndex := 1
+  else
+    grpGeminiAuthType.ItemIndex := 0;
+  grpGeminiAuthTypeClick(nil);
+
+  if FConfig.GetProviderAuthType('OpenAI') = 'web_login' then
+    grpOpenAIAuthType.ItemIndex := 1
+  else
+    grpOpenAIAuthType.ItemIndex := 0;
+  grpOpenAIAuthTypeClick(nil);
+
   edtGeminiKey.Text := FConfig.GetApiKey('Gemini');
   edtOpenAIKey.Text := FConfig.GetApiKey('OpenAI');
   edtOpenAICustomUrl.Text := FConfig.OpenAICustomBaseUrl;
@@ -667,6 +689,16 @@ begin
     ShowMessage('LM Studio URL must start with http:// or https://');
     Exit;
   end;
+
+  if grpGeminiAuthType.ItemIndex = 1 then
+    FConfig.SetProviderAuthType('Gemini', 'web_login')
+  else
+    FConfig.SetProviderAuthType('Gemini', 'api_key');
+
+  if grpOpenAIAuthType.ItemIndex = 1 then
+    FConfig.SetProviderAuthType('OpenAI', 'web_login')
+  else
+    FConfig.SetProviderAuthType('OpenAI', 'api_key');
 
   FConfig.SetApiKey('Gemini', Trim(edtGeminiKey.Text));
   FConfig.SetApiKey('OpenAI', Trim(edtOpenAIKey.Text));
@@ -906,6 +938,33 @@ begin
   else if SameText(ACategoryName, 'LM Studio') then
     pgcSettings.ActivePage := tsLMStudio
 
+end;
+
+procedure TFrameAIConfig.grpGeminiAuthTypeClick(Sender: TObject);
+var
+  LIsApiKey: Boolean;
+begin
+  LIsApiKey := grpGeminiAuthType.ItemIndex = 0;
+  edtGeminiKey.Enabled := LIsApiKey;
+  lblGeminiKey.Enabled := LIsApiKey;
+  if not LIsApiKey then
+    edtGeminiKey.Text := '';
+end;
+
+procedure TFrameAIConfig.grpOpenAIAuthTypeClick(Sender: TObject);
+var
+  LIsApiKey: Boolean;
+begin
+  LIsApiKey := grpOpenAIAuthType.ItemIndex = 0;
+  edtOpenAIKey.Enabled := LIsApiKey;
+  lblOpenAIKey.Enabled := LIsApiKey;
+  edtOpenAICustomUrl.Enabled := LIsApiKey;
+  lblOpenAICustomUrl.Enabled := LIsApiKey;
+  if not LIsApiKey then
+  begin
+    edtOpenAIKey.Text := '';
+    edtOpenAICustomUrl.Text := '';
+  end;
 end;
 
 end.
