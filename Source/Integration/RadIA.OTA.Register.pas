@@ -166,6 +166,7 @@ var
   LThemingServices: IOTAIDEThemingServices;
 begin
   LogDebug('TRadIAWizard.Create called');
+  GIsShuttingDown := False;
   inherited Create;
   
   FOptionsPages := TInterfaceList.Create;
@@ -193,6 +194,7 @@ end;
 
 destructor TRadIAWizard.Destroy;
 begin
+  GIsShuttingDown := True;
   TRadIAMediator.Instance.UnregisterDiffHandler;
   if Assigned(FTimer) then
   begin
@@ -205,6 +207,7 @@ begin
   FEditorHook.Free;
   FOptionsPages.Free;
   
+  GWizardIndex := -1;
   inherited Destroy;
 end;
 

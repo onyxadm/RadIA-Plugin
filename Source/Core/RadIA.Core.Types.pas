@@ -39,6 +39,9 @@ const
 function MessageRoleToString(const ARole: TAIMessageRole): string;
 function StringToMessageRole(const AString: string): TAIMessageRole;
 
+var
+  GIsShuttingDown: Boolean = False;
+
 implementation
 
 uses
