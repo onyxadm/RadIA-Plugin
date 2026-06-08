@@ -121,7 +121,7 @@ uses
 
 const
   CDefaultSystemPrompt =
-    'You are a Delphi Senior Software Architect. Always reply in Brazilian Portuguese (pt-BR).' + sLineBreak +
+    'You are a Delphi Senior Software Architect. Always reply in the user''s language.' + sLineBreak +
     'When generating, refactoring, or optimizing code:' + sLineBreak +
     '1. Output ONLY the specific Pascal code block requested (e.g., a procedure, function, class, or code snippet).' + sLineBreak +
     '2. Do NOT wrap the code in a complete Delphi unit (no "unit", "interface", "implementation", or "end.") unless I explicitly ask you to create a full file.' + sLineBreak +

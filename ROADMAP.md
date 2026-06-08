@@ -112,7 +112,7 @@ A versão v0.0.6 expandiu drasticamente a extensibilidade do plugin ao permitir 
 A versão v0.0.7 introduziu melhorias e otimizações nas configurações iniciais do assistente:
 
 - **System Prompt Otimizado Padrão:**
-  * Definição de uma diretriz padrão (fallback) estruturada que instrui a IA a responder em Português do Brasil (pt-BR) e retornar apenas trechos específicos e limpos de código Pascal, evitando respostas verbosas com units Delphi completas.
+  * Definição de uma diretriz padrão (fallback) estruturada que instrui a IA a responder no mesmo idioma do usuário e retornar apenas trechos específicos e limpos de código Pascal, evitando respostas verbosas com units Delphi completas.
 - **Respeito às Preferências Gravadas:**
   * O prompt padrão funciona de forma não-intrusiva como valor de inicialização padrão (default) e não substitui de forma oculta ou forçada as customizações que o desenvolvedor já gravou e salvou no Registro do Windows.
 
