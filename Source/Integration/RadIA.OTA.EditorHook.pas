@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.EditorHook;
+unit RadIA.OTA.EditorHook;
 
 interface
 
@@ -121,11 +121,16 @@ end;
 procedure TRadIAEditorHook.ActiveFormChange(Sender: TObject);
 var
   I: Integer;
+  LForm: TCustomForm;
 begin
   if Assigned(Screen) then
   begin
     for I := 0 to Screen.FormCount - 1 do
-      HookPopupMenu(Screen.Forms[I]);
+    begin
+      LForm := Screen.Forms[I];
+      if Assigned(LForm) and SameText(LForm.ClassName, 'TEditWindow') then
+        HookPopupMenu(LForm);
+    end;
   end;
     
   if Assigned(FOldActiveFormChange) then
@@ -152,6 +157,10 @@ begin
   if not Assigned(AForm) then
     Exit;
 
+  // Filtrar apenas para TEditWindow para evitar efeitos colaterais em forms em construção
+  if not SameText(AForm.ClassName, 'TEditWindow') then
+    Exit;
+
   LPopupMenu := FindEditorPopupMenu(AForm);
   if not Assigned(LPopupMenu) then
     Exit;
@@ -170,6 +179,9 @@ var
   LOldOnPopup: TNotifyEvent;
 begin
   if not Assigned(AForm) then
+    Exit;
+
+  if not SameText(AForm.ClassName, 'TEditWindow') then
     Exit;
 
   LPopupMenu := FindEditorPopupMenu(AForm);
