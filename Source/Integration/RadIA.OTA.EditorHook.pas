@@ -3,15 +3,13 @@ unit RadIA.OTA.EditorHook;
 interface
 
 uses
-  System.Classes, System.SysUtils, Vcl.ActnList, Vcl.Menus, Vcl.Dialogs, ToolsAPI;
+  System.Classes, System.SysUtils, Vcl.Menus, Vcl.Dialogs, ToolsAPI;
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
   TRadIAEditorHook = class(TComponent)
   private
-    FActionList: TActionList;
-    procedure AddAction(const AName, ACaption, ACategory: string; AExecute: TNotifyEvent);
-    procedure ActionUpdate(Sender: TObject);
+    FBindingIndex: Integer;
 
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
@@ -38,12 +36,172 @@ uses
   RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
   RadIA.Core.Mediator, RadIA.OTA.DockableForm, RadIA.Core.Logger;
 
+type
+  { Class that implements IOTALocalMenu to build the editor context menu }
+  TRadIALocalMenu = class(TInterfacedObject, IOTALocalMenu)
+  private
+    FCaption: string;
+    FName: string;
+    FParent: string;
+    FPosition: Integer;
+    FExecuteProc: TProc;
+  public
+    constructor Create(const ACaption, AName, AParent: string; APosition: Integer; AExecuteProc: TProc);
+    { IOTALocalMenu }
+    function GetCaption: string;
+    function GetChecked: Boolean;
+    function GetEnabled: Boolean;
+    function GetHelpContext: THelpContext;
+    function GetName: string;
+    function GetParent: string;
+    function GetPosition: Integer;
+    function GetVerb: string;
+    procedure Execute(const Context: IOTAGetSelText);
+  end;
+
+  { Class that implements IOTAKeyboardBinding to register the context menus }
+  TRadIAKeyboardBinding = class(TInterfacedObject, IOTAKeyboardBinding)
+  private
+    FEditorHook: TRadIAEditorHook;
+  public
+    constructor Create(AEditorHook: TRadIAEditorHook);
+    { IOTAKeyboardBinding }
+    function GetBindingType: TBindingType;
+    function GetDisplayName: string;
+    function GetName: string;
+    procedure BindKeyboard(const BindingServices: IOTAKeyBindingServices);
+  end;
+
+{ TRadIALocalMenu }
+
+constructor TRadIALocalMenu.Create(const ACaption, AName, AParent: string; APosition: Integer; AExecuteProc: TProc);
+begin
+  inherited Create;
+  FCaption := ACaption;
+  FName := AName;
+  FParent := AParent;
+  FPosition := APosition;
+  FExecuteProc := AExecuteProc;
+end;
+
+function TRadIALocalMenu.GetCaption: string;
+begin
+  Result := FCaption;
+end;
+
+function TRadIALocalMenu.GetChecked: Boolean;
+begin
+  Result := False;
+end;
+
+function TRadIALocalMenu.GetEnabled: Boolean;
+begin
+  Result := True;
+end;
+
+function TRadIALocalMenu.GetHelpContext: THelpContext;
+begin
+  Result := 0;
+end;
+
+function TRadIALocalMenu.GetName: string;
+begin
+  Result := FName;
+end;
+
+function TRadIALocalMenu.GetParent: string;
+begin
+  Result := FParent;
+end;
+
+function TRadIALocalMenu.GetPosition: Integer;
+begin
+  Result := FPosition;
+end;
+
+function TRadIALocalMenu.GetVerb: string;
+begin
+  Result := FCaption;
+end;
+
+procedure TRadIALocalMenu.Execute(const Context: IOTAGetSelText);
+begin
+  if Assigned(FExecuteProc) then
+    FExecuteProc();
+end;
+
+{ TRadIAKeyboardBinding }
+
+constructor TRadIAKeyboardBinding.Create(AEditorHook: TRadIAEditorHook);
+begin
+  inherited Create;
+  FEditorHook := AEditorHook;
+end;
+
+function TRadIAKeyboardBinding.GetBindingType: TBindingType;
+begin
+  Result := btPartial;
+end;
+
+function TRadIAKeyboardBinding.GetDisplayName: string;
+begin
+  Result := 'RadIA Context Menu Binding';
+end;
+
+function TRadIAKeyboardBinding.GetName: string;
+begin
+  Result := 'RadIA.KeyboardBinding';
+end;
+
+procedure TRadIAKeyboardBinding.BindKeyboard(const BindingServices: IOTAKeyBindingServices);
+begin
+  // Register the root context menu item (Submenu)
+  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('RadIA', 'mnuRadIARoot', '', 0, nil));
+
+  // Register child submenus pointing Parent to 'mnuRadIARoot'
+  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Explain Selected Code', 'mnuRadIAExplain', 'mnuRadIARoot', 10,
+    procedure
+    begin
+      FEditorHook.OnExplainExecute(nil);
+    end));
+
+  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Optimize/Refactor Code', 'mnuRadIAOptimize', 'mnuRadIARoot', 20,
+    procedure
+    begin
+      FEditorHook.OnOptimizeExecute(nil);
+    end));
+
+  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Generate Unit Tests (DUnitX)', 'mnuRadIATests', 'mnuRadIARoot', 30,
+    procedure
+    begin
+      FEditorHook.OnTestsExecute(nil);
+    end));
+
+  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Locate Bugs/Memory Leaks', 'mnuRadIABugs', 'mnuRadIARoot', 40,
+    procedure
+    begin
+      FEditorHook.OnBugsExecute(nil);
+    end));
+
+  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Document Method (XML)', 'mnuRadIADoc', 'mnuRadIARoot', 50,
+    procedure
+    begin
+      FEditorHook.OnDocExecute(nil);
+    end));
+
+  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Review Active Unit (Leaks/SOLID)', 'mnuRadIAReview', 'mnuRadIARoot', 60,
+    procedure
+    begin
+      FEditorHook.OnReviewExecute(nil);
+    end));
+end;
+
 { TRadIAEditorHook }
 
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FActionList := nil;
+  FBindingIndex := 0;
 end;
 
 destructor TRadIAEditorHook.Destroy;
@@ -52,113 +210,32 @@ begin
   inherited Destroy;
 end;
 
-procedure TRadIAEditorHook.AddAction(const AName, ACaption, ACategory: string; AExecute: TNotifyEvent);
-var
-  LAct: TAction;
-begin
-  LAct := TAction.Create(FActionList);
-  LAct.Name := AName;
-  LAct.Caption := ACaption;
-  LAct.Category := ACategory;
-  LAct.ActionList := FActionList;
-  LAct.OnExecute := AExecute;
-  LAct.OnUpdate := ActionUpdate;
-end;
-
-procedure TRadIAEditorHook.ActionUpdate(Sender: TObject);
-begin
-  if Sender is TAction then
-    TAction(Sender).Enabled := True;
-end;
-
 procedure TRadIAEditorHook.Install;
 var
-  LEditorServices: IOTAEditorServices;
-  LEditorLocalMenu: INTAEditorLocalMenu;
+  LKeyboardServices: IOTAKeyboardServices;
+  LBinding: IOTAKeyboardBinding;
 begin
-  TLogger.Log('Installing editor local menu hooks', 'EditorHook');
-  if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
+  TLogger.Log('Installing editor local menu hooks via KeyboardBinding', 'EditorHook');
+  if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
   begin
-    LEditorLocalMenu := LEditorServices.GetEditorLocalMenu;
-    if Assigned(LEditorLocalMenu) then
-    begin
-      FActionList := TActionList.Create(Self);
-      FActionList.Name := 'RadIAEditorActionList';
-
-      // 1. Action Pai (Submenu)
-      AddAction(
-        'actRadIARoot',
-        'RadIA',
-        'RadIA',
-        nil
-      );
-
-      // 2. Actions Filhas (Subitens)
-      AddAction(
-        'actRadIAExplain',
-        'Explain Selected Code',
-        'RadIA.Code',
-        OnExplainExecute
-      );
-
-      AddAction(
-        'actRadIAOptimize',
-        'Optimize/Refactor Code',
-        'RadIA.Code',
-        OnOptimizeExecute
-      );
-
-      AddAction(
-        'actRadIATests',
-        'Generate Unit Tests (DUnitX)',
-        'RadIA.Code',
-        OnTestsExecute
-      );
-
-      AddAction(
-        'actRadIABugs',
-        'Locate Bugs/Memory Leaks',
-        'RadIA.Code',
-        OnBugsExecute
-      );
-
-      AddAction(
-        'actRadIADoc',
-        'Document Method (XML)',
-        'RadIA.Code',
-        OnDocExecute
-      );
-
-      AddAction(
-        'actRadIAReview',
-        'Review Active Unit (Leaks/SOLID)',
-        'RadIA.Code',
-        OnReviewExecute
-      );
-
-      LEditorLocalMenu.RegisterActionList(
-        FActionList,
-        cEdMenuCatBase
-      );
-    end;
+    LBinding := TRadIAKeyboardBinding.Create(Self);
+    FBindingIndex := LKeyboardServices.AddKeyboardBinding(LBinding);
+    TLogger.Log(Format('KeyboardBinding registered with index %d', [FBindingIndex]), 'EditorHook');
   end;
 end;
 
 procedure TRadIAEditorHook.Uninstall;
 var
-  LEditorServices: IOTAEditorServices;
-  LEditorLocalMenu: INTAEditorLocalMenu;
+  LKeyboardServices: IOTAKeyboardServices;
 begin
-  if Assigned(FActionList) then
+  if FBindingIndex > 0 then
   begin
-    TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
-    if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
+    TLogger.Log(Format('Uninstalling editor local menu hooks (index %d)', [FBindingIndex]), 'EditorHook');
+    if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
     begin
-      LEditorLocalMenu := LEditorServices.GetEditorLocalMenu;
-      if Assigned(LEditorLocalMenu) then
-        LEditorLocalMenu.UnregisterActionList(cEdMenuCatBase);
+      LKeyboardServices.RemoveKeyboardBinding(FBindingIndex);
     end;
-    FreeAndNil(FActionList);
+    FBindingIndex := 0;
   end;
 end;
 

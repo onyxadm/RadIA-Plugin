@@ -239,6 +239,15 @@ if ($Release) {
     $dccParams += @('-$D+', '-$L+', '-O-', '-DDEBUG')
 }
 & $compiler $dccParams RadIA.dpk
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "=========================================================================" -ForegroundColor Red
+    Write-Host "ERRO: A compilacao do pacote principal RadIA.dpk falhou." -ForegroundColor Red
+    Write-Host "Por favor, corrija os erros de compilacao listados acima." -ForegroundColor Red
+    Write-Host "=========================================================================" -ForegroundColor Red
+    Write-Host ""
+    throw "Compilacao do pacote principal falhou."
+}
 
 # 7. Compilar Suite de Testes (Tests/RadIATests.dpr)
 Write-Host "Compilando suite de testes RadIATests.dpr em modo $configName..." -ForegroundColor Yellow
@@ -256,8 +265,20 @@ try {
         $dccParamsTests += @('-$D+', '-$L+', '-O-', '-DDEBUG')
     }
     
-    # Inclui o path do DUnitX nativo do Delphi para evitar erros se nao estiver no dcc32.cfg global
+    # 7.1 Resolver Search Paths globais do Delphi no Registro para que compile com as mesmas units da IDE
     if ($selectedInstall) {
+        $libRegPath = "HKCU:\Software\Embarcadero\BDS\$delphiVer\Library\Win32"
+        if (Test-Path $libRegPath) {
+            $searchPath = (Get-ItemProperty -Path $libRegPath -Name "Search Path" -ErrorAction SilentlyContinue)."Search Path"
+            if ($searchPath) {
+                # Substitui as macro-variaveis do Delphi pelo caminho fisico correspondente
+                $resolvedPath = $searchPath.Replace('$(BDS)', $selectedInstall.RootDir)
+                $resolvedPath = $resolvedPath.Replace('$(BDSCOMMONDIR)', "C:\Users\Public\Documents\Embarcadero\Studio\$delphiVer")
+                $dccParamsTests += "-U$resolvedPath"
+            }
+        }
+        
+        # Fallback de seguranca caso o DUnitX nao esteja no Search Path do registro mas exista na pasta source
         $dunitxPath = Join-Path $selectedInstall.RootDir "source\DUnitX"
         if (Test-Path $dunitxPath) {
             $dccParamsTests += "-U$dunitxPath"
