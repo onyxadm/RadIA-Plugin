@@ -3,13 +3,19 @@ unit RadIA.OTA.EditorHook;
 interface
 
 uses
-  System.Classes, System.SysUtils, Vcl.Menus, Vcl.Dialogs, ToolsAPI;
+  System.Classes, System.SysUtils, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, ToolsAPI;
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
   TRadIAEditorHook = class(TComponent)
   private
-    FBindingIndex: Integer;
+    FOldActiveFormChange: TNotifyEvent;
+    FInstalled: Boolean;
+    
+    procedure ActiveFormChange(Sender: TObject);
+    procedure InjectMenuIntoForm(AForm: TCustomForm);
+    procedure RemoveMenuFromForm(AForm: TCustomForm);
+    function FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
 
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
@@ -36,172 +42,13 @@ uses
   RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
   RadIA.Core.Mediator, RadIA.OTA.DockableForm, RadIA.Core.Logger;
 
-type
-  { Class that implements IOTALocalMenu to build the editor context menu }
-  TRadIALocalMenu = class(TInterfacedObject, IOTALocalMenu)
-  private
-    FCaption: string;
-    FName: string;
-    FParent: string;
-    FPosition: Integer;
-    FExecuteProc: TProc;
-  public
-    constructor Create(const ACaption, AName, AParent: string; APosition: Integer; AExecuteProc: TProc);
-    { IOTALocalMenu }
-    function GetCaption: string;
-    function GetChecked: Boolean;
-    function GetEnabled: Boolean;
-    function GetHelpContext: THelpContext;
-    function GetName: string;
-    function GetParent: string;
-    function GetPosition: Integer;
-    function GetVerb: string;
-    procedure Execute(const Context: IOTAGetSelText);
-  end;
-
-  { Class that implements IOTAKeyboardBinding to register the context menus }
-  TRadIAKeyboardBinding = class(TInterfacedObject, IOTAKeyboardBinding)
-  private
-    FEditorHook: TRadIAEditorHook;
-  public
-    constructor Create(AEditorHook: TRadIAEditorHook);
-    { IOTAKeyboardBinding }
-    function GetBindingType: TBindingType;
-    function GetDisplayName: string;
-    function GetName: string;
-    procedure BindKeyboard(const BindingServices: IOTAKeyBindingServices);
-  end;
-
-{ TRadIALocalMenu }
-
-constructor TRadIALocalMenu.Create(const ACaption, AName, AParent: string; APosition: Integer; AExecuteProc: TProc);
-begin
-  inherited Create;
-  FCaption := ACaption;
-  FName := AName;
-  FParent := AParent;
-  FPosition := APosition;
-  FExecuteProc := AExecuteProc;
-end;
-
-function TRadIALocalMenu.GetCaption: string;
-begin
-  Result := FCaption;
-end;
-
-function TRadIALocalMenu.GetChecked: Boolean;
-begin
-  Result := False;
-end;
-
-function TRadIALocalMenu.GetEnabled: Boolean;
-begin
-  Result := True;
-end;
-
-function TRadIALocalMenu.GetHelpContext: THelpContext;
-begin
-  Result := 0;
-end;
-
-function TRadIALocalMenu.GetName: string;
-begin
-  Result := FName;
-end;
-
-function TRadIALocalMenu.GetParent: string;
-begin
-  Result := FParent;
-end;
-
-function TRadIALocalMenu.GetPosition: Integer;
-begin
-  Result := FPosition;
-end;
-
-function TRadIALocalMenu.GetVerb: string;
-begin
-  Result := FCaption;
-end;
-
-procedure TRadIALocalMenu.Execute(const Context: IOTAGetSelText);
-begin
-  if Assigned(FExecuteProc) then
-    FExecuteProc();
-end;
-
-{ TRadIAKeyboardBinding }
-
-constructor TRadIAKeyboardBinding.Create(AEditorHook: TRadIAEditorHook);
-begin
-  inherited Create;
-  FEditorHook := AEditorHook;
-end;
-
-function TRadIAKeyboardBinding.GetBindingType: TBindingType;
-begin
-  Result := btPartial;
-end;
-
-function TRadIAKeyboardBinding.GetDisplayName: string;
-begin
-  Result := 'RadIA Context Menu Binding';
-end;
-
-function TRadIAKeyboardBinding.GetName: string;
-begin
-  Result := 'RadIA.KeyboardBinding';
-end;
-
-procedure TRadIAKeyboardBinding.BindKeyboard(const BindingServices: IOTAKeyBindingServices);
-begin
-  // Register the root context menu item (Submenu)
-  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('RadIA', 'mnuRadIARoot', '', 0, nil));
-
-  // Register child submenus pointing Parent to 'mnuRadIARoot'
-  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Explain Selected Code', 'mnuRadIAExplain', 'mnuRadIARoot', 10,
-    procedure
-    begin
-      FEditorHook.OnExplainExecute(nil);
-    end));
-
-  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Optimize/Refactor Code', 'mnuRadIAOptimize', 'mnuRadIARoot', 20,
-    procedure
-    begin
-      FEditorHook.OnOptimizeExecute(nil);
-    end));
-
-  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Generate Unit Tests (DUnitX)', 'mnuRadIATests', 'mnuRadIARoot', 30,
-    procedure
-    begin
-      FEditorHook.OnTestsExecute(nil);
-    end));
-
-  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Locate Bugs/Memory Leaks', 'mnuRadIABugs', 'mnuRadIARoot', 40,
-    procedure
-    begin
-      FEditorHook.OnBugsExecute(nil);
-    end));
-
-  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Document Method (XML)', 'mnuRadIADoc', 'mnuRadIARoot', 50,
-    procedure
-    begin
-      FEditorHook.OnDocExecute(nil);
-    end));
-
-  BindingServices.RegisterLocalMenu('RadIA', TRadIALocalMenu.Create('Review Active Unit (Leaks/SOLID)', 'mnuRadIAReview', 'mnuRadIARoot', 60,
-    procedure
-    begin
-      FEditorHook.OnReviewExecute(nil);
-    end));
-end;
-
 { TRadIAEditorHook }
 
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FBindingIndex := 0;
+  FOldActiveFormChange := nil;
+  FInstalled := False;
 end;
 
 destructor TRadIAEditorHook.Destroy;
@@ -211,31 +58,157 @@ begin
 end;
 
 procedure TRadIAEditorHook.Install;
-var
-  LKeyboardServices: IOTAKeyboardServices;
-  LBinding: IOTAKeyboardBinding;
 begin
-  TLogger.Log('Installing editor local menu hooks via KeyboardBinding', 'EditorHook');
-  if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
-  begin
-    LBinding := TRadIAKeyboardBinding.Create(Self);
-    FBindingIndex := LKeyboardServices.AddKeyboardBinding(LBinding);
-    TLogger.Log(Format('KeyboardBinding registered with index %d', [FBindingIndex]), 'EditorHook');
-  end;
+  if FInstalled then
+    Exit;
+
+  TLogger.Log('Installing editor local menu hooks via VCL injection', 'EditorHook');
+  FOldActiveFormChange := Screen.OnActiveFormChange;
+  Screen.OnActiveFormChange := ActiveFormChange;
+  FInstalled := True;
+  
+  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+    InjectMenuIntoForm(Screen.ActiveForm);
 end;
 
 procedure TRadIAEditorHook.Uninstall;
 var
-  LKeyboardServices: IOTAKeyboardServices;
+  I: Integer;
 begin
-  if FBindingIndex > 0 then
+  if not FInstalled then
+    Exit;
+
+  TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
+  if Assigned(Screen) then
+    Screen.OnActiveFormChange := FOldActiveFormChange;
+  FInstalled := False;
+    
+  if Assigned(Screen) then
   begin
-    TLogger.Log(Format('Uninstalling editor local menu hooks (index %d)', [FBindingIndex]), 'EditorHook');
-    if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
+    for I := 0 to Screen.FormCount - 1 do
+      RemoveMenuFromForm(Screen.Forms[I]);
+  end;
+end;
+
+procedure TRadIAEditorHook.ActiveFormChange(Sender: TObject);
+begin
+  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+    InjectMenuIntoForm(Screen.ActiveForm);
+    
+  if Assigned(FOldActiveFormChange) then
+    FOldActiveFormChange(Sender);
+end;
+
+function TRadIAEditorHook.FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
+var
+  I: Integer;
+  LComp: TComponent;
+begin
+  Result := nil;
+  if not Assigned(AParent) then
+    Exit;
+    
+  for I := 0 to AParent.ComponentCount - 1 do
+  begin
+    LComp := AParent.Components[I];
+    if LComp is TPopupMenu then
     begin
-      LKeyboardServices.RemoveKeyboardBinding(FBindingIndex);
+      if SameText(LComp.Name, 'EditorLocalMenu') then
+      begin
+        Result := TPopupMenu(LComp);
+        Exit;
+      end;
     end;
-    FBindingIndex := 0;
+    
+    Result := FindEditorPopupMenu(LComp);
+    if Assigned(Result) then
+      Exit;
+  end;
+end;
+
+procedure TRadIAEditorHook.InjectMenuIntoForm(AForm: TCustomForm);
+var
+  LPopupMenu: TPopupMenu;
+  LRootItem: TMenuItem;
+  LSubItem: TMenuItem;
+begin
+  if not Assigned(AForm) or not SameText(AForm.ClassName, 'TEditWindow') then
+    Exit;
+
+  LPopupMenu := FindEditorPopupMenu(AForm);
+  if not Assigned(LPopupMenu) then
+    Exit;
+
+  // Evita duplicidade se o menu ja estiver injetado nesta janela de edicao
+  if Assigned(LPopupMenu.Items.Find('mnuRadIARoot')) then
+    Exit;
+
+  TLogger.Log(Format('Injecting RadIA menu into local menu of editor: %s', [AForm.Name]), 'EditorHook');
+
+  // Cria o item de submenu raiz
+  LRootItem := TMenuItem.Create(LPopupMenu);
+  LRootItem.Name := 'mnuRadIARoot';
+  LRootItem.Caption := 'RadIA';
+
+  // Cria e aninha os subitens de acao
+  LSubItem := TMenuItem.Create(LPopupMenu);
+  LSubItem.Caption := 'Explain Selected Code';
+  LSubItem.OnClick := OnExplainExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(LPopupMenu);
+  LSubItem.Caption := 'Optimize/Refactor Code';
+  LSubItem.OnClick := OnOptimizeExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(LPopupMenu);
+  LSubItem.Caption := 'Generate Unit Tests (DUnitX)';
+  LSubItem.OnClick := OnTestsExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(LPopupMenu);
+  LSubItem.Caption := 'Locate Bugs/Memory Leaks';
+  LSubItem.OnClick := OnBugsExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(LPopupMenu);
+  LSubItem.Caption := 'Document Method (XML)';
+  LSubItem.OnClick := OnDocExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(LPopupMenu);
+  LSubItem.Caption := 'Review Active Unit (Leaks/SOLID)';
+  LSubItem.OnClick := OnReviewExecute;
+  LRootItem.Add(LSubItem);
+
+  // Adiciona um separador visual antes do item RadIA
+  LSubItem := TMenuItem.Create(LPopupMenu);
+  LSubItem.Caption := '-';
+  LSubItem.Name := 'mnuRadIASeparator';
+  LPopupMenu.Items.Add(LSubItem);
+
+  // Adiciona o RadIA ao menu de contexto da IDE
+  LPopupMenu.Items.Add(LRootItem);
+end;
+
+procedure TRadIAEditorHook.RemoveMenuFromForm(AForm: TCustomForm);
+var
+  LPopupMenu: TPopupMenu;
+  LItem: TMenuItem;
+begin
+  if not Assigned(AForm) or not SameText(AForm.ClassName, 'TEditWindow') then
+    Exit;
+
+  LPopupMenu := FindEditorPopupMenu(AForm);
+  if Assigned(LPopupMenu) then
+  begin
+    LItem := LPopupMenu.Items.Find('mnuRadIARoot');
+    if Assigned(LItem) then
+      LPopupMenu.Items.Remove(LItem);
+
+    LItem := LPopupMenu.Items.Find('mnuRadIASeparator');
+    if Assigned(LItem) then
+      LPopupMenu.Items.Remove(LItem);
   end;
 end;
 
