@@ -5,8 +5,9 @@
 </div>
 
 <p align="center">
-  <img src="docs/images/radia_owl_mascot.png" alt="RadIA Mascot" width="160" />
+  <img src="docs/images/radia_readme_banner-2.png" alt="RadIA - Assistente de IA para Delphi IDE" width="100%" />
 </p>
+
 
 # RadIA - Assistente de IA para Delphi IDE
 
