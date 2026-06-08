@@ -575,6 +575,92 @@ object FrameAIConfig: TFrameAIConfig
         end
       end
     end
+    object tsBedrock: TTabSheet
+      Caption = 'AWS Bedrock'
+      TabVisible = False
+      object pnlBedrock: TPanel
+        Left = 0
+        Top = 0
+        Width = 622
+        Height = 472
+        Align = alClient
+        BevelOuter = bvNone
+        ShowCaption = False
+        TabOrder = 0
+        object lblAwsAccessKeyId: TLabel
+          Left = 16
+          Top = 24
+          Width = 108
+          Height = 15
+          Caption = 'AWS Access Key ID:'
+        end
+        object lblAwsSecretAccessKey: TLabel
+          Left = 16
+          Top = 84
+          Width = 127
+          Height = 15
+          Caption = 'AWS Secret Access Key:'
+        end
+        object lblAwsRegion: TLabel
+          Left = 16
+          Top = 144
+          Width = 67
+          Height = 15
+          Caption = 'AWS Region:'
+        end
+        object lblAwsSessionToken: TLabel
+          Left = 16
+          Top = 204
+          Width = 138
+          Height = 15
+          Caption = 'AWS Session Token (opt):'
+        end
+        object lnkBedrockGetKey: TLabel
+          Left = 520
+          Top = 24
+          Width = 76
+          Height = 15
+          Cursor = crHandPoint
+          Caption = 'IAM Console'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clHighlight
+          Font.Height = -12
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsUnderline]
+          ParentFont = False
+          OnClick = lnkBedrockGetKeyClick
+        end
+        object edtAwsAccessKeyId: TEdit
+          Left = 16
+          Top = 43
+          Width = 580
+          Height = 23
+          TabOrder = 0
+        end
+        object edtAwsSecretAccessKey: TEdit
+          Left = 16
+          Top = 103
+          Width = 580
+          Height = 23
+          PasswordChar = '*'
+          TabOrder = 1
+        end
+        object edtAwsRegion: TEdit
+          Left = 16
+          Top = 163
+          Width = 580
+          Height = 23
+          TabOrder = 2
+        end
+        object edtAwsSessionToken: TEdit
+          Left = 16
+          Top = 223
+          Width = 580
+          Height = 23
+          TabOrder = 3
+        end
+      end
+    end
     object tsSystemPrompt: TTabSheet
       Caption = 'System'
       TabVisible = False

@@ -61,6 +61,18 @@ type
     edtMistralKey: TEdit;
     lnkMistralGetKey: TLabel;
 
+    tsBedrock: TTabSheet;
+    pnlBedrock: TPanel;
+    lblAwsAccessKeyId: TLabel;
+    edtAwsAccessKeyId: TEdit;
+    lblAwsSecretAccessKey: TLabel;
+    edtAwsSecretAccessKey: TEdit;
+    lblAwsRegion: TLabel;
+    edtAwsRegion: TEdit;
+    lblAwsSessionToken: TLabel;
+    edtAwsSessionToken: TEdit;
+    lnkBedrockGetKey: TLabel;
+
     lnkGeminiGetKey: TLabel;
     lnkOpenAIGetKey: TLabel;
     lnkClaudeGetKey: TLabel;
@@ -119,6 +131,7 @@ type
     procedure lnkOpenRouterGetKeyClick(Sender: TObject);
     procedure lnkQwenGetKeyClick(Sender: TObject);
     procedure lnkMistralGetKeyClick(Sender: TObject);
+    procedure lnkBedrockGetKeyClick(Sender: TObject);
     procedure btnConnectGithubClick(Sender: TObject);
     procedure btnImportVSCodeClick(Sender: TObject);
   private
@@ -205,7 +218,8 @@ begin
   CreateProviderAdvancedControls(tsAzureOpenAI, 'AzureOpenAI');
   CreateProviderAdvancedControls(tsQwen, 'Qwen');
   CreateProviderAdvancedControls(tsMistral, 'Mistral');
-
+  CreateProviderAdvancedControls(tsBedrock, 'Bedrock');
+ 
   { Create General/Logs Tab and controls programmatically }
   tsGeneral := TTabSheet.Create(Self);
   tsGeneral.PageControl := pgcSettings;
@@ -471,6 +485,9 @@ begin
   pnlMistral.StyleElements := pnlMistral.StyleElements - [seClient, seBorder];
   pnlMistral.Color := LColors.BgBase;
   pnlMistral.ParentBackground := False;
+  pnlBedrock.StyleElements := pnlBedrock.StyleElements - [seClient, seBorder];
+  pnlBedrock.Color := LColors.BgBase;
+  pnlBedrock.ParentBackground := False;
   pnlSystemPrompt.StyleElements := pnlSystemPrompt.StyleElements - [seClient, seBorder];
   pnlSystemPrompt.Color := LColors.BgBase;
   pnlSystemPrompt.ParentBackground := False;
@@ -570,6 +587,19 @@ begin
   edtMistralKey.StyleElements := edtMistralKey.StyleElements - [seClient, seBorder];
   edtMistralKey.Color := LColors.InputBgColor;
   edtMistralKey.Font.Color := LColors.TextColor;
+  
+  edtAwsAccessKeyId.StyleElements := edtAwsAccessKeyId.StyleElements - [seClient, seBorder];
+  edtAwsAccessKeyId.Color := LColors.InputBgColor;
+  edtAwsAccessKeyId.Font.Color := LColors.TextColor;
+  edtAwsSecretAccessKey.StyleElements := edtAwsSecretAccessKey.StyleElements - [seClient, seBorder];
+  edtAwsSecretAccessKey.Color := LColors.InputBgColor;
+  edtAwsSecretAccessKey.Font.Color := LColors.TextColor;
+  edtAwsRegion.StyleElements := edtAwsRegion.StyleElements - [seClient, seBorder];
+  edtAwsRegion.Color := LColors.InputBgColor;
+  edtAwsRegion.Font.Color := LColors.TextColor;
+  edtAwsSessionToken.StyleElements := edtAwsSessionToken.StyleElements - [seClient, seBorder];
+  edtAwsSessionToken.Color := LColors.InputBgColor;
+  edtAwsSessionToken.Font.Color := LColors.TextColor;
 
   // Labels Link
   lnkGeminiGetKey.StyleElements := lnkGeminiGetKey.StyleElements - [seClient, seBorder];
@@ -589,6 +619,9 @@ begin
   lnkQwenGetKey.Font.Color := LColors.AccentColor;
   lnkMistralGetKey.StyleElements := lnkMistralGetKey.StyleElements - [seClient, seBorder];
   lnkMistralGetKey.Font.Color := LColors.AccentColor;
+  
+  lnkBedrockGetKey.StyleElements := lnkBedrockGetKey.StyleElements - [seClient, seBorder];
+  lnkBedrockGetKey.Font.Color := LColors.AccentColor;
 
   // Labels
   lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
@@ -623,6 +656,15 @@ begin
   lblQwenKey.Font.Color := LColors.TextColor;
   lblMistralKey.StyleElements := lblMistralKey.StyleElements - [seClient, seBorder];
   lblMistralKey.Font.Color := LColors.TextColor;
+  
+  lblAwsAccessKeyId.StyleElements := lblAwsAccessKeyId.StyleElements - [seClient, seBorder];
+  lblAwsAccessKeyId.Font.Color := LColors.TextColor;
+  lblAwsSecretAccessKey.StyleElements := lblAwsSecretAccessKey.StyleElements - [seClient, seBorder];
+  lblAwsSecretAccessKey.Font.Color := LColors.TextColor;
+  lblAwsRegion.StyleElements := lblAwsRegion.StyleElements - [seClient, seBorder];
+  lblAwsRegion.Font.Color := LColors.TextColor;
+  lblAwsSessionToken.StyleElements := lblAwsSessionToken.StyleElements - [seClient, seBorder];
+  lblAwsSessionToken.Font.Color := LColors.TextColor;
 
   // Aba de Templates
   pnlTemplatesLeft.StyleElements := pnlTemplatesLeft.StyleElements - [seClient, seBorder];
@@ -750,7 +792,11 @@ begin
 
   edtQwenKey.Text := FConfig.GetApiKey('Qwen');
   edtMistralKey.Text := FConfig.GetApiKey('Mistral');
-
+  edtAwsAccessKeyId.Text := FConfig.AwsAccessKeyId;
+  edtAwsSecretAccessKey.Text := FConfig.AwsSecretAccessKey;
+  edtAwsRegion.Text := FConfig.AwsRegion;
+  edtAwsSessionToken.Text := FConfig.AwsSessionToken;
+ 
   if Assigned(FChkSmartConfig) then
     FChkSmartConfig.Checked := FConfig.SmartConfigEnabled;
 
@@ -855,7 +901,11 @@ begin
 
   FConfig.SetApiKey('Qwen', Trim(edtQwenKey.Text));
   FConfig.SetApiKey('Mistral', Trim(edtMistralKey.Text));
-
+  FConfig.AwsAccessKeyId := Trim(edtAwsAccessKeyId.Text);
+  FConfig.AwsSecretAccessKey := Trim(edtAwsSecretAccessKey.Text);
+  FConfig.AwsRegion := Trim(edtAwsRegion.Text);
+  FConfig.AwsSessionToken := Trim(edtAwsSessionToken.Text);
+ 
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := LOllamaUrl;
   FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
@@ -1094,6 +1144,8 @@ begin
     pgcSettings.ActivePage := tsQwen
   else if SameText(ACategoryName, 'Mistral AI') then
     pgcSettings.ActivePage := tsMistral
+  else if SameText(ACategoryName, 'AWS Bedrock') then
+    pgcSettings.ActivePage := tsBedrock
 
 end;
 
@@ -1167,6 +1219,11 @@ end;
 procedure TFrameAIConfig.lnkMistralGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://console.mistral.ai/api-keys/');
+end;
+
+procedure TFrameAIConfig.lnkBedrockGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://console.aws.amazon.com/iam/');
 end;
 
 procedure TFrameAIConfig.btnConnectGithubClick(Sender: TObject);

@@ -5,7 +5,8 @@ interface
 uses
   DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
   RadIA.Core.TokenUsage, RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter,
-  RadIA.Provider.LMStudio, RadIA.Provider.AzureOpenAI, RadIA.Provider.Qwen, RadIA.Provider.Mistral;
+  RadIA.Provider.LMStudio, RadIA.Provider.AzureOpenAI, RadIA.Provider.Qwen, RadIA.Provider.Mistral,
+  RadIA.Provider.Bedrock, RadIA.Core.AwsSigner;
 
 type
   [TestFixture]
@@ -19,6 +20,7 @@ type
     FAzureProv: TRadIAAzureOpenAIProvider;
     FQwenProv: TRadIAQwenProvider;
     FMistralProv: TRadIAMistralProvider;
+    FBedrockProv: TRadIABedrockProvider;
     
     function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
       const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
@@ -58,12 +60,19 @@ type
     procedure TestMistral_PayloadAndParsing;
     [Test]
     procedure TestMistral_StreamingSSE;
+    [Test]
+    procedure TestBedrock_PayloadAndParsing;
+    [Test]
+    procedure TestBedrock_AwsSignerSigV4;
+    [Test]
+    procedure TestBedrock_EventStreamParser;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.Rtti, System.JSON, RadIA.Core.Service, RadIA.Tests.Service;
+  System.SysUtils, System.Classes, System.Rtti, System.JSON, RadIA.Core.Service, RadIA.Tests.Service,
+  System.NetEncoding;
 
 { TTestRadIAProvidersEx }
 
@@ -77,6 +86,7 @@ begin
   FAzureProv := TRadIAAzureOpenAIProvider.Create(FConfig);
   FQwenProv := TRadIAQwenProvider.Create(FConfig);
   FMistralProv := TRadIAMistralProvider.Create(FConfig);
+  FBedrockProv := TRadIABedrockProvider.Create(FConfig);
 end;
 
 procedure TTestRadIAProvidersEx.TearDown;
@@ -88,6 +98,7 @@ begin
   FAzureProv.Free;
   FQwenProv.Free;
   FMistralProv.Free;
+  FBedrockProv.Free;
   FConfig := nil;
 end;
 
@@ -101,14 +112,16 @@ var
 begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
-  LMethod := LType.GetMethod('BuildRequestBody');
+  LMethod := LType.GetMethod('BuildBedrockRequestBody');
+  if not Assigned(LMethod) then
+    LMethod := LType.GetMethod('BuildRequestBody');
   if not Assigned(LMethod) then
     LMethod := LType.GetMethod('BuildOpenAICompatibleRequestBody');
   if Assigned(LMethod) then
   begin
     case Length(LMethod.GetParameters) of
-      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), 0.7, 2048]);
-      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream, 0.7, 2048]);
+      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
+      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream, TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
     else
       LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream]);
     end;
@@ -128,7 +141,9 @@ var
 begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
-  LMethod := LType.GetMethod('ParseResponseBody');
+  LMethod := LType.GetMethod('ParseBedrockResponse');
+  if not Assigned(LMethod) then
+    LMethod := LType.GetMethod('ParseResponseBody');
   if not Assigned(LMethod) then
     LMethod := LType.GetMethod('ParseOpenAICompatibleResponse');
   if Assigned(LMethod) then
@@ -642,6 +657,213 @@ begin
   Assert.AreEqual('Mistral', LReceivedText);
   Assert.IsTrue(LIsDone);
   Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAProvidersEx.TestBedrock_PayloadAndParsing;
+var
+  LPayload: string;
+  LHistory: TArray<IChatMessage>;
+  LJsonObj: TJSONObject;
+  LMessages: TJSONArray;
+  LText: string;
+  LUsage: TTokenUsage;
+const
+  MOCK_BEDROCK_RESPONSE =
+    '{"content": [{"type": "text", "text": "Bedrock Claude response text"}], ' +
+    '"usage": {"input_tokens": 14, "output_tokens": 26}}';
+begin
+  // 1. Test Payload Generation
+  LHistory := [TRadIAService.CreateMessage(mrUser, 'Bedrock Query')];
+  LPayload := InvokeBuildRequestBody(FBedrockProv, 'Code review this class', LHistory, False);
+
+  Assert.IsNotEmpty(LPayload);
+  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
+  try
+    Assert.IsNotNull(LJsonObj);
+    Assert.AreEqual('bedrock-2023-05-31', LJsonObj.GetValue('anthropic_version').Value);
+    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
+    Assert.IsNotNull(LMessages);
+    Assert.AreEqual(2, LMessages.Count);
+  finally
+    LJsonObj.Free;
+  end;
+
+  // 2. Test Response Parsing
+  LText := InvokeParseResponseBody(FBedrockProv, MOCK_BEDROCK_RESPONSE, LUsage);
+  Assert.AreEqual('Bedrock Claude response text', LText);
+  Assert.AreEqual(14, LUsage.PromptTokens);
+  Assert.AreEqual(26, LUsage.CompletionTokens);
+  Assert.AreEqual(40, LUsage.TotalTokens);
+end;
+
+procedure TTestRadIAProvidersEx.TestBedrock_AwsSignerSigV4;
+var
+  LHeaders: TStringList;
+const
+  MOCK_ACCESS_KEY = 'AKIAIOSFODNN7EXAMPLE';
+  MOCK_SECRET_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY';
+  MOCK_REGION = 'us-east-1';
+  MOCK_SERVICE = 'bedrock';
+  MOCK_METHOD = 'POST';
+  MOCK_URI = '/model/anthropic.claude-3-5-sonnet-20241022-v2:0/invoke';
+  MOCK_PAYLOAD = '{"anthropic_version":"bedrock-2023-05-31","messages":[]}';
+  MOCK_DATE = '20260608T170000Z';
+  MOCK_STAMP = '20260608';
+begin
+  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(
+    MOCK_ACCESS_KEY, MOCK_SECRET_KEY, MOCK_REGION, MOCK_SERVICE,
+    MOCK_METHOD, MOCK_URI, MOCK_PAYLOAD, MOCK_DATE, MOCK_STAMP
+  );
+  try
+    Assert.IsNotNull(LHeaders);
+    Assert.AreEqual('application/json', LHeaders.Values['content-type']);
+    Assert.AreEqual(MOCK_DATE, LHeaders.Values['x-amz-date']);
+    Assert.IsNotEmpty(LHeaders.Values['x-amz-content-sha256']);
+    Assert.IsNotEmpty(LHeaders.Values['Authorization']);
+    Assert.IsTrue(LHeaders.Values['Authorization'].StartsWith('AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20260608/us-east-1/bedrock/aws4_request'));
+  finally
+    LHeaders.Free;
+  end;
+
+  // Test with session token
+  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(
+    MOCK_ACCESS_KEY, MOCK_SECRET_KEY, MOCK_REGION, MOCK_SERVICE,
+    MOCK_METHOD, MOCK_URI, MOCK_PAYLOAD, MOCK_DATE, MOCK_STAMP, 'session-token-123'
+  );
+  try
+    Assert.AreEqual('session-token-123', LHeaders.Values['x-amz-security-token']);
+    Assert.IsTrue(LHeaders.Values['Authorization'].Contains('x-amz-security-token'));
+  finally
+    LHeaders.Free;
+  end;
+end;
+
+procedure TTestRadIAProvidersEx.TestBedrock_EventStreamParser;
+  function CreateMockEventStreamFrame(const AText: string): TBytes;
+  var
+    LInnerJson: TJSONObject;
+    LOuterJson: TJSONObject;
+    LInnerStr: string;
+    LOuterStr: string;
+    LPayloadBytes: TBytes;
+    LBase64: string;
+    LTotalLength: Cardinal;
+    LHeadersLength: Cardinal;
+    LPayloadLen: Cardinal;
+  begin
+    LInnerJson := TJSONObject.Create;
+    try
+      LInnerJson.AddPair('type', 'content_block_delta');
+      var LDelta := TJSONObject.Create;
+      LDelta.AddPair('text', AText);
+      LInnerJson.AddPair('delta', LDelta);
+      LInnerStr := LInnerJson.ToJSON;
+    finally
+      LInnerJson.Free;
+    end;
+
+    LBase64 := TNetEncoding.Base64.EncodeBytesToString(TEncoding.UTF8.GetBytes(LInnerStr));
+    LBase64 := LBase64.Replace(#13, '').Replace(#10, '');
+
+    LOuterJson := TJSONObject.Create;
+    try
+      LOuterJson.AddPair('bytes', LBase64);
+      LOuterStr := LOuterJson.ToJSON;
+    finally
+      LOuterJson.Free;
+    end;
+
+    LPayloadBytes := TEncoding.UTF8.GetBytes(LOuterStr);
+    LPayloadLen := Length(LPayloadBytes);
+    LHeadersLength := 0;
+    LTotalLength := LPayloadLen + LHeadersLength + 16;
+
+    SetLength(Result, LTotalLength);
+
+    // Set total length (Big Endian)
+    Result[0] := Byte((LTotalLength shl 0) shr 24);
+    Result[1] := Byte((LTotalLength shl 8) shr 24);
+    Result[2] := Byte((LTotalLength shl 16) shr 24);
+    Result[3] := Byte((LTotalLength shl 24) shr 24);
+
+    // Set headers length (0)
+    Result[4] := 0;
+    Result[5] := 0;
+    Result[6] := 0;
+    Result[7] := 0;
+
+    // Prelude CRC (0)
+    Result[8] := 0;
+    Result[9] := 0;
+    Result[10] := 0;
+    Result[11] := 0;
+
+    // Payload
+    Move(LPayloadBytes[0], Result[12], LPayloadLen);
+
+    // Message CRC (0)
+    Result[LTotalLength - 4] := 0;
+    Result[LTotalLength - 3] := 0;
+    Result[LTotalLength - 2] := 0;
+    Result[LTotalLength - 1] := 0;
+  end;
+
+var
+  LParser: TAwsEventStreamParser;
+  LChunk1, LChunk2: TBytes;
+  LReceivedText: string;
+  LCallbackCount: Integer;
+  LIsDone: Boolean;
+begin
+  LReceivedText := '';
+  LCallbackCount := 0;
+  LIsDone := False;
+
+  LParser := TAwsEventStreamParser.Create(
+    procedure(const AChunk: string; AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LReceivedText := LReceivedText + AChunk;
+      if AIsDone then
+        LIsDone := True;
+      Assert.IsEmpty(AError);
+    end
+  );
+  try
+    LChunk1 := CreateMockEventStreamFrame('Claude ');
+    LChunk2 := CreateMockEventStreamFrame('says hello!');
+
+    // 1. Process first frame
+    LParser.ProcessBytes(LChunk1);
+    Assert.AreEqual('Claude ', LReceivedText);
+    Assert.AreEqual(1, LCallbackCount);
+
+    // 2. Process second frame
+    LParser.ProcessBytes(LChunk2);
+    Assert.AreEqual('Claude says hello!', LReceivedText);
+    Assert.AreEqual(2, LCallbackCount);
+
+    // 3. Process incremental bytes (simulate network fragmentation)
+    LReceivedText := '';
+    LCallbackCount := 0;
+    var LFrame := CreateMockEventStreamFrame('Incremental!');
+    var LHalf := Length(LFrame) div 2;
+    var LPart1: TBytes;
+    var LPart2: TBytes;
+    SetLength(LPart1, LHalf);
+    Move(LFrame[0], LPart1[0], LHalf);
+    SetLength(LPart2, Length(LFrame) - LHalf);
+    Move(LFrame[LHalf], LPart2[0], Length(LFrame) - LHalf);
+
+    LParser.ProcessBytes(LPart1);
+    Assert.AreEqual('', LReceivedText); // Shouldn't fire callback yet since frame is incomplete
+
+    LParser.ProcessBytes(LPart2);
+    Assert.AreEqual('Incremental!', LReceivedText); // Fires after second half arrives
+    Assert.AreEqual(1, LCallbackCount);
+  finally
+    LParser.Free;
+  end;
 end;
 
 initialization

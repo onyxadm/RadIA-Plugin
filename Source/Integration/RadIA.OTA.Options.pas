@@ -8,7 +8,7 @@ uses
 
 type
   { Provider page configuration tag }
-  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptOllama, ptLMStudio, ptSystem, ptTemplates);
+  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio, ptSystem, ptTemplates);
 
   { INTAAddInOptions implementation for RadIA Options }
   TRadIAAddInOptions = class(TInterfacedObject, INTAAddInOptions)
@@ -57,7 +57,7 @@ begin
     ptNone: Result := 'RadIA.General';
     ptSystem: Result := 'RadIA.System Prompt';
     ptTemplates: Result := 'RadIA.Templates';
-    ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptOllama, ptLMStudio: 
+    ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio: 
       Result := 'RadIA.AI Providers.' + FTitle;
   else
     Result := 'RadIA.' + FTitle;
@@ -91,6 +91,7 @@ begin
       ptMistral: FFrame.SelectCategoryByName('Mistral AI');
       ptOpenRouter: FFrame.SelectCategoryByName('OpenRouter');
       ptGithubCopilot: FFrame.SelectCategoryByName('GitHub Copilot');
+      ptBedrock: FFrame.SelectCategoryByName('AWS Bedrock');
       ptOllama: FFrame.SelectCategoryByName('Ollama');
       ptLMStudio: FFrame.SelectCategoryByName('LM Studio');
 

@@ -37,6 +37,10 @@ type
     FQuotaCycleStart: TDateTime;
     FActiveSessionId: string;
     FAzureApiVersion: string;
+    FAwsAccessKeyId: string;
+    FAwsSecretAccessKey: string;
+    FAwsRegion: string;
+    FAwsSessionToken: string;
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
     destructor Destroy; override;
@@ -71,6 +75,14 @@ type
     procedure SetActiveSessionId(const AValue: string);
     function GetAzureApiVersion: string;
     procedure SetAzureApiVersion(const AValue: string);
+    function GetAwsAccessKeyId: string;
+    procedure SetAwsAccessKeyId(const AValue: string);
+    function GetAwsSecretAccessKey: string;
+    procedure SetAwsSecretAccessKey(const AValue: string);
+    function GetAwsRegion: string;
+    procedure SetAwsRegion(const AValue: string);
+    function GetAwsSessionToken: string;
+    procedure SetAwsSessionToken(const AValue: string);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -186,6 +198,10 @@ begin
   FQuotaCycleStart := Now;
   FActiveSessionId := '';
   FAzureApiVersion := '2024-02-15-preview';
+  FAwsAccessKeyId := '';
+  FAwsSecretAccessKey := '';
+  FAwsRegion := 'us-east-1';
+  FAwsSessionToken := '';
 end;
 
 destructor TMockConfig.Destroy;
@@ -362,6 +378,46 @@ end;
 procedure TMockConfig.SetAzureApiVersion(const AValue: string);
 begin
   FAzureApiVersion := AValue;
+end;
+
+function TMockConfig.GetAwsAccessKeyId: string;
+begin
+  Result := FAwsAccessKeyId;
+end;
+
+procedure TMockConfig.SetAwsAccessKeyId(const AValue: string);
+begin
+  FAwsAccessKeyId := AValue;
+end;
+
+function TMockConfig.GetAwsSecretAccessKey: string;
+begin
+  Result := FAwsSecretAccessKey;
+end;
+
+procedure TMockConfig.SetAwsSecretAccessKey(const AValue: string);
+begin
+  FAwsSecretAccessKey := AValue;
+end;
+
+function TMockConfig.GetAwsRegion: string;
+begin
+  Result := FAwsRegion;
+end;
+
+procedure TMockConfig.SetAwsRegion(const AValue: string);
+begin
+  FAwsRegion := AValue;
+end;
+
+function TMockConfig.GetAwsSessionToken: string;
+begin
+  Result := FAwsSessionToken;
+end;
+
+procedure TMockConfig.SetAwsSessionToken(const AValue: string);
+begin
+  FAwsSessionToken := AValue;
 end;
 
 procedure TMockConfig.AddToQuotaUsage(const AUsage: TTokenUsage);

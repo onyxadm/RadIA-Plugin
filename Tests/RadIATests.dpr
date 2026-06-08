@@ -37,6 +37,8 @@ uses
   RadIA.Provider.AzureOpenAI in '..\Source\Providers\RadIA.Provider.AzureOpenAI.pas',
   RadIA.Provider.Qwen in '..\Source\Providers\RadIA.Provider.Qwen.pas',
   RadIA.Provider.Mistral in '..\Source\Providers\RadIA.Provider.Mistral.pas',
+  RadIA.Core.AwsSigner in '..\Source\Core\RadIA.Core.AwsSigner.pas',
+  RadIA.Provider.Bedrock in '..\Source\Providers\RadIA.Provider.Bedrock.pas',
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',

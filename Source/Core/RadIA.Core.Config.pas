@@ -29,6 +29,10 @@ type
     FAutocompleteModel: string;
     FAutocompleteDelay: Integer;
     FAzureApiVersion: string;
+    FAwsAccessKeyId: string;
+    FAwsSecretAccessKey: string;
+    FAwsRegion: string;
+    FAwsSessionToken: string;
 
     { Dynamic String-based settings (avoiding TDictionary generics due to BPL RTL unloading bugs) }
     FApiKeysList: TStringList;
@@ -70,6 +74,14 @@ type
     procedure SetOpenAICustomBaseUrl(const AValue: string);
     function GetAzureApiVersion: string;
     procedure SetAzureApiVersion(const AValue: string);
+    function GetAwsAccessKeyId: string;
+    procedure SetAwsAccessKeyId(const AValue: string);
+    function GetAwsSecretAccessKey: string;
+    procedure SetAwsSecretAccessKey(const AValue: string);
+    function GetAwsRegion: string;
+    procedure SetAwsRegion(const AValue: string);
+    function GetAwsSessionToken: string;
+    procedure SetAwsSessionToken(const AValue: string);
 
     { String-based dynamic provider APIs }
     function GetApiKey(const AProviderName: string): string;
@@ -202,6 +214,10 @@ begin
   FMaxHistoryMessages := 20;
   FOpenAICustomBaseUrl := '';
   FAzureApiVersion := '2024-02-15-preview';
+  FAwsAccessKeyId := '';
+  FAwsSecretAccessKey := '';
+  FAwsRegion := 'us-east-1';
+  FAwsSessionToken := '';
   
   FSmartConfigEnabled := True;
   FLogEnabled := True;
@@ -420,6 +436,25 @@ begin
       FAutocompleteModel := ReadRegString(LReg, 'AutocompleteModel', 'gemini-1.5-flash');
       FAutocompleteDelay := ReadRegInt(LReg, 'AutocompleteDelay', 300);
       FAzureApiVersion   := ReadRegString(LReg, 'AzureApiVersion', '2024-02-15-preview');
+      FAwsRegion         := ReadRegString(LReg, 'AwsRegion', 'us-east-1');
+      try
+        if LReg.ValueExists('AwsAccessKeyId') then
+          FAwsAccessKeyId := UnprotectString(LReg.ReadString('AwsAccessKeyId'));
+      except
+        FAwsAccessKeyId := '';
+      end;
+      try
+        if LReg.ValueExists('AwsSecretAccessKey') then
+          FAwsSecretAccessKey := UnprotectString(LReg.ReadString('AwsSecretAccessKey'));
+      except
+        FAwsSecretAccessKey := '';
+      end;
+      try
+        if LReg.ValueExists('AwsSessionToken') then
+          FAwsSessionToken := UnprotectString(LReg.ReadString('AwsSessionToken'));
+      except
+        FAwsSessionToken := '';
+      end;
       
       LReg.CloseKey;
 
@@ -559,6 +594,10 @@ begin
       LReg.WriteString('AutocompleteModel', FAutocompleteModel);
       LReg.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
       LReg.WriteString('AzureApiVersion', FAzureApiVersion);
+      LReg.WriteString('AwsRegion', FAwsRegion);
+      LReg.WriteString('AwsAccessKeyId', ProtectString(FAwsAccessKeyId));
+      LReg.WriteString('AwsSecretAccessKey', ProtectString(FAwsSecretAccessKey));
+      LReg.WriteString('AwsSessionToken', ProtectString(FAwsSessionToken));
       
       { Sync legacy BaseURLs to root just in case }
       LReg.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
@@ -665,6 +704,48 @@ end;
 procedure TRadIAConfig.SetAzureApiVersion(const AValue: string);
 begin
   FAzureApiVersion := AValue.Trim;
+end;
+
+function TRadIAConfig.GetAwsAccessKeyId: string;
+begin
+  Result := FAwsAccessKeyId;
+end;
+
+procedure TRadIAConfig.SetAwsAccessKeyId(const AValue: string);
+begin
+  FAwsAccessKeyId := AValue.Trim;
+end;
+
+function TRadIAConfig.GetAwsSecretAccessKey: string;
+begin
+  Result := FAwsSecretAccessKey;
+end;
+
+procedure TRadIAConfig.SetAwsSecretAccessKey(const AValue: string);
+begin
+  FAwsSecretAccessKey := AValue.Trim;
+end;
+
+function TRadIAConfig.GetAwsRegion: string;
+begin
+  Result := FAwsRegion;
+  if Result.IsEmpty then
+    Result := 'us-east-1';
+end;
+
+procedure TRadIAConfig.SetAwsRegion(const AValue: string);
+begin
+  FAwsRegion := AValue.Trim;
+end;
+
+function TRadIAConfig.GetAwsSessionToken: string;
+begin
+  Result := FAwsSessionToken;
+end;
+
+procedure TRadIAConfig.SetAwsSessionToken(const AValue: string);
+begin
+  FAwsSessionToken := AValue.Trim;
 end;
 
 { Dynamic String-based getters and setters }

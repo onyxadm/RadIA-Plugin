@@ -128,6 +128,14 @@ type
     procedure SetActiveSessionId(const AValue: string);
     function GetAzureApiVersion: string;
     procedure SetAzureApiVersion(const AValue: string);
+    function GetAwsAccessKeyId: string;
+    procedure SetAwsAccessKeyId(const AValue: string);
+    function GetAwsSecretAccessKey: string;
+    procedure SetAwsSecretAccessKey(const AValue: string);
+    function GetAwsRegion: string;
+    procedure SetAwsRegion(const AValue: string);
+    function GetAwsSessionToken: string;
+    procedure SetAwsSessionToken(const AValue: string);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -136,6 +144,10 @@ type
     property MaxHistoryMessages: Integer read GetMaxHistoryMessages write SetMaxHistoryMessages;
     property OpenAICustomBaseUrl: string read GetOpenAICustomBaseUrl write SetOpenAICustomBaseUrl;
     property AzureApiVersion: string read GetAzureApiVersion write SetAzureApiVersion;
+    property AwsAccessKeyId: string read GetAwsAccessKeyId write SetAwsAccessKeyId;
+    property AwsSecretAccessKey: string read GetAwsSecretAccessKey write SetAwsSecretAccessKey;
+    property AwsRegion: string read GetAwsRegion write SetAwsRegion;
+    property AwsSessionToken: string read GetAwsSessionToken write SetAwsSessionToken;
     property AutocompleteEnabled: Boolean read GetAutocompleteEnabled write SetAutocompleteEnabled;
     property AutocompleteProvider: string read GetAutocompleteProvider write SetAutocompleteProvider;
     property AutocompleteModel: string read GetAutocompleteModel write SetAutocompleteModel;

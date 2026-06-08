@@ -240,6 +240,7 @@ begin
     AddPage('Mistral AI', ptMistral);
     AddPage('OpenRouter', ptOpenRouter);
     AddPage('GitHub Copilot', ptGithubCopilot);
+    AddPage('AWS Bedrock', ptBedrock);
     AddPage('Ollama', ptOllama);
     AddPage('LM Studio', ptLMStudio);
   end;
