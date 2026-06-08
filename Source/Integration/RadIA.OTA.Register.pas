@@ -114,7 +114,7 @@ begin
         LBitmap.Handle,
         False,
         'Apache 2.0 License',
-        'v0.0.7'
+        'v0.0.8'
       );
     end;
   finally
