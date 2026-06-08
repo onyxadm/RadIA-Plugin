@@ -2127,16 +2127,29 @@ begin
   pnlInput.Visible := False;
   cbModel.Visible := False;
 
-  // A barra de ferramentas nativa VCL deve ser exibida apenas no modo Web Login
-  // para permitir que o usuário mude de provedor ou acesse as configurações.
-  pnlToolbar.Visible := LIsWebLogin;
-  btnNewSession.Visible := not LIsWebLogin;
-  btnClear.Visible := not LIsWebLogin;
-  btnExport.Visible := not LIsWebLogin;
-  btnTemplates.Visible := not LIsWebLogin;
-  
   if LIsWebLogin then
   begin
+    // Garante que o painel de sessões locais (histórico) seja fechado no modo Web Login
+    pnlSessions.Visible := False;
+    splitterSessions.Visible := False;
+
+    // Move o combo de provedores para a barra superior para permitir a troca direta de provedor
+    cbProvider.Parent := pnlToolbar;
+    cbProvider.Align := alNone;
+    cbProvider.Anchors := [akTop, akRight];
+    cbProvider.Width := 130;
+    cbProvider.Top := (pnlToolbar.Height - cbProvider.Height) div 2;
+    cbProvider.Left := btnSettings.Left - cbProvider.Width - 10;
+    cbProvider.Visible := True;
+
+    // Exibe a barra de ferramentas superior VCL apenas com o título, combo de provedor e configurações
+    pnlToolbar.Visible := True;
+    btnToggleSessions.Visible := False;
+    btnNewSession.Visible := False;
+    btnClear.Visible := False;
+    btnExport.Visible := False;
+    btnTemplates.Visible := False;
+
     if SameText(LActiveProvider, 'Gemini') then
       LTargetUrl := 'https://gemini.google.com'
     else
@@ -2147,6 +2160,23 @@ begin
   end
   else
   begin
+    // Restaura o combo de provedores para a sua posição e parent original no painel de input nativo
+    cbProvider.Parent := pnlInput;
+    cbProvider.Align := alNone;
+    cbProvider.Anchors := [akLeft, akTop];
+    cbProvider.Left := 10;
+    cbProvider.Top := 18;
+    cbProvider.Width := 120;
+    cbProvider.Visible := False;
+
+    // Esconde a barra de ferramentas nativa VCL (o chat.html cuidará da exibição de seus controles Premium)
+    pnlToolbar.Visible := False;
+    btnToggleSessions.Visible := True;
+    btnNewSession.Visible := True;
+    btnClear.Visible := True;
+    btnExport.Visible := True;
+    btnTemplates.Visible := True;
+
     LTargetUrl := 'file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/');
     TLogger.Log('UpdateWebViewNavigation: Navigating to local chat: ' + LTargetUrl, 'UI');
     EdgeBrowser.Navigate(LTargetUrl);
