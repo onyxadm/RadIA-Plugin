@@ -77,6 +77,7 @@ begin
   tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
   tvCategories.Items.AddChild(LNodeProviders, 'OpenRouter');
   tvCategories.Items.AddChild(LNodeProviders, 'LM Studio');
+  tvCategories.Items.AddChild(LNodeProviders, 'GitHub Copilot');
   
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;
