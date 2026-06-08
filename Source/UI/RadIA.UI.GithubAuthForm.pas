@@ -1,0 +1,202 @@
+unit RadIA.UI.GithubAuthForm;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
+  System.Threading, RadIA.Provider.GithubCopilot;
+
+type
+  TFormGithubAuth = class(TForm)
+    pnlClient: TPanel;
+    lblTitle: TLabel;
+    lblInstructions: TLabel;
+    lblPIN: TLabel;
+    lblStatus: TLabel;
+    btnOpenBrowser: TButton;
+    btnCancel: TButton;
+    procedure btnOpenBrowserClick(Sender: TObject);
+    procedure btnCancelClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormShow(Sender: TObject);
+  private
+    FCancelled: Boolean;
+    FAccessToken: string;
+    FDeviceCode: string;
+    FUserCode: string;
+    FVerificationUri: string;
+    FInterval: Integer;
+    FExpiresIn: Integer;
+    
+    procedure StartPolling;
+  protected
+    procedure CreateWnd; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    class function Execute(AOwner: TComponent; out AAccessToken: string): Boolean;
+  end;
+
+implementation
+
+{$R *.dfm}
+
+uses
+  Winapi.ShellAPI, ToolsAPI, RadIA.UI.Resources, Vcl.Themes;
+
+class function TFormGithubAuth.Execute(AOwner: TComponent; out AAccessToken: string): Boolean;
+var
+  LForm: TFormGithubAuth;
+  LDeviceCode, LUserCode, LVerificationUri: string;
+  LInterval, LExpiresIn: Integer;
+  LErrorMsg: string;
+begin
+  AAccessToken := '';
+  
+  { Request authorization code from GitHub }
+  if not TRadIAGithubCopilotProvider.RequestDeviceCode(LDeviceCode, LUserCode,
+    LVerificationUri, LInterval, LExpiresIn, LErrorMsg) then
+  begin
+    MessageDlg('Failed to connect to GitHub Device Flow API: ' + LErrorMsg,
+      mtError, [mbOK], 0);
+    Exit(False);
+  end;
+
+  LForm := TFormGithubAuth.Create(AOwner);
+  try
+    LForm.FDeviceCode := LDeviceCode;
+    LForm.FUserCode := LUserCode;
+    LForm.FVerificationUri := LVerificationUri;
+    LForm.FInterval := LInterval;
+    LForm.FExpiresIn := LExpiresIn;
+    
+    LForm.lblPIN.Caption := LUserCode;
+
+    if LForm.ShowModal = mrOk then
+    begin
+      AAccessToken := LForm.FAccessToken;
+      Result := not AAccessToken.IsEmpty;
+    end
+    else
+    begin
+      Result := False;
+    end;
+  finally
+    LForm.Free;
+  end;
+end;
+
+constructor TFormGithubAuth.Create(AOwner: TComponent);
+var
+  LThemingServices: IOTAIDEThemingServices;
+  LActiveTheme: string;
+  LColors: TRadIAThemeColors;
+begin
+  inherited Create(AOwner);
+  FCancelled := False;
+  FAccessToken := '';
+  
+  { Apply IDE Theming if available }
+  LActiveTheme := 'light';
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LThemingServices.ApplyTheme(Self);
+      LActiveTheme := LThemingServices.ActiveTheme;
+    end;
+  end;
+
+  { Custom styling fallback for colors }
+  LColors := TRadIAThemeColors.GetColorsForTheme(LActiveTheme);
+  Self.StyleElements := Self.StyleElements - [seClient, seBorder];
+  Self.Color := LColors.BgBase;
+  
+  pnlClient.StyleElements := pnlClient.StyleElements - [seClient, seBorder];
+  pnlClient.Color := LColors.BgBase;
+  pnlClient.ParentBackground := False;
+  
+  lblTitle.StyleElements := lblTitle.StyleElements - [seClient, seBorder];
+  lblTitle.Font.Color := LColors.TextColor;
+  lblInstructions.StyleElements := lblInstructions.StyleElements - [seClient, seBorder];
+  lblInstructions.Font.Color := LColors.TextColor;
+  
+  lblPIN.StyleElements := lblPIN.StyleElements - [seClient, seBorder];
+  lblPIN.Font.Color := clHighlight; { Stand out PIN code }
+  
+  lblStatus.StyleElements := lblStatus.StyleElements - [seClient, seBorder];
+  lblStatus.Font.Color := LColors.TextColor;
+end;
+
+procedure TFormGithubAuth.CreateWnd;
+var
+  LThemingServices: IOTAIDEThemingServices;
+  LActiveTheme: string;
+begin
+  inherited CreateWnd;
+  LActiveTheme := 'light';
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+      LActiveTheme := LThemingServices.ActiveTheme;
+  end;
+  
+  if SameText(LActiveTheme, 'dark') then
+    TUIHelper.ApplyDarkTitleBar(Self, True);
+end;
+
+procedure TFormGithubAuth.FormShow(Sender: TObject);
+begin
+  StartPolling;
+end;
+
+procedure TFormGithubAuth.StartPolling;
+begin
+  lblStatus.Caption := 'Waiting for authorization in your browser...';
+  TTask.Run(
+    procedure
+    var
+      LAccessToken, LErrorMsg: string;
+      LSuccess: Boolean;
+    begin
+      LSuccess := TRadIAGithubCopilotProvider.PollForAccessToken(
+        FDeviceCode, FInterval, FExpiresIn, @FCancelled, LAccessToken, LErrorMsg
+      );
+
+      TThread.Queue(nil,
+        procedure
+        begin
+          if LSuccess then
+          begin
+            FAccessToken := LAccessToken;
+            ModalResult := mrOk;
+          end
+          else
+          begin
+            if not FCancelled then
+            begin
+              MessageDlg('Authentication failed: ' + LErrorMsg, mtError, [mbOK], 0);
+              ModalResult := mrCancel;
+            end;
+          end;
+        end);
+    end);
+end;
+
+procedure TFormGithubAuth.btnOpenBrowserClick(Sender: TObject);
+begin
+  ShellExecute(0, 'open', PChar(FVerificationUri), nil, nil, SW_SHOWNORMAL);
+end;
+
+procedure TFormGithubAuth.btnCancelClick(Sender: TObject);
+begin
+  FCancelled := True;
+  ModalResult := mrCancel;
+end;
+
+procedure TFormGithubAuth.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  FCancelled := True;
+end;
+
+end.
