@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.Helper;
+unit RadIA.OTA.Helper;
 
 interface
 
@@ -19,6 +19,7 @@ type
     class function GetActiveProjectFolder: string;
     class function GetCurrentEditBuffer: IOTAEditBuffer;
     class function GetCurrentEditView: IOTAEditView;
+    class function OpenProjectInIDE(const AProjectPath: string): Boolean;
   end;
 
 implementation
@@ -276,6 +277,18 @@ begin
     begin
       Result := ExtractFilePath(LProject.FileName);
     end;
+  end;
+end;
+
+class function TRadIAOTAHelper.OpenProjectInIDE(const AProjectPath: string): Boolean;
+var
+  LModuleServices: IOTAModuleServices;
+begin
+  Result := False;
+  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
+  begin
+    LModuleServices.OpenModule(AProjectPath);
+    Result := True;
   end;
 end;
 
