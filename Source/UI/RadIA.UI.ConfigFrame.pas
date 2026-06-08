@@ -28,6 +28,23 @@ type
     pnlOpenRouter: TPanel;
     tsLMStudio: TTabSheet;
     pnlLMStudio: TPanel;
+    lblLMStudioUrl: TLabel;
+    edtLMStudioUrl: TEdit;
+    
+    tsGithubCopilot: TTabSheet;
+    pnlGithubCopilot: TPanel;
+    lblGithubCopilotKey: TLabel;
+    edtGithubCopilotKey: TEdit;
+    btnConnectGithub: TButton;
+    btnImportVSCode: TButton;
+
+    lnkGeminiGetKey: TLabel;
+    lnkOpenAIGetKey: TLabel;
+    lnkClaudeGetKey: TLabel;
+    lnkDeepSeekGetKey: TLabel;
+    lnkGroqGetKey: TLabel;
+    lnkOpenRouterGetKey: TLabel;
+    
     tsSystemPrompt: TTabSheet;
     pnlSystemPrompt: TPanel;
     lblGeminiKey: TLabel;
@@ -73,6 +90,14 @@ type
     procedure btnRestoreDefaultsClick(Sender: TObject);
     procedure grpGeminiAuthTypeClick(Sender: TObject);
     procedure grpOpenAIAuthTypeClick(Sender: TObject);
+    procedure lnkGeminiGetKeyClick(Sender: TObject);
+    procedure lnkOpenAIGetKeyClick(Sender: TObject);
+    procedure lnkClaudeGetKeyClick(Sender: TObject);
+    procedure lnkDeepSeekGetKeyClick(Sender: TObject);
+    procedure lnkGroqGetKeyClick(Sender: TObject);
+    procedure lnkOpenRouterGetKeyClick(Sender: TObject);
+    procedure btnConnectGithubClick(Sender: TObject);
+    procedure btnImportVSCodeClick(Sender: TObject);
   private
     FConfig: IAIConfig;
     FTemplateManager: TPromptTemplateManager;
@@ -123,7 +148,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.ProviderRegistry;
+  RadIA.Core.ProviderRegistry, Winapi.ShellAPI, RadIA.UI.GithubAuthForm;
 
 type
   TTabSheetColorHack = class(TTabSheet);
@@ -152,6 +177,7 @@ begin
   CreateProviderAdvancedControls(tsOllama, 'Ollama');
   CreateProviderAdvancedControls(tsOpenRouter, 'OpenRouter');
   CreateProviderAdvancedControls(tsLMStudio, 'LMStudio');
+  CreateProviderAdvancedControls(tsGithubCopilot, 'GithubCopilot');
 
   { Create General/Logs Tab and controls programmatically }
   tsGeneral := TTabSheet.Create(Self);
@@ -406,6 +432,9 @@ begin
   pnlLMStudio.StyleElements := pnlLMStudio.StyleElements - [seClient, seBorder];
   pnlLMStudio.Color := LColors.BgBase;
   pnlLMStudio.ParentBackground := False;
+  pnlGithubCopilot.StyleElements := pnlGithubCopilot.StyleElements - [seClient, seBorder];
+  pnlGithubCopilot.Color := LColors.BgBase;
+  pnlGithubCopilot.ParentBackground := False;
   pnlSystemPrompt.StyleElements := pnlSystemPrompt.StyleElements - [seClient, seBorder];
   pnlSystemPrompt.Color := LColors.BgBase;
   pnlSystemPrompt.ParentBackground := False;
@@ -481,6 +510,23 @@ begin
   edtLMStudioUrl.StyleElements := edtLMStudioUrl.StyleElements - [seClient, seBorder];
   edtLMStudioUrl.Color := LColors.InputBgColor;
   edtLMStudioUrl.Font.Color := LColors.TextColor;
+  edtGithubCopilotKey.StyleElements := edtGithubCopilotKey.StyleElements - [seClient, seBorder];
+  edtGithubCopilotKey.Color := LColors.InputBgColor;
+  edtGithubCopilotKey.Font.Color := LColors.TextColor;
+
+  // Labels Link
+  lnkGeminiGetKey.StyleElements := lnkGeminiGetKey.StyleElements - [seClient, seBorder];
+  lnkGeminiGetKey.Font.Color := LColors.AccentColor;
+  lnkOpenAIGetKey.StyleElements := lnkOpenAIGetKey.StyleElements - [seClient, seBorder];
+  lnkOpenAIGetKey.Font.Color := LColors.AccentColor;
+  lnkClaudeGetKey.StyleElements := lnkClaudeGetKey.StyleElements - [seClient, seBorder];
+  lnkClaudeGetKey.Font.Color := LColors.AccentColor;
+  lnkDeepSeekGetKey.StyleElements := lnkDeepSeekGetKey.StyleElements - [seClient, seBorder];
+  lnkDeepSeekGetKey.Font.Color := LColors.AccentColor;
+  lnkGroqGetKey.StyleElements := lnkGroqGetKey.StyleElements - [seClient, seBorder];
+  lnkGroqGetKey.Font.Color := LColors.AccentColor;
+  lnkOpenRouterGetKey.StyleElements := lnkOpenRouterGetKey.StyleElements - [seClient, seBorder];
+  lnkOpenRouterGetKey.Font.Color := LColors.AccentColor;
 
   // Labels
   lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
@@ -619,6 +665,8 @@ begin
   if edtLMStudioUrl.Text = '' then
     edtLMStudioUrl.Text := 'http://localhost:1234/v1';
 
+  edtGithubCopilotKey.Text := FConfig.GetApiKey('GithubCopilot');
+
   if Assigned(FChkSmartConfig) then
     FChkSmartConfig.Checked := FConfig.SmartConfigEnabled;
 
@@ -707,6 +755,7 @@ begin
   FConfig.SetApiKey('DeepSeek', Trim(edtDeepSeekKey.Text));
   FConfig.SetApiKey('Groq', Trim(edtGroqKey.Text));
   FConfig.SetApiKey('OpenRouter', Trim(edtOpenRouterKey.Text));
+  FConfig.SetApiKey('GithubCopilot', Trim(edtGithubCopilotKey.Text));
   FConfig.SystemPrompt := memSystemPrompt.Text;
   FConfig.OllamaBaseUrl := LOllamaUrl;
   FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
@@ -937,6 +986,8 @@ begin
     pgcSettings.ActivePage := tsOpenRouter
   else if SameText(ACategoryName, 'LM Studio') then
     pgcSettings.ActivePage := tsLMStudio
+  else if SameText(ACategoryName, 'GitHub Copilot') then
+    pgcSettings.ActivePage := tsGithubCopilot
 
 end;
 
@@ -964,6 +1015,127 @@ begin
   begin
     edtOpenAIKey.Text := '';
     edtOpenAICustomUrl.Text := '';
+  end;
+end;
+
+procedure TFrameAIConfig.OpenUrl(const AUrl: string);
+begin
+  ShellExecute(0, 'open', PChar(AUrl), nil, nil, SW_SHOWNORMAL);
+end;
+
+procedure TFrameAIConfig.lnkGeminiGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://aistudio.google.com/app/apikey');
+end;
+
+procedure TFrameAIConfig.lnkOpenAIGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://platform.openai.com/api-keys');
+end;
+
+procedure TFrameAIConfig.lnkClaudeGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://console.anthropic.com/settings/keys');
+end;
+
+procedure TFrameAIConfig.lnkDeepSeekGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://platform.deepseek.com/api_keys');
+end;
+
+procedure TFrameAIConfig.lnkGroqGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://console.groq.com/keys');
+end;
+
+procedure TFrameAIConfig.lnkOpenRouterGetKeyClick(Sender: TObject);
+begin
+  OpenUrl('https://openrouter.ai/keys');
+end;
+
+procedure TFrameAIConfig.btnConnectGithubClick(Sender: TObject);
+var
+  LToken: string;
+begin
+  if TFormGithubAuth.Execute(Self, LToken) then
+  begin
+    edtGithubCopilotKey.Text := LToken;
+    ShowMessage('Autenticado com sucesso no GitHub Copilot!');
+  end;
+end;
+
+procedure TFrameAIConfig.btnImportVSCodeClick(Sender: TObject);
+var
+  LPath: string;
+  LJsonStr: string;
+  LJson, LGitHubNode: TJSONObject;
+  LValue: TJSONValue;
+  LToken: string;
+  LUser: string;
+begin
+  LPath := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) +
+    'Code\User\globalStorage\github.copilot\hosts.json';
+    
+  if not TFile.Exists(LPath) then
+  begin
+    { Fallback para VS Code Insiders }
+    LPath := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) +
+      'Code\User\globalStorage\github.copilot-insiders\hosts.json';
+  end;
+
+  if not TFile.Exists(LPath) then
+  begin
+    ShowMessage('Não foi possível encontrar a configuração do Copilot no VS Code.' + sLineBreak +
+      'Certifique-se de que o VS Code está instalado e conectado ao Copilot nesta máquina.');
+    Exit;
+  end;
+
+  try
+    LJsonStr := TFile.ReadAllText(LPath, TEncoding.UTF8);
+    LJson := TJSONObject.ParseJSONValue(LJsonStr) as TJSONObject;
+    if Assigned(LJson) then
+    begin
+      try
+        LGitHubNode := LJson.GetValue('github.com') as TJSONObject;
+        if Assigned(LGitHubNode) then
+        begin
+          LValue := LGitHubNode.GetValue('oauth_token');
+          if Assigned(LValue) then
+            LToken := LValue.Value
+          else
+            LToken := '';
+            
+          LValue := LGitHubNode.GetValue('user');
+          if Assigned(LValue) then
+            LUser := LValue.Value
+          else
+            LUser := '';
+
+          if not LToken.IsEmpty then
+          begin
+            edtGithubCopilotKey.Text := LToken;
+            if not LUser.IsEmpty then
+              ShowMessage(Format('Token importado com sucesso da conta do GitHub "%s" do VS Code!', [LUser]))
+            else
+              ShowMessage('Token importado com sucesso do VS Code!');
+            Exit;
+          end;
+        end;
+        
+        ShowMessage('O arquivo de credenciais do VS Code foi encontrado, mas não continha um token válido.');
+      finally
+        LJson.Free;
+      end;
+    end
+    else
+    begin
+      ShowMessage('Falha ao ler o arquivo de credenciais do VS Code (formato inválido).');
+    end;
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Erro ao ler credenciais do VS Code: ' + E.Message);
+    end;
   end;
 end;
 
