@@ -62,6 +62,7 @@ contains
   RadIA.Provider.OpenRouter in 'Source\Providers\RadIA.Provider.OpenRouter.pas',
   RadIA.Provider.Generic in 'Source\Providers\RadIA.Provider.Generic.pas',
   RadIA.Provider.LMStudio in 'Source\Providers\RadIA.Provider.LMStudio.pas',
+  RadIA.Provider.WebViewBridge in 'Source\Providers\RadIA.Provider.WebViewBridge.pas',
   RadIA.OTA.Register in 'Source\Integration\RadIA.OTA.Register.pas',
   RadIA.OTA.Helper in 'Source\Integration\RadIA.OTA.Helper.pas',
   RadIA.OTA.EditorHook in 'Source\Integration\RadIA.OTA.EditorHook.pas',

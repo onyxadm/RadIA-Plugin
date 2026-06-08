@@ -69,7 +69,8 @@ implementation
 uses
   System.IOUtils, System.JSON, System.Threading, System.Math, RadIA.OTA.Helper, RadIA.Core.ProjectContext,
   RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama,
-  RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter, RadIA.Provider.LMStudio, RadIA.Core.ProviderRegistry, RadIA.Core.Logger;
+  RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter, RadIA.Provider.LMStudio,
+  RadIA.Provider.WebViewBridge, RadIA.Core.ProviderRegistry, RadIA.Core.Logger;
 
 procedure LogService(const AMsg: string);
 begin
@@ -184,7 +185,10 @@ var
   LProviderName: string;
 begin
   LProviderName := FConfig.GetActiveProvider;
-  Result := TProviderRegistry.CreateProvider(LProviderName, FConfig);
+  if FConfig.GetProviderAuthType(LProviderName) = 'web_login' then
+    Result := TProviderRegistry.CreateProvider('WebViewBridge', FConfig)
+  else
+    Result := TProviderRegistry.CreateProvider(LProviderName, FConfig);
 end;
 
 function TRadIAService.GetEffectiveSystemPrompt: string;
