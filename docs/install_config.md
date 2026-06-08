@@ -97,6 +97,7 @@ O script `.\build.ps1` aceita os seguintes parâmetros:
 * `-Release`: Ativa as otimizações do compilador Delphi e gera uma BPL menor.
 * `-IDE64`: Compila e instala o plugin especificamente para a IDE de 64 bits do Delphi 13 Florence.
 * `-DelphiVersion "<versao>"`: Opcional. Permite forçar o uso de uma versão específica do Delphi instalada no sistema (ex: `"23.0"`, `"37.0"`, `"Athens"`).
+* `-SkipTests`: Opcional. Ignora a compilação e a execução da suíte de testes unitários (DUnitX). Recomendado para usuários finais que desejam apenas instalar o plugin de forma rápida.
 
 > [!TIP]
 > **Suporte a Múltiplas Versões da IDE:** Se você possuir mais de uma versão do Delphi instalada no Windows e executar o script com `-Install` ou `-Uninstall` sem passar o parâmetro `-DelphiVersion`, o script listará automaticamente as versões instaladas encontradas no registro e exibirá um menu no console para que você selecione de forma interativa qual deseja utilizar.

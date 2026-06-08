@@ -3,7 +3,8 @@ param(
     [switch]$Uninstall,
     [switch]$Release,
     [switch]$IDE64,
-    [string]$DelphiVersion
+    [string]$DelphiVersion,
+    [switch]$SkipTests
 )
 $ErrorActionPreference = "Stop"
 $OutputEncoding = [System.Text.Encoding]::UTF8
@@ -249,58 +250,64 @@ if ($LASTEXITCODE -ne 0) {
     throw "Compilacao do pacote principal falhou."
 }
 
-# 7. Compilar Suite de Testes (Tests/RadIATests.dpr)
-Write-Host "Compilando suite de testes RadIATests.dpr em modo $configName..." -ForegroundColor Yellow
-Push-Location Tests
-try {
-    # DCU e Bin caminhos relativos de dentro da pasta Tests
-    $testsDcuPath = "..\Output\$delphiVer\dcu\Win32\$configName"
-    $testsBinPath = "..\Output\$delphiVer\bin\Win32\$configName"
-    New-Item -ItemType Directory -Force -Path $testsDcuPath, $testsBinPath | Out-Null
-    
-    $dccParamsTests = @("-Q", "-LUdesignide", "-LUvclie", "-NU$testsDcuPath", "-E$testsBinPath")
-    if ($Release) {
-        $dccParamsTests += @('-$D-', '-$L-', '-O+', '-DRELEASE')
-    } else {
-        $dccParamsTests += @('-$D+', '-$L+', '-O-', '-DDEBUG')
-    }
-    
-    # 7.1 Resolver Search Paths globais do Delphi no Registro para que compile com as mesmas units da IDE
-    if ($selectedInstall) {
-        $libRegPath = "HKCU:\Software\Embarcadero\BDS\$delphiVer\Library\Win32"
-        if (Test-Path $libRegPath) {
-            $searchPath = (Get-ItemProperty -Path $libRegPath -Name "Search Path" -ErrorAction SilentlyContinue)."Search Path"
-            if ($searchPath) {
-                # Substitui as macro-variaveis do Delphi pelo caminho fisico correspondente
-                $resolvedPath = $searchPath.Replace('$(BDS)', $selectedInstall.RootDir)
-                $resolvedPath = $resolvedPath.Replace('$(BDSCOMMONDIR)', "C:\Users\Public\Documents\Embarcadero\Studio\$delphiVer")
-                $dccParamsTests += "-U$resolvedPath"
+if (-not $SkipTests) {
+    # 7. Compilar Suite de Testes (Tests/RadIATests.dpr)
+    Write-Host "Compilando suite de testes RadIATests.dpr em modo $configName..." -ForegroundColor Yellow
+    Push-Location Tests
+    try {
+        # DCU e Bin caminhos relativos de dentro da pasta Tests
+        $testsDcuPath = "..\Output\$delphiVer\dcu\Win32\$configName"
+        $testsBinPath = "..\Output\$delphiVer\bin\Win32\$configName"
+        New-Item -ItemType Directory -Force -Path $testsDcuPath, $testsBinPath | Out-Null
+        
+        $dccParamsTests = @("-Q", "-LUdesignide", "-LUvclie", "-NU$testsDcuPath", "-E$testsBinPath")
+        if ($Release) {
+            $dccParamsTests += @('-$D-', '-$L-', '-O+', '-DRELEASE')
+        } else {
+            $dccParamsTests += @('-$D+', '-$L+', '-O-', '-DDEBUG')
+        }
+        
+        # 7.1 Resolver Search Paths globais do Delphi no Registro para que compile com as mesmas units da IDE
+        if ($selectedInstall) {
+            $libRegPath = "HKCU:\Software\Embarcadero\BDS\$delphiVer\Library\Win32"
+            if (Test-Path $libRegPath) {
+                $searchPath = (Get-ItemProperty -Path $libRegPath -Name "Search Path" -ErrorAction SilentlyContinue)."Search Path"
+                if ($searchPath) {
+                    # Substitui as macro-variaveis do Delphi pelo caminho fisico correspondente
+                    $resolvedPath = $searchPath.Replace('$(BDS)', $selectedInstall.RootDir)
+                    $resolvedPath = $resolvedPath.Replace('$(BDSCOMMONDIR)', "C:\Users\Public\Documents\Embarcadero\Studio\$delphiVer")
+                    $dccParamsTests += "-U$resolvedPath"
+                }
+            }
+            
+            # Fallback de seguranca caso o DUnitX nao esteja no Search Path do registro mas exista na pasta source
+            $dunitxPath = Join-Path $selectedInstall.RootDir "source\DUnitX"
+            if (Test-Path $dunitxPath) {
+                $dccParamsTests += "-U$dunitxPath"
+                $dccParamsTests += "-U$(Join-Path $dunitxPath 'src')"
             }
         }
         
-        # Fallback de seguranca caso o DUnitX nao esteja no Search Path do registro mas exista na pasta source
-        $dunitxPath = Join-Path $selectedInstall.RootDir "source\DUnitX"
-        if (Test-Path $dunitxPath) {
-            $dccParamsTests += "-U$dunitxPath"
-            $dccParamsTests += "-U$(Join-Path $dunitxPath 'src')"
-        }
+        & dcc32 $dccParamsTests RadIATests.dpr
+    } finally {
+        Pop-Location
     }
-    
-    & dcc32 $dccParamsTests RadIATests.dpr
-} finally {
-    Pop-Location
-}
 
-# 8. Executar os Testes Unitarios automaticamente
-Write-Host "Executando suite de testes..." -ForegroundColor Yellow
-$testsExe = ".\Output\$delphiVer\bin\Win32\$configName\RadIATests.exe"
-if (Test-Path $testsExe) {
-    & $testsExe
-    Write-Host "=============================================" -ForegroundColor Green
-    Write-Host "    Build e Testes Concluidos com Sucesso!   " -ForegroundColor Green
-    Write-Host "=============================================" -ForegroundColor Green
+    # 8. Executar os Testes Unitarios automaticamente
+    Write-Host "Executando suite de testes..." -ForegroundColor Yellow
+    $testsExe = ".\Output\$delphiVer\bin\Win32\$configName\RadIATests.exe"
+    if (Test-Path $testsExe) {
+        & $testsExe
+        Write-Host "=============================================" -ForegroundColor Green
+        Write-Host "    Build e Testes Concluidos com Sucesso!   " -ForegroundColor Green
+        Write-Host "=============================================" -ForegroundColor Green
+    } else {
+        Write-Error "O executavel de testes nao foi gerado em: $testsExe"
+    }
 } else {
-    Write-Error "O executavel de testes nao foi gerado em: $testsExe"
+    Write-Host "=============================================" -ForegroundColor Green
+    Write-Host "      Compilacao Concluida (Testes Ignorados)" -ForegroundColor Green
+    Write-Host "=============================================" -ForegroundColor Green
 }
 
 # 9. Instalacao automatizada (se a flag -Install for fornecida)
