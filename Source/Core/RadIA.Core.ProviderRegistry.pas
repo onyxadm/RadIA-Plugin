@@ -1,4 +1,4 @@
-unit RadIA.Core.ProviderRegistry;
+﻿unit RadIA.Core.ProviderRegistry;
 
 interface
 

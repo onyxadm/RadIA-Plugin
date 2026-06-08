@@ -1,4 +1,4 @@
-unit RadIA.Provider.WebViewBridge;
+﻿unit RadIA.Provider.WebViewBridge;
 
 interface
 

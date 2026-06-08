@@ -1,4 +1,4 @@
-unit RadIA.Core.Types;
+﻿unit RadIA.Core.Types;
 
 interface
 

@@ -1,4 +1,4 @@
-unit RadIA.Core.PromptHistory;
+﻿unit RadIA.Core.PromptHistory;
 
 interface
 

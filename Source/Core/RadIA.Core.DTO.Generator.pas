@@ -1,4 +1,4 @@
-unit RadIA.Core.DTO.Generator;
+﻿unit RadIA.Core.DTO.Generator;
 
 interface
 

@@ -1,4 +1,4 @@
-unit RadIA.UI.Resources;
+﻿unit RadIA.UI.Resources;
 
 interface
 

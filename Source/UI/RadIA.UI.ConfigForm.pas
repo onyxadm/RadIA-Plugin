@@ -1,4 +1,4 @@
-unit RadIA.UI.ConfigForm;
+﻿unit RadIA.UI.ConfigForm;
 
 interface
 

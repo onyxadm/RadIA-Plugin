@@ -1,4 +1,4 @@
-unit RadIA.Core.Logger;
+﻿unit RadIA.Core.Logger;
 
 interface
 

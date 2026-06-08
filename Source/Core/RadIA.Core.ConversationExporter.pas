@@ -1,4 +1,4 @@
-unit RadIA.Core.ConversationExporter;
+﻿unit RadIA.Core.ConversationExporter;
 
 interface
 

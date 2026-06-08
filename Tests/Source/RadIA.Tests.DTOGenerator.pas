@@ -1,4 +1,4 @@
-unit RadIA.Tests.DTOGenerator;
+﻿unit RadIA.Tests.DTOGenerator;
 
 interface
 

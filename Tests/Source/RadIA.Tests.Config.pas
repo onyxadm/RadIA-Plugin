@@ -1,4 +1,4 @@
-unit RadIA.Tests.Config;
+﻿unit RadIA.Tests.Config;
 
 interface
 

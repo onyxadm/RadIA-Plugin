@@ -1,4 +1,4 @@
-unit RadIA.Core.PromptTemplates;
+﻿unit RadIA.Core.PromptTemplates;
 
 interface
 

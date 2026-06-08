@@ -1,4 +1,4 @@
-unit RadIA.UI.DiffForm;
+﻿unit RadIA.UI.DiffForm;
 
 interface
 

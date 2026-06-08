@@ -1,4 +1,4 @@
-unit RadIA.Tests.Ollama;
+﻿unit RadIA.Tests.Ollama;
 
 interface
 

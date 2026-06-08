@@ -1,4 +1,4 @@
-unit RadIA.Core.Mediator;
+﻿unit RadIA.Core.Mediator;
 
 { Implements the Mediator pattern to decouple IDE integration components
   (EditorHook, MessageViewHook) from the UI layer (ChatFrame, DockableForm).

@@ -1,4 +1,4 @@
-unit RadIA.Core.Cache;
+﻿unit RadIA.Core.Cache;
 
 interface
 

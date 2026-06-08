@@ -1,4 +1,4 @@
-unit RadIA.Provider.Ollama;
+﻿unit RadIA.Provider.Ollama;
 
 interface
 

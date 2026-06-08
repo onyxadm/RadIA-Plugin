@@ -1,4 +1,4 @@
-unit RadIA.Core.Sessions;
+﻿unit RadIA.Core.Sessions;
 
 interface
 

@@ -1,4 +1,4 @@
-unit RadIA.UI.GithubAuthForm;
+﻿unit RadIA.UI.GithubAuthForm;
 
 interface
 

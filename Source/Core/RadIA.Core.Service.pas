@@ -1,4 +1,4 @@
-unit RadIA.Core.Service;
+﻿unit RadIA.Core.Service;
 
 interface
 

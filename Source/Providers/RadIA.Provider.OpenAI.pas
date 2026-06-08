@@ -1,4 +1,4 @@
-unit RadIA.Provider.OpenAI;
+﻿unit RadIA.Provider.OpenAI;
 
 interface
 

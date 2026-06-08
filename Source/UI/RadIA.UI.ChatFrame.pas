@@ -1,4 +1,4 @@
-unit RadIA.UI.ChatFrame;
+﻿unit RadIA.UI.ChatFrame;
 
 interface
 

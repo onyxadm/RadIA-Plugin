@@ -1,4 +1,4 @@
-unit RadIA.Tests.Analysis;
+﻿unit RadIA.Tests.Analysis;
 
 interface
 
