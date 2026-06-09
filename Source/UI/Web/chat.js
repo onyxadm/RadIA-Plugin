@@ -1105,6 +1105,7 @@ function updateMessage(text, isDone, provider, model) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
   
   if (isDone) {
+    processProjectFiles(currentAssistantContent);
     currentAssistantWrapper = null;
     currentAssistantContent  = null;
     currentAssistantText     = '';

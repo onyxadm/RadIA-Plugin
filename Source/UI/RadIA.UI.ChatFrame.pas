@@ -1186,6 +1186,9 @@ begin
           LActiveModel := FConfig.GetActiveModel(LActiveProvider);
           
           PostToWebView('update_message', 'assistant', LText, LIsDone, LActiveProvider, LActiveModel);
+          
+          if LIsDone then
+            TRadIAWebViewBridgeProvider.ReceiveChunk(LText, True, '');
         end));
     end
     else if LAction = 'send_prompt' then
@@ -1588,7 +1591,8 @@ begin
             if not LChunkCopy.IsEmpty then
             begin
               LFullResponse := LFullResponse + LChunkCopy;
-              PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
+              if not SameText(LActiveProvider, 'WebViewBridge') then
+                PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
             end;
 
             if LIsDoneCopy then
