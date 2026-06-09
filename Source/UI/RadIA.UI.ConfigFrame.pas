@@ -147,6 +147,7 @@ type
     FConfig: IAIConfig;
     FTemplateManager: TPromptTemplateManager;
     FOnClose: TNotifyEvent;
+    lblTemplateOrigin: TLabel;
     
     FEdtTemperatures: TDictionary<string, TEdit>;
     FEdtMaxTokens: TDictionary<string, TEdit>;
@@ -210,6 +211,13 @@ begin
   FConfig := TRadIAConfig.GetInstance;
   FTemplateManager := TPromptTemplateManager.Create;
   FTemplateManager.Load;
+
+  lblTemplateOrigin := TLabel.Create(Self);
+  lblTemplateOrigin.Parent := pnlTemplatesClient;
+  lblTemplateOrigin.Left := btnSaveTemplate.Left;
+  lblTemplateOrigin.Top := btnSaveTemplate.Top - 25;
+  lblTemplateOrigin.Font.Style := [fsBold];
+  lblTemplateOrigin.Caption := '';
 
   FEdtTemperatures := TDictionary<string, TEdit>.Create;
   FEdtMaxTokens := TDictionary<string, TEdit>.Create;
@@ -715,6 +723,8 @@ begin
   lblTemplateSlash.Font.Color := LColors.TextColor;
   lblTemplateBody.StyleElements := lblTemplateBody.StyleElements - [seClient, seBorder];
   lblTemplateBody.Font.Color := LColors.TextColor;
+  lblTemplateOrigin.StyleElements := lblTemplateOrigin.StyleElements - [seClient, seBorder];
+  lblTemplateOrigin.Font.Color := LColors.TextColor;
 
 
 
@@ -1020,6 +1030,11 @@ begin
     memTemplateBody.Text := '';
     edtTemplateSlash.Text := '';
     chkIsProjectGenerator.Checked := False;
+    
+    edtTemplateName.ReadOnly := False;
+    btnDeleteTemplate.Caption := 'Delete';
+    btnDeleteTemplate.Enabled := False;
+    lblTemplateOrigin.Caption := '';
     Exit;
   end;
 
@@ -1031,6 +1046,33 @@ begin
     memTemplateBody.Text := LTemplate.Template;
     edtTemplateSlash.Text := LTemplate.SlashCommand;
     chkIsProjectGenerator.Checked := LTemplate.IsProjectGenerator;
+    
+    if LTemplate.IsSystem then
+    begin
+      edtTemplateName.ReadOnly := True;
+      if LTemplate.IsCustomized then
+      begin
+        btnDeleteTemplate.Caption := 'Restore Default';
+        btnDeleteTemplate.Enabled := True;
+        lblTemplateOrigin.Caption := 'Origin: Default System (Customized)';
+        lblTemplateOrigin.Font.Color := $0000A5FF; // Laranja
+      end
+      else
+      begin
+        btnDeleteTemplate.Caption := 'Delete';
+        btnDeleteTemplate.Enabled := False;
+        lblTemplateOrigin.Caption := 'Origin: Default System (Read-Only)';
+        lblTemplateOrigin.Font.Color := clGray;
+      end;
+    end
+    else
+    begin
+      edtTemplateName.ReadOnly := False;
+      btnDeleteTemplate.Caption := 'Delete';
+      btnDeleteTemplate.Enabled := True;
+      lblTemplateOrigin.Caption := 'Origin: User Custom';
+      lblTemplateOrigin.Font.Color := clHighlight;
+    end;
   end;
 end;
 
@@ -1042,27 +1084,52 @@ begin
   memTemplateBody.Text := '';
   edtTemplateSlash.Text := '';
   chkIsProjectGenerator.Checked := False;
+  
+  edtTemplateName.ReadOnly := False;
+  btnDeleteTemplate.Caption := 'Delete';
+  btnDeleteTemplate.Enabled := False;
+  lblTemplateOrigin.Caption := '';
   edtTemplateName.SetFocus;
 end;
 
 procedure TFrameAIConfig.btnDeleteTemplateClick(Sender: TObject);
 var
   LName: string;
+  LTemplate: TPromptTemplate;
 begin
   if lstTemplates.ItemIndex < 0 then
   begin
-    ShowMessage('Please select a template to delete.');
+    ShowMessage('Please select a template.');
     Exit;
   end;
 
   LName := lstTemplates.Items[lstTemplates.ItemIndex];
-  if MessageDlg(Format('Are you sure you want to delete the template "%s"?', [LName]),
-    mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  if FTemplateManager.FindTemplate(LName, LTemplate) then
   begin
-    FTemplateManager.DeleteTemplate(LName);
-    FTemplateManager.Save; // Salva o JSON local após excluir
-    PopulateTemplatesList;
-    lstTemplatesClick(nil);
+    if LTemplate.IsSystem then
+    begin
+      if LTemplate.IsCustomized then
+      begin
+        if MessageDlg(Format('Deseja realmente restaurar o template padrão "%s" para o conteúdo original de fábrica?', [LName]),
+          mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+        begin
+          FTemplateManager.RestoreDefaultTemplate(LName);
+          PopulateTemplatesList;
+          lstTemplatesClick(nil);
+        end;
+      end;
+    end
+    else
+    begin
+      if MessageDlg(Format('Are you sure you want to delete the template "%s"?', [LName]),
+        mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+      begin
+        FTemplateManager.DeleteTemplate(LName);
+        FTemplateManager.Save;
+        PopulateTemplatesList;
+        lstTemplatesClick(nil);
+      end;
+    end;
   end;
 end;
 
