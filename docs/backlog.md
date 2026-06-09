@@ -13,7 +13,7 @@ O quadro abaixo resume o status atual das features mapeadas a curto e médio pra
 | **Smart SQL Optimizer no Editor** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.1.0 |
 | **Delphi Compiler & OS Warning Scanner** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.1.0 |
 | **Revisão Automática de Código no Save** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.1.0 |
-| **Histórico de Refatorações Aplicadas** | 🔲 Planejado | 🟢 Baixa | 🟡 Média | v0.1.0 |
+| **Histórico de Refatorações Aplicadas** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐ Média | v0.1.0 |
 | **Otimizador de Cláusula Uses (Clean Uses)** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.2.0 |
 | **Gerador de Mocks para Testes Unitários** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.2.0 |
 | **Smart Multi-Unit Trace Resolver** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐⭐ Crítica | v0.2.0 |
@@ -21,14 +21,14 @@ O quadro abaixo resume o status atual das features mapeadas a curto e médio pra
 | **Gerador de Documentação OpenAPI/Swagger** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.2.0 |
 | **Análise Semântica Bidirecional (DFM vs PAS)** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.2.0 |
 | **Assistente de Migração (Smart Migrate)** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.2.0 |
-| **Painel de Gerenciamento do Cache** | 🔲 Planejado | 🟡 Média | 🟡 Média | v0.2.0 |
+| **Painel de Gerenciamento do Cache** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐ Média | v0.2.0 |
 | **Conversão BDE/ADO/dbExpress ➔ DEXT com FireDAC** | 🔲 Planejado | 🔴 Alta | ⭐⭐⭐⭐ Alta | v0.3.0+ |
 | **Decompositor de Forms (Code-Behind)** | 🔲 Planejado | 🔴 Alta | ⭐⭐⭐⭐ Alta | v0.3.0+ |
 | **Assistente de Threads e PPL** | 🔲 Planejado | 🔴 Alta | ⭐⭐⭐⭐ Alta | v0.3.0+ |
 | **Internacionalização Automática (i18n Wizard)** | 🔲 Planejado | 🔴 Alta | ⭐⭐⭐⭐ Alta | v0.3.0+ |
 | **Autocompletar Inline (Ghost Text)** | 🔲 Planejado | 🔴 Alta | ⭐⭐⭐⭐ Alta | v0.3.0+ |
 | **Integração com Depurador da IDE (OTA)** | 🔲 Planejado | 🔴 Alta | ⭐⭐⭐⭐ Alta | v0.3.0+ |
-| **Geração de Docs de Projeto (API.md)** | 🔲 Planejado | 🟡 Média | 🟡 Média | v0.3.0+ |
+| **Geração de Docs de Projeto (API.md)** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐ Média | v0.3.0+ |
 | **Suporte Nativo macOS/Linux (Lazarus)** | 🔲 Planejado | 🔴 Alta | 🟢 Baixa | v0.3.0+ |
 
 ---
