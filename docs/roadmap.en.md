@@ -4,8 +4,8 @@ This document outlines the strategic planning and long-term vision of the **RadI
 
 > [!NOTE]
 > RadIA follows a **community-driven open-source development model**.
-> *   For a detailed view of feature priorities, effort estimates, and impacts, check the [Feature Prioritization Matrix (docs/feature_prioritization_matrix.md)](docs/feature_prioritization_matrix.md).
-> *   For technical details of past and pending implementations (such as class names, successful DUnitX tests, and commits), refer to the [Evolution Backlog (docs/backlog.en.md)](docs/backlog.en.md).
+> *   For a detailed view of feature priorities, effort estimates, and impacts, check the [Feature Prioritization Matrix (feature_prioritization_matrix.md)](feature_prioritization_matrix.md).
+> *   For technical details of past and pending implementations (such as class names, successful DUnitX tests, and commits), refer to the [Evolution Backlog (backlog.en.md)](backlog.en.md).
 
 ---
 
@@ -18,7 +18,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Assures that new plugin updates bring fresh community prompts without overriding or erasing your local personal customizations.
   *   **Highlights**: Segregation of native and user templates, visual origin indicator in IDE options, and a "Restore Default" action.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.15)](docs/backlog.en.md#v0015--two-layer-template-architecture-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.15)](backlog.en.md#v0015--two-layer-template-architecture-click-to-expand).*
 </details>
 
 <details>
@@ -26,7 +26,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Freedom to create custom slash commands (`/`) mapped to repetitive prompts, and ease in migrating/sharing your prompt libraries between different workstations.
   *   **Highlights**: Full dynamic slash commands customization, JSON backup importing/exporting with merge or overwrite options, and a native Clean Architecture Delphi template.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.14)](docs/backlog.en.md#v0014--dynamic-templates--backup-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.14)](backlog.en.md#v0014--dynamic-templates--backup-click-to-expand).*
 </details>
 
 <details>
@@ -34,7 +34,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Extreme speed when starting new ideas and microservices. The AI constructs the entire folder structure and files, loading them directly into your active IDE ready to run.
   *   **Highlights**: Transactional file generator, high-fidelity glassmorphism file explorer in chat, and automated project loading inside the Delphi IDE.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.13)](docs/backlog.en.md#v0013--prompt-based-delphi-project-generation-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.13)](backlog.en.md#v0013--prompt-based-delphi-project-generation-click-to-expand).*
 </details>
 
 <details>
@@ -42,7 +42,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Integration with top Amazon models (Anthropic Claude, Llama 3) inside strict enterprise environments demanding security under AWS cloud environments.
   *   **Highlights**: Native AWS Bedrock support, SigV4 cryptographic signing, and binary EventStream parser.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.12)](docs/backlog.en.md#v0012--aws-bedrock-provider-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.12)](backlog.en.md#v0012--aws-bedrock-provider-click-to-expand).*
 </details>
 
 <details>
@@ -50,7 +50,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Expansion of the plugin's native AI catalog to comply with internal IT security policies of different companies.
   *   **Highlights**: Native support for Azure OpenAI, Alibaba Qwen 2.5, and Mistral AI, with dedicated tabs and shortcuts inside the IDE options panel.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.11)](docs/backlog.en.md#v0011--azure-qwen-and-mistral-ai-providers-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.11)](backlog.en.md#v0011--azure-qwen-and-mistral-ai-providers-click-to-expand).*
 </details>
 
 <details>
@@ -58,7 +58,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Native, official, and simplified authentication with the world's most popular coding AI directly from the RadIA chat panel, without local proxies.
   *   **Highlights**: Native cloud GitHub Copilot support, interactive device PIN login workflow, and one-click active token import from VS Code settings.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.10)](docs/backlog.en.md#v0010--native-github-copilot-support-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.10)](backlog.en.md#v0010--native-github-copilot-support-click-to-expand).*
 </details>
 
 <details>
@@ -66,7 +66,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Ease of deployment on workstation environments running multiple Delphi IDE installations simultaneously (e.g., Alexandria and Athens).
   *   **Highlights**: Interactive PowerShell installer with Windows Registry autodiscovery, and localized console encoding fixes.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.9)](docs/backlog.en.md#v009--multi-ide-build-support-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.9)](backlog.en.md#v009--multi-ide-build-support-click-to-expand).*
 </details>
 
 <details>
@@ -74,7 +74,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Workstation autonomy using local, offline AI models running on private corporate servers or local hardware via LM Studio.
   *   **Highlights**: Native LM Studio provider, and a dedicated light/dark IDE settings page.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.8)](docs/backlog.en.md#v008--lm-studio-provider-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.8)](backlog.en.md#v008--lm-studio-provider-click-to-expand).*
 </details>
 
 <details>
@@ -87,9 +87,9 @@ Below are the achievements and values delivered in each release version of the p
 <details>
   <summary><b>📦 v0.0.6 — JSON Providers and Copilot Proxy Support (Completed)</b></summary>
 
-  *   **Value Delivered**: Instant extensibility. Allows adding any new AI compatible with the OpenAI API protocol simply by saving a local JSON file, without reinstalling or recompiling the BPL.
+  *   **Value Delivered**: Instant extensibility. Allows adding any new AI compatible with the OpenAI API protocol simply by saving a local JSON file, without reinstalling or compiling the BPL.
   *   **Highlights**: Dynamic providers loadable via local JSON configs, and initial support for Copilot proxy utilities.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.6)](docs/backlog.en.md#v006--json-dynamic-providers-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.6)](backlog.en.md#v006--json-dynamic-providers-click-to-expand).*
 </details>
 
 <details>
@@ -104,7 +104,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Automation of repetitive tasks (like writing DTO models) and call stack analyses matching the active code editor line.
   *   **Highlights**: DTO converter (JSON/SQL to Pascal), Stack Trace Assistant for exception logs, static analysis for memory leaks, and a WebView2 slash command (`/`) popup autocomplete menu.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.4)](docs/backlog.en.md#v004--productivity--static-analysis-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.4)](backlog.en.md#v004--productivity--static-analysis-click-to-expand).*
 </details>
 
 <details>
@@ -112,7 +112,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Assurance that the plugin runs smoothly in the background without causing IDE crashes, BPL memory leaks, or Access Violations in everyday usage.
   *   **Highlights**: Central registry for dynamic AI loading, and thread-safe callbacks during background async HTTP requests.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.3)](docs/backlog.en.md#v003--runtime-stability-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.3)](backlog.en.md#v003--runtime-stability-click-to-expand).*
 </details>
 
 <details>
@@ -120,7 +120,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: Conversation organization separated by task or project, and budget controls over API key usage.
   *   **Highlights**: Collapsible multiple persistent sessions sidebar, local monthly token limit widget inside status bar, and OpenRouter support.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.2)](docs/backlog.en.md#v002--multiple-sessions--token-budgeting-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.2)](backlog.en.md#v002--multiple-sessions--token-budgeting-click-to-expand).*
 </details>
 
 <details>
@@ -128,7 +128,7 @@ Below are the achievements and values delivered in each release version of the p
 
   *   **Value Delivered**: The AI natively coupled inside the Delphi IDE sidebar, providing quick incremental token responses and visual editor shortcuts.
   *   **Highlights**: Dockable chat panel with WebView2, support for 6 AI backends, SSE streaming, local history, editor right-click menu actions, Smart Diff side-by-side visual comparison, Smart Build compilation error debugger, and auto XML documentation.
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.1)](docs/backlog.en.md#v001--initial-release-click-to-expand).*
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.1)](backlog.en.md#v001--initial-release-click-to-expand).*
 </details>
 
 ---

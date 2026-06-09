@@ -41,7 +41,7 @@ The board below summarizes the current status of mapped short and medium-term fe
 
 ## 🔲 2. Next Up (Planned Backlog)
 
-For complete details on objectives, impacts, and technical specifications for each future feature, check the [Feature Prioritization Matrix (docs/feature_prioritization_matrix.md)](feature_prioritization_matrix.md) or the [Evolution Roadmap (ROADMAP.en.md)](../ROADMAP.en.md).
+For complete details on objectives, impacts, and technical specifications for each future feature, check the [Feature Prioritization Matrix (docs/feature_prioritization_matrix.md)](feature_prioritization_matrix.md) or the [Evolution Roadmap (docs/roadmap.en.md)](roadmap.en.md).
 
 ---
 
