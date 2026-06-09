@@ -98,6 +98,7 @@ type
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
     procedure InitializeWebView;
     procedure CopyWebFiles;
+    procedure CopyDirectory(const ASourceDir, ADestDir: string);
     function IsProviderConfigured(const AProviderId: string): Boolean;
     procedure LoadConfig;
     procedure UpdateModelsCombo;
@@ -346,12 +347,35 @@ begin
   inherited DestroyWnd;
 end;
 
+procedure TFrameAIChat.CopyDirectory(const ASourceDir, ADestDir: string);
+var
+  LFile: string;
+  LDir: string;
+  LFileName: string;
+  LSubDir: string;
+begin
+  if not TDirectory.Exists(ASourceDir) then
+    Exit;
+
+  ForceDirectories(ADestDir);
+
+  for LFile in TDirectory.GetFiles(ASourceDir) do
+  begin
+    LFileName := TPath.GetFileName(LFile);
+    TFile.Copy(LFile, TPath.Combine(ADestDir, LFileName), True);
+  end;
+
+  for LDir in TDirectory.GetDirectories(ASourceDir) do
+  begin
+    LSubDir := TPath.GetFileName(LDir);
+    CopyDirectory(LDir, TPath.Combine(ADestDir, LSubDir));
+  end;
+end;
+
 procedure TFrameAIChat.CopyWebFiles;
 var
   LSourceDir: string;
   LModuleDir: string;
-  LFile: string;
-  LFilesToCopy: TArray<string>;
 begin
   ForceDirectories(FWebFilesDir);
   
@@ -374,16 +398,7 @@ begin
   if not TDirectory.Exists(LSourceDir) then
     Exit;
     
-  LFilesToCopy := TArray<string>.Create('chat.html', 'chat.css', 'chat.js', 'diff.html',
-    'marked.min.js', 'prism.min.js', 'prism-pascal.min.js', 'prism-tomorrow.min.css',
-    'diff2html.min.css', 'diff2html.min.js', 'diff.min.js', 'bridge.js');
-  for LFile in LFilesToCopy do
-  begin
-    if TFile.Exists(TPath.Combine(LSourceDir, LFile)) then
-    begin
-      TFile.Copy(TPath.Combine(LSourceDir, LFile), TPath.Combine(FWebFilesDir, LFile), True);
-    end;
-  end;
+  CopyDirectory(LSourceDir, FWebFilesDir);
 end;
 
 procedure TFrameAIChat.InitializeWebView;
