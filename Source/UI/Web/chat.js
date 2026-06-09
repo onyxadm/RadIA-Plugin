@@ -4,6 +4,9 @@
 
 // -- Configuração do Marked com Prism para highlight de código --
 marked.setOptions({
+  gfm: true,
+  breaks: true,
+  pedantic: false,
   highlight: function(code, lang) {
     const language = lang || 'pascal';
     if (Prism.languages[language]) {
@@ -72,7 +75,11 @@ renderer.code = function(codeOrToken, lang) {
     </div>
   `;
 };
-marked.use({ renderer });
+marked.use({
+  renderer,
+  gfm: true,
+  breaks: true
+});
 
 // ============================================================
 //  Elementos do DOM
