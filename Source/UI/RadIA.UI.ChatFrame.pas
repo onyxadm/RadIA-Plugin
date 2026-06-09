@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ChatFrame;
+unit RadIA.UI.ChatFrame;
 
 interface
 
@@ -115,6 +115,7 @@ type
     procedure ApplyIDETheme;
     procedure UpdateVCLColors(const AColors: TRadIAThemeColors);
     procedure ProcessWebMessage(const AMessage: string);
+    function PreProcessPrompt(const APromptText: string): string;
     procedure GenerateDTO(const AInput, AInputType, AOutputType: string);
     
     procedure SendInitialConfigToWeb;
@@ -136,8 +137,8 @@ implementation
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
   RadIA.Core.Mediator, RadIA.Core.ConversationExporter, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.DTO.Generator, RadIA.Core.ProviderRegistry, RadIA.Provider.WebViewBridge,
-  RadIA.UI.WebLoginForm;
+  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Core.ProviderRegistry, 
+  RadIA.Provider.WebViewBridge, RadIA.UI.WebLoginForm;
 
 {$R *.dfm}
 
@@ -943,8 +944,35 @@ begin
 
     LJson := LParsed as TJSONObject;
     LAction := LJson.GetValue<string>('action', '');
-    
-    if LAction = 'apply_code' then
+    if LAction = 'create_project' then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        var
+          LJsonFiles: TJSONArray;
+          LJsonFilesStr: string;
+          LErrorMsg: string;
+        begin
+          LJsonFiles := LJson.GetValue('files') as TJSONArray;
+          if Assigned(LJsonFiles) then
+          begin
+            LJsonFilesStr := LJsonFiles.ToJSON;
+            if not TRadIAProjectGenerator.GenerateFromJSON(LJsonFilesStr, LErrorMsg) then
+            begin
+              if not LErrorMsg.IsEmpty then
+              begin
+                Application.MessageBox(PChar(LErrorMsg), 'RadIA', MB_OK or MB_ICONWARNING);
+              end;
+            end;
+          end
+          else
+          begin
+            Application.MessageBox('No files data received.', 'RadIA', MB_OK or MB_ICONWARNING);
+          end;
+        end));
+    end
+    else if LAction = 'apply_code' then
     begin
       LCode := LJson.GetValue<string>('code', '');
       { Normalize line endings to CRLF (#13#10) for Windows OTA editor compatibility. }
@@ -1158,6 +1186,9 @@ begin
           LActiveModel := FConfig.GetActiveModel(LActiveProvider);
           
           PostToWebView('update_message', 'assistant', LText, LIsDone, LActiveProvider, LActiveModel);
+          
+          if LIsDone then
+            TRadIAWebViewBridgeProvider.ReceiveChunk(LText, True, '');
         end));
     end
     else if LAction = 'send_prompt' then
@@ -1166,9 +1197,12 @@ begin
       TThread.Queue(nil,
         TThreadProcedure(
         procedure
+        var
+          LProcessed: string;
         begin
+          LProcessed := PreProcessPrompt(LText);
           PostToWebView('add_message', 'user', LText);
-          SendPromptToAI(LText);
+          SendPromptToAI(LProcessed);
         end));
     end
     else if LAction = 'generate_dto' then
@@ -1272,11 +1306,7 @@ end;
 procedure TFrameAIChat.btnSendClick(Sender: TObject);
 var
   LText: string;
-  LActiveCode: string;
-  LTemplateName: string;
-  LResolved: string;
-  LTemplate: TPromptTemplate;
-  LStackTrace: string;
+  LProcessed: string;
 begin
   if FRequestInProgress then
   begin
@@ -1295,48 +1325,8 @@ begin
   if LText.IsEmpty then
     Exit;
 
-  { Check for Slash Command /template }
-  if LText.StartsWith('/template', True) then
-  begin
-    LTemplateName := Trim(LText.Substring(10));
-    if LTemplateName.IsEmpty then
-    begin
-      ShowMessage('Please specify the template name. Example: /template Review Clean Code Delphi');
-      Exit;
-    end;
-    
-    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
-      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
-
-    LResolved := FTemplateManager.ResolveTemplate(LTemplateName, LActiveCode);
-    if LResolved.IsEmpty then
-    begin
-      ShowMessage(Format('Template "%s" not found.', [LTemplateName]));
-      Exit;
-    end;
-    
-    LText := LResolved;
-  end
-  else if LText.StartsWith('/review', True) then
-  begin
-    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
-      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
-
-    LResolved := FTemplateManager.ResolveTemplate('Review Leaks and SOLID', LActiveCode);
-    if not LResolved.IsEmpty then
-      LText := LResolved;
-  end
-  else if LText.StartsWith('/stacktrace', True) then
-  begin
-    LStackTrace := Trim(LText.Substring(11));
-    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
-      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
-
-    if FTemplateManager.FindTemplate('Analyze Stack Trace', LTemplate) then
-    begin
-      LText := LTemplate.Template.Replace('{stacktrace}', LStackTrace).Replace('{code}', LActiveCode);
-    end;
-  end;
+  { Preprocess command templates (Slash Commands) }
+  LProcessed := PreProcessPrompt(LText);
 
   { Save to prompt history before clearing the input }
   FPromptHistoryManager.Add(memPrompt.Text);
@@ -1344,7 +1334,56 @@ begin
 
   memPrompt.Text := '';
   PostToWebView('add_message', 'user', LText);
-  SendPromptToAI(LText);
+  SendPromptToAI(LProcessed);
+end;
+
+function TFrameAIChat.PreProcessPrompt(const APromptText: string): string;
+var
+  LActiveCode: string;
+  LTemplate: TPromptTemplate;
+  LResolved: string;
+  LTemplateName: string;
+  LStackTrace: string;
+begin
+  Result := APromptText;
+
+  if APromptText.StartsWith('/createproject', True) then
+  begin
+    LTemplateName := Trim(APromptText.Substring(14));
+    if FTemplateManager.FindTemplate('Create Project Delphi', LTemplate) then
+      Result := LTemplate.Template.Replace('{specification}', LTemplateName);
+  end
+  else if APromptText.StartsWith('/template', True) then
+  begin
+    LTemplateName := Trim(APromptText.Substring(10));
+    if not LTemplateName.IsEmpty then
+    begin
+      if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
+        TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
+      
+      LResolved := FTemplateManager.ResolveTemplate(LTemplateName, LActiveCode);
+      if not LResolved.IsEmpty then
+        Result := LResolved;
+    end;
+  end
+  else if APromptText.StartsWith('/review', True) then
+  begin
+    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
+      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
+      
+    LResolved := FTemplateManager.ResolveTemplate('Review Leaks and SOLID', LActiveCode);
+    if not LResolved.IsEmpty then
+      Result := LResolved;
+  end
+  else if APromptText.StartsWith('/stacktrace', True) then
+  begin
+    LStackTrace := Trim(APromptText.Substring(11));
+    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
+      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
+      
+    if FTemplateManager.FindTemplate('Analyze Stack Trace', LTemplate) then
+      Result := LTemplate.Template.Replace('{stacktrace}', LStackTrace).Replace('{code}', LActiveCode);
+  end;
 end;
 
 procedure TFrameAIChat.btnTemplatesClick(Sender: TObject);
@@ -1552,7 +1591,8 @@ begin
             if not LChunkCopy.IsEmpty then
             begin
               LFullResponse := LFullResponse + LChunkCopy;
-              PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
+              if not SameText(LActiveProvider, 'WebViewBridge') then
+                PostToWebView('append_message', 'assistant', LChunkCopy, False, LActiveProvider, LActiveModel);
             end;
 
             if LIsDoneCopy then

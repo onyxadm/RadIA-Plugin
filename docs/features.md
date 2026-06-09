@@ -43,6 +43,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Smart Build Debugger** | Integração | Clique com o botão direito nos erros de compilação da IDE para correções instantâneas. | ✅ Concluído |
 | **Documentação XML Automática** | Geração | Geração automática de comentários `/// <summary>` sobre os métodos da unit. | ✅ Concluído |
 | **Conversor de DTO e Modelos** | Geração | Conversor de payload JSON ou DDL SQL para classes de dados (DTOs) ou records Object Pascal (com DEXT ORM, Aurelius, REST.Json ou Vanilla). | ✅ Concluído |
+| **Geração de Projeto Completo** | Geração | Geração automática de projetos Delphi (.dpr, .pas, .dfm) via prompt do assistente, salvando-os em pasta vazia e carregando-os na IDE. | ✅ Concluído |
 | **Menu Popup de Slash Commands (/)** | Chat UX | Menu flutuante de sugestões e autocompletar ao digitar `/` na caixa de entrada do chat. | ✅ Concluído |
 | **Assistente de Stack Trace** | Integração | Analisador de logs de erro/stack trace integrado ao contexto da unit aberta. | ✅ Concluído |
 | **Análise Estática de Código** | Integração | Varredura de código em busca de memory leaks (ausência de try..finally) e anti-padrões SOLID/Clean Code. | ✅ Concluído |

@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.PromptTemplates;
+unit RadIA.Core.PromptTemplates;
 
 interface
 
@@ -90,6 +90,29 @@ begin
     '1. Memory Leaks (missing try..finally blocks on object creations or incorrect deallocations)'#13#10 +
     '2. SOLID and Clean Code violations'#13#10 +
     '3. Anti-patterns or potential run-time bugs'#13#10#13#10'{code}'
+  );
+  AddTemplate(
+    'Create Project Delphi',
+    'Generate a complete Delphi project from specification with file paths',
+    'You are a Senior Delphi Software Architect. Create a complete, fully functional and compilable Delphi project based on the following specification:'#13#10 +
+    '"{specification}"'#13#10#13#10 +
+    'Provide all necessary files (such as .dpr, .pas, .dfm) so the project is complete and ready to compile and run. Follow these strict rules:'#13#10 +
+    '1. Do not use placeholders or omit any code. Write the entire implementation.'#13#10 +
+    '2. You MUST start the very first line of EVERY code block with a filepath comment representing the relative path of that file in the project directory.'#13#10 +
+    'Use the following format for each file block:'#13#10 +
+    '```pascal'#13#10 +
+    '// filepath: ProjectName.dpr'#13#10 +
+    'program ProjectName;'#13#10 +
+    '...'#13#10 +
+    '```'#13#10 +
+    'and for forms:'#13#10 +
+    '```dfm'#13#10 +
+    '// filepath: uMain.dfm'#13#10 +
+    'object MainForm: TMainForm'#13#10 +
+    '...'#13#10 +
+    'end'#13#10 +
+    '```'#13#10 +
+    '3. Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together.'
   );
 end;
 

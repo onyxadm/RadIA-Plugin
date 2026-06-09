@@ -199,6 +199,24 @@ A versão v0.0.12 adicionou suporte oficial para o provedor AWS Bedrock, incluin
 
 ---
 
+## ✅ v0.0.13 — Geração de Projetos Delphi Inteiros via Prompt (Concluído)
+
+A versão v0.0.13 adicionou suporte para criação automatizada de projetos Delphi completos a partir de um prompt, com gravação física e carregamento imediato na IDE:
+
+- **Geração de Projeto Inteiro:**
+  * Nova classe de serviço especialista `TRadIAProjectGenerator` (em `RadIA.Core.ProjectGenerator.pas`) para parsear múltiplos arquivos via JSON.
+  * Diálogo de salvamento dinâmico que exige obrigatoriamente uma pasta destino vazia para segurança de dados.
+  * Mecanismo transacional de gravação que desfaz a operação de salvamento caso ocorra qualquer erro de disco ou escrita.
+  * Autodetecção inteligente de projetos (.dproj e .dpr) e abertura automática na IDE usando a Open Tools API.
+- **Prompt Template e Slash Command `/createproject`:**
+  * Centralização das diretivas do prompt no gerenciador de templates (`TPromptTemplateManager` em `RadIA.Core.PromptTemplates.pas`), mantendo o design alinhado com o princípio de responsabilidade única.
+  * Injeção de regras rígidas de formatação de código com o comentário de metadado `// filepath: caminho/relativo`.
+- **Interface Premium de Projeto:**
+  * Painel consolidado com visual premium (glassmorphism moderno) listando todos os arquivos gerados com ícones elegantes por extensão.
+  * Navegação interativa que rola a tela do chat de forma suave (`scrollIntoView`) e destaca o bloco correspondente com uma animação de borda flash ao inspecionar o arquivo na lista.
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save

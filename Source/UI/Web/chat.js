@@ -42,15 +42,27 @@ renderer.code = function(codeOrToken, lang) {
     language = lang || 'pascal';
   }
 
+  const FILEPATH_REGEX = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*([^\r\n]+?)(?:\s*\}|\s*\*\}|\s*-->)?(?:\r?\n|$)/i;
+  const fileMatch = code.match(FILEPATH_REGEX);
+  let filepath = '';
+  let isProjectFile = false;
+
+  if (fileMatch) {
+    filepath = fileMatch[1].trim();
+    isProjectFile = true;
+    code = code.replace(FILEPATH_REGEX, '');
+  }
+
   const id = 'cb_' + (++_codeRegistryCounter);
   _codeRegistry[id] = code;
 
   const isPascal = ['pascal', 'delphi', 'objectpascal'].includes(language.toLowerCase());
+  const headerTitle = isProjectFile ? `${language.toUpperCase()} • ${filepath}` : language.toUpperCase();
 
   return `
-    <div class="code-block-container">
+    <div class="code-block-container" ${isProjectFile ? `data-filepath="${filepath}" data-project-file="true"` : ''}>
       <div class="code-header">
-        <span>${language.toUpperCase()}</span>
+        <span>${headerTitle}</span>
         <div class="code-header-actions">
           <button class="copy-btn" title="Copy Code" onclick="copyCode(this, '${id}')">${SVG_ICONS.copy}</button>
           ${isPascal ? `<button class="apply-btn" title="Apply to Editor" onclick="applyCode('${id}')">${SVG_ICONS.apply}</button>` : ''}
@@ -98,7 +110,8 @@ const SLASH_COMMANDS = [
   { name: '/doc', desc: 'Generates XML documentation for the selected method', shortcut: 'Ctrl+Shift+D' },
   { name: '/template', desc: 'Opens the prompt templates library', shortcut: 'Ctrl+Shift+T' },
   { name: '/stacktrace', desc: 'Analyzes an error log or stack trace and points out the root cause', shortcut: '' },
-  { name: '/review', desc: 'Performs static analysis on the active unit (leaks/SOLID)', shortcut: '' }
+  { name: '/review', desc: 'Performs static analysis on the active unit (leaks/SOLID)', shortcut: '' },
+  { name: '/createproject', desc: 'Generates a complete Delphi project from specification', shortcut: '' }
 ];
 
 let slashPopupVisible = false;
@@ -499,6 +512,7 @@ function addMessage(role, text, provider, model) {
 
   if (role === 'assistant' || role === 'system') {
     content.innerHTML = marked.parse(text);
+    processProjectFiles(content);
   } else {
     const p = document.createElement('p');
     p.textContent = text;
@@ -666,9 +680,152 @@ function appendMessage(text, isDone, provider, model) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
   if (isDone) {
+    processProjectFiles(currentAssistantContent);
     currentAssistantWrapper = null;
     currentAssistantContent  = null;
     currentAssistantText     = '';
+  }
+}
+
+function processProjectFiles(contentElement) {
+  if (!contentElement) return;
+
+  const fileBlocks = contentElement.querySelectorAll('.code-block-container[data-project-file="true"]');
+  if (fileBlocks.length === 0) return;
+
+  if (contentElement.querySelector('.radia-project-panel')) return;
+
+  const projectPanel = document.createElement('div');
+  projectPanel.className = 'radia-project-panel';
+
+  const header = document.createElement('div');
+  header.className = 'radia-project-header';
+  header.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <span>PROJETO DELPHI GERADO</span>
+  `;
+  projectPanel.appendChild(header);
+
+  const filesList = document.createElement('div');
+  filesList.className = 'radia-project-files-list';
+
+  fileBlocks.forEach((block) => {
+    const filepath = block.getAttribute('data-filepath');
+    const ext = filepath.split('.').pop().toLowerCase();
+    const copyBtn = block.querySelector('.copy-btn');
+    if (!copyBtn) return;
+    const onclickAttr = copyBtn.getAttribute('onclick') || '';
+    const onclickMatch = onclickAttr.match(/'([^']+)'/);
+    const blockId = onclickMatch ? onclickMatch[1] : '';
+    
+    let iconColor = 'var(--fg-secondary)';
+    let fileIconSvg = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+      </svg>
+    `;
+
+    if (ext === 'dpr' || ext === 'dproj') {
+      iconColor = 'var(--accent)';
+      fileIconSvg = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"></polyline>
+          <polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+      `;
+    } else if (ext === 'pas') {
+      iconColor = '#4caf50';
+      fileIconSvg = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+      `;
+    } else if (ext === 'dfm') {
+      iconColor = '#ff9800';
+      fileIconSvg = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="9" y1="3" x2="9" y2="21"></line>
+        </svg>
+      `;
+    }
+
+    const item = document.createElement('div');
+    item.className = 'radia-project-file-item';
+    item.innerHTML = `
+      <div class="file-item-info">
+        <span class="file-item-icon" style="color: ${iconColor};">${fileIconSvg}</span>
+        <span class="file-item-name" title="${filepath}">${filepath}</span>
+      </div>
+      <div class="file-item-actions">
+        <button class="file-item-btn" title="Visualizar código do arquivo" onclick="scrollToBlock('${blockId}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    `;
+    filesList.appendChild(item);
+  });
+  projectPanel.appendChild(filesList);
+
+  const actionBtn = document.createElement('button');
+  actionBtn.className = 'radia-project-action-btn';
+  actionBtn.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block; vertical-align: middle;">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+      <polyline points="7 3 7 8 15 8"></polyline>
+    </svg>
+    <span>Criar Projeto e Abrir na IDE</span>
+  `;
+
+  actionBtn.addEventListener('click', () => {
+    const filesData = [];
+    fileBlocks.forEach(block => {
+      const filepath = block.getAttribute('data-filepath');
+      const codeEl = block.querySelector('code');
+      const content = codeEl ? codeEl.textContent : '';
+      filesData.push({ path: filepath, content: content });
+    });
+
+    actionBtn.disabled = true;
+    actionBtn.querySelector('span').textContent = 'Processando no Delphi...';
+
+    postMessageToDelphi({
+      action: 'create_project',
+      files: filesData
+    });
+
+    setTimeout(() => {
+      actionBtn.disabled = false;
+      actionBtn.querySelector('span').textContent = 'Criar Projeto e Abrir na IDE';
+    }, 4000);
+  });
+
+  projectPanel.appendChild(actionBtn);
+  contentElement.appendChild(projectPanel);
+}
+
+function scrollToBlock(blockId) {
+  const codeRegistryKey = Object.keys(_codeRegistry).find(key => key === blockId);
+  if (codeRegistryKey) {
+    const copyButton = document.querySelector(`button[onclick*="${blockId}"]`);
+    if (copyButton) {
+      const container = copyButton.closest('.code-block-container');
+      if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        container.classList.add('highlight-flash');
+        setTimeout(() => {
+          container.classList.remove('highlight-flash');
+        }, 1500);
+      }
+    }
   }
 }
 
@@ -948,6 +1105,7 @@ function updateMessage(text, isDone, provider, model) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
   
   if (isDone) {
+    processProjectFiles(currentAssistantContent);
     currentAssistantWrapper = null;
     currentAssistantContent  = null;
     currentAssistantText     = '';

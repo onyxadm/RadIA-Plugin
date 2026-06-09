@@ -198,6 +198,24 @@ Version v0.0.12 introduced official support for the AWS Bedrock provider, featur
 
 ---
 
+## ✅ v0.0.13 — Prompt-Based Delphi Project Generation (Completed)
+
+Version v0.0.13 introduced support for automatically generating entire Delphi projects from a chat prompt, with physical file persistence and immediate loading inside the IDE:
+
+- **Complete Project Generation:**
+  * Implemented a new `TRadIAProjectGenerator` specialist service (in `RadIA.Core.ProjectGenerator.pas`) to parse multiple files via JSON.
+  * Added a directory selection dialog that restricts saving unless the folder is completely empty.
+  * Integrated a transactional file saver that rolls back and deletes all created files in case of write errors.
+  * Automated project detection (.dproj and .dpr) and native loading in the Delphi IDE via Open Tools API.
+- **Prompt Template and Slash Command `/createproject`:**
+  * Centralized all prompt directives in the template manager (`TPromptTemplateManager` in `RadIA.Core.PromptTemplates.pas`), keeping UI code clean and respecting the Single Responsibility Principle.
+  * Instructed the AI to strictly format output files with the comment tag `// filepath: relative/path`.
+- **Premium Project UI Panel:**
+  * Rendered a consolidated, high-fidelity project panel (modern glassmorphism design) listing all generated files with file type icons.
+  * Added smooth chat container scroll-to-view and a temporary flash highlight border animation to visually locate file code blocks when inspecting the file list.
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save
