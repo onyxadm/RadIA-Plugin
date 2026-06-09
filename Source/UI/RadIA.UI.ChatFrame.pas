@@ -699,7 +699,7 @@ begin
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'set_request_state');
-    LJson.AddPair('inProgress', AInProgress);
+    LJson.AddPair('inProgress', TJSONBool.Create(AInProgress));
     PostMessageToWeb(LJson.ToJSON);
   finally
     LJson.Free;
