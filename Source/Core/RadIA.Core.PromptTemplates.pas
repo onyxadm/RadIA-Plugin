@@ -130,7 +130,10 @@ begin
     '...'#13#10 +
     'end'#13#10 +
     '```'#13#10 +
-    '3. Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together.',
+    '3. Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together.'#13#10 +
+    '4. Memory Safety, Type Safety and Dependencies:'#13#10 +
+    '   - Enforce proper "uses" clauses: Double-check that every unit imports all units required for its compilation (e.g. System.Generics.Collections for generic lists, System.Classes for persistence/lists, System.SysUtils for exceptions/guid, Vcl.Dialogs/Forms/Controls/Graphics/StdCtrls/ExtCtrls for VCL UI controls, etc.).'#13#10 +
+    '   - Use strongly typed generic collections (from System.Generics.Collections like TList<T> or TDictionary<K,V>) instead of legacy non-generic collections (like TList without generic type parameters). Never use raw non-generic lists.',
     True,
     '/createproject'
   );
@@ -167,9 +170,10 @@ begin
     '   - Method parameters/arguments must be prefixed with "A" (e.g., AInputText).'#13#10 +
     '   - Local variables inside methods must be prefixed with "L" (e.g., LResultObj).'#13#10 +
     '6. Modern Object Pascal Features:'#13#10 +
-    '   - Use strong typing, enums, advanced records, and generics (from System.Generics.Collections like TList<T> or TDictionary<K,V>) instead of legacy Pointer lists or untyped structures.'#13#10 +
+    '   - Use strong typing, enums, advanced records, and generics (from System.Generics.Collections like TList<T> or TDictionary<K,V>) instead of legacy Pointer lists or untyped structures. NEVER use raw non-generic collections like TList without a type parameter (TList<T>) if you import System.Generics.Collections, and always specify its generic arguments.'#13#10 +
     '7. Compile-Ready Integration:'#13#10 +
-    '   - Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together without external third-party dependencies unless explicitly requested.',
+    '   - Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together without external third-party dependencies unless explicitly requested.'#13#10 +
+    '   - Double-check the "uses" clause of every unit: ensure every type, class, record, interface or collection used is properly imported (e.g. System.Generics.Collections for generic lists, System.Classes for persistence/lists, System.SysUtils for exceptions/guid, Vcl.Dialogs/Forms/Controls/Graphics/StdCtrls/ExtCtrls for VCL UI controls, etc.). Do not miss any unit dependency.',
     True,
     '/createprojectarch'
   );
@@ -249,9 +253,10 @@ begin
     Save;
   end;
 
-  { Auto-migration: if legacy Portuguese templates are found, or new architecture template is missing, restore defaults }
+  { Auto-migration: if legacy Portuguese templates are found, or new architecture template is missing, or prompt directives need updating, restore defaults }
   if ((FTemplates.Count > 0) and SameText(FTemplates[0].Name, 'Revisar Clean Code Delphi')) or
-     (not FindTemplate('Create Project Delphi Architecture', LArchTemp)) then
+     (not FindTemplate('Create Project Delphi Architecture', LArchTemp)) or
+     (FindTemplate('Create Project Delphi', LArchTemp) and not LArchTemp.Template.Contains('uses')) then
   begin
     CreateDefaultTemplates;
     Save;
