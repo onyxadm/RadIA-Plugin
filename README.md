@@ -47,7 +47,8 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
 *   **Depurador de Compilação (Smart Build):** Integração com a aba *Messages* do Delphi. Clique com o botão direito nos erros de compilação da IDE para obter explicações e correções instantâneas.
 *   **Documentação XML Automática:** Geração de comentários XML estruturados (`/// <summary>`) acima do cabeçalho de métodos para alimentar o Help Insight.
 *   **Conversor de DTO e Modelos:** Geração automática e instantânea de classes (DTOs) e records Object Pascal a partir de JSON ou scripts de tabelas SQL (DDL), com suporte inteligente a DEXT ORM, TMS Aurelius, REST.Json e Vanilla Delphi.
-*   **Comandos de Barra (Slash Commands):** Ações rápidas digitando comandos no chat (ex: `/doc`, `/explain`, `/refactor`, `/bugs`).
+*   **Comandos de Barra Customizáveis (Slash Commands):** Execução de ações rápidas digitando comandos no chat (ex: `/explain`, `/createprojectarch`). Permite cadastrar novos comandos dinâmicos associados a templates de prompts personalizados pelas opções do plugin.
+*   **Biblioteca de Templates e Backup:** Interface para gerenciamento de prompts reutilizáveis com substituição inteligente de marcadores (`{code}`, `{specification}`) e diálogos para exportação e importação de backups (JSON) com suporte a mesclagem.
 *   **Armazenamento Seguro de Chaves:** Credenciais criptografadas localmente via Windows DPAPI e salvas no Registro do Windows.
 *   **Cancelamento de Requisições:** Botão de parada dinâmico redondo integrado na cápsula do prompt para interromper requisições assíncronas de forma segura. Ocorre também de forma automática ao criar, excluir ou alternar entre chats na barra lateral.
 

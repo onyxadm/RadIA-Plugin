@@ -217,6 +217,24 @@ A versão v0.0.13 adicionou suporte para criação automatizada de projetos Delp
 
 ---
 
+## ✅ v0.0.14 — Templates Dinâmicos, Backup e Nova Arquitetura de Projetos (Concluído)
+
+A versão v0.0.14 trouxe flexibilidade total para gerenciamento de prompts e templates de projetos na IDE, além de suporte a backup importável e um gerador de projetos otimizado:
+
+- **Customização Dinâmica de Slash Commands:**
+  * Remoção completa de ifs estáticos hardcoded no processamento de comandos. Agora o RadIA varre dinamicamente a lista de templates ativos para reconhecer e aplicar os slash commands e seus argumentos correspondentes.
+  * Sincronização automatizada da lista de slash commands com a interface web (WebView2) para autocompletar dinamicamente no chat.
+- **Mecanismo de Backup de Templates (Importar / Exportar):**
+  * Botões dedicados e diálogos nativos do Windows integrados à UI da VCL (`Tools -> Options -> RadIA -> Templates`).
+  * Implementação de exportação e importação estrutural robusta de arquivos JSON, realizando validação rigorosa das propriedades mandatórias (`name` e `template`).
+  * Suporte transacional para mesclar (*Merge*) com os templates atuais ou sobrescrevê-los (*Overwrite*) por completo.
+- **Template Otimizado de Arquitetura Clean Delphi (`/createprojectarch`):**
+  * Criação do template nativo `'Create Project Delphi Architecture'` incorporando conceitos arquiteturais sólidos (SOLID, injeção de dependência via interfaces, isolamento de lógica de negócio e try..finally sistemático para garantia de liberação de memória).
+- **Suite de Testes e Correções:**
+  * Atualização da suite de testes para cobrir as rotinas de importação (com e sem merge), validação de erros sintáticos e exportação. Todos os **112 testes unitários DUnitX aprovados**.
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save
