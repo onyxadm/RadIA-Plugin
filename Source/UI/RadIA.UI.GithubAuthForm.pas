@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.GithubAuthForm;
+unit RadIA.UI.GithubAuthForm;
 
 interface
 
@@ -176,22 +176,25 @@ begin
       );
 
       TThread.Queue(nil,
-        procedure
-        begin
-          if LSuccess then
+        TThreadProcedure(
+          procedure
           begin
-            LForm.FAccessToken := LAccessToken;
-            LForm.ModalResult := mrOk;
-          end
-          else
-          begin
-            if not LForm.FCancelled then
+            if LSuccess then
             begin
-              MessageDlg('Authentication failed: ' + LErrorMsg, mtError, [mbOK], 0);
-              LForm.ModalResult := mrCancel;
+              LForm.FAccessToken := LAccessToken;
+              LForm.ModalResult := mrOk;
+            end
+            else
+            begin
+              if not LForm.FCancelled then
+              begin
+                MessageDlg('Authentication failed: ' + LErrorMsg, mtError, [mbOK], 0);
+                LForm.ModalResult := mrCancel;
+              end;
             end;
-          end;
-        end);
+          end
+        )
+      );
     end);
 end;
 

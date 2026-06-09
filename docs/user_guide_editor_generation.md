@@ -11,11 +11,13 @@ O RadIA conecta-se nativamente ao editor de código do Delphi usando a Open Tool
 ### Como Utilizar:
 1. No editor de código da IDE, **selecione** o trecho de código que deseja analisar ou modificar.
 2. Clique com o **botão direito** sobre a seleção.
-3. No menu pop-up, navegue até a categoria **RadIA** e selecione uma das seguintes ações:
+3. No topo do menu pop-up, abra a categoria **RadIA** e selecione uma das seguintes ações:
    * **Explicar Código Selecionado (`/explain`):** Analisa didaticamente a lógica, explicando o fluxo de execução e a finalidade de algoritmos complexos.
    * **Otimizar/Refatorar (`/refactor`):** Reescreve o código visando performance, legibilidade e aplicação de padrões Clean Code e SOLID.
    * **Localizar Bugs (`/bugs`):** Executa uma varredura em busca de memory leaks (ausência de try..finally), exceções não tratadas e falhas de lógica.
    * **Gerar Testes Unitários (`/test`):** Gera automaticamente classes e métodos de testes estruturados baseados no framework DUnitX.
+
+> O submenu **RadIA** é inserido no topo do menu contextual do editor após a IDE montar os itens nativos, mantendo compatibilidade com Delphi 12/13 e com menus adicionados por outros plugins.
 
 ---
 
@@ -82,7 +84,7 @@ Uma das ferramentas mais poderosas do RadIA é a habilidade de estruturar e salv
 2. A IA processará a requisição e retornará a lista completa de arquivos estruturados (projeto `.dpr`, configurações `.dproj`, unidades de lógica `.pas` e telas `.dfm`).
 3. O RadIA exibirá um painel com estilo *glassmorphism* contendo a lista dos arquivos gerados.
 4. **Fluxo de Gravação**:
-   * Clique em **Gerar Arquivos** na UI do chat.
+   * Clique em **Criar Projeto e Abrir na IDE** na UI do chat.
    * Um diálogo nativo do Windows será exibido para você selecionar a pasta de destino.
 
 > [!IMPORTANT]

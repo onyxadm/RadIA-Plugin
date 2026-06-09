@@ -1,5 +1,6 @@
 program RadIATests;
 
+{$DEFINE TESTS}
 {$APPTYPE CONSOLE}
 
 uses
@@ -12,6 +13,7 @@ uses
   RadIA.Core.Interfaces in '..\Source\Core\RadIA.Core.Interfaces.pas',
   RadIA.Core.Logger in '..\Source\Core\RadIA.Core.Logger.pas',
   RadIA.Core.Config in '..\Source\Core\RadIA.Core.Config.pas',
+  RadIA.Core.SettingsStorage in '..\Source\Core\RadIA.Core.SettingsStorage.pas',
   RadIA.Core.ProviderRegistry in '..\Source\Core\RadIA.Core.ProviderRegistry.pas',
   RadIA.Core.Cache in '..\Source\Core\RadIA.Core.Cache.pas',
   RadIA.Core.Service in '..\Source\Core\RadIA.Core.Service.pas',
@@ -22,7 +24,12 @@ uses
   RadIA.Core.ProjectContext in '..\Source\Core\RadIA.Core.ProjectContext.pas',
   RadIA.Core.Sessions in '..\Source\Core\RadIA.Core.Sessions.pas',
   RadIA.Core.DTO.Generator in '..\Source\Core\RadIA.Core.DTO.Generator.pas',
+  RadIA.Core.ProjectGenerator in '..\Source\Core\RadIA.Core.ProjectGenerator.pas',
   RadIA.OTA.Helper in '..\Source\Integration\RadIA.OTA.Helper.pas',
+  RadIA.OTA.EditorHook in '..\Source\Integration\RadIA.OTA.EditorHook.pas',
+  RadIA.OTA.ContextParser in '..\Source\Integration\RadIA.OTA.ContextParser.pas',
+  RadIA.OTA.MessageViewHook in '..\Source\Integration\RadIA.OTA.MessageViewHook.pas',
+  RadIA.Core.Mediator in '..\Source\Core\RadIA.Core.Mediator.pas',
   RadIA.Provider.Base in '..\Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in '..\Source\Providers\RadIA.Provider.Gemini.pas',
   RadIA.Provider.OpenAI in '..\Source\Providers\RadIA.Provider.OpenAI.pas',
@@ -39,9 +46,12 @@ uses
   RadIA.Provider.Mistral in '..\Source\Providers\RadIA.Provider.Mistral.pas',
   RadIA.Core.AwsSigner in '..\Source\Core\RadIA.Core.AwsSigner.pas',
   RadIA.Provider.Bedrock in '..\Source\Providers\RadIA.Provider.Bedrock.pas',
+  RadIA.UI.ChatPresenter in '..\Source\UI\RadIA.UI.ChatPresenter.pas',
+  RadIA.UI.ConfigPresenter in '..\Source\UI\RadIA.UI.ConfigPresenter.pas',
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',
+  RadIA.Tests.EditorHook in 'Source\RadIA.Tests.EditorHook.pas',
   RadIA.Tests.Providers in 'Source\RadIA.Tests.Providers.pas',
   RadIA.Tests.Cache in 'Source\RadIA.Tests.Cache.pas',
   RadIA.Tests.Ollama in 'Source\RadIA.Tests.Ollama.pas',
@@ -58,7 +68,9 @@ uses
   RadIA.Tests.Quota in 'Source\RadIA.Tests.Quota.pas',
   RadIA.Tests.DTOGenerator in 'Source\RadIA.Tests.DTOGenerator.pas',
   RadIA.Tests.JSONProviders in 'Source\RadIA.Tests.JSONProviders.pas',
-  RadIA.Tests.Analysis in 'Source\RadIA.Tests.Analysis.pas';
+  RadIA.Tests.Analysis in 'Source\RadIA.Tests.Analysis.pas',
+  RadIA.Tests.ChatPresenter in 'Source\RadIA.Tests.ChatPresenter.pas',
+  RadIA.Tests.ConfigPresenter in 'Source\RadIA.Tests.ConfigPresenter.pas';
 
 var
   Runner: ITestRunner;

@@ -41,6 +41,7 @@ type
     FAwsSecretAccessKey: string;
     FAwsRegion: string;
     FAwsSessionToken: string;
+    FInjectDelphiVersion: Boolean;
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
     destructor Destroy; override;
@@ -83,6 +84,8 @@ type
     procedure SetAwsRegion(const AValue: string);
     function GetAwsSessionToken: string;
     procedure SetAwsSessionToken(const AValue: string);
+    function GetInjectDelphiVersion: Boolean;
+    procedure SetInjectDelphiVersion(const AValue: Boolean);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -130,6 +133,8 @@ type
     procedure TestTrimming_SystemMessagesIgnoredInCount;
     [Test]
     procedure TestSmartConfigResolution;
+    [Test]
+    procedure TestDelphiVersionInjection;
   end;
 
   [TestFixture]
@@ -202,6 +207,7 @@ begin
   FAwsSecretAccessKey := '';
   FAwsRegion := 'us-east-1';
   FAwsSessionToken := '';
+  FInjectDelphiVersion := True;
 end;
 
 destructor TMockConfig.Destroy;
@@ -424,6 +430,16 @@ procedure TMockConfig.AddToQuotaUsage(const AUsage: TTokenUsage);
 begin
   if FQuotaEnabled then
     FQuotaUsed := FQuotaUsed + AUsage.TotalTokens;
+end;
+
+function TMockConfig.GetInjectDelphiVersion: Boolean;
+begin
+  Result := FInjectDelphiVersion;
+end;
+
+procedure TMockConfig.SetInjectDelphiVersion(const AValue: Boolean);
+begin
+  FInjectDelphiVersion := AValue;
 end;
 
 function TMockConfig.GetApiKey(const AProviderName: string): string;
@@ -707,6 +723,30 @@ begin
     LService.ResolveParameters('Gemini', rpRefactorCode, LTemp, LMaxTokens);
     Assert.AreEqual(0.4, LTemp, 0.01);
     Assert.AreEqual(1024, LMaxTokens);
+  finally
+    LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestDelphiVersionInjection;
+var
+  LConfig: IAIConfig;
+  LService: TRadIAService;
+  LPrompt: string;
+begin
+  LConfig := TMockConfig.Create(5, 'Base Prompt');
+  LService := TRadIAService.Create(LConfig);
+  try
+    { 1. Com injecao habilitada (default) }
+    LConfig.InjectDelphiVersion := True;
+    LPrompt := LService.GetEffectiveSystemPrompt;
+    Assert.IsTrue(LPrompt.Contains('Embarcadero'), 'Prompt should contain Delphi version info');
+
+    { 2. Com injecao desabilitada }
+    LConfig.InjectDelphiVersion := False;
+    LPrompt := LService.GetEffectiveSystemPrompt;
+    Assert.IsFalse(LPrompt.Contains('Embarcadero'), 'Prompt should NOT contain Delphi version info when disabled');
+    Assert.AreEqual('Base Prompt', LPrompt.Trim, 'Prompt should equal the base system prompt when disabled');
   finally
     LService.Free;
   end;

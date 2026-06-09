@@ -11,11 +11,13 @@ RadIA connects natively to the Delphi code editor using the Open Tools API (OTA)
 ### How to Use:
 1. In the IDE code editor, **select** the code block you want to analyze or modify.
 2. **Right-click** the selection.
-3. In the pop-up menu, navigate to the **RadIA** category and choose one of the following actions:
+3. At the top of the pop-up menu, open the **RadIA** category and choose one of the following actions:
    * **Explain Selected Code (`/explain`):** Pedagogically analyzes the logic, explaining the execution flow and the purpose of complex algorithms.
    * **Optimize/Refactor (`/refactor`):** Rewrites code aiming for performance, readability, and compliance with Clean Code and SOLID principles.
    * **Find Bugs (`/bugs`):** Scans the code for memory leaks (missing try..finally blocks), unhandled exceptions, and logic flaws.
    * **Generate Unit Tests (`/test`):** Automatically generates structured test classes and methods using the DUnitX framework.
+
+> The **RadIA** submenu is inserted at the top of the editor context menu after the IDE builds its native items, preserving compatibility with Delphi 12/13 and menus added by other plugins.
 
 ---
 
@@ -82,7 +84,7 @@ One of RadIA's most powerful capabilities is structuring and saving a complete D
 2. The AI will process the request and return the complete list of structured files (project `.dpr`, configuration `.dproj`, logic units `.pas`, and UI forms `.dfm`).
 3. RadIA will display a glassmorphism-styled panel showing the list of generated files.
 4. **Saving Workflow**:
-   * Click **Generate Files** in the chat UI.
+   * Click **Criar Projeto e Abrir na IDE** (Create Project and Open in IDE) in the chat UI.
    * A native Windows folder selection dialog will open.
 
 > [!IMPORTANT]

@@ -45,10 +45,17 @@ uses
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
   RadIA.Core.Logger, RadIA.OTA.Options;
 
+const
+  GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;
+
+function GetModuleHandleEx(dwFlags: DWORD; lpModuleName: PChar; var phModule: HMODULE): BOOL; stdcall;
+  external 'kernel32.dll' name 'GetModuleHandleExW';
+
 var
   GWizardIndex: Integer = -1;
   GAboutBoxIndex: Integer = -1;
   LAboutServices: IOTAAboutBoxServices;
+  GModuleHandle: HMODULE = 0;
 
 procedure LogDebug(const AMsg: string);
 begin
@@ -114,7 +121,7 @@ begin
         LBitmap.Handle,
         False,
         'Apache 2.0 License',
-        'v0.0.15'
+        'v0.0.16'
       );
     end;
   finally
@@ -167,6 +174,10 @@ var
 begin
   LogDebug('TRadIAWizard.Create called');
   GIsShuttingDown := False;
+  
+  // Incrementar a contagem de referencias da BPL para mante-la mapeada em memoria se a IDE fechar
+  GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, PChar(@Register), GModuleHandle);
+  
   inherited Create;
   
   FOptionsPages := TInterfaceList.Create;
@@ -195,6 +206,11 @@ end;
 destructor TRadIAWizard.Destroy;
 begin
   GIsShuttingDown := True;
+  
+  {$IFNDEF TESTS}
+  RadIA.OTA.DockableForm.UnregisterDockableForm;
+  {$ENDIF}
+
   TRadIAMediator.Instance.UnregisterDiffHandler;
   if Assigned(FTimer) then
   begin
@@ -206,6 +222,13 @@ begin
   TRadIAEditorHook(FEditorHook).Uninstall;
   FEditorHook.Free;
   FOptionsPages.Free;
+  
+  // Se nao for shutdown geral da IDE (ou seja, desinstalacao normal do pacote), libere a referencia de modulo
+  if (not GIsShuttingDown) and (GModuleHandle <> 0) then
+  begin
+    FreeLibrary(GModuleHandle);
+    GModuleHandle := 0;
+  end;
   
   GWizardIndex := -1;
   inherited Destroy;
@@ -251,13 +274,21 @@ var
   LOptionsServices: INTAEnvironmentOptionsServices;
   I: Integer;
 begin
-  if Supports(BorlandIDEServices, INTAEnvironmentOptionsServices, LOptionsServices) then
-  begin
-    for I := FOptionsPages.Count - 1 downto 0 do
+  try
+    if Supports(BorlandIDEServices, INTAEnvironmentOptionsServices, LOptionsServices) then
     begin
-      LOptionsServices.UnregisterAddInOptions(FOptionsPages[I] as INTAAddInOptions);
+      for I := FOptionsPages.Count - 1 downto 0 do
+      begin
+        try
+          LOptionsServices.UnregisterAddInOptions(FOptionsPages[I] as INTAAddInOptions);
+        except
+          // Silenciosamente ignora qualquer erro de desregistro no encerramento da IDE
+        end;
+      end;
+      FOptionsPages.Clear;
     end;
-    FOptionsPages.Clear;
+  except
+    // Protege contra exceções de acesso a BorlandIDEServices/LOptionsServices
   end;
 end;
 
@@ -458,20 +489,28 @@ begin
   if not Assigned(FEditorHook) then
     Exit;
     
-  if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
-  begin
-    LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
-    if Assigned(LToolsMenu) then
+  try
+    if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
     begin
-      for I := LToolsMenu.Count - 1 downto 0 do
+      LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
+      if Assigned(LToolsMenu) then
       begin
-        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
-           SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
+        for I := LToolsMenu.Count - 1 downto 0 do
         begin
-          LToolsMenu.Items[I].Free;
+          try
+            if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
+               SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
+            begin
+              LToolsMenu.Items[I].Free;
+            end;
+          except
+            // Ignora erro ao liberar item individual
+          end;
         end;
       end;
     end;
+  except
+    // Protege contra exceções ao acessar serviços de menu
   end;
 end;
 
@@ -505,19 +544,6 @@ end;
 
 initialization
 
-finalization
-  if (GWizardIndex <> -1) and Assigned(BorlandIDEServices) then
-  begin
-    // Unload the wizard if the BPL is uninstalled
-    (BorlandIDEServices as IOTAWizardServices).RemoveWizard(GWizardIndex);
-  end;
 
-  if (GAboutBoxIndex <> -1) and Assigned(BorlandIDEServices) then
-  begin
-    if Supports(BorlandIDEServices, IOTAAboutBoxServices, LAboutServices) then
-    begin
-      LAboutServices.RemovePluginInfo(GAboutBoxIndex);
-    end;
-  end;
 
 end.

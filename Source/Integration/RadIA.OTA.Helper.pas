@@ -20,9 +20,14 @@ type
     class function GetCurrentEditBuffer: IOTAEditBuffer;
     class function GetCurrentEditView: IOTAEditView;
     class function OpenProjectInIDE(const AProjectPath: string): Boolean;
+    class function GetDelphiVersionName: string;
+    class function GetPreferredLanguageInstruction: string;
   end;
 
 implementation
+
+uses
+  Winapi.Windows;
 
 { TRadIAOTAHelper }
 
@@ -289,6 +294,50 @@ begin
   begin
     LModuleServices.OpenModule(AProjectPath);
     Result := True;
+  end;
+end;
+
+class function TRadIAOTAHelper.GetDelphiVersionName: string;
+begin
+  {$IF CompilerVersion = 37.0}
+  Result := 'Delphi 13 Florence';
+  {$ELSEIF CompilerVersion = 36.0}
+  Result := 'Delphi 12 Athens';
+  {$ELSEIF CompilerVersion = 35.0}
+  Result := 'Delphi 11 Alexandria';
+  {$ELSEIF CompilerVersion = 34.0}
+  Result := 'Delphi 10.4 Sydney';
+  {$ELSEIF CompilerVersion = 33.0}
+  Result := 'Delphi 10.3 Rio';
+  {$ELSEIF CompilerVersion = 32.0}
+  Result := 'Delphi 10.2 Tokyo';
+  {$ELSEIF CompilerVersion = 31.0}
+  Result := 'Delphi 10.1 Berlin';
+  {$ELSEIF CompilerVersion = 30.0}
+  Result := 'Delphi 10 Seattle';
+  {$ELSEIF CompilerVersion = 29.0}
+  Result := 'Delphi XE8';
+  {$ELSE}
+  Result := 'Delphi (CompilerVersion ' + FloatToStr(CompilerVersion) + ')';
+  {$ENDIF}
+end;
+
+class function TRadIAOTAHelper.GetPreferredLanguageInstruction: string;
+var
+  LLangID: LANGID;
+  LPrimaryLang: Byte;
+begin
+  LLangID := GetUserDefaultUILanguage;
+  LPrimaryLang := LLangID and $3FF;
+  
+  case LPrimaryLang of
+    $16: Result := 'Please reply in Brazilian Portuguese.'; // LANG_PORTUGUESE
+    $0A: Result := 'Please reply in Spanish.';              // LANG_SPANISH
+    $0C: Result := 'Please reply in French.';               // LANG_FRENCH
+    $07: Result := 'Please reply in German.';               // LANG_GERMAN
+    $10: Result := 'Please reply in Italian.';              // LANG_ITALIAN
+    else
+      Result := 'Please reply in English.';                 // Default
   end;
 end;
 

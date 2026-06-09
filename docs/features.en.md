@@ -40,7 +40,7 @@ This document contains the complete checklist, categorization, and development s
 | **Project Context** | Intelligence | Automatic project context loading (system prompts/custom files) via `.radia`. | ✅ Completed |
 | **Tokens & Cost Tracking** | Control | Status bar counter for session token usage and USD estimated cost. | ✅ Completed |
 | **Local Quota Control** | Control | Define a monthly token limit with request blocking and a manual reset button. | ✅ Completed |
-| **Editor Context Actions** | Integration | Right-click code selection to Explain, Optimize/Refactor, Test, or Scan for Bugs. | ✅ Completed |
+| **Editor Context Actions** | Integration | RadIA submenu at the top of the editor right-click menu to explain code, optimize/refactor, generate tests, find bugs, document methods, and review the active unit. | ✅ Completed |
 | **Interactive Smart Diff** | Integration | Side-by-side original/suggested diff view with instant editor replacement. | ✅ Completed |
 | **Smart Build Debugger** | Integration | Message tab integration to resolve compiler issues with one-click fixes. | ✅ Completed |
 | **Auto XML Documentation** | Generation | Write Delphi-compliant XML help comments above methods automatically. | ✅ Completed |
@@ -51,3 +51,7 @@ This document contains the complete checklist, categorization, and development s
 | **Static Code Analysis** | Integration | Code scan for memory leaks (missing try..finally) and SOLID/Clean Code anti-patterns. | ✅ Completed |
 | **Secure Credentials** | Security | API Keys saved securely inside the Windows Registry using DPAPI. | ✅ Completed |
 | **Multi-IDE Build & Install** | Infrastructure | PowerShell script supporting multiple registry Delphi environments and interactive selection menu. | ✅ Completed |
+| **MVP Architecture** | Infrastructure | Complete decoupling between VCL UI (Views) and logic (Presenters) in the Chat and Settings frames. | ✅ Completed |
+| **Storage Abstraction** | Infrastructure | Persistence abstraction via `ISettingsStorage` allowing in-memory configurations. | ✅ Completed |
+| **Presentation Testing** | Infrastructure | Automated DUnitX test suite validating Presenters logic with mocked Views. | ✅ Completed |
+| **Editor OTA Hook** | Infrastructure | Resilient editor-view integration using OTA notifiers and asynchronous context-menu hooking, compatible with Delphi 12/13 and third-party IDE plugins. | ✅ Completed |

@@ -67,6 +67,16 @@ object FrameAIConfig: TFrameAIConfig
           Height = 23
           TabOrder = 1
         end
+        object btnGeminiWebLogin: TButton
+          Left = 16
+          Top = 155
+          Width = 140
+          Height = 25
+          Caption = 'Web Login...'
+          Enabled = False
+          TabOrder = 2
+          OnClick = btnGeminiWebLoginClick
+        end
       end
     end
     object tsOpenAI: TTabSheet
@@ -142,6 +152,16 @@ object FrameAIConfig: TFrameAIConfig
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
+        end
+        object btnOpenAIWebLogin: TButton
+          Left = 16
+          Top = 220
+          Width = 140
+          Height = 25
+          Caption = 'Web Login...'
+          Enabled = False
+          TabOrder = 3
+          OnClick = btnOpenAIWebLoginClick
         end
       end
     end

@@ -6,10 +6,10 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.ComCtrls, System.Generics.Collections, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, ToolsAPI,
-  RadIA.Core.PromptTemplates;
+  RadIA.Core.PromptTemplates, RadIA.UI.ConfigPresenter;
 
 type
-  TFrameAIConfig = class(TFrame)
+  TFrameAIConfig = class(TFrame, IConfigView)
   published
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
@@ -37,6 +37,8 @@ type
     edtGithubCopilotKey: TEdit;
     btnConnectGithub: TButton;
     btnImportVSCode: TButton;
+    btnGeminiWebLogin: TButton;
+    btnOpenAIWebLogin: TButton;
 
     tsAzureOpenAI: TTabSheet;
     pnlAzureOpenAI: TPanel;
@@ -143,9 +145,10 @@ type
     procedure lnkBedrockGetKeyClick(Sender: TObject);
     procedure btnConnectGithubClick(Sender: TObject);
     procedure btnImportVSCodeClick(Sender: TObject);
+    procedure btnGeminiWebLoginClick(Sender: TObject);
+    procedure btnOpenAIWebLoginClick(Sender: TObject);
   private
-    FConfig: IAIConfig;
-    FTemplateManager: TPromptTemplateManager;
+    FPresenter: TConfigPresenter;
     FOnClose: TNotifyEvent;
     lblTemplateOrigin: TLabel;
     
@@ -156,6 +159,7 @@ type
     
     tsGeneral: TTabSheet;
     pnlGeneral: TPanel;
+    chkInjectDelphiVersion: TCheckBox;
     chkLogEnabled: TCheckBox;
     lblLogPath: TLabel;
     edtLogPath: TEdit;
@@ -174,7 +178,6 @@ type
     procedure btnResetQuotaClick(Sender: TObject);
     
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
-    procedure PopulateTemplatesList;
     procedure OpenUrl(const AUrl: string);
   public
     constructor Create(AOwner: TComponent); override;
@@ -186,16 +189,80 @@ type
     procedure btnSaveClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
     
+    { IConfigView Implementation }
+    function GetApiKey(const AProviderId: string): string;
+    procedure SetApiKey(const AProviderId: string; const AKey: string);
+    function GetCustomUrl(const AProviderId: string): string;
+    procedure SetCustomUrl(const AProviderId: string; const AUrl: string);
+    function GetAuthTypeIndex(const AProviderId: string): Integer;
+    procedure SetAuthTypeIndex(const AProviderId: string; const AIndex: Integer);
+
+    function GetTemperatureInput(const AProviderId: string): string;
+    procedure SetTemperatureInput(const AProviderId: string; const AValue: string);
+    function GetMaxTokensInput(const AProviderId: string): string;
+    procedure SetMaxTokensInput(const AProviderId: string; const AValue: string);
+    function GetTimeoutInput(const AProviderId: string): string;
+    procedure SetTimeoutInput(const AProviderId: string; const AValue: string);
+
+    function GetAzureModel: string;
+    procedure SetAzureModel(const AValue: string);
+    function GetAzureApiVersion: string;
+    procedure SetAzureApiVersion(const AValue: string);
+
+    function GetAwsAccessKeyId: string;
+    procedure SetAwsAccessKeyId(const AValue: string);
+    function GetAwsSecretAccessKey: string;
+    procedure SetAwsSecretAccessKey(const AValue: string);
+    function GetAwsRegion: string;
+    procedure SetAwsRegion(const AValue: string);
+    function GetAwsSessionToken: string;
+    procedure SetAwsSessionToken(const AValue: string);
+
+    function GetSystemPrompt: string;
+    procedure SetSystemPrompt(const AValue: string);
+    function GetSmartConfigEnabled: Boolean;
+    procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetInjectDelphiVersion: Boolean;
+    procedure SetInjectDelphiVersion(const AValue: Boolean);
+    function GetLogEnabled: Boolean;
+    procedure SetLogEnabled(const AValue: Boolean);
+    function GetLogPath: string;
+    procedure SetLogPath(const AValue: string);
+    function GetLogMaxSize: string;
+    procedure SetLogMaxSize(const AValue: string);
+    
+    function GetQuotaEnabled: Boolean;
+    procedure SetQuotaEnabled(const AValue: Boolean);
+    function GetQuotaLimit: string;
+    procedure SetQuotaLimit(const AValue: string);
+    procedure SetQuotaUsedText(const AText: string);
+
+    procedure ShowMessageDialog(const AMessage: string);
+    function SaveDialogExecute(out AFileName: string): Boolean;
+    function OpenDialogExecute(out AFileName: string): Boolean;
+    function FolderDialogExecute(out AFolderName: string): Boolean;
+    procedure CloseView(const AModalResult: Integer);
+
+    procedure UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
+    procedure GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
+    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+    procedure ClearTemplateFields;
+    procedure FocusTemplateName;
+    function GetSelectedTemplateIndex: Integer;
+    procedure SetSelectedTemplateIndex(const AIndex: Integer);
+    procedure SetDeleteTemplateButtonState(const ACaption: string; const AEnabled: Boolean);
+    procedure SetTemplateOriginLabel(const AText: string; const AColor: TColor);
+
     property OnClose: TNotifyEvent read FOnClose write FOnClose;
   end;
 
 implementation
 
-{$R *.dfm}
-
 uses
   System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.ProviderRegistry, Winapi.ShellAPI, RadIA.UI.GithubAuthForm;
+  RadIA.Core.ProviderRegistry, Winapi.ShellAPI, RadIA.UI.GithubAuthForm, RadIA.UI.WebLoginForm;
+
+{$R *.dfm}
 
 type
   TTabSheetColorHack = class(TTabSheet);
@@ -208,9 +275,7 @@ var
   LUseIDETheme: Boolean;
 begin
   inherited Create(AOwner);
-  FConfig := TRadIAConfig.GetInstance;
-  FTemplateManager := TPromptTemplateManager.Create;
-  FTemplateManager.Load;
+  FPresenter := TConfigPresenter.Create(Self);
 
   lblTemplateOrigin := TLabel.Create(Self);
   lblTemplateOrigin.Parent := pnlTemplatesClient;
@@ -238,7 +303,6 @@ begin
   CreateProviderAdvancedControls(tsMistral, 'Mistral');
   CreateProviderAdvancedControls(tsBedrock, 'Bedrock');
  
-  { Create General/Logs Tab and controls programmatically }
   tsGeneral := TTabSheet.Create(Self);
   tsGeneral.PageControl := pgcSettings;
   tsGeneral.Caption := 'General / Logs';
@@ -258,29 +322,37 @@ begin
   FChkSmartConfig.Height := 23;
   FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
 
+  chkInjectDelphiVersion := TCheckBox.Create(Self);
+  chkInjectDelphiVersion.Parent := pnlGeneral;
+  chkInjectDelphiVersion.Left := 16;
+  chkInjectDelphiVersion.Top := 48;
+  chkInjectDelphiVersion.Width := 300;
+  chkInjectDelphiVersion.Height := 23;
+  chkInjectDelphiVersion.Caption := 'Inject Delphi version in prompt';
+
   chkLogEnabled := TCheckBox.Create(Self);
   chkLogEnabled.Parent := pnlGeneral;
   chkLogEnabled.Left := 16;
-  chkLogEnabled.Top := 48;
+  chkLogEnabled.Top := 80;
   chkLogEnabled.Width := 200;
   chkLogEnabled.Caption := 'Enable logging';
 
   lblLogPath := TLabel.Create(Self);
   lblLogPath.Parent := pnlGeneral;
   lblLogPath.Left := 16;
-  lblLogPath.Top := 80;
+  lblLogPath.Top := 112;
   lblLogPath.Caption := 'Log Folder Path:';
 
   edtLogPath := TEdit.Create(Self);
   edtLogPath.Parent := pnlGeneral;
   edtLogPath.Left := 16;
-  edtLogPath.Top := 98;
+  edtLogPath.Top := 130;
   edtLogPath.Width := 320;
 
   btnBrowseLogPath := TButton.Create(Self);
   btnBrowseLogPath.Parent := pnlGeneral;
   btnBrowseLogPath.Left := 342;
-  btnBrowseLogPath.Top := 96;
+  btnBrowseLogPath.Top := 128;
   btnBrowseLogPath.Width := 30;
   btnBrowseLogPath.Height := 23;
   btnBrowseLogPath.Caption := '...';
@@ -289,20 +361,20 @@ begin
   lblLogMaxSize := TLabel.Create(Self);
   lblLogMaxSize.Parent := pnlGeneral;
   lblLogMaxSize.Left := 16;
-  lblLogMaxSize.Top := 136;
+  lblLogMaxSize.Top := 168;
   lblLogMaxSize.Caption := 'Max Log File Size (KB):';
 
   edtLogMaxSize := TEdit.Create(Self);
   edtLogMaxSize.Parent := pnlGeneral;
   edtLogMaxSize.Left := 16;
-  edtLogMaxSize.Top := 154;
+  edtLogMaxSize.Top := 186;
   edtLogMaxSize.Width := 100;
   edtLogMaxSize.NumbersOnly := True;
 
   grpQuota := TGroupBox.Create(Self);
   grpQuota.Parent := pnlGeneral;
   grpQuota.Left := 16;
-  grpQuota.Top := 192;
+  grpQuota.Top := 224;
   grpQuota.Width := 356;
   grpQuota.Height := 140;
   grpQuota.Caption := ' Local Token Quota ';
@@ -342,8 +414,6 @@ begin
   btnResetQuota.Caption := 'Reset Usage';
   btnResetQuota.OnClick := btnResetQuotaClick;
 
-
-
   LActiveTheme := 'light';
   LUseIDETheme := False;
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
@@ -359,14 +429,12 @@ begin
   if not LUseIDETheme then
     UpdateVCLColors(LActiveTheme);
 
-  LoadConfig;
+  FPresenter.LoadConfig;
 end;
-
-
 
 destructor TFrameAIConfig.Destroy;
 begin
-  FTemplateManager.Free;
+  FPresenter.Free;
   FEdtTemperatures.Free;
   FEdtMaxTokens.Free;
   FEdtTimeouts.Free;
@@ -401,7 +469,6 @@ begin
   LGroupBox.Margins.Bottom := 8;
   LGroupBox.AlignWithMargins := True;
 
-  // Temperature
   LLabel := TLabel.Create(Self);
   LLabel.Parent := LGroupBox;
   LLabel.Left := 16;
@@ -415,7 +482,6 @@ begin
   LEdtTemp.Width := 100;
   FEdtTemperatures.Add(AProviderId, LEdtTemp);
 
-  // Max Tokens
   LLabel := TLabel.Create(Self);
   LLabel.Parent := LGroupBox;
   LLabel.Left := 140;
@@ -430,7 +496,6 @@ begin
   LEdtMax.NumbersOnly := True;
   FEdtMaxTokens.Add(AProviderId, LEdtMax);
 
-  // Timeout
   LLabel := TLabel.Create(Self);
   LLabel.Parent := LGroupBox;
   LLabel.Left := 264;
@@ -536,18 +601,17 @@ begin
     LEdit.StyleElements := LEdit.StyleElements - [seClient, seBorder];
     LEdit.Color := LColors.InputBgColor;
     LEdit.Font.Color := LColors.TextColor;
-  end;// Memo do System Prompt
+  end;
+
   memSystemPrompt.StyleElements := memSystemPrompt.StyleElements - [seClient, seBorder];
   memSystemPrompt.Color := LColors.InputBgColor;
   memSystemPrompt.Font.Color := LColors.TextColor;
 
-  // Auth Type Radio Groups
   grpGeminiAuthType.StyleElements := grpGeminiAuthType.StyleElements - [seClient, seBorder];
   grpGeminiAuthType.Font.Color := LColors.TextColor;
   grpOpenAIAuthType.StyleElements := grpOpenAIAuthType.StyleElements - [seClient, seBorder];
   grpOpenAIAuthType.Font.Color := LColors.TextColor;
 
-  // Inputs
   edtGeminiKey.StyleElements := edtGeminiKey.StyleElements - [seClient, seBorder];
   edtGeminiKey.Color := LColors.InputBgColor;
   edtGeminiKey.Font.Color := LColors.TextColor;
@@ -619,7 +683,6 @@ begin
   edtAwsSessionToken.Color := LColors.InputBgColor;
   edtAwsSessionToken.Font.Color := LColors.TextColor;
 
-  // Labels Link
   lnkGeminiGetKey.StyleElements := lnkGeminiGetKey.StyleElements - [seClient, seBorder];
   lnkGeminiGetKey.Font.Color := LColors.AccentColor;
   lnkOpenAIGetKey.StyleElements := lnkOpenAIGetKey.StyleElements - [seClient, seBorder];
@@ -641,7 +704,6 @@ begin
   lnkBedrockGetKey.StyleElements := lnkBedrockGetKey.StyleElements - [seClient, seBorder];
   lnkBedrockGetKey.Font.Color := LColors.AccentColor;
 
-  // Labels
   lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
   lblGeminiKey.Font.Color := LColors.TextColor;
   lblOpenAIKey.StyleElements := lblOpenAIKey.StyleElements - [seClient, seBorder];
@@ -684,7 +746,6 @@ begin
   lblAwsSessionToken.StyleElements := lblAwsSessionToken.StyleElements - [seClient, seBorder];
   lblAwsSessionToken.Font.Color := LColors.TextColor;
 
-  // Aba de Templates
   pnlTemplatesLeft.StyleElements := pnlTemplatesLeft.StyleElements - [seClient, seBorder];
   pnlTemplatesLeft.Color := LColors.BgBase;
   pnlTemplatesLeft.ParentBackground := False;
@@ -704,7 +765,6 @@ begin
   edtTemplateDesc.StyleElements := edtTemplateDesc.StyleElements - [seClient, seBorder];
   edtTemplateDesc.Color := LColors.InputBgColor;
   edtTemplateDesc.Font.Color := LColors.TextColor;
-  
   edtTemplateSlash.StyleElements := edtTemplateSlash.StyleElements - [seClient, seBorder];
   edtTemplateSlash.Color := LColors.InputBgColor;
   edtTemplateSlash.Font.Color := LColors.TextColor;
@@ -727,8 +787,6 @@ begin
   lblTemplateOrigin.StyleElements := lblTemplateOrigin.StyleElements - [seClient, seBorder];
   lblTemplateOrigin.Font.Color := LColors.TextColor;
 
-
-
   if Assigned(FChkSmartConfig) then
   begin
     FChkSmartConfig.StyleElements := FChkSmartConfig.StyleElements - [seClient, seBorder];
@@ -740,6 +798,11 @@ begin
     tsGeneral.StyleElements := tsGeneral.StyleElements - [seClient, seBorder];
     TTabSheetColorHack(tsGeneral).ParentBackground := False;
     TTabSheetColorHack(tsGeneral).Color := LColors.BgBase;
+  end;
+  if Assigned(chkInjectDelphiVersion) then
+  begin
+    chkInjectDelphiVersion.StyleElements := chkInjectDelphiVersion.StyleElements - [seClient, seBorder];
+    chkInjectDelphiVersion.Font.Color := LColors.TextColor;
   end;
   if Assigned(chkLogEnabled) then
   begin
@@ -781,322 +844,23 @@ begin
 end;
 
 procedure TFrameAIConfig.LoadConfig;
-var
-  LFormatSettings: TFormatSettings;
-  LPair: TPair<string, TEdit>;
 begin
-  LFormatSettings := TFormatSettings.Invariant;
-  
-  if FConfig.GetProviderAuthType('Gemini') = 'web_login' then
-    grpGeminiAuthType.ItemIndex := 1
-  else
-    grpGeminiAuthType.ItemIndex := 0;
-  grpGeminiAuthTypeClick(nil);
-
-  if FConfig.GetProviderAuthType('OpenAI') = 'web_login' then
-    grpOpenAIAuthType.ItemIndex := 1
-  else
-    grpOpenAIAuthType.ItemIndex := 0;
-  grpOpenAIAuthTypeClick(nil);
-
-  edtGeminiKey.Text := FConfig.GetApiKey('Gemini');
-  edtOpenAIKey.Text := FConfig.GetApiKey('OpenAI');
-  edtOpenAICustomUrl.Text := FConfig.OpenAICustomBaseUrl;
-  edtClaudeKey.Text := FConfig.GetApiKey('Claude');
-  edtDeepSeekKey.Text := FConfig.GetApiKey('DeepSeek');
-  edtGroqKey.Text := FConfig.GetApiKey('Groq');
-  edtOpenRouterKey.Text := FConfig.GetApiKey('OpenRouter');
-  memSystemPrompt.Text := FConfig.SystemPrompt;
-  edtOllamaUrl.Text := FConfig.OllamaBaseUrl;
-  
-  edtLMStudioUrl.Text := FConfig.GetProviderBaseUrl('LMStudio');
-  if edtLMStudioUrl.Text = '' then
-    edtLMStudioUrl.Text := 'http://localhost:1234/v1';
-
-  edtGithubCopilotKey.Text := FConfig.GetApiKey('GithubCopilot');
-
-  edtAzureKey.Text := FConfig.GetApiKey('AzureOpenAI');
-  edtAzureUrl.Text := FConfig.GetProviderBaseUrl('AzureOpenAI');
-  edtAzureModel.Text := FConfig.GetActiveModel('AzureOpenAI');
-  edtAzureApiVersion.Text := FConfig.AzureApiVersion;
-
-  edtQwenKey.Text := FConfig.GetApiKey('Qwen');
-  edtMistralKey.Text := FConfig.GetApiKey('Mistral');
-  edtAwsAccessKeyId.Text := FConfig.AwsAccessKeyId;
-  edtAwsSecretAccessKey.Text := FConfig.AwsSecretAccessKey;
-  edtAwsRegion.Text := FConfig.AwsRegion;
-  edtAwsSessionToken.Text := FConfig.AwsSessionToken;
- 
-  if Assigned(FChkSmartConfig) then
-    FChkSmartConfig.Checked := FConfig.SmartConfigEnabled;
-
-  for LPair in FEdtTemperatures do
-    LPair.Value.Text := FormatFloat('0.0', FConfig.GetTemperature(LPair.Key), LFormatSettings);
-  for LPair in FEdtMaxTokens do
-    LPair.Value.Text := IntToStr(FConfig.GetMaxTokens(LPair.Key));
-  for LPair in FEdtTimeouts do
-    LPair.Value.Text := IntToStr(FConfig.GetTimeout(LPair.Key));
-  
-  // O loop antigo baseado em TAIProviderType foi totalmente removido daqui
-
-  if Assigned(chkLogEnabled) then
-    chkLogEnabled.Checked := FConfig.LogEnabled;
-  if Assigned(edtLogPath) then
-    edtLogPath.Text := FConfig.LogPath;
-  if Assigned(edtLogMaxSize) then
-    edtLogMaxSize.Text := IntToStr(FConfig.LogMaxSizeKB);
-
-  if Assigned(chkQuotaEnabled) then
-    chkQuotaEnabled.Checked := FConfig.QuotaEnabled;
-  if Assigned(edtQuotaLimit) then
-    edtQuotaLimit.Text := FConfig.QuotaLimit.ToString;
-  if Assigned(lblQuotaUsed) then
-    lblQuotaUsed.Caption := Format('Monthly Used Tokens: %s', [FormatFloat('#,##0', FConfig.QuotaUsed, LFormatSettings)]);
-
-  if Assigned(tsTemplates) then
-    tsTemplates.TabVisible := False;
-  
-
-
-  PopulateTemplatesList;
-  if lstTemplates.Count > 0 then
-  begin
-    lstTemplates.ItemIndex := 0;
-    lstTemplatesClick(nil);
-  end;
-end;
-
-procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
-var
-  LForm: TCustomForm;
-  LOllamaUrl: string;
-  LOpenAIUrl: string;
-  LFormatSettings: TFormatSettings;
-  LTemp: Double;
-  LPair: TPair<string, TEdit>;
-begin
-  LOllamaUrl := Trim(edtOllamaUrl.Text);
-  LOpenAIUrl := Trim(edtOpenAICustomUrl.Text);
-  var LLMStudioUrl := Trim(edtLMStudioUrl.Text);
-  LFormatSettings := TFormatSettings.Invariant;
-
-  if not LOllamaUrl.IsEmpty and not (LOllamaUrl.StartsWith('http://', True) or LOllamaUrl.StartsWith('https://', True)) then
-  begin
-    ShowMessage('Ollama URL must start with http:// or https://');
-    Exit;
-  end;
-
-  if not LOpenAIUrl.IsEmpty and not (LOpenAIUrl.StartsWith('http://', True) or LOpenAIUrl.StartsWith('https://', True)) then
-  begin
-    ShowMessage('OpenAI Custom Base URL must start with http:// or https://');
-    Exit;
-  end;
-
-  if not LLMStudioUrl.IsEmpty and not (LLMStudioUrl.StartsWith('http://', True) or LLMStudioUrl.StartsWith('https://', True)) then
-  begin
-    ShowMessage('LM Studio URL must start with http:// or https://');
-    Exit;
-  end;
-
-  var LAzureUrl := Trim(edtAzureUrl.Text);
-  if not LAzureUrl.IsEmpty and not (LAzureUrl.StartsWith('http://', True) or LAzureUrl.StartsWith('https://', True)) then
-  begin
-    ShowMessage('Azure OpenAI Endpoint URL must start with http:// or https://');
-    Exit;
-  end;
-
-  if grpGeminiAuthType.ItemIndex = 1 then
-    FConfig.SetProviderAuthType('Gemini', 'web_login')
-  else
-    FConfig.SetProviderAuthType('Gemini', 'api_key');
-
-  if grpOpenAIAuthType.ItemIndex = 1 then
-    FConfig.SetProviderAuthType('OpenAI', 'web_login')
-  else
-    FConfig.SetProviderAuthType('OpenAI', 'api_key');
-
-  FConfig.SetApiKey('Gemini', Trim(edtGeminiKey.Text));
-  FConfig.SetApiKey('OpenAI', Trim(edtOpenAIKey.Text));
-  FConfig.OpenAICustomBaseUrl := LOpenAIUrl;
-  FConfig.SetApiKey('Claude', Trim(edtClaudeKey.Text));
-  FConfig.SetApiKey('DeepSeek', Trim(edtDeepSeekKey.Text));
-  FConfig.SetApiKey('Groq', Trim(edtGroqKey.Text));
-  FConfig.SetApiKey('OpenRouter', Trim(edtOpenRouterKey.Text));
-  FConfig.SetApiKey('GithubCopilot', Trim(edtGithubCopilotKey.Text));
-  
-  FConfig.SetApiKey('AzureOpenAI', Trim(edtAzureKey.Text));
-  FConfig.SetProviderBaseUrl('AzureOpenAI', LAzureUrl);
-  FConfig.SetActiveModel('AzureOpenAI', Trim(edtAzureModel.Text));
-  FConfig.AzureApiVersion := Trim(edtAzureApiVersion.Text);
-
-  FConfig.SetApiKey('Qwen', Trim(edtQwenKey.Text));
-  FConfig.SetApiKey('Mistral', Trim(edtMistralKey.Text));
-  FConfig.AwsAccessKeyId := Trim(edtAwsAccessKeyId.Text);
-  FConfig.AwsSecretAccessKey := Trim(edtAwsSecretAccessKey.Text);
-  FConfig.AwsRegion := Trim(edtAwsRegion.Text);
-  FConfig.AwsSessionToken := Trim(edtAwsSessionToken.Text);
- 
-  FConfig.SystemPrompt := memSystemPrompt.Text;
-  FConfig.OllamaBaseUrl := LOllamaUrl;
-  FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
-
-  if Assigned(FChkSmartConfig) then
-    FConfig.SmartConfigEnabled := FChkSmartConfig.Checked;
-
-  for LPair in FEdtTemperatures do
-  begin
-    if TryStrToFloat(LPair.Value.Text, LTemp, LFormatSettings) then
-    begin
-      if (LTemp >= 0.0) and (LTemp <= 2.0) then
-        FConfig.SetTemperature(LPair.Key, LTemp);
-    end;
-  end;
-
-  for LPair in FEdtMaxTokens do
-    FConfig.SetMaxTokens(LPair.Key, StrToIntDef(LPair.Value.Text, 2048));
-
-  for LPair in FEdtTimeouts do
-    FConfig.SetTimeout(LPair.Key, StrToIntDef(LPair.Value.Text, 60));
-  
-  // O loop baseado em TAIProviderType foi completamente removido daqui
-
-  if Assigned(chkLogEnabled) then
-    FConfig.LogEnabled := chkLogEnabled.Checked;
-  if Assigned(edtLogPath) then
-    FConfig.LogPath := Trim(edtLogPath.Text);
-  if Assigned(edtLogMaxSize) then
-    FConfig.LogMaxSizeKB := StrToIntDef(edtLogMaxSize.Text, 1024);
-
-  if Assigned(chkQuotaEnabled) then
-    FConfig.QuotaEnabled := chkQuotaEnabled.Checked;
-  if Assigned(edtQuotaLimit) then
-    FConfig.QuotaLimit := StrToInt64Def(edtQuotaLimit.Text, 1000000);
-
-
-
-  FConfig.Save;
-
-  { Save templates too }
-  FTemplateManager.Save;
-
-  LForm := GetParentForm(Self);
-  if (LForm <> nil) and SameText(LForm.ClassName, 'TFormAIConfig') then
-    LForm.ModalResult := mrOk;
-end;
-
-procedure TFrameAIConfig.btnCancelClick(Sender: TObject);
-var
-  LForm: TCustomForm;
-begin
-  LoadConfig;
-  LForm := GetParentForm(Self);
-  if (LForm <> nil) and SameText(LForm.ClassName, 'TFormAIConfig') then
-    LForm.ModalResult := mrCancel;
-end;
-
-procedure TFrameAIConfig.PopulateTemplatesList;
-var
-  LTemplate: TPromptTemplate;
-  LSelectedIndex: Integer;
-begin
-  LSelectedIndex := lstTemplates.ItemIndex;
-  lstTemplates.Items.BeginUpdate;
-  try
-    lstTemplates.Items.Clear;
-    for LTemplate in FTemplateManager.GetTemplates do
-    begin
-      lstTemplates.Items.Add(LTemplate.Name);
-    end;
-  finally
-    lstTemplates.Items.EndUpdate;
-  end;
-  
-  if (LSelectedIndex >= 0) and (LSelectedIndex < lstTemplates.Count) then
-    lstTemplates.ItemIndex := LSelectedIndex
-  else if lstTemplates.Count > 0 then
-    lstTemplates.ItemIndex := 0
-  else
-    lstTemplates.ItemIndex := -1;
+  FPresenter.LoadConfig;
 end;
 
 procedure TFrameAIConfig.lstTemplatesClick(Sender: TObject);
-var
-  LName: string;
-  LTemplate: TPromptTemplate;
 begin
-  if lstTemplates.ItemIndex < 0 then
-  begin
-    edtTemplateName.Text := '';
-    edtTemplateDesc.Text := '';
-    memTemplateBody.Text := '';
-    edtTemplateSlash.Text := '';
-    chkIsProjectGenerator.Checked := False;
-    
-    edtTemplateName.ReadOnly := False;
-    btnDeleteTemplate.Caption := 'Delete';
-    btnDeleteTemplate.Enabled := False;
-    lblTemplateOrigin.Caption := '';
-    Exit;
-  end;
-
-  LName := lstTemplates.Items[lstTemplates.ItemIndex];
-  if FTemplateManager.FindTemplate(LName, LTemplate) then
-  begin
-    edtTemplateName.Text := LTemplate.Name;
-    edtTemplateDesc.Text := LTemplate.Description;
-    memTemplateBody.Text := LTemplate.Template;
-    edtTemplateSlash.Text := LTemplate.SlashCommand;
-    chkIsProjectGenerator.Checked := LTemplate.IsProjectGenerator;
-    
-    if LTemplate.IsSystem then
-    begin
-      edtTemplateName.ReadOnly := True;
-      if LTemplate.IsCustomized then
-      begin
-        btnDeleteTemplate.Caption := 'Restore Default';
-        btnDeleteTemplate.Enabled := True;
-        lblTemplateOrigin.Caption := 'System (Customized)';
-        lblTemplateOrigin.Font.Color := $00008CFF; // Laranja premium suave
-      end
-      else
-      begin
-        btnDeleteTemplate.Caption := 'Delete';
-        btnDeleteTemplate.Enabled := False;
-        lblTemplateOrigin.Caption := 'System (Read-Only)';
-        lblTemplateOrigin.Font.Color := clGrayText;
-      end;
-    end
-    else
-    begin
-      edtTemplateName.ReadOnly := False;
-      btnDeleteTemplate.Caption := 'Delete';
-      btnDeleteTemplate.Enabled := True;
-      lblTemplateOrigin.Caption := 'User';
-      lblTemplateOrigin.Font.Color := clHighlight;
-    end;
-  end;
+  FPresenter.HandleTemplateSelected;
 end;
 
 procedure TFrameAIConfig.btnNewTemplateClick(Sender: TObject);
 begin
-  lstTemplates.ItemIndex := -1;
-  edtTemplateName.Text := '';
-  edtTemplateDesc.Text := '';
-  memTemplateBody.Text := '';
-  edtTemplateSlash.Text := '';
-  chkIsProjectGenerator.Checked := False;
-  
-  edtTemplateName.ReadOnly := False;
-  btnDeleteTemplate.Caption := 'Delete';
-  btnDeleteTemplate.Enabled := False;
-  lblTemplateOrigin.Caption := '';
-  edtTemplateName.SetFocus;
+  FPresenter.CreateNewTemplate;
 end;
 
 procedure TFrameAIConfig.btnDeleteTemplateClick(Sender: TObject);
 var
-  LName: string;
-  LTemplate: TPromptTemplate;
+  LConfirmMsg: string;
 begin
   if lstTemplates.ItemIndex < 0 then
   begin
@@ -1104,66 +868,20 @@ begin
     Exit;
   end;
 
-  LName := lstTemplates.Items[lstTemplates.ItemIndex];
-  if FTemplateManager.FindTemplate(LName, LTemplate) then
+  if SameText(btnDeleteTemplate.Caption, 'Restore Default') then
+    LConfirmMsg := 'Deseja realmente restaurar o template padrão "' + lstTemplates.Items[lstTemplates.ItemIndex] + '" para o conteúdo original?'
+  else
+    LConfirmMsg := 'Are you sure you want to delete the template "' + lstTemplates.Items[lstTemplates.ItemIndex] + '"?';
+
+  if MessageDlg(LConfirmMsg, mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
-    if LTemplate.IsSystem then
-    begin
-      if LTemplate.IsCustomized then
-      begin
-        if MessageDlg(Format('Deseja realmente restaurar o template padrão "%s" para o conteúdo original de fábrica?', [LName]),
-          mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-        begin
-          FTemplateManager.RestoreDefaultTemplate(LName);
-          PopulateTemplatesList;
-          lstTemplatesClick(nil);
-        end;
-      end;
-    end
-    else
-    begin
-      if MessageDlg(Format('Are you sure you want to delete the template "%s"?', [LName]),
-        mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-      begin
-        FTemplateManager.DeleteTemplate(LName);
-        FTemplateManager.Save;
-        PopulateTemplatesList;
-        lstTemplatesClick(nil);
-      end;
-    end;
+    FPresenter.DeleteTemplate;
   end;
 end;
 
 procedure TFrameAIConfig.btnSaveTemplateClick(Sender: TObject);
-var
-  LName, LDesc, LBody, LSlash: string;
-  LIsProjGen: Boolean;
-  LIndex: Integer;
 begin
-  LName := Trim(edtTemplateName.Text);
-  LDesc := Trim(edtTemplateDesc.Text);
-  LBody := memTemplateBody.Text;
-  LSlash := Trim(edtTemplateSlash.Text);
-  LIsProjGen := chkIsProjectGenerator.Checked;
-
-  if LName.IsEmpty then
-  begin
-    ShowMessage('Template Name cannot be empty.');
-    Exit;
-  end;
-
-  FTemplateManager.AddTemplate(LName, LDesc, LBody, LIsProjGen, LSlash);
-  FTemplateManager.Save; // Salva o JSON local após salvar/atualizar
-  PopulateTemplatesList;
-  
-  LIndex := lstTemplates.Items.IndexOf(LName);
-  if LIndex >= 0 then
-  begin
-    lstTemplates.ItemIndex := LIndex;
-    lstTemplatesClick(nil);
-  end;
-  
-  ShowMessage('Template saved successfully.');
+  FPresenter.SaveTemplate;
 end;
 
 procedure TFrameAIConfig.btnRestoreDefaultsClick(Sender: TObject);
@@ -1171,29 +889,13 @@ begin
   if MessageDlg('Are you sure you want to restore default templates? This will overwrite your changes.',
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
-    FTemplateManager.RestoreDefaultTemplates;
-    PopulateTemplatesList;
-    if lstTemplates.Count > 0 then
-    begin
-      lstTemplates.ItemIndex := 0;
-      lstTemplatesClick(nil);
-    end;
-    ShowMessage('Default templates restored successfully.');
+    FPresenter.RestoreDefaultTemplates;
   end;
 end;
 
 procedure TFrameAIConfig.btnExportTemplatesClick(Sender: TObject);
 begin
-  if dlgsTemplatesSave.Execute then
-  begin
-    try
-      FTemplateManager.ExportToFile(dlgsTemplatesSave.FileName);
-      ShowMessage('Templates exported successfully.');
-    except
-      on E: Exception do
-        ShowMessage('Failed to export templates: ' + E.Message);
-    end;
-  end;
+  FPresenter.ExportTemplates;
 end;
 
 procedure TFrameAIConfig.btnImportTemplatesClick(Sender: TObject);
@@ -1213,14 +915,9 @@ begin
       
     LMerge := LConfirm = mrYes;
     
-    if FTemplateManager.ImportFromFile(dlgsTemplatesOpen.FileName, LMerge, LErrorMsg) then
+    if FPresenter.TemplateManager.ImportFromFile(dlgsTemplatesOpen.FileName, LMerge, LErrorMsg) then
     begin
-      PopulateTemplatesList;
-      if lstTemplates.Count > 0 then
-      begin
-        lstTemplates.ItemIndex := 0;
-        lstTemplatesClick(nil);
-      end;
+      FPresenter.LoadConfig;
       ShowMessage('Templates imported successfully.');
     end
     else
@@ -1231,25 +928,13 @@ begin
 end;
 
 procedure TFrameAIConfig.btnBrowseLogPathClick(Sender: TObject);
-var
-  LFolder: string;
 begin
-  if Vcl.FileCtrl.SelectDirectory('Select Log Folder', '', LFolder, [sdNewUI, sdNewFolder]) then
-    edtLogPath.Text := LFolder;
+  FPresenter.BrowseLogPath;
 end;
 
 procedure TFrameAIConfig.btnResetQuotaClick(Sender: TObject);
 begin
-  if MessageDlg('Are you sure you want to reset the monthly token usage counter to zero?',
-    mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-  begin
-    FConfig.QuotaUsed := 0;
-    FConfig.QuotaCycleStart := Now;
-    FConfig.Save;
-    
-    lblQuotaUsed.Caption := 'Monthly Used Tokens: 0';
-    ShowMessage('Token usage counter reset successfully.');
-  end;
+  FPresenter.ResetQuota;
 end;
 
 procedure TFrameAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
@@ -1292,7 +977,6 @@ begin
     pgcSettings.ActivePage := tsMistral
   else if SameText(ACategoryName, 'AWS Bedrock') then
     pgcSettings.ActivePage := tsBedrock
-
 end;
 
 procedure TFrameAIConfig.grpGeminiAuthTypeClick(Sender: TObject);
@@ -1302,6 +986,7 @@ begin
   LIsApiKey := grpGeminiAuthType.ItemIndex = 0;
   edtGeminiKey.Enabled := LIsApiKey;
   lblGeminiKey.Enabled := LIsApiKey;
+  btnGeminiWebLogin.Enabled := not LIsApiKey;
   if not LIsApiKey then
     edtGeminiKey.Text := '';
 end;
@@ -1315,6 +1000,7 @@ begin
   lblOpenAIKey.Enabled := LIsApiKey;
   edtOpenAICustomUrl.Enabled := LIsApiKey;
   lblOpenAICustomUrl.Enabled := LIsApiKey;
+  btnOpenAIWebLogin.Enabled := not LIsApiKey;
   if not LIsApiKey then
   begin
     edtOpenAIKey.Text := '';
@@ -1378,8 +1064,7 @@ var
 begin
   if TFormGithubAuth.Execute(Self, LToken) then
   begin
-    edtGithubCopilotKey.Text := LToken;
-    ShowMessage('Autenticado com sucesso no GitHub Copilot!');
+    FPresenter.ConnectGithub(LToken);
   end;
 end;
 
@@ -1397,15 +1082,13 @@ begin
     
   if not TFile.Exists(LPath) then
   begin
-    { Fallback para VS Code Insiders }
     LPath := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) +
       'Code\User\globalStorage\github.copilot-insiders\hosts.json';
   end;
 
   if not TFile.Exists(LPath) then
   begin
-    ShowMessage('Não foi possível encontrar a configuração do Copilot no VS Code.' + sLineBreak +
-      'Certifique-se de que o VS Code está instalado e conectado ao Copilot nesta máquina.');
+    ShowMessage('Não foi possível encontrar a configuração do Copilot no VS Code.');
     Exit;
   end;
 
@@ -1432,11 +1115,7 @@ begin
 
           if not LToken.IsEmpty then
           begin
-            edtGithubCopilotKey.Text := LToken;
-            if not LUser.IsEmpty then
-              ShowMessage(Format('Token importado com sucesso da conta do GitHub "%s" do VS Code!', [LUser]))
-            else
-              ShowMessage('Token importado com sucesso do VS Code!');
+            FPresenter.ImportVSCodeCopilotToken(LToken, LUser);
             Exit;
           end;
         end;
@@ -1445,17 +1124,285 @@ begin
       finally
         LJson.Free;
       end;
-    end
-    else
-    begin
-      ShowMessage('Falha ao ler o arquivo de credenciais do VS Code (formato inválido).');
     end;
   except
     on E: Exception do
-    begin
       ShowMessage('Erro ao ler credenciais do VS Code: ' + E.Message);
-    end;
   end;
+end;
+
+procedure TFrameAIConfig.btnGeminiWebLoginClick(Sender: TObject);
+begin
+  TFormWebLogin.ShowLogin(Self, 'https://gemini.google.com',
+    procedure
+    begin
+      ShowMessage('Login no Gemini realizado com sucesso!');
+    end);
+end;
+
+procedure TFrameAIConfig.btnOpenAIWebLoginClick(Sender: TObject);
+begin
+  TFormWebLogin.ShowLogin(Self, 'https://chatgpt.com',
+    procedure
+    begin
+      ShowMessage('Login no OpenAI realizado com sucesso!');
+    end);
+end;
+
+procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
+begin
+  FPresenter.SaveConfig;
+end;
+
+procedure TFrameAIConfig.btnCancelClick(Sender: TObject);
+begin
+  FPresenter.CancelConfig;
+end;
+
+{ IConfigView Implementation }
+
+function TFrameAIConfig.GetApiKey(const AProviderId: string): string;
+begin
+  if SameText(AProviderId, 'Gemini') then Result := edtGeminiKey.Text
+  else if SameText(AProviderId, 'OpenAI') then Result := edtOpenAIKey.Text
+  else if SameText(AProviderId, 'Claude') then Result := edtClaudeKey.Text
+  else if SameText(AProviderId, 'DeepSeek') then Result := edtDeepSeekKey.Text
+  else if SameText(AProviderId, 'Groq') then Result := edtGroqKey.Text
+  else if SameText(AProviderId, 'OpenRouter') then Result := edtOpenRouterKey.Text
+  else if SameText(AProviderId, 'GithubCopilot') then Result := edtGithubCopilotKey.Text
+  else if SameText(AProviderId, 'AzureOpenAI') then Result := edtAzureKey.Text
+  else if SameText(AProviderId, 'Qwen') then Result := edtQwenKey.Text
+  else if SameText(AProviderId, 'Mistral') then Result := edtMistralKey.Text
+  else Result := '';
+end;
+
+procedure TFrameAIConfig.SetApiKey(const AProviderId: string; const AKey: string);
+begin
+  if SameText(AProviderId, 'Gemini') then edtGeminiKey.Text := AKey
+  else if SameText(AProviderId, 'OpenAI') then edtOpenAIKey.Text := AKey
+  else if SameText(AProviderId, 'Claude') then edtClaudeKey.Text := AKey
+  else if SameText(AProviderId, 'DeepSeek') then edtDeepSeekKey.Text := AKey
+  else if SameText(AProviderId, 'Groq') then edtGroqKey.Text := AKey
+  else if SameText(AProviderId, 'OpenRouter') then edtOpenRouterKey.Text := AKey
+  else if SameText(AProviderId, 'GithubCopilot') then edtGithubCopilotKey.Text := AKey
+  else if SameText(AProviderId, 'AzureOpenAI') then edtAzureKey.Text := AKey
+  else if SameText(AProviderId, 'Qwen') then edtQwenKey.Text := AKey
+  else if SameText(AProviderId, 'Mistral') then edtMistralKey.Text := AKey;
+end;
+
+function TFrameAIConfig.GetCustomUrl(const AProviderId: string): string;
+begin
+  if SameText(AProviderId, 'OpenAI') then Result := edtOpenAICustomUrl.Text
+  else if SameText(AProviderId, 'Ollama') then Result := edtOllamaUrl.Text
+  else if SameText(AProviderId, 'LMStudio') then Result := edtLMStudioUrl.Text
+  else if SameText(AProviderId, 'AzureOpenAI') then Result := edtAzureUrl.Text
+  else Result := '';
+end;
+
+procedure TFrameAIConfig.SetCustomUrl(const AProviderId: string; const AUrl: string);
+begin
+  if SameText(AProviderId, 'OpenAI') then edtOpenAICustomUrl.Text := AUrl
+  else if SameText(AProviderId, 'Ollama') then edtOllamaUrl.Text := AUrl
+  else if SameText(AProviderId, 'LMStudio') then edtLMStudioUrl.Text := AUrl
+  else if SameText(AProviderId, 'AzureOpenAI') then edtAzureUrl.Text := AUrl;
+end;
+
+function TFrameAIConfig.GetAuthTypeIndex(const AProviderId: string): Integer;
+begin
+  if SameText(AProviderId, 'Gemini') then Result := grpGeminiAuthType.ItemIndex
+  else if SameText(AProviderId, 'OpenAI') then Result := grpOpenAIAuthType.ItemIndex
+  else Result := 0;
+end;
+
+procedure TFrameAIConfig.SetAuthTypeIndex(const AProviderId: string; const AIndex: Integer);
+begin
+  if SameText(AProviderId, 'Gemini') then
+  begin
+    grpGeminiAuthType.ItemIndex := AIndex;
+    grpGeminiAuthTypeClick(grpGeminiAuthType);
+  end
+  else if SameText(AProviderId, 'OpenAI') then
+  begin
+    grpOpenAIAuthType.ItemIndex := AIndex;
+    grpOpenAIAuthTypeClick(grpOpenAIAuthType);
+  end;
+end;
+
+function TFrameAIConfig.GetTemperatureInput(const AProviderId: string): string;
+var
+  LEdit: TEdit;
+begin
+  if FEdtTemperatures.TryGetValue(AProviderId, LEdit) then Result := LEdit.Text else Result := '0.7';
+end;
+
+procedure TFrameAIConfig.SetTemperatureInput(const AProviderId: string; const AValue: string);
+var
+  LEdit: TEdit;
+begin
+  if FEdtTemperatures.TryGetValue(AProviderId, LEdit) then LEdit.Text := AValue;
+end;
+
+function TFrameAIConfig.GetMaxTokensInput(const AProviderId: string): string;
+var
+  LEdit: TEdit;
+begin
+  if FEdtMaxTokens.TryGetValue(AProviderId, LEdit) then Result := LEdit.Text else Result := '2048';
+end;
+
+procedure TFrameAIConfig.SetMaxTokensInput(const AProviderId: string; const AValue: string);
+var
+  LEdit: TEdit;
+begin
+  if FEdtMaxTokens.TryGetValue(AProviderId, LEdit) then LEdit.Text := AValue;
+end;
+
+function TFrameAIConfig.GetTimeoutInput(const AProviderId: string): string;
+var
+  LEdit: TEdit;
+begin
+  if FEdtTimeouts.TryGetValue(AProviderId, LEdit) then Result := LEdit.Text else Result := '60';
+end;
+
+procedure TFrameAIConfig.SetTimeoutInput(const AProviderId: string; const AValue: string);
+var
+  LEdit: TEdit;
+begin
+  if FEdtTimeouts.TryGetValue(AProviderId, LEdit) then LEdit.Text := AValue;
+end;
+
+function TFrameAIConfig.GetAzureModel: string; begin Result := edtAzureModel.Text; end;
+procedure TFrameAIConfig.SetAzureModel(const AValue: string); begin edtAzureModel.Text := AValue; end;
+function TFrameAIConfig.GetAzureApiVersion: string; begin Result := edtAzureApiVersion.Text; end;
+procedure TFrameAIConfig.SetAzureApiVersion(const AValue: string); begin edtAzureApiVersion.Text := AValue; end;
+
+function TFrameAIConfig.GetAwsAccessKeyId: string; begin Result := edtAwsAccessKeyId.Text; end;
+procedure TFrameAIConfig.SetAwsAccessKeyId(const AValue: string); begin edtAwsAccessKeyId.Text := AValue; end;
+function TFrameAIConfig.GetAwsSecretAccessKey: string; begin Result := edtAwsSecretAccessKey.Text; end;
+procedure TFrameAIConfig.SetAwsSecretAccessKey(const AValue: string); begin edtAwsSecretAccessKey.Text := AValue; end;
+function TFrameAIConfig.GetAwsRegion: string; begin Result := edtAwsRegion.Text; end;
+procedure TFrameAIConfig.SetAwsRegion(const AValue: string); begin edtAwsRegion.Text := AValue; end;
+function TFrameAIConfig.GetAwsSessionToken: string; begin Result := edtAwsSessionToken.Text; end;
+procedure TFrameAIConfig.SetAwsSessionToken(const AValue: string); begin edtAwsSessionToken.Text := AValue; end;
+
+function TFrameAIConfig.GetSystemPrompt: string; begin Result := memSystemPrompt.Text; end;
+procedure TFrameAIConfig.SetSystemPrompt(const AValue: string); begin memSystemPrompt.Text := AValue; end;
+function TFrameAIConfig.GetSmartConfigEnabled: Boolean; begin Result := FChkSmartConfig.Checked; end;
+procedure TFrameAIConfig.SetSmartConfigEnabled(const AValue: Boolean); begin FChkSmartConfig.Checked := AValue; end;
+function TFrameAIConfig.GetInjectDelphiVersion: Boolean; begin Result := chkInjectDelphiVersion.Checked; end;
+procedure TFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean); begin chkInjectDelphiVersion.Checked := AValue; end;
+function TFrameAIConfig.GetLogEnabled: Boolean; begin Result := chkLogEnabled.Checked; end;
+procedure TFrameAIConfig.SetLogEnabled(const AValue: Boolean); begin chkLogEnabled.Checked := AValue; end;
+function TFrameAIConfig.GetLogPath: string; begin Result := edtLogPath.Text; end;
+procedure TFrameAIConfig.SetLogPath(const AValue: string); begin edtLogPath.Text := AValue; end;
+function TFrameAIConfig.GetLogMaxSize: string; begin Result := edtLogMaxSize.Text; end;
+procedure TFrameAIConfig.SetLogMaxSize(const AValue: string); begin edtLogMaxSize.Text := AValue; end;
+
+function TFrameAIConfig.GetQuotaEnabled: Boolean; begin Result := chkQuotaEnabled.Checked; end;
+procedure TFrameAIConfig.SetQuotaEnabled(const AValue: Boolean); begin chkQuotaEnabled.Checked := AValue; end;
+function TFrameAIConfig.GetQuotaLimit: string; begin Result := edtQuotaLimit.Text; end;
+procedure TFrameAIConfig.SetQuotaLimit(const AValue: string); begin edtQuotaLimit.Text := AValue; end;
+procedure TFrameAIConfig.SetQuotaUsedText(const AText: string); begin lblQuotaUsed.Caption := AText; end;
+
+procedure TFrameAIConfig.ShowMessageDialog(const AMessage: string);
+begin
+  ShowMessage(AMessage);
+end;
+
+function TFrameAIConfig.SaveDialogExecute(out AFileName: string): Boolean;
+begin
+  Result := dlgsTemplatesSave.Execute;
+  if Result then AFileName := dlgsTemplatesSave.FileName;
+end;
+
+function TFrameAIConfig.OpenDialogExecute(out AFileName: string): Boolean;
+begin
+  Result := dlgsTemplatesOpen.Execute;
+  if Result then AFileName := dlgsTemplatesOpen.FileName;
+end;
+
+function TFrameAIConfig.FolderDialogExecute(out AFolderName: string): Boolean;
+begin
+  Result := Vcl.FileCtrl.SelectDirectory('Select Log Folder', '', AFolderName, [sdNewUI, sdNewFolder]);
+end;
+
+procedure TFrameAIConfig.CloseView(const AModalResult: Integer);
+var
+  LForm: TCustomForm;
+begin
+  LForm := GetParentForm(Self);
+  if (LForm <> nil) and SameText(LForm.ClassName, 'TFormAIConfig') then
+    LForm.ModalResult := AModalResult;
+end;
+
+procedure TFrameAIConfig.UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
+var
+  LName: string;
+begin
+  lstTemplates.Items.BeginUpdate;
+  try
+    lstTemplates.Items.Clear;
+    for LName in ATemplateNames do
+      lstTemplates.Items.Add(LName);
+  finally
+    lstTemplates.Items.EndUpdate;
+  end;
+  lstTemplates.ItemIndex := ASelectedIndex;
+end;
+
+procedure TFrameAIConfig.GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
+begin
+  AName := Trim(edtTemplateName.Text);
+  ADesc := Trim(edtTemplateDesc.Text);
+  ABody := memTemplateBody.Text;
+  ASlash := Trim(edtTemplateSlash.Text);
+  AIsProjGen := chkIsProjectGenerator.Checked;
+end;
+
+procedure TFrameAIConfig.SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+begin
+  edtTemplateName.Text := AName;
+  edtTemplateDesc.Text := ADesc;
+  memTemplateBody.Text := ABody;
+  edtTemplateSlash.Text := ASlash;
+  chkIsProjectGenerator.Checked := AIsProjGen;
+  edtTemplateName.ReadOnly := AIsSystem;
+end;
+
+procedure TFrameAIConfig.ClearTemplateFields;
+begin
+  edtTemplateName.Text := '';
+  edtTemplateDesc.Text := '';
+  memTemplateBody.Text := '';
+  edtTemplateSlash.Text := '';
+  chkIsProjectGenerator.Checked := False;
+  edtTemplateName.ReadOnly := False;
+end;
+
+procedure TFrameAIConfig.FocusTemplateName;
+begin
+  edtTemplateName.SetFocus;
+end;
+
+function TFrameAIConfig.GetSelectedTemplateIndex: Integer;
+begin
+  Result := lstTemplates.ItemIndex;
+end;
+
+procedure TFrameAIConfig.SetSelectedTemplateIndex(const AIndex: Integer);
+begin
+  lstTemplates.ItemIndex := AIndex;
+end;
+
+procedure TFrameAIConfig.SetDeleteTemplateButtonState(const ACaption: string; const AEnabled: Boolean);
+begin
+  btnDeleteTemplate.Caption := ACaption;
+  btnDeleteTemplate.Enabled := AEnabled;
+end;
+
+procedure TFrameAIConfig.SetTemplateOriginLabel(const AText: string; const AColor: TColor);
+begin
+  lblTemplateOrigin.Caption := AText;
+  lblTemplateOrigin.Font.Color := AColor;
 end;
 
 end.

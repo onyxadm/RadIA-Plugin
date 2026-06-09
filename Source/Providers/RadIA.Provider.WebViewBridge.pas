@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.WebViewBridge;
+unit RadIA.Provider.WebViewBridge;
 
 interface
 
@@ -89,12 +89,15 @@ begin
   
   if Assigned(FOnSendPrompt) then
   begin
-    TThread.Queue(nil,
-      procedure
-      begin
-        if Assigned(FOnSendPrompt) then
-          FOnSendPrompt(APrompt);
-      end);
+    if not GIsShuttingDown then
+    begin
+      TThread.Queue(nil,
+        procedure
+        begin
+          if Assigned(FOnSendPrompt) then
+            FOnSendPrompt(APrompt);
+        end);
+    end;
   end
   else
   begin
@@ -120,12 +123,15 @@ begin
   inherited CancelCurrentRequest;
   if Assigned(FOnCancel) then
   begin
-    TThread.Queue(nil,
-      procedure
-      begin
-        if Assigned(FOnCancel) then
-          FOnCancel();
-      end);
+    if not GIsShuttingDown then
+    begin
+      TThread.Queue(nil,
+        procedure
+        begin
+          if Assigned(FOnCancel) then
+            FOnCancel();
+        end);
+    end;
   end;
 end;
 

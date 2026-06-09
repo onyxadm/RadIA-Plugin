@@ -63,6 +63,8 @@ O RadIA é construído inteiramente em Object Pascal (Delphi) usando a **Open To
 A interface utiliza uma arquitetura híbrida:
 1.  **VCL Nativa:** Gerencia o acoplamento da janela, a tela de configurações, ações de menus, gravação segura no registro e chamadas assíncronas.
 2.  **Motor WebView2 (Edge):** Exibe as mensagens e respostas da IA utilizando HTML5, CSS e JS locais (Marked.js para Markdown e Prism.js para realce de sintaxe). A interface se adapta automaticamente ao tema da IDE (Light/Dark) e roda de forma fluida sem congelar a IDE.
+3.  **Padrão MVP (Model-View-Presenter):** A lógica de apresentação e a coordenação de fluxos (como envio de mensagens, troca de provedores e salvamento de configurações) são totalmente desacopladas do formulário VCL e encapsuladas em Presenters (`TChatPresenter` e `TConfigPresenter`), permitindo que a interface gráfica atue como uma View passiva.
+4.  **Abstração de Armazenamento (`ISettingsStorage`):** Para maior manutenibilidade e testabilidade, o mecanismo de persistência de opções foi abstraído. Em produção, os dados são salvos no Registro do Windows (`TRegistrySettingsStorage`), enquanto nos testes unitários são persistidos temporariamente em memória (`TMemorySettingsStorage`), garantindo isolamento total dos testes sem corromper as credenciais reais do desenvolvedor.
 
 ### 4. Requisitos do Sistema
 *   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria, 12 Athens ou 13 Florence (ou superior).
