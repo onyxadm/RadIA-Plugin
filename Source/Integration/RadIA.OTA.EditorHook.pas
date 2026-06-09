@@ -10,11 +10,9 @@ type
   TRadIAEditorHook = class(TComponent)
   private
     FOldActiveFormChange: TNotifyEvent;
-    FOldActiveControlChange: TNotifyEvent;
     FInstalled: Boolean;
     
     procedure ActiveFormChange(Sender: TObject);
-    procedure ActiveControlChange(Sender: TObject);
     procedure HookPopupMenu(AForm: TCustomForm);
     procedure UnhookPopupMenu(AForm: TCustomForm);
     function FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
@@ -75,7 +73,6 @@ constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   FOldActiveFormChange := nil;
-  FOldActiveControlChange := nil;
   FInstalled := False;
 end;
 
@@ -98,9 +95,6 @@ begin
   FOldActiveFormChange := Screen.OnActiveFormChange;
   Screen.OnActiveFormChange := ActiveFormChange;
 
-  FOldActiveControlChange := Screen.OnActiveControlChange;
-  Screen.OnActiveControlChange := ActiveControlChange;
-
   FInstalled := True;
   
   if Assigned(Screen) then
@@ -112,16 +106,6 @@ begin
       except
         on E: Exception do
           TLogger.Log('Install: Error hooking active form: ' + E.Message, 'EditorHook');
-      end;
-    end;
-    
-    if Assigned(Screen.ActiveControl) then
-    begin
-      try
-        ActiveControlChange(nil);
-      except
-        on E: Exception do
-          TLogger.Log('Install: Error executing initial ActiveControlChange: ' + E.Message, 'EditorHook');
       end;
     end;
   end;
@@ -142,7 +126,6 @@ begin
   begin
     try
       Screen.OnActiveFormChange := FOldActiveFormChange;
-      Screen.OnActiveControlChange := FOldActiveControlChange;
     except
       // ignora silenciosamente se Screen estiver instavel no shutdown
     end;
@@ -223,42 +206,6 @@ begin
   end;
 end;
 
-procedure TRadIAEditorHook.ActiveControlChange(Sender: TObject);
-var
-  I: Integer;
-  LForm: TCustomForm;
-begin
-  try
-    if Assigned(Screen) then
-    begin
-      for I := 0 to Screen.FormCount - 1 do
-      begin
-        try
-          LForm := Screen.Forms[I];
-          if Assigned(LForm) and SameText(LForm.ClassName, 'TEditWindow') then
-            HookPopupMenu(LForm);
-        except
-          on E: Exception do
-            TLogger.Log('ActiveControlChange: Error checking form ' + IntToStr(I) + ': ' + E.Message, 'EditorHook');
-        end;
-      end;
-    end;
-  except
-    on E: Exception do
-      TLogger.Log('ActiveControlChange: General error: ' + E.Message, 'EditorHook');
-  end;
-
-  // Garantir que o manipulador original da IDE seja sempre executado
-  if Assigned(FOldActiveControlChange) then
-  begin
-    try
-      FOldActiveControlChange(Sender);
-    except
-      on E: Exception do
-        TLogger.Log('ActiveControlChange: Error executing original: ' + E.Message, 'EditorHook');
-    end;
-  end;
-end;
 
 function TRadIAEditorHook.FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
 var
