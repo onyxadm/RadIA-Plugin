@@ -252,22 +252,17 @@ A versão v0.0.15 introduziu a segregação completa dos templates padrões de p
 
 ## 🔲 v0.1.0 — Automação, Auditoria e Ganhos Rápidos (Próxima Versão)
 
-### 1. Analisador de Memory Leaks & FastMM (Quick Win)
-*   **Objetivo**: Permitir colar logs de dumps brutos do FastMM (FastMM4/FastMM5) no chat lateral e receber a localização exata da alocação que falhou no código fonte, bem como a sugestão de correção (estruturas `try..finally` e `Owner` adequados).
-*   **Impacto**: ⭐⭐⭐⭐⭐ Alto
-*   **Complexidade**: Baixa
-
-### 2. Smart SQL Optimizer no Editor (Quick Win)
+### 1. Smart SQL Optimizer no Editor (Quick Win)
 *   **Objetivo**: Detectar strings de comandos SQL dentro do código Pascal ativo e oferecer uma refatoração assistida para otimização de performance, indexação sugerida e validação de sintaxe conforme o dialeto do banco de dados configurado.
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Baixa
 
-### 3. Revisão Automática de Código no Save
+### 2. Revisão Automática de Código no Save
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção (ex: possíveis bugs, código duplicado ou falta de tratamento de exceção).
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 4. Histórico de Refatorações Aplicadas
+### 3. Histórico de Refatorações Aplicadas
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão **[Aplicar Alteração]** foi acionado, registrando o trecho original, o trecho aplicado, a data e o arquivo, permitindo revisão manual posterior.
 *   **Impacto**: ⭐⭐⭐ Médio
 *   **Complexidade**: Baixa
