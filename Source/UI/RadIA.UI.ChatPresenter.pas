@@ -1007,6 +1007,7 @@ var
   LJsonFiles: TJSONArray;
   LJsonFilesStr: string;
 begin
+  TLogger.Log('ProcessWebMessage raw: ' + AMessage, 'UI');
   LParsed := TJSONObject.ParseJSONValue(AMessage);
   if not Assigned(LParsed) then
     Exit;
@@ -1027,6 +1028,11 @@ begin
         begin
           Self.FView.ReplaceActiveEditorText(LText);
         end));
+    end
+    else if LAction = 'log' then
+    begin
+      LText := LJson.GetValue<string>('text', '');
+      TLogger.Log('JS Console: ' + LText, 'WebView');
     end
     else if LAction = 'ready' then
     begin
