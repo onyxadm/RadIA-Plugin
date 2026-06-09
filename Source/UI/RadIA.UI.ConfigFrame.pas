@@ -214,9 +214,14 @@ begin
 
   lblTemplateOrigin := TLabel.Create(Self);
   lblTemplateOrigin.Parent := pnlTemplatesClient;
-  lblTemplateOrigin.Left := btnSaveTemplate.Left;
-  lblTemplateOrigin.Top := btnSaveTemplate.Top - 25;
-  lblTemplateOrigin.Font.Style := [fsBold];
+  lblTemplateOrigin.AutoSize := False;
+  lblTemplateOrigin.Width := 200;
+  lblTemplateOrigin.Alignment := taRightJustify;
+  lblTemplateOrigin.Left := pnlTemplatesClient.Width - 217;
+  lblTemplateOrigin.Top := lblTemplateName.Top;
+  lblTemplateOrigin.Anchors := [akTop, akRight];
+  lblTemplateOrigin.Font.Assign(lblTemplateName.Font);
+  lblTemplateOrigin.Font.Style := [];
   lblTemplateOrigin.Caption := '';
 
   FEdtTemperatures := TDictionary<string, TEdit>.Create;
@@ -1054,15 +1059,15 @@ begin
       begin
         btnDeleteTemplate.Caption := 'Restore Default';
         btnDeleteTemplate.Enabled := True;
-        lblTemplateOrigin.Caption := 'Origin: Default System (Customized)';
-        lblTemplateOrigin.Font.Color := $0000A5FF; // Laranja
+        lblTemplateOrigin.Caption := 'Origin: System (Customized)';
+        lblTemplateOrigin.Font.Color := $00008CFF; // Laranja premium suave
       end
       else
       begin
         btnDeleteTemplate.Caption := 'Delete';
         btnDeleteTemplate.Enabled := False;
-        lblTemplateOrigin.Caption := 'Origin: Default System (Read-Only)';
-        lblTemplateOrigin.Font.Color := clGray;
+        lblTemplateOrigin.Caption := 'Origin: System (Read-Only)';
+        lblTemplateOrigin.Font.Color := clGrayText;
       end;
     end
     else
@@ -1070,7 +1075,7 @@ begin
       edtTemplateName.ReadOnly := False;
       btnDeleteTemplate.Caption := 'Delete';
       btnDeleteTemplate.Enabled := True;
-      lblTemplateOrigin.Caption := 'Origin: User Custom';
+      lblTemplateOrigin.Caption := 'Origin: User';
       lblTemplateOrigin.Font.Color := clHighlight;
     end;
   end;
