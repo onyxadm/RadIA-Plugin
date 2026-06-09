@@ -208,7 +208,7 @@ begin
     LDelphiVersionPrompt := 'The user is writing code using Embarcadero ' + TRadIAOTAHelper.GetDelphiVersionName + '. ' +
                             'Make sure any code, syntax, keywords, and RTL components you generate are fully compatible and compile ' +
                             'in this version. Avoid newer language features that are not supported in ' + TRadIAOTAHelper.GetDelphiVersionName + '. ' +
-                            'Always reply in the user''s language.';
+                            TRadIAOTAHelper.GetPreferredLanguageInstruction;
     
     if LSystemPrompt.IsEmpty then
       LSystemPrompt := LDelphiVersionPrompt

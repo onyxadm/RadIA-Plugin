@@ -128,7 +128,7 @@ implementation
 uses
   System.IOUtils, System.JSON.Builders, RadIA.Core.Config, RadIA.Core.Logger,
   RadIA.Core.ProviderRegistry, RadIA.Core.ConversationExporter,
-  RadIA.Core.DTO.Generator, RadIA.Provider.WebViewBridge;
+  RadIA.Core.DTO.Generator, RadIA.Provider.WebViewBridge, RadIA.OTA.Helper;
 
 { Helper Functions }
 
@@ -1234,7 +1234,7 @@ begin
     var LFinalPrompt := APrompt;
     if not LFinalPrompt.Trim.IsEmpty then
     begin
-      LFinalPrompt := LFinalPrompt + sLineBreak + sLineBreak + 'Please reply in Brazilian Portuguese.';
+      LFinalPrompt := LFinalPrompt + sLineBreak + sLineBreak + TRadIAOTAHelper.GetPreferredLanguageInstruction;
     end;
     
     LJson.AddPair('text', LFinalPrompt);

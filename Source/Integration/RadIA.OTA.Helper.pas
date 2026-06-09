@@ -21,9 +21,13 @@ type
     class function GetCurrentEditView: IOTAEditView;
     class function OpenProjectInIDE(const AProjectPath: string): Boolean;
     class function GetDelphiVersionName: string;
+    class function GetPreferredLanguageInstruction: string;
   end;
 
 implementation
+
+uses
+  Winapi.Windows;
 
 { TRadIAOTAHelper }
 
@@ -316,6 +320,25 @@ begin
   {$ELSE}
   Result := 'Delphi (CompilerVersion ' + FloatToStr(CompilerVersion) + ')';
   {$ENDIF}
+end;
+
+class function TRadIAOTAHelper.GetPreferredLanguageInstruction: string;
+var
+  LLangID: LANGID;
+  LPrimaryLang: Byte;
+begin
+  LLangID := GetUserDefaultUILanguage;
+  LPrimaryLang := LLangID and $3FF;
+  
+  case LPrimaryLang of
+    $16: Result := 'Please reply in Brazilian Portuguese.'; // LANG_PORTUGUESE
+    $0A: Result := 'Please reply in Spanish.';              // LANG_SPANISH
+    $0C: Result := 'Please reply in French.';               // LANG_FRENCH
+    $07: Result := 'Please reply in German.';               // LANG_GERMAN
+    $10: Result := 'Please reply in Italian.';              // LANG_ITALIAN
+    else
+      Result := 'Please reply in English.';                 // Default
+  end;
 end;
 
 end.
