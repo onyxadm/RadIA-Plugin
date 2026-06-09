@@ -12,7 +12,7 @@ The plugin can be installed in two ways:
 
 ### Option A: Automated Installation (PowerShell) - Recommended
 
-This option automatically compiles the plugin, runs unit tests (if the **DUnitX** framework is installed in the IDE; otherwise, tests are automatically and transparently ignored), copies the binaries to the official public Delphi directories, and registers the plugin in the Windows Registry.
+This option compiles the plugin, copies the binaries to the official public Delphi directories, and registers the plugin in the Windows Registry. If you need to compile and run the unit test suite (**DUnitX**), simply add the `-Test` switch to the command.
 
 1. Open the Windows PowerShell console.
 2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
@@ -108,18 +108,18 @@ Enter the obtained keys in the plugin settings (**Settings** at the top of the c
 
 The `.\build.ps1` script supports the following switches:
 
-* `-Install`: Builds the plugin, runs unit tests, copies binaries to public Delphi paths, and registers the package.
+* `-Install`: Builds the plugin, copies binaries to public Delphi paths, and registers the package.
 * `-Uninstall`: Clean uninstalls the plugin, deleting files and registry keys.
 * `-Release`: Enables compiler optimizations and outputs a smaller BPL binary.
 * `-IDE64`: Compiles and installs specifically for the 64-bit Delphi IDE in Delphi 13 Florence.
 * `-DelphiVersion "<version>"`: Optional. Allows forcing a specific Delphi version installed in the system (e.g., `"23.0"`, `"37.0"`, `"Athens"`).
-* `-SkipTests`: Optional. Skips building and running the unit test suite (DUnitX). Recommended for end-users who only want a quick plugin installation.
+* `-Test`: Optional. Compiles and executes the unit test suite (DUnitX). By default, tests are omitted from the build process.
 
 > [!TIP]
 > **Multiple IDE Versions Support:** If you have more than one Delphi version installed on Windows and execute the script with `-Install` or `-Uninstall` without passing the `-DelphiVersion` parameter, the script will automatically list all valid installations found in the Registry and display a console menu for interactive selection.
 
 > [!NOTE]
-> **DUnitX Auto-Detection:** The installer automatically detects if the DUnitX framework is present in your selected Delphi installation. If DUnitX is missing (typical in basic/minimal IDE installations), the script will display a warning and automatically disable the unit tests suite, continuing with the compilation and successful installation of the main plugin without requiring user intervention.
+> **DUnitX Auto-Detection:** If the `-Test` parameter is provided, the installer automatically detects if the DUnitX framework is present in your selected Delphi installation. If DUnitX is missing, the script will display a warning, automatically disable tests execution, and proceed normally with compiling and installing the main plugin.
 
 ---
 
