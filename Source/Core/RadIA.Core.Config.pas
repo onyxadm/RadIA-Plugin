@@ -1015,6 +1015,8 @@ end;
 class procedure TRadIAConfig.SetStorage(const AStorage: ISettingsStorage);
 begin
   FStorage := AStorage;
+  if FStorage = nil then
+    FStorage := TRegistrySettingsStorage.Create;
   if Assigned(FInstance) then
     FInstance.Load;
 end;

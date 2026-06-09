@@ -61,7 +61,9 @@ uses
   RadIA.Tests.Quota in 'Source\RadIA.Tests.Quota.pas',
   RadIA.Tests.DTOGenerator in 'Source\RadIA.Tests.DTOGenerator.pas',
   RadIA.Tests.JSONProviders in 'Source\RadIA.Tests.JSONProviders.pas',
-  RadIA.Tests.Analysis in 'Source\RadIA.Tests.Analysis.pas';
+  RadIA.Tests.Analysis in 'Source\RadIA.Tests.Analysis.pas',
+  RadIA.Tests.ChatPresenter in 'Source\RadIA.Tests.ChatPresenter.pas',
+  RadIA.Tests.ConfigPresenter in 'Source\RadIA.Tests.ConfigPresenter.pas';
 
 var
   Runner: ITestRunner;
