@@ -21,3 +21,17 @@ Basta digitar o caractere `/` na caixa de entrada do chat. Um menu flutuante sur
 | `/template` | Abre o menu flutuante de biblioteca de templates para escolha de prompts reutilizáveis. | — |
 | `/stacktrace` | Analisa logs de erro ou exceções (MadExcept, EurekaLog ou RTL) e aponta a causa raiz na unit ativa. | Envia o texto da unit aberta no editor como referência de código para a linha do erro. |
 | `/review` | Executa uma análise estática abrangente de toda a unit ativa em busca de memory leaks (falta de try..finally) e anti-padrões. | Envia o código completo do arquivo ativo no editor. |
+| `/createproject` | Cria um projeto Delphi vanilla completo no disco e o carrega na IDE com base em uma especificação textual. | — |
+| `/createprojectarch` | Cria um projeto Delphi baseado em arquitetura limpa (SOLID) no disco e o carrega na IDE com base em especificação. | — |
+
+---
+
+## Customização e Backups de Comandos
+
+O RadIA permite que você edite, exclua ou adicione novos comandos e templates de prompts diretamente nas opções do plugin na IDE (`Tools -> Options -> RadIA -> Templates`).
+
+Cada template cadastrado pode especificar:
+- **Slash Command**: O comando que acionará o template diretamente no chat (ex: `/explain`).
+- **Is Project Generator**: Um indicador se aquele template gera um projeto físico compilável no disco.
+- **Importação/Exportação**: Você pode exportar seus templates para arquivos JSON e importá-los em outras máquinas de forma transacional, mesclando com os existentes ou substituindo-os.
+

@@ -103,7 +103,7 @@ const btnNewChatSidebar = document.getElementById('btn-new-chat-sidebar');
 const sessionsList    = document.getElementById('sessions-list');
 
 // Slash Commands Configuration
-const SLASH_COMMANDS = [
+let SLASH_COMMANDS = [
   { name: '/explain', desc: 'Explains the selected code in the editor', shortcut: 'Ctrl+Shift+E' },
   { name: '/refactor', desc: 'Optimizes and refactors the selected code', shortcut: 'Ctrl+Shift+R' },
   { name: '/bugs', desc: 'Finds bugs and memory leaks in the selected code', shortcut: 'Ctrl+Shift+B' },
@@ -845,6 +845,32 @@ function initializeConfig(data) {
   });
 
   updateModelsList(data.models, data.activeModel);
+
+  if (data.slashCommands && Array.isArray(data.slashCommands)) {
+    const baseCommands = [
+      { name: '/template', desc: 'Opens the prompt templates library', shortcut: 'Ctrl+Shift+T' },
+      { name: '/refactor', desc: 'Optimizes and refactors the selected code', shortcut: 'Ctrl+Shift+R' },
+      { name: '/optimize', desc: 'Performs performance analysis and optimizations', shortcut: '' },
+      { name: '/review', desc: 'Performs static analysis on the active unit (leaks/SOLID)', shortcut: '' }
+    ];
+
+    SLASH_COMMANDS = [...baseCommands];
+    data.slashCommands.forEach(cmd => {
+      const commandName = cmd.command.toLowerCase();
+      SLASH_COMMANDS = SLASH_COMMANDS.filter(c => c.name.toLowerCase() !== commandName);
+
+      let shortcut = '';
+      if (cmd.command === '/explain') shortcut = 'Ctrl+Shift+E';
+      else if (cmd.command === '/bugs') shortcut = 'Ctrl+Shift+B';
+      else if (cmd.command === '/doc') shortcut = 'Ctrl+Shift+D';
+
+      SLASH_COMMANDS.push({
+        name: cmd.command,
+        desc: cmd.description || cmd.name,
+        shortcut: shortcut
+      });
+    });
+  }
 
   if (btnWebLogin) {
     if (data.isWebLogin) {

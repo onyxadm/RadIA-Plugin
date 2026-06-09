@@ -17,7 +17,9 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Histórico de Prompts (↑/↓)** | Chat UX | Navegação rápida pelos prompts enviados anteriormente usando as setas do teclado. | ✅ Concluído |
 | **Cancelamento de Requisições** | Chat UX | Permite abortar chamadas ativas de IA de forma assíncrona (com botão stop ou automaticamente ao alternar/criar chats). | ✅ Concluído |
 | **Exportação de Conversa** | Chat UX | Botão para salvar histórico nos formatos Markdown (.md) ou HTML autônomo com Prism.js. | ✅ Concluído |
-| **Templates de Prompt** | Chat UX | Biblioteca de templates (Clean Code, DUnitX, Documentação) com slash command `/template`. | ✅ Concluído |
+| **Templates de Prompt** | Chat UX | Biblioteca de templates rápidos de prompt com substituição de código e o comando `/template`. | ✅ Concluído |
+| **Slash Commands Dinâmicos** | Chat UX | Mapeamento dinâmico de templates para comandos de barra (ex: `/createprojectarch`), sincronizados e autocompletados no WebView2. | ✅ Concluído |
+| **Backup de Templates** | Chat UX | Exportação e importação transacional em JSON de templates com validação estrutural de esquema e opção de mesclagem na UI. | ✅ Concluído |
 | **Google Gemini** | Provedor | Suporte nativo aos modelos Gemini 1.5 Flash e Pro via chaves próprias (BYOK). | ✅ Concluído |
 | **OpenAI ChatGPT** | Provedor | Suporte nativo aos modelos GPT-4o, GPT-4o-mini e outros. | ✅ Concluído |
 | **Login Híbrido (Web Login)**| Provedor | Permite alternar entre BYOK (API Keys) ou Login Web (Plus/Pro) para OpenAI e Gemini, usando injeção inteligente de DOM/CSS para ocultar menus oficiais e ponte JS. | ✅ Concluído |

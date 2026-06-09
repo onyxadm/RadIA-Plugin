@@ -17,7 +17,9 @@ This document contains the complete checklist, categorization, and development s
 | **Prompt Navigation (↑/↓)** | Chat UX | Terminal-like keyboard arrow history lookup in prompt input. | ✅ Completed |
 | **Request Cancellation** | Chat UX | Abort active AI HTTP requests asynchronously using a dynamic stop button interface. | ✅ Completed |
 | **Export Conversation** | Chat UX | Save current active chats to Markdown (.md) or standalone rich HTML formats. | ✅ Completed |
-| **Prompt Templates** | Chat UX | Custom quick-access prompt library with `{code}` token and `/template` command. | ✅ Completed |
+| **Prompt Templates** | Chat UX | Quick prompt template library with token replacement and the `/template` command. | ✅ Completed |
+| **Dynamic Slash Commands** | Chat UX | Dynamic mapping of templates to slash commands (e.g. `/createprojectarch`), synced and autocompleted in WebView2. | ✅ Completed |
+| **Template Backup & Restore** | Chat UX | Transactional JSON import and export with schema validations and merge/overwrite UI options. | ✅ Completed |
 | **Google Gemini** | Provider | Native BYOK integration for Gemini 1.5 Pro and Gemini 1.5 Flash models. | ✅ Completed |
 | **OpenAI ChatGPT** | Provider | Native BYOK integration for GPT-4o, GPT-4o-mini, and others. | ✅ Completed |
 | **Hybrid Login (Web Login)**| Provider | Choose between BYOK (API Keys) or Web Login (Plus/Pro) for OpenAI and Gemini, using smart DOM/CSS injection and JS bridge. | ✅ Completed |
