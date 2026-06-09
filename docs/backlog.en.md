@@ -50,6 +50,19 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
+  <summary><b>📦 v0.0.16 — MVP Architecture Refactoring, Storage Abstraction, and Presenter Unit Tests (Click to expand)</b></summary>
+
+  #### 1. MVP Presentation Pattern & Configuration Storage Abstraction - Items #40, #41
+  *   **Description**: Decoupled presentation logic and UI code for the Chat panel and Settings frame by introducing the MVP architecture pattern, and designed a flexible storage abstraction layer (`ISettingsStorage`) allowing deterministic testing with in-memory settings storage.
+  *   **Details**:
+      *   Created `RadIA.Core.SettingsStorage.pas` introducing the `ISettingsStorage` interface with two concrete implementations: `TRegistrySettingsStorage` (for production) and `TMemorySettingsStorage` (for unit tests).
+      *   Refactored `RadIA.Core.Config.pas` to support dependency injection of the storage layer via `SetStorage`.
+      *   Implemented the MVP pattern for the Chat UI by developing `TChatPresenter` and the `IChatView` interface, delegating logic out of `TChatFrame` (passive View).
+      *   Implemented the MVP pattern for the Settings dialog by developing `TConfigPresenter` and the `IConfigView` interface, incorporating robust validations for URLs, temperatures, and integer parameters.
+      *   Wrote and integrated 13 new mocked unit tests in `RadIA.Tests.ChatPresenter.pas` and `RadIA.Tests.ConfigPresenter.pas`, achieving **130 successful tests** inside the console DUnitX test suite.
+</details>
+
+<details>
   <summary><b>📦 v0.0.15 — Two-Layer Template Architecture (Click to expand)</b></summary>
 
   #### 1. Two-Layer Segregated Template Architecture (Native vs. User overlays) - Item #12c

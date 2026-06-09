@@ -82,7 +82,7 @@ One of RadIA's most powerful capabilities is structuring and saving a complete D
 2. The AI will process the request and return the complete list of structured files (project `.dpr`, configuration `.dproj`, logic units `.pas`, and UI forms `.dfm`).
 3. RadIA will display a glassmorphism-styled panel showing the list of generated files.
 4. **Saving Workflow**:
-   * Click **Generate Files** in the chat UI.
+   * Click **Criar Projeto e Abrir na IDE** (Create Project and Open in IDE) in the chat UI.
    * A native Windows folder selection dialog will open.
 
 > [!IMPORTANT]

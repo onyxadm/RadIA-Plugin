@@ -4,6 +4,9 @@
 
 // -- Configuração do Marked com Prism para highlight de código --
 marked.setOptions({
+  gfm: true,
+  breaks: true,
+  pedantic: false,
   highlight: function(code, lang) {
     const language = lang || 'pascal';
     if (Prism.languages[language]) {
@@ -72,7 +75,11 @@ renderer.code = function(codeOrToken, lang) {
     </div>
   `;
 };
-marked.use({ renderer });
+marked.use({
+  renderer,
+  gfm: true,
+  breaks: true
+});
 
 // ============================================================
 //  Elementos do DOM
@@ -170,6 +177,38 @@ function postMessageToDelphi(payload) {
     window.chrome.webview.postMessage(JSON.stringify(payload));
   }
 }
+
+// Redirect console logs to Delphi for debugging
+(function() {
+  const originalLog = console.log;
+  const originalError = console.error;
+  const originalWarn = console.warn;
+
+  function sendLog(type, args) {
+    const text = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+    postMessageToDelphi({ action: 'log', text: `[${type}] ${text}` });
+  }
+
+  console.log = function(...args) {
+    originalLog.apply(console, args);
+    sendLog('LOG', args);
+  };
+  console.error = function(...args) {
+    originalError.apply(console, args);
+    sendLog('ERROR', args);
+  };
+  console.warn = function(...args) {
+    originalWarn.apply(console, args);
+    sendLog('WARN', args);
+  };
+
+  window.addEventListener('error', (event) => {
+    postMessageToDelphi({
+      action: 'log',
+      text: `[WINDOW_ERROR] ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`
+    });
+  });
+})();
 
 // ============================================================
 //  Lógica de Interface
@@ -937,6 +976,7 @@ function updateModelsList(models, activeModel) {
 }
 
 function setRequestState(inProgress) {
+  console.log('[DEBUG] setRequestState called with:', inProgress);
   requestInProgress = inProgress;
   if (inProgress) {
     btnSendPrompt.classList.add('stop-btn');
@@ -1144,6 +1184,7 @@ function updateMessage(text, isDone, provider, model) {
 if (window.chrome && window.chrome.webview) {
   window.chrome.webview.addEventListener('message', event => {
     const data = event.data;
+    console.log('[DEBUG] Received message from Delphi:', data);
     switch (data.action) {
       case 'add_message':           addMessage(data.role, data.text, data.provider, data.model); break;
       case 'update_message':        updateMessage(data.text, data.isDone, data.provider, data.model); break;

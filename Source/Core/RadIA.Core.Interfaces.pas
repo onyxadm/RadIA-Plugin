@@ -136,6 +136,8 @@ type
     procedure SetAwsRegion(const AValue: string);
     function GetAwsSessionToken: string;
     procedure SetAwsSessionToken(const AValue: string);
+    function GetInjectDelphiVersion: Boolean;
+    procedure SetInjectDelphiVersion(const AValue: Boolean);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -161,6 +163,7 @@ type
     property QuotaUsed: Int64 read GetQuotaUsed write SetQuotaUsed;
     property QuotaCycleStart: TDateTime read GetQuotaCycleStart write SetQuotaCycleStart;
     property ActiveSessionId: string read GetActiveSessionId write SetActiveSessionId;
+    property InjectDelphiVersion: Boolean read GetInjectDelphiVersion write SetInjectDelphiVersion;
   end;
 
 implementation

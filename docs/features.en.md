@@ -51,3 +51,6 @@ This document contains the complete checklist, categorization, and development s
 | **Static Code Analysis** | Integration | Code scan for memory leaks (missing try..finally) and SOLID/Clean Code anti-patterns. | ✅ Completed |
 | **Secure Credentials** | Security | API Keys saved securely inside the Windows Registry using DPAPI. | ✅ Completed |
 | **Multi-IDE Build & Install** | Infrastructure | PowerShell script supporting multiple registry Delphi environments and interactive selection menu. | ✅ Completed |
+| **MVP Architecture** | Infrastructure | Complete decoupling between VCL UI (Views) and logic (Presenters) in the Chat and Settings frames. | ✅ Completed |
+| **Storage Abstraction** | Infrastructure | Persistence abstraction via `ISettingsStorage` allowing in-memory configurations. | ✅ Completed |
+| **Presentation Testing** | Infrastructure | Automated DUnitX test suite validating Presenters logic with mocked Views. | ✅ Completed |

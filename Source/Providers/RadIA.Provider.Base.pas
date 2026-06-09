@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Base;
+unit RadIA.Provider.Base;
 
 interface
 
@@ -42,7 +42,7 @@ type
       const ARequestBody: string; const AOnWrite: TProc<TBytes>);
     procedure DoPostRequestStreamString(const AUrl: string; const AHeaders: TNetHeaders;
       const ARequestBody: string; const AOnStringChunk: TProc<string>);
-    function DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders): string;
+    function DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
 
     { Concurrency and stream orchestration helpers }
     procedure ExecuteRequestAsync(const AUrl: string; const AHeaders: TNetHeaders;
@@ -98,7 +98,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Generics.Collections, System.Math, RadIA.Core.Logger;
+  System.JSON, System.Generics.Collections, System.Math, RadIA.Core.Logger, System.SyncObjs;
 
 function MaskHeaders(const AHeaders: TNetHeaders): string;
 var
@@ -210,7 +210,7 @@ begin
   FCancelled := True;
 end;
 
-function TRadIAProviderBase.DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders): string;
+function TRadIAProviderBase.DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
 var
   LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
@@ -219,8 +219,13 @@ begin
   TLogger.Log(Format('DoGetRequest: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
   
   FCancelled := False;
-  LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000;
-  if LTimeoutMs <= 0 then LTimeoutMs := 60000;
+  if ATimeoutMs > 0 then
+    LTimeoutMs := ATimeoutMs
+  else
+  begin
+    LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000;
+    if LTimeoutMs <= 0 then LTimeoutMs := 60000;
+  end;
 
   FHTTPClient.ConnectionTimeout := LTimeoutMs;
   FHTTPClient.SendTimeout := LTimeoutMs;
@@ -453,36 +458,47 @@ begin
       LUsage: TTokenUsage;
       LErrorMsg: string;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderId;
       try
-        LResponseText := DoPostRequest(AUrl, AHeaders, ARequestBody);
-        LResponseText := AParseFunc(LResponseText, LUsage);
+        System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+        LProviderRef.GetProviderId;
+        try
+          LResponseText := DoPostRequest(AUrl, AHeaders, ARequestBody);
+          LResponseText := AParseFunc(LResponseText, LUsage);
 
-        TThread.Queue(nil,
-          TThreadProcedure(
-            procedure
+          if not GIsShuttingDown then
+          begin
+            TThread.Queue(nil,
+              TThreadProcedure(
+                procedure
+                begin
+                  ACallback(LResponseText, '', False, LUsage);
+                end
+              )
+            );
+          end;
+        except
+          on E: Exception do
+          begin
+            LErrorMsg := E.ClassName + ': ' + E.Message;
+            if not GIsShuttingDown then
             begin
-              ACallback(LResponseText, '', False, LUsage);
-            end
-          )
-        );
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            TThreadProcedure(
-              procedure
-              begin
-                ACallback('', LErrorMsg, False, TTokenUsage.Empty);
-              end
-            )
-          );
+              TThread.Queue(nil,
+                TThreadProcedure(
+                  procedure
+                  begin
+                    ACallback('', LErrorMsg, False, TTokenUsage.Empty);
+                  end
+                )
+              );
+            end;
+          end;
         end;
+      finally
+        TInterlocked.Decrement(GActiveThreadCount);
       end;
     end;
 
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTaskProc);
 end;
 
@@ -501,41 +517,19 @@ begin
       LErrorMsg: string;
       LJsonError: string;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderId;
-      LBufferText := '';
       try
-        DoPostRequestStreamString(AUrl, AHeaders, ARequestBody,
-          procedure(AChunk: string)
-          begin
-            LBufferText := LBufferText + AChunk;
-            LBufferText := AProcessBufferFunc(LBufferText);
-          end);
-
-        // Process residual data in buffer after network stream completes
-        if not LBufferText.IsEmpty then
-        begin
-          if not LBufferText.EndsWith(#10) then
-            LBufferText := LBufferText + #10;
-          try
-            AProcessBufferFunc(LBufferText);
-          except
-            // Mute buffer processing exception on teardown
-          end;
-        end;
-
-        TThread.Queue(nil,
-          TThreadProcedure(
-            procedure
+        System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+        LProviderRef.GetProviderId;
+        LBufferText := '';
+        try
+          DoPostRequestStreamString(AUrl, AHeaders, ARequestBody,
+            procedure(AChunk: string)
             begin
-              ACallback('', True, '');
-            end
-          )
-        );
-      except
-        on E: Exception do
-        begin
-          // Process residual buffer data before returning error
+              LBufferText := LBufferText + AChunk;
+              LBufferText := AProcessBufferFunc(LBufferText);
+            end);
+
+          // Process residual data in buffer after network stream completes
           if not LBufferText.IsEmpty then
           begin
             if not LBufferText.EndsWith(#10) then
@@ -543,32 +537,65 @@ begin
             try
               AProcessBufferFunc(LBufferText);
             except
+              // Mute buffer processing exception on teardown
             end;
           end;
 
-          LErrorMsg := E.Message;
-          if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
+          if not GIsShuttingDown then
           begin
-            LJsonError := ExtractErrorMessageFromJson(LBufferText);
-            if not LJsonError.IsEmpty then
-              LErrorMsg := LErrorMsg + ' Response: ' + LJsonError
-            else if not LBufferText.Trim.IsEmpty then
-              LErrorMsg := LErrorMsg + ' Response: ' + LBufferText.Trim;
+            TThread.Queue(nil,
+              TThreadProcedure(
+                procedure
+                begin
+                  ACallback('', True, '');
+                end
+              )
+            );
           end;
-          LErrorMsg := E.ClassName + ': ' + LErrorMsg;
-          
-          TThread.Queue(nil,
-            TThreadProcedure(
-              procedure
-              begin
-                ACallback('', True, LErrorMsg);
-              end
-            )
-          );
+        except
+          on E: Exception do
+          begin
+            // Process residual buffer data before returning error
+            if not LBufferText.IsEmpty then
+            begin
+              if not LBufferText.EndsWith(#10) then
+                LBufferText := LBufferText + #10;
+              try
+                AProcessBufferFunc(LBufferText);
+              except
+              end;
+            end;
+
+            LErrorMsg := E.Message;
+            if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
+            begin
+              LJsonError := ExtractErrorMessageFromJson(LBufferText);
+              if not LJsonError.IsEmpty then
+                LErrorMsg := LErrorMsg + ' Response: ' + LJsonError
+              else if not LBufferText.Trim.IsEmpty then
+                LErrorMsg := LErrorMsg + ' Response: ' + LBufferText.Trim;
+            end;
+            LErrorMsg := E.ClassName + ': ' + LErrorMsg;
+            
+            if not GIsShuttingDown then
+            begin
+              TThread.Queue(nil,
+                TThreadProcedure(
+                  procedure
+                  begin
+                    ACallback('', True, LErrorMsg);
+                  end
+                )
+              );
+            end;
+          end;
         end;
+      finally
+        TInterlocked.Decrement(GActiveThreadCount);
       end;
     end;
 
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTaskProc);
 end;
 
@@ -626,14 +653,17 @@ begin
     begin
       LResCopy := AResponse;
       LErrCopy := AError;
-      TThread.Queue(nil,
-        TThreadProcedure(
-          procedure
-          begin
-            ACallback(LResCopy, True, LErrCopy);
-          end
-        )
-      );
+      if not GIsShuttingDown then
+      begin
+        TThread.Queue(nil,
+          TThreadProcedure(
+            procedure
+            begin
+              ACallback(LResCopy, True, LErrCopy);
+            end
+          )
+        );
+      end;
     end, ATemperature, AMaxTokens);
 end;
 
@@ -840,36 +870,42 @@ begin
   { Providers that do not supply a discovery URL fall back to static list }
   if LUrl.IsEmpty then
   begin
-    TThread.Queue(nil,
-      TThreadProcedure(
-        procedure
-        var
-          LModels: TArray<string>;
-        begin
-          LModels := GetAvailableModels;
-          ACallback(LModels, '');
-        end
-      )
-    );
+    if not GIsShuttingDown then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+          procedure
+          var
+            LModels: TArray<string>;
+          begin
+            LModels := GetAvailableModels;
+            ACallback(LModels, '');
+          end
+        )
+      );
+    end;
     Exit;
   end;
 
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
-    TThread.Queue(nil,
-      TThreadProcedure(
-        procedure
-        var
-          LModels: TArray<string>;
-          LMsg: string;
-        begin
-          LModels := GetAvailableModels;
-          LMsg := Format('API Key is missing for %s. Using fallback models.', [GetName]);
-          ACallback(LModels, LMsg);
-        end
-      )
-    );
+    if not GIsShuttingDown then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+          procedure
+          var
+            LModels: TArray<string>;
+            LMsg: string;
+          begin
+            LModels := GetAvailableModels;
+            LMsg := Format('API Key is missing for %s. Using fallback models.', [GetName]);
+            ACallback(LModels, LMsg);
+          end
+        )
+      );
+    end;
     Exit;
   end;
 
@@ -889,76 +925,87 @@ begin
       LErrorMsg: string;
       I: Integer;
     begin
-      LProviderRef.GetProviderId;
-      LModelsList := TList<string>.Create;
       try
+        LProviderRef.GetProviderId;
+        LModelsList := TList<string>.Create;
         try
-          LResponseText := DoGetRequest(LUrl, LHeaders);
-          LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
-          if Assigned(LJson) then
-          begin
-            try
-              LData := LJson.GetValue('data') as TJSONArray;
-              if Assigned(LData) then
-              begin
-                for I := 0 to LData.Count - 1 do
+          try
+            LResponseText := DoGetRequest(LUrl, LHeaders, 5000); // Timeout rápido de 5 segundos para busca de modelos
+            LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
+            if Assigned(LJson) then
+            begin
+              try
+                LData := LJson.GetValue('data') as TJSONArray;
+                if Assigned(LData) then
                 begin
-                  LVal := LData.Items[I];
-                  if LVal.TryGetValue<string>('id', LId) then
+                  for I := 0 to LData.Count - 1 do
                   begin
-                    if FilterModelId(LId) then
-                      LModelsList.Add(LId);
+                    LVal := LData.Items[I];
+                    if LVal.TryGetValue<string>('id', LId) then
+                    begin
+                      if FilterModelId(LId) then
+                        LModelsList.Add(LId);
+                    end;
                   end;
                 end;
+              finally
+                LJson.Free;
               end;
-            finally
-              LJson.Free;
+            end;
+
+            LModelsList.Sort;
+
+            if LModelsList.Count = 0 then
+              LModelsArray := GetAvailableModels
+            else
+              LModelsArray := LModelsList.ToArray;
+
+            if not GIsShuttingDown then
+            begin
+              TThread.Queue(nil,
+                TThreadProcedure(
+                  procedure
+                  var
+                    LModelsCopy: TArray<string>;
+                  begin
+                    LModelsCopy := LModelsArray;
+                    ACallback(LModelsCopy, '');
+                  end
+                )
+              );
+            end;
+          except
+            on E: Exception do
+            begin
+              LErrorMsg := E.ClassName + ': ' + E.Message;
+              LModelsArray := GetAvailableModels;
+              if not GIsShuttingDown then
+              begin
+                TThread.Queue(nil,
+                  TThreadProcedure(
+                    procedure
+                    var
+                      LModelsCopy: TArray<string>;
+                      LErrCopy: string;
+                    begin
+                      LModelsCopy := LModelsArray;
+                      LErrCopy := LErrorMsg;
+                      ACallback(LModelsCopy, LErrCopy);
+                    end
+                  )
+                );
+              end;
             end;
           end;
-
-          LModelsList.Sort;
-
-          if LModelsList.Count = 0 then
-            LModelsArray := GetAvailableModels
-          else
-            LModelsArray := LModelsList.ToArray;
-
-          TThread.Queue(nil,
-            TThreadProcedure(
-              procedure
-              var
-                LModelsCopy: TArray<string>;
-              begin
-                LModelsCopy := LModelsArray;
-                ACallback(LModelsCopy, '');
-              end
-            )
-          );
-        except
-          on E: Exception do
-          begin
-            LErrorMsg := E.ClassName + ': ' + E.Message;
-            LModelsArray := GetAvailableModels;
-            TThread.Queue(nil,
-              TThreadProcedure(
-                procedure
-                var
-                  LModelsCopy: TArray<string>;
-                  LErrCopy: string;
-                begin
-                  LModelsCopy := LModelsArray;
-                  LErrCopy := LErrorMsg;
-                  ACallback(LModelsCopy, LErrCopy);
-                end
-              )
-            );
-          end;
+        finally
+          LModelsList.Free;
         end;
       finally
-        LModelsList.Free;
+        TInterlocked.Decrement(GActiveThreadCount);
       end;
     end;
 
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTaskProc);
 end;
 

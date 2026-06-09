@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.GithubCopilot;
+unit RadIA.Provider.GithubCopilot;
 
 interface
 
@@ -169,6 +169,7 @@ procedure TRadIAGithubCopilotProvider.SendPromptAsync(const APrompt: string;
   const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 begin
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(
     procedure
     var
@@ -177,47 +178,57 @@ begin
       LHeaders: TNetHeaders;
     begin
       try
-        LSessionToken := EnsureSessionToken;
-      except
-        on E: Exception do
-        begin
-          TThread.Queue(nil,
-            procedure
+        try
+          LSessionToken := EnsureSessionToken;
+        except
+          on E: Exception do
+          begin
+            if not GIsShuttingDown then
             begin
-              ACallback('', 'Failed to obtain session token: ' + E.Message, False, TTokenUsage.Empty);
-            end);
-          Exit;
+              TThread.Queue(nil,
+                procedure
+                begin
+                  ACallback('', 'Failed to obtain session token: ' + E.Message, False, TTokenUsage.Empty);
+                end);
+            end;
+            Exit;
+          end;
         end;
-      end;
 
-      LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
-      
-      SetLength(LHeaders, 5);
-      LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LSessionToken);
-      LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
-      LHeaders[2] := TNetHeader.Create('Editor-Version', 'vscode/1.80.0');
-      LHeaders[3] := TNetHeader.Create('Editor-Plugin-Version', 'copilot-chat/0.4.1');
-      LHeaders[4] := TNetHeader.Create('X-Request-Id', TGuid.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
+        LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
+        
+        SetLength(LHeaders, 5);
+        LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LSessionToken);
+        LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
+        LHeaders[2] := TNetHeader.Create('Editor-Version', 'vscode/1.80.0');
+        LHeaders[3] := TNetHeader.Create('Editor-Plugin-Version', 'copilot-chat/0.4.1');
+        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGuid.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
 
-      try
-        LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
-      except
-        on E: Exception do
-        begin
-          TThread.Queue(nil,
-            procedure
+        try
+          LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
+        except
+          on E: Exception do
+          begin
+            if not GIsShuttingDown then
             begin
-              ACallback('', 'Error building request JSON: ' + E.Message, False, TTokenUsage.Empty);
-            end);
-          Exit;
+              TThread.Queue(nil,
+                procedure
+                begin
+                  ACallback('', 'Error building request JSON: ' + E.Message, False, TTokenUsage.Empty);
+                end);
+            end;
+            Exit;
+          end;
         end;
-      end;
 
-      ExecuteRequestAsync(LUrl, LHeaders, LRequestBody,
-        function(const AResponseJson: string; out AUsage: TTokenUsage): string
-        begin
-          Result := ParseOpenAICompatibleResponse(AResponseJson, AUsage);
-        end, ACallback);
+        ExecuteRequestAsync(LUrl, LHeaders, LRequestBody,
+          function(const AResponseJson: string; out AUsage: TTokenUsage): string
+          begin
+            Result := ParseOpenAICompatibleResponse(AResponseJson, AUsage);
+          end, ACallback);
+      finally
+        TInterlocked.Decrement(GActiveThreadCount);
+      end;
     end);
 end;
 
@@ -225,6 +236,7 @@ procedure TRadIAGithubCopilotProvider.SendPromptStreamAsync(const APrompt: strin
   const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 begin
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(
     procedure
     var
@@ -233,51 +245,61 @@ begin
       LHeaders: TNetHeaders;
     begin
       try
-        LSessionToken := EnsureSessionToken;
-      except
-        on E: Exception do
-        begin
-          TThread.Queue(nil,
-            procedure
+        try
+          LSessionToken := EnsureSessionToken;
+        except
+          on E: Exception do
+          begin
+            if not GIsShuttingDown then
             begin
-              ACallback('', True, 'Failed to obtain session token: ' + E.Message);
-            end);
-          Exit;
+              TThread.Queue(nil,
+                procedure
+                begin
+                  ACallback('', True, 'Failed to obtain session token: ' + E.Message);
+                end);
+            end;
+            Exit;
+          end;
         end;
-      end;
 
-      LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
-      
-      SetLength(LHeaders, 5);
-      LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LSessionToken);
-      LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
-      LHeaders[2] := TNetHeader.Create('Editor-Version', 'vscode/1.80.0');
-      LHeaders[3] := TNetHeader.Create('Editor-Plugin-Version', 'copilot-chat/0.4.1');
-      LHeaders[4] := TNetHeader.Create('X-Request-Id', TGuid.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
+        LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
+        
+        SetLength(LHeaders, 5);
+        LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LSessionToken);
+        LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
+        LHeaders[2] := TNetHeader.Create('Editor-Version', 'vscode/1.80.0');
+        LHeaders[3] := TNetHeader.Create('Editor-Plugin-Version', 'copilot-chat/0.4.1');
+        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGuid.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
 
-      try
-        LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
-      except
-        on E: Exception do
-        begin
-          TThread.Queue(nil,
-            procedure
+        try
+          LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);
+        except
+          on E: Exception do
+          begin
+            if not GIsShuttingDown then
             begin
-              ACallback('', True, 'Error building request JSON: ' + E.Message);
-            end);
-          Exit;
+              TThread.Queue(nil,
+                procedure
+                begin
+                  ACallback('', True, 'Error building request JSON: ' + E.Message);
+                end);
+            end;
+            Exit;
+          end;
         end;
-      end;
 
-      ExecuteRequestStreamAsync(LUrl, LHeaders, LRequestBody,
-        function(const ABuffer: string): string
-        var
-          LTemp: string;
-        begin
-          LTemp := ABuffer;
-          ProcessOpenAICompatibleStreamBuffer(LTemp, ACallback);
-          Result := LTemp;
-        end, ACallback);
+        ExecuteRequestStreamAsync(LUrl, LHeaders, LRequestBody,
+          function(const ABuffer: string): string
+          var
+            LTemp: string;
+          begin
+            LTemp := ABuffer;
+            ProcessOpenAICompatibleStreamBuffer(LTemp, ACallback);
+            Result := LTemp;
+          end, ACallback);
+      finally
+        TInterlocked.Decrement(GActiveThreadCount);
+      end;
     end);
 end;
 

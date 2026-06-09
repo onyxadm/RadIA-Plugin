@@ -51,3 +51,6 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Análise Estática de Código** | Integração | Varredura de código em busca de memory leaks (ausência de try..finally) e anti-padrões SOLID/Clean Code. | ✅ Concluído |
 | **Armazenamento Seguro** | Segurança | Chaves de API salvas localmente criptografadas usando a API do Windows DPAPI. | ✅ Concluído |
 | **Build e Instalação Multi-IDE** | Infraestrutura | Script PowerShell com suporte a múltiplos ambientes Delphi no registro e seleção interativa. | ✅ Concluído |
+| **Arquitetura MVP** | Infraestrutura | Desacoplamento completo entre UI VCL (Views) e lógica (Presenters) do Chat e Configurações. | ✅ Concluído |
+| **Abstração de Armazenamento** | Infraestrutura | Abstração de persistência via `ISettingsStorage` facilitando testes em memória. | ✅ Concluído |
+| **Testes de Apresentação** | Infraestrutura | Suíte de testes automatizados com DUnitX validando lógica de Presenters com mocks de Views. | ✅ Concluído |

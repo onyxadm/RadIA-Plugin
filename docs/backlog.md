@@ -50,6 +50,19 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
+  <summary><b>📦 v0.0.16 — Refatoração Arquitetural MVP, Storage Abstraction e Testes (Clique para expandir)</b></summary>
+
+  #### 1. Implementação do Padrão MVP e Abstração de Armazenamento - Itens #40, #41
+  *   **Descrição**: Desacoplamento da lógica de negócios e UI no Chat e na tela de Configurações introduzindo o padrão MVP, e criação de uma abstração flexível para persistência de dados de configurações (`ISettingsStorage`), permitindo testes unitários determinísticos com mock storage em memória.
+  *   **Detalhes**:
+      *   Desenvolvimento da unit `RadIA.Core.SettingsStorage.pas` com a interface `ISettingsStorage` e as implementações concretas `TRegistrySettingsStorage` (produção) e `TMemorySettingsStorage` (testes).
+      *   Refatoração de `RadIA.Core.Config.pas` para suportar injeção de dependência de Storage via `SetStorage`.
+      *   Implementação do padrão MVP no painel de chat com a criação do `TChatPresenter` e a interface `IChatView`, delegando a lógica do `TChatFrame` (View).
+      *   Implementação do padrão MVP no frame de configurações com a criação do `TConfigPresenter` e a interface `IConfigView`, incluindo regras robustas de validação de URL, temperatura e parâmetros inteiros.
+      *   Desenvolvimento e integração de 13 novos testes unitários mockados em `RadIA.Tests.ChatPresenter.pas` e `RadIA.Tests.ConfigPresenter.pas`, atingindo **130 testes aprovados** com sucesso na suíte de testes.
+</details>
+
+<details>
   <summary><b>📦 v0.0.15 — Arquitetura de Templates em Duas Camadas (Clique para expandir)</b></summary>
 
   #### 1. Arquitetura de Templates Segregada (Nativo vs. Usuário com Overlays) - Item #12c

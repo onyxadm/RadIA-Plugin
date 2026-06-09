@@ -82,7 +82,7 @@ Uma das ferramentas mais poderosas do RadIA é a habilidade de estruturar e salv
 2. A IA processará a requisição e retornará a lista completa de arquivos estruturados (projeto `.dpr`, configurações `.dproj`, unidades de lógica `.pas` e telas `.dfm`).
 3. O RadIA exibirá um painel com estilo *glassmorphism* contendo a lista dos arquivos gerados.
 4. **Fluxo de Gravação**:
-   * Clique em **Gerar Arquivos** na UI do chat.
+   * Clique em **Criar Projeto e Abrir na IDE** na UI do chat.
    * Um diálogo nativo do Windows será exibido para você selecionar a pasta de destino.
 
 > [!IMPORTANT]

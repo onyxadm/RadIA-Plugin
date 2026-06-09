@@ -195,11 +195,32 @@
         const textNode = document.createTextNode(markdownText);
         pre.parentNode.replaceChild(textNode, pre);
       });
+
+      // Adiciona quebras de linha explícitas para elementos de bloco comuns para evitar que o texto
+      // fique colado quando extraído em abas ocultas/background (onde innerText falha em formatar quebras).
+      const blockTags = clone.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, br');
+      blockTags.forEach(tag => {
+        if (tag.tagName === 'BR') {
+          const brNewline = document.createTextNode('\n');
+          tag.parentNode.replaceChild(brNewline, tag);
+        } else {
+          const beforeNode = document.createTextNode('\n');
+          const afterNode = document.createTextNode('\n');
+          tag.parentNode.insertBefore(beforeNode, tag);
+          tag.parentNode.insertBefore(afterNode, tag.nextSibling);
+        }
+      });
       
-      return clone.innerText || '';
+      // Usamos textContent para ler o DOM bruto de forma independente de renderização visual/layout CSS
+      let markdown = clone.textContent || '';
+      
+      // Limpa quebras de linha consecutivas excessivas para manter a formatação limpa
+      markdown = markdown.replace(/\n{3,}/g, '\n\n');
+      
+      return markdown.trim();
     } catch (err) {
       log('Erro ao formatar Markdown do elemento:', err);
-      return el.innerText || '';
+      return el.textContent || el.innerText || '';
     }
   }
 
@@ -208,11 +229,13 @@
   let lastText = '';
   let generatingTimeout = 0;
   let previousResponseElement = null;
+  let wasGeneratingDetected = false;
 
   function startMonitoring() {
     log('Iniciando monitoramento de resposta...');
     lastText = '';
     generatingTimeout = 0;
+    wasGeneratingDetected = false;
     
     // Captura o elemento da última resposta existente ANTES de começar a nova
     previousResponseElement = currentSite.getLastResponseElement();
@@ -231,6 +254,9 @@
 
       const text = getMarkdownFromElement(currentEl);
       const isGenerating = currentSite.isGenerating();
+      if (isGenerating) {
+        wasGeneratingDetected = true;
+      }
 
       if (text && text !== lastText) {
         log('Enviando resposta completa de streaming:', text.length, 'bytes');
@@ -240,12 +266,16 @@
           isDone: false
         });
         lastText = text;
+        generatingTimeout = 0; // Reset timeout because text content is still growing
       }
 
       if (!isGenerating && lastText.length > 0) {
-        // Damos uma margem de segurança de 8 ciclos (2.4 segundos) para ter certeza de que a geração terminou
         generatingTimeout++;
-        if (generatingTimeout >= 8) {
+        // Se detectamos que o botão de stop/loading funcionou antes, confiamos no isGenerating=false.
+        // O silêncio necessário é de apenas 2 ciclos (600ms).
+        // Se o botão nunca foi detectado (detector falhou), usamos um silêncio de segurança de 15 ciclos (4.5 segundos).
+        const requiredCycles = wasGeneratingDetected ? 2 : 15;
+        if (generatingTimeout >= requiredCycles) {
           log('Geração concluída.');
           clearInterval(monitorInterval);
           monitorInterval = null;

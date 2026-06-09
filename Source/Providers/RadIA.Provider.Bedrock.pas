@@ -49,7 +49,7 @@ implementation
 
 uses
   System.JSON, System.Threading, System.NetEncoding, System.Math,
-  RadIA.Core.AwsSigner, RadIA.Core.ProviderRegistry, RadIA.Core.Logger;
+  RadIA.Core.AwsSigner, RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs;
 
 { TAwsEventStreamParser }
 
@@ -218,12 +218,15 @@ end;
 
 procedure TRadIABedrockProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
 begin
-  TThread.Queue(nil,
-    procedure
-    begin
-      ACallback(GetAvailableModels, '');
-    end
-  );
+  if not GIsShuttingDown then
+  begin
+    TThread.Queue(nil,
+      procedure
+      begin
+        ACallback(GetAvailableModels, '');
+      end
+    );
+  end;
 end;
 
 function TRadIABedrockProvider.BuildBedrockRequestBody(const APrompt: string;
@@ -370,32 +373,43 @@ begin
       LUsage: TTokenUsage;
       LErrorMsg: string;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderId;
       try
-        LResponseJson := DoPostRequest(LUrl, LHeaders, LBody);
-        LTextResponse := ParseBedrockResponse(LResponseJson, LUsage);
+        System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+        LProviderRef.GetProviderId;
+        try
+          LResponseJson := DoPostRequest(LUrl, LHeaders, LBody);
+          LTextResponse := ParseBedrockResponse(LResponseJson, LUsage);
 
-        TThread.Queue(nil,
-          procedure
+          if not GIsShuttingDown then
           begin
-            ACallback(LTextResponse, '', False, LUsage);
-          end
-        );
-      except
-        on E: Exception do
-        begin
-          LErrorMsg := E.ClassName + ': ' + E.Message;
-          TThread.Queue(nil,
-            procedure
+            TThread.Queue(nil,
+              procedure
+              begin
+                ACallback(LTextResponse, '', False, LUsage);
+              end
+            );
+          end;
+        except
+          on E: Exception do
+          begin
+            LErrorMsg := E.ClassName + ': ' + E.Message;
+            if not GIsShuttingDown then
             begin
-              ACallback('', LErrorMsg, False, TTokenUsage.Empty);
-            end
-          );
+              TThread.Queue(nil,
+                procedure
+                begin
+                  ACallback('', LErrorMsg, False, TTokenUsage.Empty);
+                end
+              );
+            end;
+          end;
         end;
+      finally
+        TInterlocked.Decrement(GActiveThreadCount);
       end;
     end;
 
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTask);
 end;
 
@@ -454,52 +468,66 @@ begin
       LParser: TAwsEventStreamParser;
       LErrorMsg: string;
     begin
-      System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-      LProviderRef.GetProviderId;
-
-      LParser := TAwsEventStreamParser.Create(
-        procedure(const AChunk: string; AIsDone: Boolean; const AError: string)
-        begin
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback(AChunk, AIsDone, AError);
-            end
-          );
-        end
-      );
       try
-        try
-          DoPostRequestStream(LUrl, LHeaders, LBody,
-            procedure(ABytes: TBytes)
-            begin
-              LParser.ProcessBytes(ABytes);
-            end
-          );
+        System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+        LProviderRef.GetProviderId;
 
-          TThread.Queue(nil,
-            procedure
-            begin
-              ACallback('', True, '');
-            end
-          );
-        except
-          on E: Exception do
+        LParser := TAwsEventStreamParser.Create(
+          procedure(const AChunk: string; AIsDone: Boolean; const AError: string)
           begin
-            LErrorMsg := E.ClassName + ': ' + E.Message;
-            TThread.Queue(nil,
-              procedure
+            if not GIsShuttingDown then
+            begin
+              TThread.Queue(nil,
+                procedure
+                begin
+                  ACallback(AChunk, AIsDone, AError);
+                end
+              );
+            end;
+          end
+        );
+        try
+          try
+            DoPostRequestStream(LUrl, LHeaders, LBody,
+              procedure(ABytes: TBytes)
               begin
-                ACallback('', True, LErrorMsg);
+                LParser.ProcessBytes(ABytes);
               end
             );
+
+            if not GIsShuttingDown then
+            begin
+              TThread.Queue(nil,
+                procedure
+                begin
+                  ACallback('', True, '');
+                end
+              );
+            end;
+          except
+            on E: Exception do
+            begin
+              LErrorMsg := E.ClassName + ': ' + E.Message;
+              if not GIsShuttingDown then
+              begin
+                TThread.Queue(nil,
+                  procedure
+                  begin
+                    ACallback('', True, LErrorMsg);
+                  end
+                );
+              end;
+            end;
           end;
+        finally
+          LParser.Free;
         end;
       finally
-        LParser.Free;
+        TInterlocked.Decrement(GActiveThreadCount);
       end;
     end;
 
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTask);
 end;
 
