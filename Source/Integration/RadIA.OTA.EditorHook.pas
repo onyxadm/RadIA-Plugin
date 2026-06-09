@@ -199,13 +199,30 @@ var
   LPopupMenu: TPopupMenu;
   LOldOnPopup: TNotifyEvent;
 begin
-  if Sender is TPopupMenu then
-  begin
-    LPopupMenu := TPopupMenu(Sender);
-    InjectMenuIntoPopupMenu(LPopupMenu);
-    
-    if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) and Assigned(LOldOnPopup) then
-      LOldOnPopup(Sender);
+  try
+    if Sender is TPopupMenu then
+    begin
+      LPopupMenu := TPopupMenu(Sender);
+      try
+        InjectMenuIntoPopupMenu(LPopupMenu);
+      except
+        on E: Exception do
+          TLogger.Log('EditorMenuPopup: Error injecting RadIA menu: ' + E.Message, 'EditorHook');
+      end;
+      
+      if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) and Assigned(LOldOnPopup) then
+      begin
+        try
+          LOldOnPopup(Sender);
+        except
+          on E: Exception do
+            TLogger.Log('EditorMenuPopup: Error executing original OnPopup: ' + E.Message, 'EditorHook');
+        end;
+      end;
+    end;
+  except
+    on E: Exception do
+      TLogger.Log('EditorMenuPopup: General error: ' + E.Message, 'EditorHook');
   end;
 end;
 
@@ -213,13 +230,19 @@ procedure TRadIAEditorHook.InjectMenuIntoPopupMenu(APopupMenu: TPopupMenu);
 var
   LRootItem: TMenuItem;
   LSubItem: TMenuItem;
+  LComp: TComponent;
 begin
   if not Assigned(APopupMenu) then
     Exit;
 
-  // Prevent duplicate menus
-  if Assigned(APopupMenu.Items.Find('mnuRadIARoot')) then
-    Exit;
+  // Destruir preventivamente componentes órfãos anteriores de mesmo nome para evitar erro de nome duplicado na IDE
+  LComp := APopupMenu.FindComponent('mnuRadIARoot');
+  if Assigned(LComp) then
+    LComp.Free;
+
+  LComp := APopupMenu.FindComponent('mnuRadIASeparator');
+  if Assigned(LComp) then
+    LComp.Free;
 
   TLogger.Log('Injecting RadIA menu items into EditorLocalMenu', 'EditorHook');
 
@@ -228,33 +251,33 @@ begin
   LRootItem.Name := 'mnuRadIARoot';
   LRootItem.Caption := 'RadIA';
 
-  // Action Submenu Items
-  LSubItem := TMenuItem.Create(APopupMenu);
+  // Action Submenu Items - Owner MUST be LRootItem so they are automatically freed when LRootItem is freed
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Explain Selected Code';
   LSubItem.OnClick := OnExplainExecute;
   LRootItem.Add(LSubItem);
 
-  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Optimize/Refactor Code';
   LSubItem.OnClick := OnOptimizeExecute;
   LRootItem.Add(LSubItem);
 
-  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Generate Unit Tests (DUnitX)';
   LSubItem.OnClick := OnTestsExecute;
   LRootItem.Add(LSubItem);
 
-  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Locate Bugs/Memory Leaks';
   LSubItem.OnClick := OnBugsExecute;
   LRootItem.Add(LSubItem);
 
-  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Document Method (XML)';
   LSubItem.OnClick := OnDocExecute;
   LRootItem.Add(LSubItem);
 
-  LSubItem := TMenuItem.Create(APopupMenu);
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Review Active Unit (Leaks/SOLID)';
   LSubItem.OnClick := OnReviewExecute;
   LRootItem.Add(LSubItem);
@@ -278,11 +301,11 @@ begin
 
   LItem := APopupMenu.Items.Find('mnuRadIARoot');
   if Assigned(LItem) then
-    APopupMenu.Items.Remove(LItem);
+    LItem.Free;
 
   LItem := APopupMenu.Items.Find('mnuRadIASeparator');
   if Assigned(LItem) then
-    APopupMenu.Items.Remove(LItem);
+    LItem.Free;
 end;
 
 procedure TRadIAEditorHook.PopulateToolsMenu(const AMenuItem: TMenuItem);

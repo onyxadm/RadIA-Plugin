@@ -69,6 +69,7 @@ type
 
     procedure CreateEdgeBrowserWeb;
     procedure EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    procedure EdgeBrowserWebSourceChanged(Sender: TCustomEdgeBrowser; IsNewDocument: Boolean);
     {$IF CompilerVersion >= 35.0}
     procedure EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
     {$ELSE}
@@ -911,6 +912,7 @@ begin
     FEdgeBrowserWeb.Parent := FpnlBrowserWeb;
     FEdgeBrowserWeb.Align := alClient;
     FEdgeBrowserWeb.OnCreateWebViewCompleted := EdgeBrowserWebCreateWebViewCompleted;
+    FEdgeBrowserWeb.OnSourceChanged := EdgeBrowserWebSourceChanged;
     {$IF CompilerVersion >= 35.0}
     FEdgeBrowserWeb.OnWebMessageReceived := EdgeBrowserWebWebMessageReceived;
     {$ELSE}
@@ -918,6 +920,7 @@ begin
     {$ENDIF}
     
     FEdgeBrowserWeb.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2Web');
+    FEdgeBrowserWeb.CreateWebView;
   end;
 end;
 
@@ -956,7 +959,16 @@ begin
         end;
       end;
     end;
+
+    if Assigned(FPresenter) then
+      FPresenter.OnBackgroundBrowserInitialized;
   end;
+end;
+
+procedure TFrameAIChat.EdgeBrowserWebSourceChanged(Sender: TCustomEdgeBrowser; IsNewDocument: Boolean);
+begin
+  if Assigned(FPresenter) then
+    FPresenter.OnBackgroundBrowserNavigation(Sender.LocationURL);
 end;
 
 {$IF CompilerVersion >= 35.0}

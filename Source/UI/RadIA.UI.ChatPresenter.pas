@@ -55,8 +55,13 @@ type
     FWebFilesDir: string;
     FLifecycleGuard: IInterface;
     FActiveModels: TArray<string>;
+    FPendingPrompt: string;
+    FBackgroundBrowserReady: Boolean;
+    FCurrentBackgroundUrl: string;
+    FLoginPopupOpen: Boolean;
 
     procedure LoadConfig;
+    procedure HandleBackgroundLoginComplete;
     procedure UpdateModelsCombo;
     procedure LoadChatHistory;
     procedure SaveChatHistory;
@@ -65,6 +70,7 @@ type
     procedure UpdateSessionsList;
     function PreProcessPrompt(const APromptText: string): string;
     function IsProviderConfigured(const AProviderId: string): Boolean;
+    function GetWebLoginUrl(const AProvider: string): string;
 
     procedure SendInitialConfigToWeb;
     procedure SendModelsUpdateToWeb(const AModels: TArray<string>; const AActiveModel: string);
@@ -108,6 +114,8 @@ type
     procedure OnWebViewBridgeSendPrompt(const APrompt: string);
     procedure OnWebViewBridgeCancel;
     procedure OnBackgroundBrowserMessage(const AMessage: string);
+    procedure OnBackgroundBrowserInitialized;
+    procedure OnBackgroundBrowserNavigation(const AUrl: string);
 
     property RequestInProgress: Boolean read FRequestInProgress;
     property SessionManager: TRadIASessionManager read FSessionManager;
@@ -149,6 +157,10 @@ begin
   FWebViewReady := False;
   FLifecycleGuard := TLifecycleGuard.Create;
   FActiveModels := [];
+  FPendingPrompt := '';
+  FBackgroundBrowserReady := False;
+  FCurrentBackgroundUrl := '';
+  FLoginPopupOpen := False;
 
   TRadIAWebViewBridgeProvider.OnSendPrompt := OnWebViewBridgeSendPrompt;
   TRadIAWebViewBridgeProvider.OnCancel := OnWebViewBridgeCancel;
@@ -229,6 +241,17 @@ begin
     Result := not FConfig.GetApiKey(AProviderId).Trim.IsEmpty;
   end;
 end;
+
+function TChatPresenter.GetWebLoginUrl(const AProvider: string): string;
+begin
+  if SameText(AProvider, 'Gemini') then
+    Result := 'https://gemini.google.com'
+  else if SameText(AProvider, 'OpenAI') then
+    Result := 'https://chatgpt.com'
+  else
+    Result := '';
+end;
+
 
 procedure TChatPresenter.LoadConfig;
 var
@@ -312,6 +335,8 @@ begin
 end;
 
 procedure TChatPresenter.ChangeProvider(const AProviderName: string);
+var
+  LUrl: string;
 begin
   if FLoadingConfig then
     Exit;
@@ -320,6 +345,24 @@ begin
   FConfig.SetActiveProvider(AProviderName);
   FConfig.Save;
   UpdateModelsCombo;
+
+  LUrl := GetWebLoginUrl(AProviderName);
+  if not LUrl.IsEmpty then
+  begin
+    if not FView.IsBackgroundBrowserInitialized then
+    begin
+      TLogger.Log('ChangeProvider: Initializing background browser for newly selected Web Login provider.', 'UI');
+      FBackgroundBrowserReady := False;
+      FView.CreateBackgroundBrowser;
+    end
+    else if not SameText(FCurrentBackgroundUrl, LUrl) then
+    begin
+      TLogger.Log(Format('ChangeProvider: Preventive navigation of background browser to %s', [LUrl]), 'UI');
+      FBackgroundBrowserReady := False;
+      FCurrentBackgroundUrl := LUrl;
+      FView.NavigateBackgroundBrowser(LUrl);
+    end;
+  end;
 end;
 
 procedure TChatPresenter.ChangeModel(const AModelName: string);
@@ -891,6 +934,8 @@ begin
 end;
 
 procedure TChatPresenter.OnWebViewReady;
+var
+  LActiveProvider: string;
 begin
   FWebViewReady := True;
   LoadChatHistory;
@@ -899,6 +944,13 @@ begin
   
   if FRequestInProgress then
     PostToWebView('show_typing', '', '');
+
+  LActiveProvider := FConfig.GetActiveProvider;
+  if not GetWebLoginUrl(LActiveProvider).IsEmpty then
+  begin
+    TLogger.Log('OnWebViewReady: Pre-initializing background browser for Web Login provider.', 'UI');
+    FView.CreateBackgroundBrowser;
+  end;
 end;
 
 procedure TChatPresenter.ProcessWebMessage(const AMessage: string);
@@ -1027,6 +1079,16 @@ begin
           Self.HandleOnbtnWebLoginConnectClick;
         end));
     end
+    else if SameText(LAction, 'login_complete') then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          Self.FBackgroundBrowserReady := True;
+          Self.HandleBackgroundLoginComplete;
+        end));
+    end
     else if LAction = 'error' then
     begin
       LText := LJson.GetValue<string>('text', '');
@@ -1126,16 +1188,45 @@ end;
 procedure TChatPresenter.OnWebViewBridgeSendPrompt(const APrompt: string);
 var
   LJson: TJSONObject;
+  LActiveProvider: string;
+  LUrl: string;
 begin
-  FView.CreateBackgroundBrowser;
-  
+  LActiveProvider := FConfig.GetActiveProvider;
+  LUrl := GetWebLoginUrl(LActiveProvider);
+  if LUrl.IsEmpty then
+  begin
+    TLogger.Log('OnWebViewBridgeSendPrompt: Active provider ' + LActiveProvider + ' does not support Web Login.', 'UI');
+    Exit;
+  end;
+
   if not FView.IsBackgroundBrowserInitialized then
   begin
-    TLogger.Log('OnWebViewBridgeSendPrompt: Background browser is not initialized yet.', 'UI');
+    TLogger.Log('OnWebViewBridgeSendPrompt: Background browser is not initialized yet. Queueing prompt and initializing...', 'UI');
+    FPendingPrompt := APrompt;
+    FBackgroundBrowserReady := False;
+    FView.CreateBackgroundBrowser;
+    Exit;
+  end;
+
+  if not SameText(FCurrentBackgroundUrl, LUrl) then
+  begin
+    TLogger.Log(Format('OnWebViewBridgeSendPrompt: Navigating background browser to %s', [LUrl]), 'UI');
+    FPendingPrompt := APrompt;
+    FBackgroundBrowserReady := False;
+    FCurrentBackgroundUrl := LUrl;
+    FView.NavigateBackgroundBrowser(LUrl);
+    Exit;
+  end;
+
+  if not FBackgroundBrowserReady then
+  begin
+    TLogger.Log('OnWebViewBridgeSendPrompt: Background browser is navigating/loading. Queueing prompt.', 'UI');
+    FPendingPrompt := APrompt;
     Exit;
   end;
 
   TLogger.Log('OnWebViewBridgeSendPrompt: Dispatching prompt to background web view.', 'UI');
+  FPendingPrompt := '';
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'send_prompt');
@@ -1168,25 +1259,87 @@ begin
   ProcessWebMessage(AMessage);
 end;
 
-procedure TChatPresenter.HandleOnbtnWebLoginConnectClick;
+procedure TChatPresenter.OnBackgroundBrowserInitialized;
 var
   LActiveProvider: string;
   LUrl: string;
 begin
   LActiveProvider := FConfig.GetActiveProvider;
-  if SameText(LActiveProvider, 'Gemini') then
-    LUrl := 'https://gemini.google.com'
-  else
-    LUrl := 'https://chatgpt.com';
+  LUrl := GetWebLoginUrl(LActiveProvider);
+  if LUrl.IsEmpty then
+    Exit;
+
+  TLogger.Log(Format('OnBackgroundBrowserInitialized: Background browser created. Navigating to %s', [LUrl]), 'UI');
+  FBackgroundBrowserReady := False;
+  FCurrentBackgroundUrl := LUrl;
+  FView.NavigateBackgroundBrowser(LUrl);
+end;
+
+procedure TChatPresenter.HandleBackgroundLoginComplete;
+begin
+  TLogger.Log('HandleBackgroundLoginComplete: Background browser is logged in and ready.', 'UI');
+  if not FPendingPrompt.IsEmpty then
+  begin
+    TLogger.Log('HandleBackgroundLoginComplete: Dispatching pending prompt.', 'UI');
+    OnWebViewBridgeSendPrompt(FPendingPrompt);
+  end;
+end;
+
+procedure TChatPresenter.OnBackgroundBrowserNavigation(const AUrl: string);
+var
+  LIsAuthPage: Boolean;
+begin
+  LIsAuthPage := AUrl.Contains('accounts.google.com') or 
+                 AUrl.Contains('auth.openai.com') or 
+                 AUrl.Contains('accounts.openai.com') or 
+                 AUrl.Contains('/auth/login') or 
+                 AUrl.Contains('ServiceLogin');
+                 
+  if LIsAuthPage then
+  begin
+    TLogger.Log('OnBackgroundBrowserNavigation: Auth page redirect detected. URL: ' + AUrl, 'UI');
+    TThread.Queue(nil,
+      procedure
+      begin
+        HandleOnbtnWebLoginConnectClick;
+      end);
+  end;
+end;
+
+procedure TChatPresenter.HandleOnbtnWebLoginConnectClick;
+var
+  LActiveProvider: string;
+  LUrl: string;
+begin
+  if FLoginPopupOpen then
+  begin
+    TLogger.Log('HandleOnbtnWebLoginConnectClick: Login popup is already open. Ignoring request.', 'UI');
+    Exit;
+  end;
+
+  LActiveProvider := FConfig.GetActiveProvider;
+  LUrl := GetWebLoginUrl(LActiveProvider);
+  if LUrl.IsEmpty then
+    Exit;
 
   TLogger.Log('HandleOnbtnWebLoginConnectClick: Opening popup form for ' + LActiveProvider, 'UI');
   
-  FView.ShowLoginWindow(LUrl,
-    procedure
+  FLoginPopupOpen := True;
+  try
+    FView.ShowLoginWindow(LUrl,
+      procedure
+      begin
+        FLoginPopupOpen := False;
+        TLogger.Log('HandleOnbtnWebLoginConnectClick: Login completed successfully. Refreshing background browser.', 'UI');
+        FView.NavigateBackgroundBrowser(LUrl);
+      end);
+  except
+    on E: Exception do
     begin
-      TLogger.Log('HandleOnbtnWebLoginConnectClick: Login completed successfully. Refreshing background browser.', 'UI');
-      FView.NavigateBackgroundBrowser(LUrl);
-    end);
+      FLoginPopupOpen := False;
+      TLogger.Log('HandleOnbtnWebLoginConnectClick: Error showing login window: ' + E.Message, 'UI');
+    end;
+  end;
 end;
 
 function TChatPresenter.PreProcessPrompt(const APromptText: string): string;
