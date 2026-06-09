@@ -120,21 +120,37 @@ end;
 
 procedure TRadIAEditorHook.ActiveFormChange(Sender: TObject);
 var
-  I: Integer;
-  LForm: TCustomForm;
+  LActiveForm: TCustomForm;
 begin
-  if Assigned(Screen) then
-  begin
-    for I := 0 to Screen.FormCount - 1 do
+  try
+    if Assigned(Screen) then
     begin
-      LForm := Screen.Forms[I];
-      if Assigned(LForm) and SameText(LForm.ClassName, 'TEditWindow') then
-        HookPopupMenu(LForm);
+      LActiveForm := Screen.ActiveForm;
+      if Assigned(LActiveForm) and SameText(LActiveForm.ClassName, 'TEditWindow') then
+      begin
+        try
+          HookPopupMenu(LActiveForm);
+        except
+          on E: Exception do
+            TLogger.Log('ActiveFormChange: Error hooking active form: ' + E.Message, 'EditorHook');
+        end;
+      end;
+    end;
+  except
+    on E: Exception do
+      TLogger.Log('ActiveFormChange: General error: ' + E.Message, 'EditorHook');
+  end;
+
+  // Garantir que o manipulador original da IDE seja sempre executado
+  if Assigned(FOldActiveFormChange) then
+  begin
+    try
+      FOldActiveFormChange(Sender);
+    except
+      on E: Exception do
+        TLogger.Log('ActiveFormChange: Error executing original OnActiveFormChange: ' + E.Message, 'EditorHook');
     end;
   end;
-    
-  if Assigned(FOldActiveFormChange) then
-    FOldActiveFormChange(Sender);
 end;
 
 function TRadIAEditorHook.FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
