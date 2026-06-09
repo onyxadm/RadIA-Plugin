@@ -1,6 +1,6 @@
 # RadIA - Matriz de Priorização e Viabilidade de Features
 
-Este documento apresenta uma análise técnica e de negócios comparando as **10 ideias de novas features** com as **7 features que já constam no backlog/roadmap** do projeto RadIA (após remoção de itens redundantes de análise de vazamento de memória já cobertos pelos comandos `/bugs` e `/stacktrace` existentes).
+Este documento apresenta uma análise técnica e de negócios comparando as **13 ideias de novas features** com as **7 features que já constam no backlog/roadmap** do projeto RadIA.
 
 A análise é estruturada sob a perspectiva de um **Arquiteto de Software Sênior**, avaliando a complexidade de implementação no ecossistema do Embarcadero Delphi (usando a Open Tools API e Windows) contra o impacto gerado no dia a dia do desenvolvedor.
 
@@ -13,22 +13,25 @@ A tabela abaixo cruza o **Esforço (Dificuldade)** com o **Impacto (Benefício)*
 | Feature | Origem | Dificuldade (Esforço) | Benefício (Impacto) | Categoria |
 | :--- | :--- | :--- | :--- | :--- |
 | **1. Smart SQL Optimizer no Editor** | Nova | 🟢 Baixa | 🔴 Alto | **Quick Win** (Ganho Rápido) |
-| **2. Histórico de Refatorações Aplicadas** | Backlog | 🟢 Baixa | 🟡 Médio | **Tarefa de Apoio** |
-| **3. Otimizador de Cláusula Uses (Clean Uses)** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **4. Gerador de Mocks para Testes Unitários** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **5. Revisão Automática de Código no Save** | Backlog | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **6. Assistente de Migração (Smart Migrate)** | Backlog | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **7. Gerador de Documentação OpenAPI/Swagger** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **8. Análise Semântica Bidirecional (DFM x PAS)** | Nova | 🟡 Média | 🟡 Médio-Alto | **Projeto Principal** |
-| **9. Geração de Docs de Projeto (API.md)** | Backlog | 🟡 Média | 🟡 Médio-Alto | **Projeto Principal** |
-| **10. Painel de Gerenciamento do Cache** | Backlog | 🟡 Média | 🟡 Médio | **Tarefa de Apoio** |
-| **11. Conversão BDE/ADO/dbExpress ➔ DEXT com FireDAC** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **12. Decompositor de Forms (Code-Behind)** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **13. Assistente de Threads e PPL** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **14. Internacionalização Automática (i18n)** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **15. Autocompletar Inline (Ghost Text)** | Backlog | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **16. Integração com Depurador da IDE (OTA)** | Backlog | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **17. Suporte Nativo macOS/Linux (Lazarus)** | Backlog | 🔴 Alta | 🟡 Baixo-Médio | **Descarte/Longo Prazo** |
+| **2. Delphi Compiler & OS Warning Scanner** | Nova | 🟢 Baixa | 🔴 Alto | **Quick Win** (Ganho Rápido) |
+| **3. Histórico de Refatorações Aplicadas** | Backlog | 🟢 Baixa | 🟡 Médio | **Tarefa de Apoio** |
+| **4. Otimizador de Cláusula Uses (Clean Uses)** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **5. Gerador de Mocks para Testes Unitários** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **6. Smart Multi-Unit Trace Resolver** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **7. MadExcept / EurekaLog Context Extractor** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **8. Revisão Automática de Código no Save** | Backlog | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **9. Assistente de Migração (Smart Migrate)** | Backlog | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **10. Gerador de Documentação OpenAPI/Swagger** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **11. Análise Semântica Bidirecional (DFM x PAS)** | Nova | 🟡 Média | 🟡 Médio-Alto | **Projeto Principal** |
+| **12. Geração de Docs de Projeto (API.md)** | Backlog | 🟡 Média | 🟡 Médio-Alto | **Projeto Principal** |
+| **13. Painel de Gerenciamento do Cache** | Backlog | 🟡 Média | 🟡 Médio | **Tarefa de Apoio** |
+| **14. Conversão BDE/ADO/dbExpress ➔ DEXT com FireDAC** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **15. Decompositor de Forms (Code-Behind)** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **16. Assistente de Threads e PPL** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **17. Internacionalização Automática (i18n)** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **18. Autocompletar Inline (Ghost Text)** | Backlog | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **19. Integração com Depurador da IDE (OTA)** | Backlog | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **20. Suporte Nativo macOS/Linux (Lazarus)** | Backlog | 🔴 Alta | 🟡 Baixo-Médio | **Descarte/Longo Prazo** |
 
 ---
 
@@ -38,7 +41,8 @@ Features que não demandam integrações complexas de baixo nível com o editor 
 
 ```mermaid
 graph TD
-    C[Smart SQL Optimizer] -->|Baixo Risco| D(Leitura de string no editor + Chat)
+    A[Smart SQL Optimizer] -->|Baixo Risco| B(Leitura de string no editor + Chat)
+    C[Delphi Compiler Scanner] -->|Foco em Prompts| D(Detecção de warnings de baixo nível)
     E[Histórico de Refatorações] -->|Persistência Simples| F(Gravação de JSON local)
 ```
 
@@ -46,7 +50,11 @@ graph TD
 * **Benefício:** **Alto**. Previne erros de sintaxe de SQL ocultos em strings e melhora a performance de consultas antes do commit.
 * **Complexidade:** **Baixa**. O plugin lê a linha atual ou o bloco selecionado de texto contendo comandos SQL através da Open Tools API, envia-o para a IA validar de acordo com o dialeto de banco selecionado, e retorna as sugestões de otimização no chat lateral.
 
-### 1.2. Histórico de Refatorações Aplicadas (Backlog - v0.1.0)
+### 1.2. Delphi Compiler & OS Warning Scanner (Nova)
+* **Benefício:** **Alto**. Previne bugs silenciosos do ecossistema do Delphi (ex: travamentos por chamadas visuais sem sincronização de threads, conflitos de string Unicode, vazamentos de handles do Windows).
+* **Complexidade:** **Baixa**. Consiste principalmente no desenvolvimento de modelos estruturados de prompt para a análise estática executada no comando `/bugs`, ensinando a IA a focar especificamente em armadilhas conhecidas de runtime e compilador da VCL.
+
+### 1.3. Histórico de Refatorações Aplicadas (Backlog - v0.1.0)
 * **Benefício:** **Médio**. Fornece rastreabilidade e auditoria interna, permitindo que o desenvolvedor veja e desfaça edições que a IA realizou diretamente pelo editor.
 * **Complexidade:** **Baixa**. Consiste em gravar um log incremental contendo `Data`, `Arquivo`, `Trecho Anterior` e `Trecho Novo` em um diretório JSON local (ex: `%APPDATA%\RadIA\history\`) a cada clique no botão **[Aplicar Alteração]**.
 
@@ -64,27 +72,35 @@ Features que envolvem manipulação estrutural de código Object Pascal (reescri
 * **Benefício:** **Alto**. Facilita a adoção de testes unitários no Delphi, permitindo isolar componentes acoplados que dependem de bancos de dados ou conexões externas.
 * **Complexidade:** **Média**. Utiliza a base já existente de geração de testes do RadIA. A IA mapeia as dependências da classe (interfaces de construtores) e gera o código mock (compatível com Delphi-Mocks ou mocks manuais com interfaces) dentro do repositório de testes.
 
-### 2.3. Revisão Automática de Código no Save (Backlog - v0.1.0)
+### 2.3. Smart Multi-Unit Trace Resolver (Nova)
+* **Benefício:** **Alto**. Permite a resolução de exceções reais complexas que trafegam entre múltiplas camadas do sistema (Controller, Service, Repository), lendo automaticamente os arquivos físicos correspondentes e provendo contexto global para a IA.
+* **Complexidade:** **Média**. A OTA do Delphi permite rastrear e ler o código-fonte de quaisquer arquivos vinculados ao projeto ativo. O RadIA parseia as linhas do stack trace, carrega em background os trechos específicos dessas units e injeta tudo de forma estruturada no contexto da IA.
+
+### 2.4. MadExcept / EurekaLog Context Extractor (Nova)
+* **Benefício:** **Alto**. A IA ganha "visibilidade de runtime", analisando as exceções com base nos valores reais das variáveis e objetos locais coletados pelo log de erro no instante exato da falha do sistema.
+* **Complexidade:** **Média**. Exige a criação de rotinas regex para extrair a lista e o estado das variáveis listadas nos logs de crash e formatá-los para a IA como metadados do prompt.
+
+### 2.5. Revisão Automática de Código no Save (Backlog - v0.1.0)
 * **Benefício:** **Alto**. Garante que boas práticas (Clean Code/SOLID) sejam analisadas continuamente sem a necessidade de acionamento manual do desenvolvedor.
 * **Complexidade:** **Média**. Necessita interceptar o evento de gravação da IDE (`IOTAModuleNotifier.AfterSave`), coletar as alterações e enviar uma requisição silenciosa em background. O desafio é não bloquear o processo de gravação e exibir as mensagens de alerta de forma não-intrusiva no painel RadIA.
 
-### 2.4. Assistente de Migração de Versão (Smart Migrate) (Backlog - v0.2.0)
+### 2.6. Assistente de Migração de Versão (Smart Migrate) (Backlog - v0.2.0)
 * **Benefício:** **Alto**. Acelera drasticamente a modernização de projetos antigos baseados em Delphi 7/XE para Delphi moderno (10.4/11/12), lidando com tipos de strings Unicode, chamadas de rede legadas e substituição de bibliotecas obsoletas.
 * **Complexidade:** **Média**. Funciona de forma similar às refatorações existentes, utilizando templates e prompts focados em padrões Delphi moderno.
 
-### 2.5. Gerador de Documentação OpenAPI/Swagger (Nova)
+### 2.7. Gerador de Documentação OpenAPI/Swagger (Nova)
 * **Benefício:** **Alto**. Essencial para times que usam Delphi no backend com Horse ou RAD Server, economizando dias de digitação manual de especificações.
 * **Complexidade:** **Média**. O RadIA precisa varrer as rotas registradas nas classes de controle ou nas units de inicialização da API, ler as estruturas dos DTOs referenciados e compilar o arquivo de configuração Swagger (JSON/YAML).
 
-### 2.6. Análise Semântica Bidirecional (DFM vs PAS) (Nova)
+### 2.8. Análise Semântica Bidirecional (DFM vs PAS) (Nova)
 * **Benefício:** **Médio-Alto**. Remove o lixo acumulado em formulários legados (declarações invisíveis de componentes removidos e eventos órfãos).
 * **Complexidade:** **Média**. Envolve a leitura cruzada do arquivo `.dfm` (em modo texto) e a unit `.pas`, identificando componentes instanciados no DFM que não possuem referência ativa ou manipulação no código-fonte.
 
-### 2.7. Geração de Documentação de Projeto (Backlog - v0.3.0+)
+### 2.9. Geração de Documentação de Projeto (Backlog - v0.3.0+)
 * **Benefício:** **Médio-Alto**. Gera sumários arquiteturais e mapeia as units do projeto em um arquivo de documentação centralizado (ex: `docs/API.md`).
 * **Complexidade:** **Média**. A IA analisa a estrutura de pastas do projeto ativo, lê o cabeçalho das principais classes (`/// <summary>`) e gera um arquivo Markdown estruturado.
 
-### 2.8. Painel de Gerenciamento do Cache (Backlog - v0.2.0)
+### 2.10. Painel de Gerenciamento do Cache (Backlog - v0.2.0)
 * **Benefício:** **Médio**. Ajuda a gerenciar os custos e depurar as respostas salvas da IA localmente.
 * **Complexidade:** **Média**. Exige a criação de uma tela VCL clássica em `Source/UI/` que lista os itens salvos no cache local e permite sua exclusão individual ou total.
 
@@ -129,4 +145,4 @@ Features que alteram profundamente a estrutura de múltiplos arquivos simultanea
 
 > [!TIP]
 > **Recomendação de Próximos Passos:**
-> O foco estratégico do RadIA deve ser a implementação de **Quick Wins** (Smart SQL Optimizer), pois traz valor imediato com baixíssimo risco de regressões. Paralelamente, podemos planejar o desenvolvimento incremental dos **Projetos Principais** de esforço médio (como a Otimização da Cláusula Uses e a Revisão Automática no Save), consolidando a robustez do assistente antes de partirmos para refatorações complexas em DFM.
+> O foco estratégico do RadIA deve ser a implementação de **Quick Wins** (Smart SQL Optimizer e Delphi Compiler Scanner), pois trazem valor imediato com baixíssimo risco de regressões. Paralelamente, podemos planejar o desenvolvimento incremental dos **Projetos Principais** de esforço médio (como a Otimização da Cláusula Uses, Smart Multi-Unit Trace Resolver e a Revisão Automática no Save), consolidando a robustez do assistente antes de partirmos para refatorações complexas em DFM.

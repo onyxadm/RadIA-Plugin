@@ -258,12 +258,17 @@ Version v0.0.15 introduced the complete segregation of default prompt templates 
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Low
 
-### 2. Automatic Code Review on Save
+### 2. Delphi Compiler & OS Warning Scanner (Quick Win)
+*   **Goal**: Analyze selected code seeking warnings and traps specific to the Delphi/Windows ecosystem (Unicode strings, UI updates without thread sync, GDI handle leaks).
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Low
+
+### 3. Automatic Code Review on Save
 *   **Goal**: Silently analyze the active unit on save and signal in the RadIA panel if the AI found points of attention (e.g., potential bugs, duplicated code, or missing exception handling).
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 3. Applied Refactoring History
+### 4. Applied Refactoring History
 *   **Goal**: Maintain an auditable log of every time the **[Apply Changes]** button was clicked, recording the original snippet, the applied snippet, the date, and the file, allowing future manual review.
 *   **Impact**: ⭐⭐⭐ Medium
 *   **Complexity**: Low
@@ -282,22 +287,32 @@ Version v0.0.15 introduced the complete segregation of default prompt templates 
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 7. OpenAPI/Swagger Documentation Generator (Horse, RAD Server)
+### 7. Smart Multi-Unit Trace Resolver
+*   **Goal**: Track and read automatically from the active project specific snippets of units listed in a pasted stack trace, providing a multi-unit global context to allow the AI to solve complex runtime errors.
+*   **Impact**: ⭐⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 8. Exception Log Assistant (MadExcept / EurekaLog Context Extractor)
+*   **Goal**: Analyze structured logs from crash diagnostics tools, gathering local variable states and object values at the exact moment of the crash to provide the AI with precise runtime inspectability.
+*   **Impact**: ⭐⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 9. OpenAPI/Swagger Documentation Generator (Horse, RAD Server)
 *   **Goal**: Scan routing and controller configurations of modern Delphi APIs to automatically export a Swagger specification (JSON/YAML) and map matching request/response DTO schemas.
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 8. Bidirectional Semantic Analysis (DFM vs PAS)
+### 10. Bidirectional Semantic Analysis (DFM vs PAS)
 *   **Goal**: Perform a cross-file analysis between the visual form file (`.dfm`) and the code unit (`.pas`) to point out and safely clean up orphaned components and empty event handlers cluttering the codebase.
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 9. Version Migration Assistant (Smart Migrate)
+### 11. Version Migration Assistant (Smart Migrate)
 *   **Goal**: Contextual menu or sidebar action to rewrite legacy/procedural code blocks utilizing modern Delphi features (Unicode, PPL, FireDAC).
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 10. Cache Management Panel
+### 12. Cache Management Panel
 *   **Goal**: Display an internal administration screen for the response cache, allowing users to view cached entries, delete specific ones, and see the total cache file size without manually editing JSON.
 *   **Impact**: ⭐⭐⭐ Medium
 *   **Complexity**: Medium
