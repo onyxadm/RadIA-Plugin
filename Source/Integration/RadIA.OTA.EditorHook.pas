@@ -3,7 +3,7 @@ unit RadIA.OTA.EditorHook;
 interface
 
 uses
-  System.Classes, System.SysUtils, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, ToolsAPI;
+  System.Classes, System.SysUtils, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI;
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
@@ -11,6 +11,7 @@ type
   private
     FOldActiveFormChange: TNotifyEvent;
     FInstalled: Boolean;
+    FTimer: TTimer;
     
     procedure ActiveFormChange(Sender: TObject);
     procedure HookPopupMenu(AForm: TCustomForm);
@@ -30,6 +31,7 @@ type
     procedure OnShowChatExecute(Sender: TObject);
 
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
+    procedure OnTimerEvent(Sender: TObject);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -37,6 +39,9 @@ type
     procedure Install;
     procedure Uninstall;
     procedure PopulateToolsMenu(const AMenuItem: TMenuItem);
+    
+    procedure HookMenuDirectly(APopupMenu: TPopupMenu);
+    procedure UnhookMenuDirectly(APopupMenu: TPopupMenu);
   end;
 
 implementation
@@ -44,7 +49,18 @@ implementation
 uses
   System.Generics.Collections,
   RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
-  RadIA.Core.Mediator, RadIA.OTA.DockableForm, RadIA.Core.Logger;
+  RadIA.Core.Mediator,
+  {$IFNDEF TESTS}
+  RadIA.OTA.DockableForm,
+  {$ENDIF}
+  RadIA.Core.Logger;
+
+{$IFDEF TESTS}
+procedure ShowRadIAChat;
+begin
+  // Stub for unit tests to avoid pulling VCL Forms/WebView2 components
+end;
+{$ENDIF}
 
 var
   // Global dictionary to track original OnPopup events for intercepted menus
@@ -77,10 +93,23 @@ begin
 
   FOldActiveFormChange := Screen.OnActiveFormChange;
   Screen.OnActiveFormChange := ActiveFormChange;
+
+  FTimer := TTimer.Create(Self);
+  FTimer.Interval := 1000;
+  FTimer.OnTimer := OnTimerEvent;
+  FTimer.Enabled := True;
+
   FInstalled := True;
   
   if Assigned(Screen) and Assigned(Screen.ActiveForm) then
-    HookPopupMenu(Screen.ActiveForm);
+  begin
+    try
+      HookPopupMenu(Screen.ActiveForm);
+    except
+      on E: Exception do
+        TLogger.Log('Install: Error hooking active form: ' + E.Message, 'EditorHook');
+    end;
+  end;
 end;
 
 procedure TRadIAEditorHook.Uninstall;
@@ -93,6 +122,13 @@ begin
     Exit;
 
   TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
+
+  if Assigned(FTimer) then
+  begin
+    FTimer.Enabled := False;
+    FreeAndNil(FTimer);
+  end;
+
   if Assigned(Screen) then
     Screen.OnActiveFormChange := FOldActiveFormChange;
   
@@ -101,20 +137,35 @@ begin
   if Assigned(Screen) then
   begin
     for I := 0 to Screen.FormCount - 1 do
-      UnhookPopupMenu(Screen.Forms[I]);
+    begin
+      try
+        UnhookPopupMenu(Screen.Forms[I]);
+      except
+        on E: Exception do
+          TLogger.Log('Uninstall: Error unhooking form menu: ' + E.Message, 'EditorHook');
+      end;
+    end;
   end;
 
   if Assigned(FInterceptedMenus) then
   begin
-    // Restore all original OnPopup handlers
-    for LMenu in FInterceptedMenus.Keys do
-    begin
-      LOldOnPopup := FInterceptedMenus.Items[LMenu];
-      LMenu.OnPopup := LOldOnPopup;
-      RemoveMenuFromPopupMenu(LMenu);
+    try
+      // Restore all original OnPopup handlers
+      for LMenu in FInterceptedMenus.Keys do
+      begin
+        try
+          LOldOnPopup := FInterceptedMenus.Items[LMenu];
+          LMenu.OnPopup := LOldOnPopup;
+          RemoveMenuFromPopupMenu(LMenu);
+        except
+          on E: Exception do
+            TLogger.Log('Uninstall: Error restoring popup menu: ' + E.Message, 'EditorHook');
+        end;
+      end;
+    finally
+      FInterceptedMenus.Clear;
+      FreeAndNil(FInterceptedMenus);
     end;
-    FInterceptedMenus.Clear;
-    FreeAndNil(FInterceptedMenus);
   end;
 end;
 
@@ -178,21 +229,13 @@ begin
     Exit;
 
   LPopupMenu := FindEditorPopupMenu(AForm);
-  if not Assigned(LPopupMenu) then
-    Exit;
-
-  if Assigned(FInterceptedMenus) and not FInterceptedMenus.ContainsKey(LPopupMenu) then
-  begin
-    TLogger.Log(Format('Hooking OnPopup of EditorLocalMenu for %s (%s)', [AForm.Name, AForm.ClassName]), 'EditorHook');
-    FInterceptedMenus.Add(LPopupMenu, LPopupMenu.OnPopup);
-    LPopupMenu.OnPopup := EditorMenuPopup;
-  end;
+  if Assigned(LPopupMenu) then
+    HookMenuDirectly(LPopupMenu);
 end;
 
 procedure TRadIAEditorHook.UnhookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
-  LOldOnPopup: TNotifyEvent;
 begin
   if not Assigned(AForm) then
     Exit;
@@ -201,12 +244,57 @@ begin
     Exit;
 
   LPopupMenu := FindEditorPopupMenu(AForm);
-  if Assigned(LPopupMenu) and Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) then
+  if Assigned(LPopupMenu) then
+    UnhookMenuDirectly(LPopupMenu);
+end;
+
+procedure TRadIAEditorHook.HookMenuDirectly(APopupMenu: TPopupMenu);
+var
+  LEventHook: TNotifyEvent;
+  LEventCurrent: TNotifyEvent;
+  LMethodHook: TMethod;
+  LMethodCurrent: TMethod;
+begin
+  if not Assigned(APopupMenu) then
+    Exit;
+
+  if not Assigned(FInterceptedMenus) then
+    Exit;
+
+  LEventHook := EditorMenuPopup;
+  LMethodHook := TMethod(LEventHook);
+  LEventCurrent := APopupMenu.OnPopup;
+  LMethodCurrent := TMethod(LEventCurrent);
+
+  if LMethodCurrent.Code <> LMethodHook.Code then
   begin
-    TLogger.Log(Format('Unhooking OnPopup of EditorLocalMenu for %s (%s)', [AForm.Name, AForm.ClassName]), 'EditorHook');
-    LPopupMenu.OnPopup := LOldOnPopup;
-    FInterceptedMenus.Remove(LPopupMenu);
-    RemoveMenuFromPopupMenu(LPopupMenu);
+    if FInterceptedMenus.ContainsKey(APopupMenu) then
+    begin
+      TLogger.Log('Re-hooking OnPopup of EditorLocalMenu - hook was overridden', 'EditorHook');
+      FInterceptedMenus.AddOrSetValue(APopupMenu, LEventCurrent);
+    end
+    else
+    begin
+      TLogger.Log('Hooking OnPopup of EditorLocalMenu', 'EditorHook');
+      FInterceptedMenus.Add(APopupMenu, LEventCurrent);
+    end;
+    APopupMenu.OnPopup := LEventHook;
+  end;
+end;
+
+procedure TRadIAEditorHook.UnhookMenuDirectly(APopupMenu: TPopupMenu);
+var
+  LOldOnPopup: TNotifyEvent;
+begin
+  if not Assigned(APopupMenu) then
+    Exit;
+
+  if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(APopupMenu, LOldOnPopup) then
+  begin
+    TLogger.Log('Unhooking OnPopup of EditorLocalMenu', 'EditorHook');
+    APopupMenu.OnPopup := LOldOnPopup;
+    FInterceptedMenus.Remove(APopupMenu);
+    RemoveMenuFromPopupMenu(APopupMenu);
   end;
 end;
 
@@ -459,6 +547,22 @@ begin
     [LErrorMsg, ExtractFileName(LFileName), LLine, LSourceCode]);
 
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
+end;
+
+procedure TRadIAEditorHook.OnTimerEvent(Sender: TObject);
+begin
+  if not FInstalled then
+    Exit;
+
+  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+  begin
+    try
+      HookPopupMenu(Screen.ActiveForm);
+    except
+      on E: Exception do
+        TLogger.Log('OnTimerEvent: Error checking/hooking active form: ' + E.Message, 'EditorHook');
+    end;
+  end;
 end;
 
 initialization

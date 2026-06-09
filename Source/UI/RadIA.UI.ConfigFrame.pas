@@ -37,6 +37,8 @@ type
     edtGithubCopilotKey: TEdit;
     btnConnectGithub: TButton;
     btnImportVSCode: TButton;
+    btnGeminiWebLogin: TButton;
+    btnOpenAIWebLogin: TButton;
 
     tsAzureOpenAI: TTabSheet;
     pnlAzureOpenAI: TPanel;
@@ -143,6 +145,8 @@ type
     procedure lnkBedrockGetKeyClick(Sender: TObject);
     procedure btnConnectGithubClick(Sender: TObject);
     procedure btnImportVSCodeClick(Sender: TObject);
+    procedure btnGeminiWebLoginClick(Sender: TObject);
+    procedure btnOpenAIWebLoginClick(Sender: TObject);
   private
     FPresenter: TConfigPresenter;
     FOnClose: TNotifyEvent;
@@ -256,7 +260,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.ProviderRegistry, Winapi.ShellAPI, RadIA.UI.GithubAuthForm;
+  RadIA.Core.ProviderRegistry, Winapi.ShellAPI, RadIA.UI.GithubAuthForm, RadIA.UI.WebLoginForm;
 
 {$R *.dfm}
 
@@ -982,6 +986,7 @@ begin
   LIsApiKey := grpGeminiAuthType.ItemIndex = 0;
   edtGeminiKey.Enabled := LIsApiKey;
   lblGeminiKey.Enabled := LIsApiKey;
+  btnGeminiWebLogin.Enabled := not LIsApiKey;
   if not LIsApiKey then
     edtGeminiKey.Text := '';
 end;
@@ -995,6 +1000,7 @@ begin
   lblOpenAIKey.Enabled := LIsApiKey;
   edtOpenAICustomUrl.Enabled := LIsApiKey;
   lblOpenAICustomUrl.Enabled := LIsApiKey;
+  btnOpenAIWebLogin.Enabled := not LIsApiKey;
   if not LIsApiKey then
   begin
     edtOpenAIKey.Text := '';
@@ -1125,6 +1131,24 @@ begin
   end;
 end;
 
+procedure TFrameAIConfig.btnGeminiWebLoginClick(Sender: TObject);
+begin
+  TFormWebLogin.ShowLogin(Self, 'https://gemini.google.com',
+    procedure
+    begin
+      ShowMessage('Login no Gemini realizado com sucesso!');
+    end);
+end;
+
+procedure TFrameAIConfig.btnOpenAIWebLoginClick(Sender: TObject);
+begin
+  TFormWebLogin.ShowLogin(Self, 'https://chatgpt.com',
+    procedure
+    begin
+      ShowMessage('Login no OpenAI realizado com sucesso!');
+    end);
+end;
+
 procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
 begin
   FPresenter.SaveConfig;
@@ -1192,8 +1216,16 @@ end;
 
 procedure TFrameAIConfig.SetAuthTypeIndex(const AProviderId: string; const AIndex: Integer);
 begin
-  if SameText(AProviderId, 'Gemini') then grpGeminiAuthType.ItemIndex := AIndex
-  else if SameText(AProviderId, 'OpenAI') then grpOpenAIAuthType.ItemIndex := AIndex;
+  if SameText(AProviderId, 'Gemini') then
+  begin
+    grpGeminiAuthType.ItemIndex := AIndex;
+    grpGeminiAuthTypeClick(grpGeminiAuthType);
+  end
+  else if SameText(AProviderId, 'OpenAI') then
+  begin
+    grpOpenAIAuthType.ItemIndex := AIndex;
+    grpOpenAIAuthTypeClick(grpOpenAIAuthType);
+  end;
 end;
 
 function TFrameAIConfig.GetTemperatureInput(const AProviderId: string): string;

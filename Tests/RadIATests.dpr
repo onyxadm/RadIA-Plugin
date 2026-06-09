@@ -1,5 +1,6 @@
 program RadIATests;
 
+{$DEFINE TESTS}
 {$APPTYPE CONSOLE}
 
 uses
@@ -24,6 +25,10 @@ uses
   RadIA.Core.Sessions in '..\Source\Core\RadIA.Core.Sessions.pas',
   RadIA.Core.DTO.Generator in '..\Source\Core\RadIA.Core.DTO.Generator.pas',
   RadIA.OTA.Helper in '..\Source\Integration\RadIA.OTA.Helper.pas',
+  RadIA.OTA.EditorHook in '..\Source\Integration\RadIA.OTA.EditorHook.pas',
+  RadIA.OTA.ContextParser in '..\Source\Integration\RadIA.OTA.ContextParser.pas',
+  RadIA.OTA.MessageViewHook in '..\Source\Integration\RadIA.OTA.MessageViewHook.pas',
+  RadIA.Core.Mediator in '..\Source\Core\RadIA.Core.Mediator.pas',
   RadIA.Provider.Base in '..\Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in '..\Source\Providers\RadIA.Provider.Gemini.pas',
   RadIA.Provider.OpenAI in '..\Source\Providers\RadIA.Provider.OpenAI.pas',
@@ -45,6 +50,7 @@ uses
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',
+  RadIA.Tests.EditorHook in 'Source\RadIA.Tests.EditorHook.pas',
   RadIA.Tests.Providers in 'Source\RadIA.Tests.Providers.pas',
   RadIA.Tests.Cache in 'Source\RadIA.Tests.Cache.pas',
   RadIA.Tests.Ollama in 'Source\RadIA.Tests.Ollama.pas',

@@ -1,0 +1,123 @@
+unit RadIA.Tests.EditorHook;
+
+interface
+
+uses
+  DUnitX.TestFramework, Vcl.Menus, RadIA.OTA.EditorHook;
+
+type
+  [TestFixture]
+  TTestEditorHook = class
+  private
+    FHook: TRadIAEditorHook;
+    FPopupMenu: TPopupMenu;
+    FOnPopupCalled: Boolean;
+    FOnPopup2Called: Boolean;
+    procedure DummyOnPopup(Sender: TObject);
+    procedure DummyOnPopup2(Sender: TObject);
+  public
+    [SetUp]
+    procedure SetUp;
+    [TearDown]
+    procedure TearDown;
+    
+    [Test]
+    procedure TestInitialHooking;
+    [Test]
+    procedure TestReHookingWhenOverridden;
+    [Test]
+    procedure TestUnhooking;
+  end;
+
+implementation
+
+uses
+  System.Classes, System.SysUtils;
+
+{ TTestEditorHook }
+
+procedure TTestEditorHook.SetUp;
+begin
+  FHook := TRadIAEditorHook.Create(nil);
+  FHook.Install;
+  FPopupMenu := TPopupMenu.Create(nil);
+  FOnPopupCalled := False;
+  FOnPopup2Called := False;
+end;
+
+procedure TTestEditorHook.TearDown;
+begin
+  FPopupMenu.Free;
+  FHook.Uninstall;
+  FHook.Free;
+end;
+
+procedure TTestEditorHook.DummyOnPopup(Sender: TObject);
+begin
+  FOnPopupCalled := True;
+end;
+
+procedure TTestEditorHook.DummyOnPopup2(Sender: TObject);
+begin
+  FOnPopup2Called := True;
+end;
+
+procedure TTestEditorHook.TestInitialHooking;
+var
+  LEventDummy: TNotifyEvent;
+begin
+  LEventDummy := DummyOnPopup;
+  FPopupMenu.OnPopup := LEventDummy;
+  
+  FHook.HookMenuDirectly(FPopupMenu);
+  
+  // The OnPopup handler should have been changed to the hook handler
+  Assert.AreNotEqual(TMethod(FPopupMenu.OnPopup).Code, TMethod(LEventDummy).Code);
+end;
+
+procedure TTestEditorHook.TestReHookingWhenOverridden;
+var
+  LEventDummy: TNotifyEvent;
+  LNewDummy: TNotifyEvent;
+begin
+  LEventDummy := DummyOnPopup;
+  FPopupMenu.OnPopup := LEventDummy;
+  
+  FHook.HookMenuDirectly(FPopupMenu);
+  
+  // Override the handler (simulating the IDE re-creating the menu)
+  FOnPopup2Called := False;
+  LNewDummy := DummyOnPopup2;
+  FPopupMenu.OnPopup := LNewDummy;
+  
+  // Execute the hooker again (e.g. triggered by the 1s timer)
+  FHook.HookMenuDirectly(FPopupMenu);
+  
+  // The active OnPopup handler should still point to the hook handler
+  Assert.AreNotEqual(TMethod(FPopupMenu.OnPopup).Code, TMethod(LNewDummy).Code);
+  
+  // When the event fires, the overridden IDE handler should still be invoked
+  if Assigned(FPopupMenu.OnPopup) then
+    FPopupMenu.OnPopup(FPopupMenu);
+    
+  Assert.IsTrue(FOnPopup2Called, 'The overridden IDE handler should have been chained and executed by the hooker');
+end;
+
+procedure TTestEditorHook.TestUnhooking;
+var
+  LEventDummy: TNotifyEvent;
+begin
+  LEventDummy := DummyOnPopup;
+  FPopupMenu.OnPopup := LEventDummy;
+  
+  FHook.HookMenuDirectly(FPopupMenu);
+  FHook.UnhookMenuDirectly(FPopupMenu);
+  
+  // The original OnPopup handler should be perfectly restored
+  Assert.AreEqual(TMethod(FPopupMenu.OnPopup).Code, TMethod(LEventDummy).Code);
+end;
+
+initialization
+  TDUnitX.RegisterTestFixture(TTestEditorHook);
+
+end.

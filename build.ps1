@@ -276,7 +276,7 @@ if ($runTests) {
         $testsBinPath = "..\Output\$delphiVer\bin\Win32\$configName"
         New-Item -ItemType Directory -Force -Path $testsDcuPath, $testsBinPath | Out-Null
         
-        $dccParamsTests = @("-Q", "-LUdesignide", "-LUvclie", "-NU$testsDcuPath", "-E$testsBinPath")
+        $dccParamsTests = @("-Q", "-LUdesignide", "-LUvclie", "-NU$testsDcuPath", "-E$testsBinPath", "-DTESTS")
         if ($Release) {
             $dccParamsTests += @('-$D-', '-$L-', '-O+', '-DRELEASE')
         } else {
