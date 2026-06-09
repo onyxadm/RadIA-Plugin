@@ -890,7 +890,10 @@ begin
       end;
     end;
     
-    LForm.ShowModal;
+    if LForm.ShowModal = mrOk then
+    begin
+      FPresenter.LoadConfig;
+    end;
   finally
     LForm.Free;
   end;

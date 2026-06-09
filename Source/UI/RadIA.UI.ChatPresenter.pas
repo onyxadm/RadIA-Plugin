@@ -60,7 +60,6 @@ type
     FCurrentBackgroundUrl: string;
     FLoginPopupOpen: Boolean;
 
-    procedure LoadConfig;
     procedure HandleBackgroundLoginComplete;
     procedure UpdateModelsCombo;
     procedure LoadChatHistory;
@@ -84,6 +83,7 @@ type
     destructor Destroy; override;
 
     procedure Initialize(const AWebFilesDir: string);
+    procedure LoadConfig;
     procedure ProcessWebMessage(const AMessage: string);
     procedure OnWebViewReady;
     
@@ -1230,7 +1230,14 @@ begin
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'send_prompt');
-    LJson.AddPair('text', APrompt);
+    
+    var LFinalPrompt := APrompt;
+    if not LFinalPrompt.Trim.IsEmpty then
+    begin
+      LFinalPrompt := LFinalPrompt + sLineBreak + sLineBreak + 'Please reply in Brazilian Portuguese.';
+    end;
+    
+    LJson.AddPair('text', LFinalPrompt);
     FView.PostMessageToBackgroundWeb(LJson.ToJSON);
   finally
     LJson.Free;
