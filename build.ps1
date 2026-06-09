@@ -138,18 +138,11 @@ switch ($compilerVersion) {
 }
 
 Write-Host "Versao do Delphi correspondente (DelphiVer): $delphiVer" -ForegroundColor Green
-# 4.1 Ajustar automaticamente a arquitetura do plugin conforme a versao da IDE
-if ($compilerVersion -ge 37.0) {
-    if (-not $IDE64) {
-        Write-Host "Detectado Delphi 13 ou superior (IDE de 64 bits). Ativando flag -IDE64 automaticamente." -ForegroundColor Yellow
-        $IDE64 = $true
-    }
+# 4.1 Ajustar a arquitetura do plugin conforme as escolhas do usuario
+if ($IDE64) {
+    Write-Host "Compilando para IDE de 64 bits (Win64) conforme parametro -IDE64 informado." -ForegroundColor Yellow
 } else {
-    if ($IDE64) {
-        Write-Host "AVISO: A IDE do Delphi nas versoes anteriores ao Delphi 13 e de 32 bits." -ForegroundColor Yellow
-        Write-Host "       A flag -IDE64 foi desativada pois o plugin deve ser compilado em Win32 para carregar na IDE." -ForegroundColor Yellow
-        $IDE64 = $false
-    }
+    Write-Host "Compilando para IDE de 32 bits (Win32) por padrao." -ForegroundColor Yellow
 }
 
 
@@ -384,7 +377,7 @@ if ($Install) {
     $dllName = "WebView2Loader.dll"
 
     # Copiar a DLL de 32-bit apenas se a IDE for de 32-bit (Delphi 12 ou anterior, sem flag IDE64)
-    if (($compilerVersion -lt 37.0) -and (-not $IDE64)) {
+    if (-not $IDE64) {
         if (-not (Test-Path "$ideBinDir\$dllName")) {
             Write-Host "WebView2Loader.dll (32-bit) nao encontrada em $ideBinDir." -ForegroundColor Yellow
             $redist32 = ".\Redist\Win32\$dllName"
@@ -393,10 +386,7 @@ if ($Install) {
                 Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$redist32' -Destination '$ideBinDir\$dllName' -Force" -Wait
             }
         }
-    }
-
-    # Copiar a DLL de 64-bit apenas se a IDE for de 64-bit (Delphi 13 ou superior, ou com flag IDE64)
-    if (($compilerVersion -ge 37.0) -or $IDE64) {
+    } else {
         if (-not (Test-Path "$ideBin64Dir\$dllName")) {
             Write-Host "WebView2Loader.dll (64-bit) nao encontrada em $ideBin64Dir." -ForegroundColor Yellow
             $redist64 = ".\Redist\Win64\$dllName"

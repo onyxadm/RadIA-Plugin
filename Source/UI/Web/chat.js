@@ -976,6 +976,7 @@ function updateModelsList(models, activeModel) {
 }
 
 function setRequestState(inProgress) {
+  console.log('[DEBUG] setRequestState called with:', inProgress);
   requestInProgress = inProgress;
   if (inProgress) {
     btnSendPrompt.classList.add('stop-btn');
@@ -1183,6 +1184,7 @@ function updateMessage(text, isDone, provider, model) {
 if (window.chrome && window.chrome.webview) {
   window.chrome.webview.addEventListener('message', event => {
     const data = event.data;
+    console.log('[DEBUG] Received message from Delphi:', data);
     switch (data.action) {
       case 'add_message':           addMessage(data.role, data.text, data.provider, data.model); break;
       case 'update_message':        updateMessage(data.text, data.isDone, data.provider, data.model); break;
