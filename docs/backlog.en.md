@@ -1,253 +1,309 @@
-<div align="right">
+# RadIA - Evolution Backlog
 
-[🇧🇷 Português](backlog.md) | [🇺🇸 English](backlog.en.md)
-
-</div>
-
-# RadIA Future Evolution Backlog
-
-This document tracks tasks and ideas for the evolution of the RadIA plugin, detailing the status of each feature.
+This document registers the development status, future planning, and technical implementation history of **RadIA** plugin tasks.
 
 ---
 
-## ✅ Completed Items
+## 📊 Kanban Dashboard
 
-### 1. Context Window Management (Automatic Trimming) - Item #10
-*   **Description**: Prevents silent token limit errors from the API by trimming older messages from the active conversation when the maximum configured limit is reached.
-*   **Details**:
-    *   Implemented the `MaxHistoryMessages` field in settings (Windows Registry, default: 20).
-    *   The orchestrator `TRadIAService.TrimHistory` trims older messages while preserving the system prompt and the most recent messages.
-    *   Robust validation with 10 specific unit tests in `RadIA.Tests.Service.pas`.
+The board below summarizes the current status of mapped short and medium-term features in the project:
 
-### 2. DTO and Model Converter (JSON / DDL ➔ Delphi) - Item #22
-*   **Description**: Automated generation of Object Pascal classes and records from JSON payloads or SQL DDL scripts, with built-in support for DEXT ORM, Aurelius, REST.Json, and Vanilla.
-*   **Details**:
-    *   Developed the central builder `TRadIADTOBuilder` inside `RadIA.Core.DTO.Generator.pas` with dynamic rule conversion engines.
-    *   Direct DEXT ORM mapping utilizing Smart Properties (`IntType`, `StringType`, etc.) and lazy relationships (`ILazy<T>`, `TValueLazy<T>`) without redundant getters/setters.
-    *   Robust validation with 96 unit tests inside `RadIA.Tests.DTOGenerator.pas`.
-
-### 3. Prompt History (↑/↓ Navigation) - Item #6
-*   **Description**: Allows the developer to navigate through the last queries sent using the up/down arrow keys on the keyboard.
-*   **Details**:
-    *   Created the `TPromptHistoryManager` limiting entries to 50, persisted in `%APPDATA%\RadIA\prompt_history.json`.
-    *   Keyboard capture in `memPromptKeyDown` for dynamic prompt navigation.
-    *   Validation with 13 dedicated unit tests in `RadIA.Tests.PromptHistory.pas`.
-
-### 3. OpenAI Compatible Endpoints (LM Studio, Azure, Groq) - Item #8
-*   **Description**: Support for any provider compatible with the OpenAI protocol by simply changing the base URL.
-*   **Details**:
-    *   Added the `Custom Base URL` field in OpenAI settings (`IAIConfig.OpenAICustomBaseUrl`).
-    *   Request methods and model discovery use the custom URL when provided.
-    *   Validation with 3 dedicated unit tests in `RadIA.Tests.Providers.pas`.
-
-### 4. Token Tracking - Item #14
-*   **Description**: Displays the count of tokens (Prompt and Completion) consumed in the Chat UI status bar.
-*   **Details**:
-    *   Implemented the `TTokenUsage` record to track input/output tokens.
-    *   Dynamic status bar in HTML/CSS/JS synchronized with Delphi.
-    *   Validation with unit tests in `RadIA.Tests.TokenUsage.pas`.
-
-### 5. Export Conversation (.md / .html) - Item #7
-*   **Description**: Allows saving the full history of the active chat in Markdown or structured HTML formats with a single click.
-*   **Details**:
-    *   Export button integrated into the sidebar and native `TSaveDialog` dialog.
-    *   Standalone HTML exported with embedded CSS and Prism.js for Pascal highlighting.
-    *   Validation with 4 unit tests in `RadIA.Tests.Exporter.pas`.
-
-### 6. Prompt Templates - Item #12
-*   **Description**: Quick prompt template library with code replacement and the `/template` slash command.
-*   **Details**:
-    *   Dynamic "Tpl" menu and slash command in the chat.
-    *   Smart replacement of the `{code}` placeholder with the selected code block in the IDE.
-    *   Validation with 4 unit tests in `RadIA.Tests.Templates.pas`.
-
-### 7. Project Context (.radia file) - Item #11
-*   **Description**: Allows customizing system prompts and reading additional project files as AI context.
-*   **Details**:
-    *   `TProjectContextLoader` reader that detects `.radia` files in the root folder of the active Delphi project via `IOTAProject`.
-    *   Validation with 4 unit tests in `RadIA.Tests.ProjectContext.pas`.
-
-### 8. Response Streaming (SSE) - Item #4
-*   **Description**: Incremental token-by-token display (Server-Sent Events) in the IDE chat, optimizing the user experience.
-*   **Details**:
-    *   Native SSE streaming implemented in providers: OpenAI, Gemini, Claude, and Ollama.
-    *   Usage of `TStreamingTargetStream` intercepting HTTP writes in real-time.
-    *   Javascript functions `appendMessage`, `showTypingIndicator`, and `hideTypingIndicator` integrated in the WebView.
-    *   Dedicated unit tests in `RadIA.Tests.Streaming.pas` covering incremental behavior, partial buffers, and completion events.
-
-### 9. Integration with Local Models (Ollama) + Persistent History - Item #3
-*   **Description**: Native support for local models without paid keys and full chat history restoration.
-
-### 10. Native Providers: DeepSeek and Groq - Item #9
-*   **Description**: Added direct native support to DeepSeek and Groq providers with SSE streaming and dynamic model autodiscovery.
-*   **Details**:
-    *   Created the `RadIA.Provider.DeepSeek.pas` unit for connection to the DeepSeek API.
-    *   Created the `RadIA.Provider.Groq.pas` unit for connection to the Groq API.
-    *   Extended settings for API keys with secure storage and DPAPI.
-    *   New unit tests in `RadIA.Tests.ProvidersEx.pas` covering payload, response parsing, and streaming SSE flow.
-
-### 11. AI Request Cancellation & New Prompt Design - Item #17
-*   **Description**: Allows the developer to abort active AI HTTP requests asynchronously and instantly, and redesigns the chat input box into a modern and responsive floating capsule layout.
-*   **Details**:
-    *   Implemented network-level cancellation by intercepting the `OnReceiveData` callback of `THTTPClient`.
-    *   The send button changes its function and icon dynamically to a stop button (`■`) during the request, and the UI displays a clean cancellation message without encoding issues.
-    *   Input panel background configured for native transparency (`ParentBackground := True`), with the capsule shape (`shpInputBg`) and memo (`memPrompt`) styled with high contrast and visual integration.
-
-### 12. Advanced Settings per AI Provider - Item #18
-*   **Description**: Allows developers to configure generation parameters such as Temperature and Max Tokens individually per provider inside tabbed sections in the settings screen.
-*   **Details**:
-    *   Dynamic parameter editing and persistence within the Windows Registry via the `TRadIAConfig` class.
-    *   Payload mapping and integration inside HTTP JSON request modules for all supported AI backends (Ollama, Gemini, OpenAI, Claude, Groq, and DeepSeek).
-
-### 13. Multiple Chat Sessions - Item #5
-*   **Description**: Allows developers to organize conversations by project, feature, or task without losing the context of previous sessions.
-*   **Details**:
-    *   Persistent session storage in `%APPDATA%\RadIA\sessions\<guid>.json` indexed within `sessions_index.json` managed by the `TRadIASessionManager` class.
-    *   Collapsible sidebar panel in the UI (`pnlSessions`) with a `ListBox` and controls (New Session, Rename, Delete) featuring a smooth slide animation and a Hamburger toggle (☰) on the toolbar.
-    *   Robust validation using unit tests in `RadIA.Tests.Sessions.pas`.
-
-### 14. Local Token Budget and Quota Control - Item #19
-*   **Description**: Allows developers to set a monthly local token usage limit in settings to avoid surprise charges on their API keys, accumulating the consumption locally and blocking new requests if exceeded.
-*   **Details**:
-        *   Windows Registry integration with automatic monthly token quota resets.
-        *   Dynamic settings controls generated on the panel's configuration page.
-        *   HTML-based quota consumption percentage display inside the WebView's status bar.
-        *   Full test coverage in `RadIA.Tests.Quota.pas` checking blocking logic and reset cycles.
-
-### 15. New Configuration Layout (Delphi-like) and Tools -> Options Integration - Item #2
-*   **Description**: Refactoring the settings screen into a reusable frame integrated natively inside the IDE's global configuration (`Tools -> Options`), with a styled tree view dynamic mapping.
-*   **Details**:
-    *   Implementation of the `TFrameAIConfig` frame containing the PageControl and options controls.
-    *   Implementation of the `TFormAIConfig` standalone wrapper form containing a sidebar with `TTreeView` and footer buttons to preserve the original standalone popup behavior.
-    *   Integration of the Open Tools API bridge via `TRadIAAddInOptions` (`INTAAddInOptions`) registering the category tree under **Third Party > RadIA** (with subnodes for Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama).
-    *   Automated theming and styling following the native IDE theme using individual panel wrappers for style inheritance and preventing inappropriate color contrast in the IDE dark theme.
-    *   Automated silent saving when clicking "OK" inside the IDE's options, and explicit success messages shown only on the standalone popup form.
-
-### 16. Native Provider: OpenRouter - Item #20
-*   **Description**: Added direct native support to the OpenRouter provider with SSE streaming, registry persistence, secure credential storage via DPAPI, and model configuration.
-*   **Details**:
-    *   Created the `RadIA.Provider.OpenRouter.pas` unit inheriting from `TRadIAOpenAICompatibleProvider`.
-    *   Mapped `ptOpenRouter` in provider type enum, implemented API key settings, and defined fallback default models (`google/gemini-2.5-pro`, `meta-llama/llama-3.3-70b-instruct`, `deepseek/deepseek-r1`).
-    *   Added the `tsOpenRouter` tab with layout design, and implemented dark/light mode paint controls.
-    *   Created new unit tests in `RadIA.Tests.ProvidersEx.pas` covering payload generation, responses, and SSE event streaming parsing.
-
-### 17. Dynamic and Simplified Provider Infrastructure (Plugin-like) - Item #21
-*   **Description**: Refactored the AI provider infrastructure to support dynamic auto-registration of AI backends, removing cascaded static couplings and rigid enums.
-*   **Details**:
-    *   Implemented the centralized `TProviderRegistry` registry containing provider metadata (`TProviderMetadata`) and delegation of factory functions.
-    *   Implemented auto-registration for the 7 native providers (Gemini, OpenAI, Claude, Ollama, DeepSeek, Groq, and OpenRouter) within their `initialization` sections.
-    *   Decoupled the orchestrator `TRadIAService` which now dynamically resolves any active provider via `TProviderRegistry.CreateProvider` without static `case` statements.
-    *   Added new unit tests in `RadIA.Tests.Service.pas` covering registry integrity and error handling.
-
-### 18. Dynamic Providers via JSON (No Recompilation Plug-ins) - Item #21b
-*   **Description**: Support for adding new OpenAI-compatible AI providers simply by placing `.json` configuration files inside RadIA's AppData, without compiling the plugin.
-*   **Details**:
-    *   Implemented automatic directory scanning in `TProviderRegistry.LoadJsonProviders` reading from `%APPDATA%\RadIA\providers\`.
-    *   Developed the generic polymorphic class `TRadIAGenericOpenAIProvider` acting as a universal OpenAI client wrapper.
-    *   Implemented API key fallback settings configured inside the JSON, and dynamic status marking for listing loaded JSON providers in the chat interface.
-    *   New unit test suite integrated in `RadIA.Tests.JSONProviders.pas`.
-
-### 19. Native Provider: LM Studio - Item #21c
-*   **Description**: Added complete and optional native support for the local LM Studio provider with SSE streaming, local models auto-discovery, and settings page tab.
-*   **Details**:
-    *   Created `RadIA.Provider.LMStudio.pas` unit containing the provider client class and its auto-registration in `TProviderRegistry`.
-    *   Created a dedicated LM Studio tab inside the options page Frame with custom server URL settings and IDE theme color adaptation.
-    *   Refactored the sidebar chat detection to handle LM Studio as an optional provider (visible only if a server URL is saved in options).
-    *   Developed new unit tests inside `RadIA.Tests.ProvidersEx.pas` validating LM Studio payloads, response parsing, and SSE streaming.
-
-### 20. Support for Multiple Delphi Versions in Build - Item #27
-*   **Description**: Improved the robustness of the build and installation script (`build.ps1`) for environments with multiple Delphi versions installed, allowing selection via interactive menu or command-line parameters.
-*   **Details**:
-    *   Implemented the `-DelphiVersion` parameter to force the compilation and registration targeting a specific Delphi version.
-    *   Implemented dynamic scanning of the Windows Registry (`HKCU:\Software\Embarcadero\BDS`) to map actual installation paths (`RootDir`) and friendly names.
-    *   Developed an interactive console menu in PowerShell for selecting the version if multiple active IDEs are detected during installation or uninstallation.
-    *   Dynamicized all internal IDE folders and build paths using `$rootDir` instead of global hardcoded paths on the C: drive.
-
-### 21. Hybrid Connection and Web Login (Plus/Pro) - Item #28
-*   **Description**: Implementation of a complementary connection mode via Web Login in consumer accounts (ChatGPT Plus/Pro and Gemini Advanced) with DOM automation and JS bridge, living harmoniously with the traditional BYOK model (API Keys).
-*   **Details**:
-    *   Created configuration keys and selector in settings interface ("Tools -> Options") per provider.
-    *   Developed the `bridge.js` script to control DOM input/output, inject CSS to hide unnecessary elements of the official site, and monitor stream progress.
-    *   Created the virtual provider `TRadIAWebViewBridgeProvider` for synchronous/asynchronous AI request orchestration targeting the active WebView2 window.
-    *   Configured a secure Chromium User-Agent to prevent OAuth blocks during Google's authentication flow.
-
-### 22. Native GitHub Copilot Support (Phase 2) - Item #29
-*   **Description**: Native support for the GitHub Copilot cloud with integrated OAuth Device Flow and one-click VS Code credential importing, along with settings UI shortcut links to obtain API keys for other providers.
-*   **Details**:
-    *   Developed the `RadIA.Provider.GithubCopilot.pas` unit featuring the provider class and thread-safe session token management from `https://api.github.com/copilot_internal/v2/token`.
-    *   Developed the VCL modal auth form `RadIA.UI.GithubAuthForm.pas` for background device login polling.
-    *   Updated the options frame to include the Copilot tab with login/import buttons and "Get API Key" hyperlink shortcuts for cloud-based providers.
-
-### 23. Additional Native Providers (Azure OpenAI, Alibaba Qwen and Mistral AI) - Items #30, #31, #32
-*   **Description**: Added direct native support for the official APIs of Azure OpenAI, Alibaba Qwen (ModelStudio), and Mistral AI, featuring dedicated configuration tabs, API key shortcut links, SSE streaming support, and custom provider sorting in the user interface.
-*   **Details**:
-    *   Developed the provider classes `TRadIAAzureOpenAIProvider`, `TRadIAQwenProvider`, and `TRadIAMistralProvider` dynamically integrated into `TProviderRegistry`.
-    *   Mapped secure API keys using Windows DPAPI and provider-specific configurations (such as `AzureApiVersion`).
-    *   Created dynamic light/dark themed VCL settings tabs for each provider within the IDE options (`Tools -> Options`) and config form.
-    *   Implemented custom provider ordering within `TProviderRegistry.GetProviders` to keep **Ollama** and **LM Studio** strictly at the end of all client-facing listings.
-    *   Validated with new unit tests in `RadIA.Tests.ProvidersEx.pas` and configuration mock updates in `RadIA.Tests.Service.pas`.
-
-
-### 24. Native AWS Bedrock Provider with SigV4 Signing and EventStream Parser - Item #33
-*   **Description**: Complete native support for the AWS Bedrock provider, utilizing AWS Signature Version 4 (SigV4) cryptographic request signing and on-the-fly binary decoding of the AWS EventStream format.
-*   **Details**:
-    *   Developed the `TRadIABedrockProvider` client class inside the `RadIA.Provider.Bedrock.pas` unit, integrated into the central registry.
-    *   Created the `TAwsSigV4Signer` cryptographic utility inside the `RadIA.Core.AwsSigner.pas` unit to compute SHA-256 and HMAC-SHA-256 signatures for headers required by AWS.
-    *   Implemented the `TAwsEventStreamParser` binary parser to incrementally process and decode EventStream payloads from Bedrock's async stream responses.
-    *   Added a custom VCL tab inside the Delphi IDE's options frame with DPAPI-encrypted settings fields for AWS Access Key, Secret Key, Region, and Session Token.
-    *   Added corresponding unit tests inside `RadIA.Tests.ProvidersEx.pas`, achieving **112 successful tests** inside the full test suite.
-
-### 25. Complete Project Generation (Prompt-Based) - Item #24b
-*   **Description**: Automated creation of Delphi projects (.dpr, .pas, .dfm) from a prompt, saving them to a designated empty folder on disk, and natively loading them in the IDE.
-*   **Details**:
-    *   Developed the transactional file-saver and folder structure analyzer `TRadIAProjectGenerator` inside `RadIA.Core.ProjectGenerator.pas`.
-    *   Mandated empty directory verification and transactional rollback to discard files on writing exceptions.
-    *   Created a premium project view panel inside WebView2 displaying files by type with scroll-to-view and code block highlighting.
-
-### 26. Stack Trace Assistant, Static Code Analysis & Popup Menu - Items #23, #24, #25
-*   **Description**: Built-in slash commands `/stacktrace` and `/bugs` targeting contextual exception trace analysis and memory leak scans, alongside a dynamic autocomplete popup menu in WebView2 chat.
-*   **Details**:
-    *   Configured editor active unit text context injection.
-    *   Rendered floating chat popup suggestions supporting keyboard arrow navigation and mouse selection clicks.
-
-### 27. Dynamic Templates, Prompt Backups & New Architecture - Item #12b
-*   **Description**: Complete dynamic customization of prompt templates and slash commands, coupled with settings UI backup utilities and SOLID architecture project templates.
-*   **Details**:
-    *   Replaced hardcoded preprocessing ifs with a fully dynamic template dictionary scan featuring `{code}`, `{specification}`, `{stacktrace}`, and `{argument}` placeholders.
-    *   Integrated Windows VCL template import/export dialogs verifying JSON syntax and offering Merge vs. Overwrite transactional loading options.
-    *   Designed the `'Create Project Delphi Architecture'` template (`/createprojectarch`) enforcing interface inversion, memory safety try..finally guards, and Pascal conventions.
-    *   Updated and verified all unit tests in `RadIA.Tests.Templates.pas` checking schemas, constraints, and backups.
-
-### 28. Segregated Template Architecture (System vs. User with Overlays) - Item #12c
-*   **Description**: Segregated default prompt templates inside source code from customized user templates on disk, allowing automatic updates of plugin prompts without breaking user adjustments, with overlay and factory restore supports.
-*   **Details**:
-    *   Two-layer configuration files loaded with runtime merge in `TPromptTemplateManager`.
-    *   Automatic cleansing (`CleanRedundantUserTemplates`) of redundant templates on user AppData matching raw code defaults.
-    *   Enhanced options frame VCL settings rendering dynamic source captions (`lblTemplateOrigin`) and contextual delete/restore options.
-    *   Expanded DUnitX unit test suite containing 117 tests successfully verified.
+| Feature / Task | Status | Difficulty | Priority | Target Version |
+| :--- | :---: | :---: | :---: | :---: |
+| **Smart SQL Optimizer in Editor** | 🔲 Planned | 🟢 Low | ⭐⭐⭐⭐ High | v0.1.0 |
+| **Delphi Compiler & OS Warning Scanner** | 🔲 Planned | 🟢 Low | ⭐⭐⭐⭐ High | v0.1.0 |
+| **Automatic Code Review on Save** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.1.0 |
+| **Applied Refactoring History** | 🔲 Planned | 🟢 Low | 🟡 Medium | v0.1.0 |
+| **Uses Clause Optimizer (Clean Uses)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
+| **Mock Generator for Unit Tests** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
+| **Smart Multi-Unit Trace Resolver** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐⭐ Critical | v0.2.0 |
+| **MadExcept / EurekaLog Context Extractor** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐⭐ Critical | v0.2.0 |
+| **OpenAPI/Swagger Documentation Generator** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
+| **Bidirectional Semantic Analysis (DFM x PAS)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
+| **Version Migration Assistant (Smart Migrate)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
+| **Cache Management Panel** | 🔲 Planned | 🟡 Medium | 🟡 Medium | v0.2.0 |
+| **BDE/ADO/dbExpress ➔ DEXT with FireDAC Migration** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
+| **Legacy Form Decomposer (Code-Behind)** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
+| **Threads and PPL Assistant** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
+| **Automated Internationalization (i18n Wizard)** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
+| **Smart Inline Autocomplete (Ghost Text)** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
+| **IDE Debugger Auto Hook (OTA)** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
+| **Project Docs Auto Generation (API.md)** | 🔲 Planned | 🟡 Medium | 🟡 Medium | v0.3.0+ |
+| **Native macOS/Linux Support (Lazarus)** | 🔲 Planned | 🔴 High | 🟢 Low | v0.3.0+ |
 
 ---
 
-## ⏳ In Development
+## ⏳ 1. Work in Progress (WIP)
 
-*   *No active development items at the moment.*
+*   *No active task currently in progress in this branch.*
 
 ---
 
-## 🔲 Pending Items
+## 🔲 2. Next Up (Planned Backlog)
 
-### 1. Cache Management Panel (Item #13)
-*   **Goal**: Provide visibility and control over the response cache without having to edit the JSON file manually.
+For complete details on objectives, impacts, and technical specifications for each future feature, check the [Feature Prioritization Matrix (docs/feature_prioritization_matrix.md)](feature_prioritization_matrix.md) or the [Evolution Roadmap (ROADMAP.en.md)](../ROADMAP.en.md).
 
-### 2. Automatic Code Review on Save (Item #15)
-*   **Goal**: Silently analyze the unit upon saving and signal in the RadIA panel if the AI found any points of interest.
+---
 
-### 3. Applied Refactoring History (Item #16)
-*   **Goal**: Maintain an auditable log of every time the [Apply Changes] button was triggered, allowing manual review and undo.
+## ✅ 3. Completed History
 
-### 4. Smart Inline Autocomplete (Ghost Text) (Item #26)
-*   **Goal**: Real-time code completion suggestions directly onto the code editor with ghost text styling like Copilot/Cursor.
-*   **Architecture Note**: Technical research and prototyping on the ToolsAPI (utilizing `INTAEditViewNotifier.PaintLine`, GDI Canvas isolation with `SaveDC`/`RestoreDC`, synchronous debounce, and key interception VK_TAB/VK_ESCAPE with `IOTAKeyboardBinding`) have been completed. Development has been temporarily paused due to restrictions in the IDE's synchronous repaint cycle that affect the native cursor's stability in High DPI. Modules have been archived for future evolution when new asynchronous painting APIs from Embarcadero are evaluated.
+Check the implementation details of each completed feature grouped by target release version:
 
+<details>
+  <summary><b>📦 v0.0.15 — Two-Layer Template Architecture (Click to expand)</b></summary>
 
+  #### 1. Two-Layer Segregated Template Architecture (Native vs. User overlays) - Item #12c
+  *   **Description**: Segregates default prompt templates hardcoded in the codebase from those customized by the user inside AppData, allowing updates without losing custom settings, using overlays and factory resets.
+  *   **Details**:
+      *   Two-layer loading logic merging default and custom templates at runtime inside `TPromptTemplateManager`.
+      *   Automated cleanup of redundant unedited templates inside user AppData directory (`CleanRedundantUserTemplates`).
+      *   Enhanced settings VCL UI featuring origin descriptors (`lblTemplateOrigin`) and contextual delete/restore buttons.
+      *   Expanded unit test suite achieving 117 successful DUnitX assertions.
+</details>
 
+<details>
+  <summary><b>📦 v0.0.14 — Dynamic Templates & Backup (Click to expand)</b></summary>
+
+  #### 1. Dynamic Templates, Prompt Backups, and New Architecture - Item #12b
+  *   **Description**: Total dynamic template customization for prompts and slash commands, including VCL JSON backup dialogs and Clean Architecture support.
+  *   **Details**:
+      *   Removed hardcoded ifs when resolving slash commands. The parser scans `TPromptTemplateManager` dynamically using `{code}`, `{specification}`, `{stacktrace}`, and `{argument}` placeholders.
+      *   JSON import/export transactional dialogs with schema checks and options to *Merge* or *Overwrite* local templates.
+      *   Shipped the new `'Create Project Delphi Architecture'` (`/createprojectarch`) template, incorporating Dependency Inversion, robust try..finally blocks, and Pascal naming standards.
+      *   Updated test coverage in `RadIA.Tests.Templates.pas` verifying backup parsing and schema validations.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.13 — Prompt-Based Delphi Project Generation (Click to expand)</b></summary>
+
+  #### 1. Full Project Generation (Prompt-Based) - Item #24b
+  *   **Description**: Automated creation of full Delphi projects based on chat prompts, writing them to disk and opening them in the IDE.
+  *   **Details**:
+      *   Developed transactional builder class `TRadIAProjectGenerator` inside `RadIA.Core.ProjectGenerator.pas`.
+      *   Requires a clean, empty folder for saving files, rolling back created files if write errors occur.
+      *   Parsed and rendered files inside a glassmorphism project panel in WebView2 featuring file shortcuts and flash highlight.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.12 — AWS Bedrock Provider (Click to expand)</b></summary>
+
+  #### 1. Native AWS Bedrock Provider with SigV4 Signatures and EventStream Parser - Item #33
+  *   **Description**: Full native AWS Bedrock support featuring AWS Signature Version 4 (SigV4) signing and binary AWS EventStream real-time decoding.
+  *   **Details**:
+      *   Developed the provider client `TRadIABedrockProvider` inside `RadIA.Provider.Bedrock.pas` registered into the core registry.
+      *   Developed the SigV4 cryptographic utility `TAwsSigV4Signer` inside `RadIA.Core.AwsSigner.pas` computing SHA-256 and HMAC-SHA-256 signatures for AWS request headers.
+      *   Implemented `TAwsEventStreamParser` to incrementally parse and decode Bedrock's binary EventStream payload frames.
+      *   Created a VCL settings page featuring DPAPI-encrypted storage for AWS credentials (Access Key, Secret Key, Region, and Session Token).
+      *   Added unit tests to `RadIA.Tests.ProvidersEx.pas`, achieving **112 passing green assertions** in the test suite.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.11 — Azure, Qwen, and Mistral AI Providers (Click to expand)</b></summary>
+
+  #### 1. Additional Native Providers (Azure OpenAI, Alibaba Qwen, and Mistral AI) - Items #30, #31, #32
+  *   **Description**: Direct native support for Azure OpenAI, Alibaba Qwen (ModelStudio), and Mistral AI APIs, including settings panels, key acquisition shortcuts, SSE streaming, and sorted provider lists.
+  *   **Details**:
+      *   Developed provider classes `TRadIAAzureOpenAIProvider`, `TRadIAQwenProvider`, and `TRadIAMistralProvider` registered dynamically in `TProviderRegistry`.
+      *   Saved secure API keys via Windows DPAPI and custom properties (like `AzureApiVersion`).
+      *   Created VCL light/dark options tabs for each provider inside the IDE's options dialog.
+      *   Implemented sorted lists inside `TProviderRegistry.GetProviders` ensuring **Ollama** and **LM Studio** sit at the bottom of all lists.
+      *   Validated with tests inside `RadIA.Tests.ProvidersEx.pas` and mocked configurations inside `RadIA.Tests.Service.pas`.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.10 — Native GitHub Copilot Support (Click to expand)</b></summary>
+
+  #### 1. Native GitHub Copilot Provider (Phase 2) - Item #29
+  *   **Description**: Native integration with the GitHub Copilot cloud featuring PIN authentication (Device Flow) and one-click key import from VS Code, along with developer console shortcuts for other keys.
+  *   **Details**:
+      *   Developed unit `RadIA.Provider.GithubCopilot.pas` managing the temporary session tokens requested from `https://api.github.com/copilot_internal/v2/token`.
+      *   Created UI dialog `RadIA.UI.GithubAuthForm.pas` handling the background PIN device login flow.
+      *   Modified VCL settings page to display the Copilot tab with login controls and quick API Key hyperlink shortcuts.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.9 — Multi-IDE Build Support (Click to expand)</b></summary>
+
+  #### 1. Multi-IDE Version Build Support - Item #27
+  *   **Description**: Enhances build script stability (`build.ps1`) to support systems running multiple Delphi IDE instances, offering target version choice via shell parameters or interactive menus.
+  *   **Details**:
+      *   Implemented the `-DelphiVersion` compiler target flag.
+      *   Scans the Windows Registry (`HKCU:\Software\Embarcadero\BDS`) to fetch physical install paths (`RootDir`) and version labels.
+      *   Added an interactive console select menu when multiple IDEs are found.
+      *   Replaced hardcoded C: paths with dynamic root mapping using `$rootDir`.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.8 — LM Studio Provider (Click to expand)</b></summary>
+
+  #### 1. Native LM Studio Provider - Item #21c
+  *   **Description**: Shipped native, optional support for local LM Studio instances featuring SSE streaming, model autodiscovery, and custom endpoints.
+  *   **Details**:
+      *   Created unit `RadIA.Provider.LMStudio.pas` hosting the provider and its auto-registration.
+      *   Designed a dedicated VCL settings tab matching the IDE theme and persisting URL settings.
+      *   Refactored the sidebar chat to load LM Studio optionally (hiding it from dropdown lists unless configured).
+      *   Coded unit tests covering LM Studio JSON mapping and stream buffers inside `RadIA.Tests.ProvidersEx.pas`.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.6 — JSON Dynamic Providers (Click to expand)</b></summary>
+
+  #### 1. Dynamic JSON Providers (Plugins without Recompilation) - Item #21b
+  *   **Description**: Support for registering custom OpenAI-compatible providers by saving configuration `.json` files inside RadIA's AppData directory, without compiling the plugin.
+  *   **Details**:
+      *   Iterates the directory at `%APPDATA%\RadIA\providers\` inside `TProviderRegistry.LoadJsonProviders`.
+      *   Designed a generic client wrapper `TRadIAGenericOpenAIProvider` to serve as a universal OpenAI bridge.
+      *   Handled fallbacks for optional API Keys and flags to list the loaded provider inside the chat sidebar.
+      *   Built a test suite inside `RadIA.Tests.JSONProviders.pas`.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.4 — Productivity & Static Analysis (Click to expand)</b></summary>
+
+  #### 1. DTO and Model Converter (JSON / DDL ➔ Delphi) - Item #22
+  *   **Description**: Generates Object Pascal classes and records matching JSON payloads or SQL DDL scripts, with options for DEXT ORM, Aurelius, REST.Json, and Vanilla.
+  *   **Details**:
+      *   Programmed DTO builder `TRadIADTOBuilder` inside `RadIA.Core.DTO.Generator.pas` using flexible conversion rules.
+      *   Mapped properties for DEXT ORM using Smart properties (`IntType`, `StringType`) and Lazy relations (`ILazy<T>`, `TValueLazy<T>`).
+      *   Validated with 96 unit assertions inside `RadIA.Tests.DTOGenerator.pas`.
+
+  #### 2. Stack Trace Assistant, Static Code Analysis, and Popup Menu - Items #23, #24, #25
+  *   **Description**: Shipped integrated slash commands `/stacktrace` and `/bugs`, along with a WebView2 autocomplete command popup box.
+  *   **Details**:
+      *   Mapped prompt templates injecting editor context (active file buffer or selection).
+      *   Crafted the dynamic CSS popup menu inside WebView2 reacting to keyboard arrows (`↑`/`↓`/`Enter`/`Esc`) and mouse hover.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.3 — Runtime Stability (Click to expand)</b></summary>
+
+  #### 1. Dynamic and Decoupled Providers Architecture (Plugin-like) - Item #21
+  *   **Description**: Refactored AI modules to support dynamic auto-registration of backends, removing cascaded ifs and hardcoded provider enums.
+  *   **Details**:
+      *   Created central registry `TProviderRegistry` housing metadata (`TProviderMetadata`) and delegate factories.
+      *   Implemented auto-registration of 7 native providers inside their `initialization` sections.
+      *   Decoupled `TRadIAService` which now resolves providers dynamically by calling `TProviderRegistry.CreateProvider` without static case loops.
+      *   Added assertions inside `RadIA.Tests.Service.pas` covering registry integrity and error handling.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.2 — Multiple Sessions & Token Budgeting (Click to expand)</b></summary>
+
+  #### 1. Multiple Chat Sessions - Item #5
+  *   **Description**: Organizes conversations by project or task, preserving previous context across restarts.
+  *   **Details**:
+      *   Persists sessions to disk at `%APPDATA%\RadIA\sessions\<guid>.json` indexed via `sessions_index.json` using `TRadIASessionManager`.
+      *   Collapsible sidebar UI (`pnlSessions`) with a `ListBox` and edit tools (New Chat, Rename, Delete) and a Toggle toolbar button (☰).
+      *   Tested session persistence inside `RadIA.Tests.Sessions.pas`.
+
+  #### 2. Local Token Quota and Budgeting - Item #19
+  *   **Description**: Configures monthly limits to prevent surprise faturations, accumulating usage locally and blocking network requests.
+  *   **Details**:
+      *   Registry integration featuring automatic monthly quota resets.
+      *   Visual budget settings inside the options panel.
+      *   WebView status bar displaying real-time usage percentages.
+      *   Tested block routines and quota cycles inside `RadIA.Tests.Quota.pas`.
+
+  #### 3. Native OpenRouter Provider - Item #20
+  *   **Description**: Connects directly to OpenRouter with SSE streaming, DPAPI key encryption, registry storage, and dynamic models listing.
+  *   **Details**:
+      *   Designed `RadIA.Provider.OpenRouter.pas` inheriting from `TRadIAOpenAICompatibleProvider`.
+      *   Mapped registry paths, keys, and default models (`google/gemini-2.5-pro`, `meta-llama/llama-3.3-70b-instruct`, `deepseek/deepseek-r1`).
+      *   Added VCL settings tab matching the IDE theme.
+      *   Tested SSE buffering and responses inside `RadIA.Tests.ProvidersEx.pas`.
+
+  #### 4. Context Window Management (Automated Trimming) - Item #10
+  *   **Description**: Prevents token limit API errors by trimming old history entries when maximum size is reached.
+  *   **Details**:
+      *   Added `MaxHistoryMessages` settings field (Registry, default: 20).
+      *   Manager client `TRadIAService.TrimHistory` cuts the oldest messages while keeping the system prompt and new inputs.
+      *   Validated with 10 unit tests in `RadIA.Tests.Service.pas`.
+
+  #### 5. Token Consumption Tracking - Item #14
+  *   **Description**: Displays input/output token counts inside the chat status bar.
+  *   **Details**:
+      *   Coded `TTokenUsage` record to track inputs/outputs.
+      *   Synced WebView status bar elements with Delphi.
+      *   Tested count mappings inside `RadIA.Tests.TokenUsage.pas`.
+</details>
+
+<details>
+  <summary><b>📦 v0.0.1 — Initial Release (Click to expand)</b></summary>
+
+  #### 1. Prompt History Navigation (↑/↓) - Item #6
+  *   **Description**: Allows developers to cycle through sent inputs using keyboard arrows.
+  *   **Details**:
+      *   Created manager class `TPromptHistoryManager` saving up to 50 history rows inside `%APPDATA%\RadIA\prompt_history.json`.
+      *   Intercepted `memPromptKeyDown` events in the memo control.
+      *   Tested navigation arrays inside `RadIA.Tests.PromptHistory.pas`.
+
+  #### 2. OpenAI Compatible Endpoints - Item #8
+  *   **Description**: Connects to any OpenAI-compatible gateway by changing the Base URL parameter.
+  *   **Details**:
+      *   Added `Custom Base URL` settings field (`IAIConfig.OpenAICustomBaseUrl`).
+      *   Tested customizations inside `RadIA.Tests.Providers.pas`.
+
+  #### 3. Export Conversations - Item #7
+  *   **Description**: Exports the active chat history to Markdown (.md) or standalone HTML.
+  *   **Details**:
+      *   Added "Export" toolbar buttons triggering native file saving dialogs (`TSaveDialog`).
+      *   Embedded Prism.js inside standalone HTML outputs.
+      *   Tested export structures inside `RadIA.Tests.Exporter.pas`.
+
+  #### 4. Prompt Templates - Item #12
+  *   **Description**: Quick template menu replacing `{code}` placeholders with active selections.
+  *   **Details**:
+      *   Added VCL menu buttons and `/template` slash commands.
+      *   Tested parser regexes inside `RadIA.Tests.Templates.pas`.
+
+  #### 5. Project Context (.radia file) - Item #11
+  *   **Description**: Custom system prompts and workspace contexts fetched from local project files.
+  *   **Details**:
+      *   Developed `TProjectContextLoader` searching `.radia` files in the active project root directory using `IOTAProject`.
+      *   Tested workspace loader inside `RadIA.Tests.ProjectContext.pas`.
+
+  #### 6. SSE Stream Responses - Item #4
+  *   **Description**: Token-by-token server response streaming inside the chat window.
+  *   **Details**:
+      *   SSE streaming integrated inside OpenAI, Gemini, Claude, and Ollama.
+      *   Intercepted network downloads using `TStreamingTargetStream` wrappers.
+      *   Coded WebView receiver handlers (`appendMessage`, typing triggers).
+      *   Tested stream buffering inside `RadIA.Tests.Streaming.pas`.
+
+  #### 7. Ollama Integration & Persistent Chat - Item #3
+  *   **Description**: Local offline modeling without key billing, and persistent chat lists.
+
+  #### 8. DeepSeek & Groq Providers - Item #9
+  *   **Description**: Integrated DeepSeek and Groq APIs natively.
+  *   **Details**:
+      *   Created clients `RadIA.Provider.DeepSeek.pas` and `RadIA.Provider.Groq.pas`.
+      *   DPAPI encryption mapping for API keys.
+      *   Tested payloads and streams inside `RadIA.Tests.ProvidersEx.pas`.
+
+  #### 9. Request Aborts & Prompt Capsule UI - Item #17
+  *   **Description**: Cancels pending AI queries at the socket level and introduces a modern capsule text input UI.
+  *   **Details**:
+      *   Aborts downloads by interrupting `THTTPClient.OnReceiveData` calls.
+      *   Swap send buttons dynamically to a stop icon (`■`) during network requests.
+      *   Styled the memo background using transparency attributes and borders.
+
+  #### 10. Provider Preferences Configurations - Item #18
+  *   **Description**: Individual temperature and max token parameters for each provider.
+  *   **Details**:
+      *   Persisted settings fields inside Windows Registry using the core config class.
+      *   Mapped variables to JSON request builders.
+
+  #### 11. Hybrid Connection and Login Web (Plus/Pro) - Item #28
+  *   **Description**: Automates DOM inputs and parses chat data from consumer WebView instances, allowing Plus/Pro usage.
+  *   *Details*:
+      *   Designed settings toggles and bridges inside the options screen.
+      *   Written `bridge.js` to override official UI layouts and scan stream text.
+      *   Configured chromium UA values to bypass third-party login locks.
+
+  #### 12. VCL Third Party Options Integration - Item #2
+  *   **Description**: Hosts settings frames natively under the global IDE Third Party Options registry.
+  *   **Details**:
+      *   Developed config frame `TFrameAIConfig` and standalone popup form wrapper `TFormAIConfig`.
+      *   Registered registry bridges using `INTAAddInOptions` API under **Third Party > RadIA**.
+      *   Styled options dynamically to match IDE light/dark styles.
+</details>
