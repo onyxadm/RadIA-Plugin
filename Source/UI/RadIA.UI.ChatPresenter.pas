@@ -59,6 +59,7 @@ type
     FBackgroundBrowserReady: Boolean;
     FCurrentBackgroundUrl: string;
     FLoginPopupOpen: Boolean;
+    FOwnsService: Boolean;
 
     procedure HandleBackgroundLoginComplete;
     procedure UpdateModelsCombo;
@@ -171,9 +172,15 @@ begin
     FConfig := TRadIAConfig.GetInstance;
 
   if Assigned(AService) then
-    FAIService := AService
+  begin
+    FAIService := AService;
+    FOwnsService := False;
+  end
   else
+  begin
     FAIService := TRadIAService.Create(FConfig);
+    FOwnsService := True;
+  end;
 
   FPromptHistoryManager := TPromptHistoryManager.Create;
   FAccumulatedUsage := TTokenUsage.Empty;
@@ -196,9 +203,8 @@ begin
   FTemplateManager.Free;
   FSessionManager.Free;
   
-  // Checking if FAIService was created locally to free it safely
-  if not Assigned(TRadIAService.Create(nil)) then
-    FAIService.Free;
+  if FOwnsService and Assigned(FAIService) then
+    FreeAndNil(FAIService);
 
   inherited Destroy;
 end;
