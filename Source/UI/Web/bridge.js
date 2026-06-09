@@ -195,11 +195,32 @@
         const textNode = document.createTextNode(markdownText);
         pre.parentNode.replaceChild(textNode, pre);
       });
+
+      // Adiciona quebras de linha explícitas para elementos de bloco comuns para evitar que o texto
+      // fique colado quando extraído em abas ocultas/background (onde innerText falha em formatar quebras).
+      const blockTags = clone.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, br');
+      blockTags.forEach(tag => {
+        if (tag.tagName === 'BR') {
+          const brNewline = document.createTextNode('\n');
+          tag.parentNode.replaceChild(brNewline, tag);
+        } else {
+          const beforeNode = document.createTextNode('\n');
+          const afterNode = document.createTextNode('\n');
+          tag.parentNode.insertBefore(beforeNode, tag);
+          tag.parentNode.insertBefore(afterNode, tag.nextSibling);
+        }
+      });
       
-      return clone.innerText || '';
+      // Usamos textContent para ler o DOM bruto de forma independente de renderização visual/layout CSS
+      let markdown = clone.textContent || '';
+      
+      // Limpa quebras de linha consecutivas excessivas para manter a formatação limpa
+      markdown = markdown.replace(/\n{3,}/g, '\n\n');
+      
+      return markdown.trim();
     } catch (err) {
       log('Erro ao formatar Markdown do elemento:', err);
-      return el.innerText || '';
+      return el.textContent || el.innerText || '';
     }
   }
 
@@ -244,9 +265,10 @@
       }
 
       if (!isGenerating && lastText.length > 0) {
-        // Allow up to 15 cycles (4.5 seconds) of silence/inactivity before declaring done
+        // Allow up to 100 cycles (30 seconds) of silence/inactivity before declaring done
+        // to prevent premature cutting of long assistant responses or during network slowness
         generatingTimeout++;
-        if (generatingTimeout >= 15) {
+        if (generatingTimeout >= 100) {
           log('Geração concluída.');
           clearInterval(monitorInterval);
           monitorInterval = null;

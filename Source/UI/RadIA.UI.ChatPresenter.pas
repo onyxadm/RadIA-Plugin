@@ -128,7 +128,7 @@ implementation
 uses
   System.IOUtils, System.JSON.Builders, RadIA.Core.Config, RadIA.Core.Logger,
   RadIA.Core.ProviderRegistry, RadIA.Core.ConversationExporter,
-  RadIA.Core.DTO.Generator, RadIA.Provider.WebViewBridge, RadIA.OTA.Helper;
+  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge, RadIA.OTA.Helper;
 
 { Helper Functions }
 
@@ -757,7 +757,7 @@ begin
             if not AChunk.IsEmpty then
             begin
               LFullResponse := LFullResponse + AChunk;
-              if not SameText(LActiveProvider, 'WebViewBridge') then
+              if not SameText(LActiveProvider, 'WebViewBridge') and not SameText(Self.FConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
                 Self.PostToWebView('append_message', 'assistant', AChunk, False, LActiveProvider, LActiveModel);
             end;
 
@@ -961,6 +961,8 @@ var
   LText: string;
   LProviderStr: string;
   LModelStr: string;
+  LJsonFiles: TJSONArray;
+  LJsonFilesStr: string;
 begin
   LParsed := TJSONObject.ParseJSONValue(AMessage);
   if not Assigned(LParsed) then
@@ -1143,6 +1145,35 @@ begin
           LInputType := LJson.GetValue<string>('inputType', '');
           LOutputType := LJson.GetValue<string>('outputType', '');
           Self.GenerateDTO(LInput, LInputType, LOutputType);
+        end));
+    end
+    else if LAction = 'create_project' then
+    begin
+      LJsonFiles := LJson.GetValue('files') as TJSONArray;
+      LJsonFilesStr := '';
+      if Assigned(LJsonFiles) then
+        LJsonFilesStr := LJsonFiles.ToJSON;
+
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        var
+          LErrorMsg: string;
+        begin
+          if not LJsonFilesStr.IsEmpty then
+          begin
+            if not TRadIAProjectGenerator.GenerateFromJSON(LJsonFilesStr, LErrorMsg) then
+            begin
+              if not LErrorMsg.IsEmpty then
+              begin
+                Self.FView.ShowMessageDialog(LErrorMsg);
+              end;
+            end;
+          end
+          else
+          begin
+            Self.FView.ShowMessageDialog('No files data received.');
+          end;
         end));
     end
     else if LAction = 'cancel_request' then
