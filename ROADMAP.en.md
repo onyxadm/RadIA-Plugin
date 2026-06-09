@@ -253,22 +253,17 @@ Version v0.0.15 introduced the complete segregation of default prompt templates 
 
 ## 🔲 v0.1.0 — Automation, Auditing, and Quick Wins (Next Version)
 
-### 1. Memory Leak & FastMM Analyzer (Quick Win)
-*   **Goal**: Allow developers to paste raw FastMM dump logs (FastMM4/FastMM5) in the sidebar chat and receive the exact allocation source line in the project codebase, along with structural fix suggestions (proper `try..finally` blocks and `Owner` bindings).
-*   **Impact**: ⭐⭐⭐⭐⭐ High
-*   **Complexity**: Low
-
-### 2. Smart SQL Optimizer in Editor (Quick Win)
+### 1. Smart SQL Optimizer in Editor (Quick Win)
 *   **Goal**: Detect SQL command strings within active Pascal code and offer a context-aware refactoring suggestion to optimize performance, recommend database indexes, and validate syntax matching the configured database dialect.
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Low
 
-### 3. Automatic Code Review on Save
+### 2. Automatic Code Review on Save
 *   **Goal**: Silently analyze the active unit on save and signal in the RadIA panel if the AI found points of attention (e.g., potential bugs, duplicated code, or missing exception handling).
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 4. Applied Refactoring History
+### 3. Applied Refactoring History
 *   **Goal**: Maintain an auditable log of every time the **[Apply Changes]** button was clicked, recording the original snippet, the applied snippet, the date, and the file, allowing future manual review.
 *   **Impact**: ⭐⭐⭐ Medium
 *   **Complexity**: Low

@@ -1,6 +1,6 @@
 # RadIA - Matriz de Priorização e Viabilidade de Features
 
-Este documento apresenta uma análise técnica e de negócios comparando as **11 ideias de novas features** (incluindo a conversão de banco legado para DEXT ORM) com as **8 features que já constam no backlog/roadmap** do projeto RadIA.
+Este documento apresenta uma análise técnica e de negócios comparando as **10 ideias de novas features** com as **7 features que já constam no backlog/roadmap** do projeto RadIA (após remoção de itens redundantes de análise de vazamento de memória já cobertos pelos comandos `/bugs` e `/stacktrace` existentes).
 
 A análise é estruturada sob a perspectiva de um **Arquiteto de Software Sênior**, avaliando a complexidade de implementação no ecossistema do Embarcadero Delphi (usando a Open Tools API e Windows) contra o impacto gerado no dia a dia do desenvolvedor.
 
@@ -12,24 +12,23 @@ A tabela abaixo cruza o **Esforço (Dificuldade)** com o **Impacto (Benefício)*
 
 | Feature | Origem | Dificuldade (Esforço) | Benefício (Impacto) | Categoria |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Analisador de Memory Leaks & FastMM** | Nova | 🟢 Baixa | 🔴 Alto | **Quick Win** (Ganho Rápido) |
-| **2. Smart SQL Optimizer no Editor** | Nova | 🟢 Baixa | 🔴 Alto | **Quick Win** (Ganho Rápido) |
-| **3. Histórico de Refatorações Aplicadas** | Backlog | 🟢 Baixa | 🟡 Médio | **Tarefa de Apoio** |
-| **4. Otimizador de Cláusula Uses (Clean Uses)** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **5. Gerador de Mocks para Testes Unitários** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **6. Revisão Automática de Código no Save** | Backlog | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **7. Assistente de Migração (Smart Migrate)** | Backlog | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **8. Gerador de Documentação OpenAPI/Swagger** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
-| **9. Análise Semântica Bidirecional (DFM x PAS)** | Nova | 🟡 Média | 🟡 Médio-Alto | **Projeto Principal** |
-| **10. Geração de Docs de Projeto (API.md)** | Backlog | 🟡 Média | 🟡 Médio-Alto | **Projeto Principal** |
-| **11. Painel de Gerenciamento do Cache** | Backlog | 🟡 Média | 🟡 Médio | **Tarefa de Apoio** |
-| **12. Conversão BDE/ADO/dbExpress ➔ DEXT com FireDAC** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **13. Decompositor de Forms (Code-Behind)** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **14. Assistente de Threads e PPL** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **15. Internacionalização Automática (i18n)** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **16. Autocompletar Inline (Ghost Text)** | Backlog | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **17. Integração com Depurador da IDE (OTA)** | Backlog | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
-| **18. Suporte Nativo macOS/Linux (Lazarus)** | Backlog | 🔴 Alta | 🟡 Baixo-Médio | **Descarte/Longo Prazo** |
+| **1. Smart SQL Optimizer no Editor** | Nova | 🟢 Baixa | 🔴 Alto | **Quick Win** (Ganho Rápido) |
+| **2. Histórico de Refatorações Aplicadas** | Backlog | 🟢 Baixa | 🟡 Médio | **Tarefa de Apoio** |
+| **3. Otimizador de Cláusula Uses (Clean Uses)** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **4. Gerador de Mocks para Testes Unitários** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **5. Revisão Automática de Código no Save** | Backlog | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **6. Assistente de Migração (Smart Migrate)** | Backlog | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **7. Gerador de Documentação OpenAPI/Swagger** | Nova | 🟡 Média | 🔴 Alto | **Projeto Principal** |
+| **8. Análise Semântica Bidirecional (DFM x PAS)** | Nova | 🟡 Média | 🟡 Médio-Alto | **Projeto Principal** |
+| **9. Geração de Docs de Projeto (API.md)** | Backlog | 🟡 Média | 🟡 Médio-Alto | **Projeto Principal** |
+| **10. Painel de Gerenciamento do Cache** | Backlog | 🟡 Média | 🟡 Médio | **Tarefa de Apoio** |
+| **11. Conversão BDE/ADO/dbExpress ➔ DEXT com FireDAC** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **12. Decompositor de Forms (Code-Behind)** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **13. Assistente de Threads e PPL** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **14. Internacionalização Automática (i18n)** | Nova | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **15. Autocompletar Inline (Ghost Text)** | Backlog | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **16. Integração com Depurador da IDE (OTA)** | Backlog | 🔴 Alta | 🔴 Alto | **Aposta Estratégica** |
+| **17. Suporte Nativo macOS/Linux (Lazarus)** | Backlog | 🔴 Alta | 🟡 Baixo-Médio | **Descarte/Longo Prazo** |
 
 ---
 
@@ -39,20 +38,15 @@ Features que não demandam integrações complexas de baixo nível com o editor 
 
 ```mermaid
 graph TD
-    A[FastMM Dump Analyzer] -->|Alta Viabilidade| B(Parsing do stack trace via IA)
     C[Smart SQL Optimizer] -->|Baixo Risco| D(Leitura de string no editor + Chat)
     E[Histórico de Refatorações] -->|Persistência Simples| F(Gravação de JSON local)
 ```
 
-### 1.1. Analisador de Memory Leaks & FastMM (Nova)
-* **Benefício:** **Alto**. Resolver memory leaks é uma das maiores dores no desenvolvimento Delphi. Entender o log bruto do FastMM4/FastMM5 é exaustivo.
-* **Complexidade:** **Baixa**. O RadIA precisa apenas receber o stack trace colado na WebView2 (ou ler de um arquivo de log local do FastMM) e enviar o contexto do erro juntamente com a unit ativa à IA. O modelo de linguagem faz todo o mapeamento lógico de onde a liberação falhou.
-
-### 1.2. Smart SQL Optimizer no Editor (Nova)
+### 1.1. Smart SQL Optimizer no Editor (Nova)
 * **Benefício:** **Alto**. Previne erros de sintaxe de SQL ocultos em strings e melhora a performance de consultas antes do commit.
 * **Complexidade:** **Baixa**. O plugin lê a linha atual ou o bloco selecionado de texto contendo comandos SQL através da Open Tools API, envia-o para a IA validar de acordo com o dialeto de banco selecionado, e retorna as sugestões de otimização no chat lateral.
 
-### 1.3. Histórico de Refatorações Aplicadas (Backlog - v0.1.0)
+### 1.2. Histórico de Refatorações Aplicadas (Backlog - v0.1.0)
 * **Benefício:** **Médio**. Fornece rastreabilidade e auditoria interna, permitindo que o desenvolvedor veja e desfaça edições que a IA realizou diretamente pelo editor.
 * **Complexidade:** **Baixa**. Consiste em gravar um log incremental contendo `Data`, `Arquivo`, `Trecho Anterior` e `Trecho Novo` em um diretório JSON local (ex: `%APPDATA%\RadIA\history\`) a cada clique no botão **[Aplicar Alteração]**.
 
@@ -135,4 +129,4 @@ Features que alteram profundamente a estrutura de múltiplos arquivos simultanea
 
 > [!TIP]
 > **Recomendação de Próximos Passos:**
-> O foco estratégico do RadIA deve ser a implementação de **Quick Wins** (Memory Leaks e Smart SQL Optimizer), pois trazem valor imediato com baixíssimo risco de regressões. Paralelamente, podemos planejar o desenvolvimento incremental dos **Projetos Principais** de esforço médio (como a Otimização da Cláusula Uses e a Revisão Automática no Save), consolidando a robustez do assistente antes de partirmos para refatorações complexas em DFM.
+> O foco estratégico do RadIA deve ser a implementação de **Quick Wins** (Smart SQL Optimizer), pois traz valor imediato com baixíssimo risco de regressões. Paralelamente, podemos planejar o desenvolvimento incremental dos **Projetos Principais** de esforço médio (como a Otimização da Cláusula Uses e a Revisão Automática no Save), consolidando a robustez do assistente antes de partirmos para refatorações complexas em DFM.
