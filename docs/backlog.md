@@ -50,7 +50,7 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
-  <summary><b>📦 v0.0.16 — Refatoração Arquitetural MVP, Storage Abstraction e Testes (Clique para expandir)</b></summary>
+  <summary><b>📦 v0.0.16 — Refatoração Arquitetural MVP, Storage Abstraction e Robustez do Editor (Clique para expandir)</b></summary>
 
   #### 1. Implementação do Padrão MVP e Abstração de Armazenamento - Itens #40, #41
   *   **Descrição**: Desacoplamento da lógica de negócios e UI no Chat e na tela de Configurações introduzindo o padrão MVP, e criação de uma abstração flexível para persistência de dados de configurações (`ISettingsStorage`), permitindo testes unitários determinísticos com mock storage em memória.
@@ -59,7 +59,15 @@ Consulte os detalhes de implementação de cada recurso agrupado por versão:
       *   Refatoração de `RadIA.Core.Config.pas` para suportar injeção de dependência de Storage via `SetStorage`.
       *   Implementação do padrão MVP no painel de chat com a criação do `TChatPresenter` e a interface `IChatView`, delegando a lógica do `TChatFrame` (View).
       *   Implementação do padrão MVP no frame de configurações com a criação do `TConfigPresenter` e a interface `IConfigView`, incluindo regras robustas de validação de URL, temperatura e parâmetros inteiros.
-      *   Desenvolvimento e integração de 13 novos testes unitários mockados em `RadIA.Tests.ChatPresenter.pas` e `RadIA.Tests.ConfigPresenter.pas`, atingindo **130 testes aprovados** com sucesso na suíte de testes.
+      *   Desenvolvimento e integração de testes unitários mockados em `RadIA.Tests.ChatPresenter.pas`, `RadIA.Tests.ConfigPresenter.pas` e `RadIA.Tests.EditorHook.pas`, atingindo **135 testes aprovados** com sucesso na suíte de testes.
+
+  #### 2. Robustez do Menu Contextual do Editor - Item #42
+  *   **Descrição**: Reforço da integração com o menu de contexto do editor Delphi para reduzir dependência de detalhes frágeis da VCL e preservar compatibilidade com Delphi 12/13 e plugins de terceiros.
+  *   **Detalhes**:
+      *   Registro de notifiers OTA (`IOTAIDENotifier` e `IOTAEditorNotifier`) para agendar o hook quando arquivos `.pas` e views do editor são abertas ou ativadas.
+      *   Hook seguro e assíncrono do menu após a IDE concluir a montagem do `TEditWindow`, evitando regressões na criação de novos projetos e no code folding/elision tree.
+      *   Detecção de `TPopupMenu` tanto por componentes do form quanto pela árvore de controles (`Control.PopupMenu`), cobrindo o menu real do editor em diferentes versões/layouts da IDE.
+      *   Injeção do submenu **RadIA** no topo do menu contextual, após o `OnPopup` original da IDE reconstruir os itens padrão.
 </details>
 
 <details>

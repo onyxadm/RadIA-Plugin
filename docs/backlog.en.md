@@ -50,7 +50,7 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
-  <summary><b>📦 v0.0.16 — MVP Architecture Refactoring, Storage Abstraction, and Presenter Unit Tests (Click to expand)</b></summary>
+  <summary><b>📦 v0.0.16 — MVP Architecture Refactoring, Storage Abstraction, and Editor Robustness (Click to expand)</b></summary>
 
   #### 1. MVP Presentation Pattern & Configuration Storage Abstraction - Items #40, #41
   *   **Description**: Decoupled presentation logic and UI code for the Chat panel and Settings frame by introducing the MVP architecture pattern, and designed a flexible storage abstraction layer (`ISettingsStorage`) allowing deterministic testing with in-memory settings storage.
@@ -59,7 +59,15 @@ Check the implementation details of each completed feature grouped by target rel
       *   Refactored `RadIA.Core.Config.pas` to support dependency injection of the storage layer via `SetStorage`.
       *   Implemented the MVP pattern for the Chat UI by developing `TChatPresenter` and the `IChatView` interface, delegating logic out of `TChatFrame` (passive View).
       *   Implemented the MVP pattern for the Settings dialog by developing `TConfigPresenter` and the `IConfigView` interface, incorporating robust validations for URLs, temperatures, and integer parameters.
-      *   Wrote and integrated 13 new mocked unit tests in `RadIA.Tests.ChatPresenter.pas` and `RadIA.Tests.ConfigPresenter.pas`, achieving **130 successful tests** inside the console DUnitX test suite.
+      *   Wrote and integrated mocked unit tests in `RadIA.Tests.ChatPresenter.pas`, `RadIA.Tests.ConfigPresenter.pas`, and `RadIA.Tests.EditorHook.pas`, achieving **135 successful tests** inside the console DUnitX test suite.
+
+  #### 2. Editor Context Menu Robustness - Item #42
+  *   **Description**: Strengthened the Delphi editor context-menu integration to reduce fragile VCL assumptions and preserve compatibility with Delphi 12/13 and third-party IDE plugins.
+  *   **Details**:
+      *   Registered OTA notifiers (`IOTAIDENotifier` and `IOTAEditorNotifier`) to schedule menu hooks when `.pas` files and editor views are opened or activated.
+      *   Deferred context-menu hooking until after the IDE finishes building the `TEditWindow`, avoiding regressions when creating new projects and interacting with code folding/elision tree internals.
+      *   Detects `TPopupMenu` instances both from form components and from the control tree (`Control.PopupMenu`), covering the real editor menu across IDE versions and layouts.
+      *   Injects the **RadIA** submenu at the top of the context menu after the IDE's original `OnPopup` handler rebuilds the default items.
 </details>
 
 <details>

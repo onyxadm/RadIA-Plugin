@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.16 — MVP, Storage Abstraction e Robustez do Editor (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Base interna mais testável e estável, com telas desacopladas em MVP e menu contextual do editor mais confiável no Delphi 12/13.
+  *   **Destaques**: `TChatPresenter`, `TConfigPresenter`, `ISettingsStorage`, storage em memória para testes, hook do editor via notifiers OTA e submenu **RadIA** no topo do menu contextual.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.16)](backlog.md#v0016--refatoração-arquitetural-mvp-storage-abstraction-e-robustez-do-editor-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.15 — Templates em Duas Camadas e Overlays (Concluído)</b></summary>
 
   *   **Valor Entregue**: Segurança de que novas atualizações do plugin trazem prompts novos da comunidade sem sobrescrever ou apagar suas personalizações locais.

@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **RadI
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.16 — MVP, Storage Abstraction, and Editor Robustness (Completed)</b></summary>
+
+  *   **Value Delivered**: A more testable and stable internal foundation, with MVP-decoupled screens and a more reliable Delphi 12/13 editor context menu.
+  *   **Highlights**: `TChatPresenter`, `TConfigPresenter`, `ISettingsStorage`, in-memory settings storage for tests, editor hooks via OTA notifiers, and the **RadIA** submenu at the top of the editor context menu.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.16)](backlog.en.md#v0016--mvp-architecture-refactoring-storage-abstraction-and-editor-robustness-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.15 — Two-Layer Templates and Overlays (Completed)</b></summary>
 
   *   **Value Delivered**: Assures that new plugin updates bring fresh community prompts without overriding or erasing your local personal customizations.
