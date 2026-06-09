@@ -215,9 +215,9 @@ begin
   lblTemplateOrigin := TLabel.Create(Self);
   lblTemplateOrigin.Parent := pnlTemplatesClient;
   lblTemplateOrigin.AutoSize := False;
-  lblTemplateOrigin.Width := 200;
+  lblTemplateOrigin.Width := 300;
   lblTemplateOrigin.Alignment := taRightJustify;
-  lblTemplateOrigin.Left := pnlTemplatesClient.Width - 217;
+  lblTemplateOrigin.Left := pnlTemplatesClient.Width - 317;
   lblTemplateOrigin.Top := lblTemplateName.Top;
   lblTemplateOrigin.Anchors := [akTop, akRight];
   lblTemplateOrigin.Font.Assign(lblTemplateName.Font);
@@ -1059,14 +1059,14 @@ begin
       begin
         btnDeleteTemplate.Caption := 'Restore Default';
         btnDeleteTemplate.Enabled := True;
-        lblTemplateOrigin.Caption := 'Origin: System (Customized)';
+        lblTemplateOrigin.Caption := 'System (Customized)';
         lblTemplateOrigin.Font.Color := $00008CFF; // Laranja premium suave
       end
       else
       begin
         btnDeleteTemplate.Caption := 'Delete';
         btnDeleteTemplate.Enabled := False;
-        lblTemplateOrigin.Caption := 'Origin: System (Read-Only)';
+        lblTemplateOrigin.Caption := 'System (Read-Only)';
         lblTemplateOrigin.Font.Color := clGrayText;
       end;
     end
@@ -1075,7 +1075,7 @@ begin
       edtTemplateName.ReadOnly := False;
       btnDeleteTemplate.Caption := 'Delete';
       btnDeleteTemplate.Enabled := True;
-      lblTemplateOrigin.Caption := 'Origin: User';
+      lblTemplateOrigin.Caption := 'User';
       lblTemplateOrigin.Font.Color := clHighlight;
     end;
   end;
