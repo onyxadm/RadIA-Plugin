@@ -12,7 +12,7 @@ O plugin pode ser instalado de duas formas:
 
 ### Opção A: Instalação Automatizada (PowerShell) - Recomendada
 
-Esta opção compila o plugin, executa os testes unitários (caso o framework **DUnitX** esteja instalado na IDE; caso contrário, os testes são ignorados de forma automática e transparente), copia os binários para os diretórios públicos oficiais do Delphi e registra o plugin no Registro do Windows automaticamente.
+Esta opção compila o plugin, copia os binários para os diretórios públicos oficiais do Delphi e registra o plugin no Registro do Windows automaticamente. Se for necessário rodar a suíte de testes unitários (**DUnitX**), basta adicionar o parâmetro `-Test` ao comando.
 
 1. Abra o console do Windows PowerShell.
 2. Certifique-se de que a pasta `bin` da instalação do Delphi contendo o `dcc32` está presente no PATH do sistema.
@@ -108,18 +108,18 @@ Insira as chaves obtidas nas configurações do plugin (**Settings** no topo do 
 
 O script `.\build.ps1` aceita os seguintes parâmetros:
 
-* `-Install`: Compila, executa testes, copia os arquivos binários para a pasta pública do Delphi e cria o registro do pacote no Windows.
+* `-Install`: Compila, copia os arquivos binários para a pasta pública do Delphi e cria o registro do pacote no Windows.
 * `-Uninstall`: Desinstala o plugin de forma limpa apagando arquivos e chaves de registro.
 * `-Release`: Ativa as otimizações do compilador Delphi e gera uma BPL menor.
 * `-IDE64`: Compila e instala o plugin especificamente para a IDE de 64 bits do Delphi 13 Florence.
 * `-DelphiVersion "<versao>"`: Opcional. Permite forçar o uso de uma versão específica do Delphi instalada no sistema (ex: `"23.0"`, `"37.0"`, `"Athens"`).
-* `-SkipTests`: Opcional. Ignora a compilação e a execução da suíte de testes unitários (DUnitX). Recomendado para usuários finais que desejam apenas instalar o plugin de forma rápida.
+* `-Test`: Opcional. Compila e executa a suíte de testes unitários (DUnitX). Por padrão, os testes são omitidos do processo de compilação.
 
 > [!TIP]
 > **Suporte a Múltiplas Versões da IDE:** Se você possuir mais de uma versão do Delphi instalada no Windows e executar o script com `-Install` ou `-Uninstall` sem passar o parâmetro `-DelphiVersion`, o script listará automaticamente as versões instaladas encontradas no registro e exibirá um menu no console para que você selecione de forma interativa qual deseja utilizar.
 
 > [!NOTE]
-> **Autodetecção do DUnitX:** O instalador verifica automaticamente se o framework DUnitX está instalado no Delphi selecionado. Se o DUnitX não for encontrado (instalação básica/mínima da IDE), o script exibirá um aviso no console e desativará os testes unitários de forma automática, prosseguindo com a compilação e a instalação bem-sucedida do plugin principal sem a necessidade de intervenção do usuário.
+> **Autodetecção do DUnitX:** Se o parâmetro `-Test` for fornecido, o instalador verifica automaticamente se o framework DUnitX está instalado no Delphi selecionado. Se o DUnitX não for encontrado, o script exibirá um aviso no console, desativará a execução dos testes de forma automática e prosseguirá normalmente com a compilação e instalação do plugin principal.
 
 ---
 

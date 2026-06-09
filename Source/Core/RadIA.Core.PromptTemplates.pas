@@ -156,7 +156,9 @@ begin
     '```'#13#10 +
     '3. Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together.'#13#10 +
     '4. Memory Safety, Type Safety and Dependencies:'#13#10 +
-    '   - Enforce proper "uses" clauses: Double-check that every unit imports all units required for its compilation (e.g. System.Generics.Collections for generic lists, System.Classes for persistence/lists, System.SysUtils for exceptions/guid, Vcl.Dialogs/Forms/Controls/Graphics/StdCtrls/ExtCrts for VCL UI controls, etc.).'#13#10 +
+    '   - Enforce proper "uses" clauses: Double-check that every unit imports all units required for its ' +
+    'compilation (e.g. System.Generics.Collections for generic lists, System.Classes for persistence/lists, ' +
+    'System.SysUtils for exceptions/guid, Vcl.Dialogs/Forms/Controls/Graphics/StdCtrls/ExtCrts for VCL UI controls, etc.).'#13#10 +
     '   - Use strongly typed generic collections (from System.Generics.Collections like TList<T> or TDictionary<K,V>) instead of legacy non-generic collections (like TList without generic type parameters). Never use raw non-generic lists.',
     True,
     '/createproject'
@@ -183,7 +185,9 @@ begin
     'end'#13#10 +
     '```'#13#10 +
     '3. Architectural Best Practices (SOLID & Clean Code):'#13#10 +
-    '   - Enforce Single Responsibility Principle (SRP): Segregate business logic, calculations, and data access into pure Object Pascal classes or services. Do not write business logic inside UI form event handlers (OnClick, OnCreate, etc.). Event handlers should only call domain services.'#13#10 +
+    '   - Enforce Single Responsibility Principle (SRP): Segregate business logic, calculations, and data access ' +
+    'into pure Object Pascal classes or services. Do not write business logic inside UI form event handlers ' +
+    '(OnClick, OnCreate, etc.). Event handlers should only call domain services.'#13#10 +
     '   - Dependency Inversion (DIP): Use interfaces (IInterface) to decouple objects where appropriate.'#13#10 +
     '4. Memory Safety & Resource Management:'#13#10 +
     '   - Prevent memory leaks: Every time an object is instantiated locally, wrap its usage inside a try..finally block and free it in the finally block.'#13#10 +
@@ -194,10 +198,17 @@ begin
     '   - Method parameters/arguments must be prefixed with "A" (e.g., AInputText).'#13#10 +
     '   - Local variables inside methods must be prefixed with "L" (e.g., LResultObj).'#13#10 +
     '6. Modern Object Pascal Features:'#13#10 +
-    '   - Use strong typing, enums, advanced records, and generics (from System.Generics.Collections like TList<T> or TDictionary<K,V>) instead of legacy Pointer lists or untyped structures. NEVER use raw non-generic collections like TList without a type parameter (TList<T>) if you import System.Generics.Collections, and always specify its generic arguments.'#13#10 +
+    '   - Use strong typing, enums, advanced records, and generics (from System.Generics.Collections like ' +
+    'TList<T> or TDictionary<K,V>) instead of legacy Pointer lists or untyped structures. NEVER use raw ' +
+    'non-generic collections like TList without a type parameter (TList<T>) if you import ' +
+    'System.Generics.Collections, and always specify its generic arguments.'#13#10 +
     '7. Compile-Ready Integration:'#13#10 +
     '   - Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together without external third-party dependencies unless explicitly requested.'#13#10 +
-    '   - Double-check the "uses" clause of every unit: ensure every type, class, record, interface or collection used is properly imported (e.g. System.Generics.Collections for generic lists, System.Classes for persistence/lists, System.SysUtils for exceptions/guid, Vcl.Dialogs/Forms/Controls/Graphics/StdCtrls/ExtCtrls for VCL UI controls, etc.). Do not miss any unit dependency.',
+    '   - Double-check the "uses" clause of every unit: ensure every type, class, record, interface or ' +
+    'collection used is properly imported (e.g. System.Generics.Collections for generic lists, ' +
+    'System.Classes for persistence/lists, System.SysUtils for exceptions/guid, ' +
+    'Vcl.Dialogs/Forms/Controls/Graphics/StdCtrls/ExtCtrls for VCL UI controls, etc.). ' +
+    'Do not miss any unit dependency.',
     True,
     '/createprojectarch'
   );

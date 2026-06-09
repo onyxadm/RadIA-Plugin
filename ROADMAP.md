@@ -298,7 +298,7 @@ Contribuições são muito bem-vindas! Caso queira implementar algum dos itens d
 1. Faça um **fork** do repositório.
 2. Crie uma branch descritiva: `feature/multiplas-sessoes`.
 3. Implemente as mudanças seguindo os princípios **SOLID, Clean Code e DRY** adotados no projeto.
-4. Certifique-se de que o comando `powershell -ExecutionPolicy Bypass -File .\build.ps1` passa com **todos os testes verdes**.
+4. Certifique-se de que o comando `powershell -ExecutionPolicy Bypass -File .\build.ps1 -Test` passa com **todos os testes verdes**.
 5. Abra um **Pull Request** descrevendo a sua contribuição.
 
 > [!IMPORTANT]

@@ -297,7 +297,7 @@ Contributions are very welcome! If you want to implement any of the items in thi
 1. **Fork** the repository.
 2. Create a descriptive branch: `feature/multiple-chat-sessions`.
 3. Implement the changes following the **SOLID, Clean Code, and DRY** principles adopted in the project.
-4. Make sure the command `powershell -ExecutionPolicy Bypass -File .\build.ps1` passes with **all tests green**.
+4. Make sure the command `powershell -ExecutionPolicy Bypass -File .\build.ps1 -Test` passes with **all tests green**.
 5. Open a **Pull Request** describing your contribution.
 
 > [!IMPORTANT]
