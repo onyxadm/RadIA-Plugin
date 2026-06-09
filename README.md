@@ -102,29 +102,47 @@ Para aprender a tirar o máximo proveito das funcionalidades do RadIA no seu dia
 ```
 PluginDelphiIA/
 │
+├── .github/                            # Configurações do GitHub e templates
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md               # Template de relato de bug (PT)
+│   │   ├── bug_report.en.md            # Template de relato de bug (EN)
+│   │   ├── feature_request.md          # Template de sugestão de recurso (PT)
+│   │   ├── feature_request.en.md       # Template de sugestão de recurso (EN)
+│   │   └── config.yml                  # Configuração de seletor de issues
+│   └── pull_request_template.md        # Template bilíngue de Pull Request
+│
 ├── docs/                               # Documentação e recursos visuais
-│   ├── images/
-│   │   ├── radia_ui_mockup.png         # Mockup do Chat na lateral da IDE
-│   │   ├── radia_options_mockup.png    # Mockup da tela de configurações (Tools -> Options)
-│   │   └── radia_diff_ui_mockup.png    # Mockup da tela de comparação Diff
-│   ├── install_config.md               # Guia detalhado de instalação e chaves
-│   ├── implementation_plan.md          # Plano detalhado de arquitetura
-│   ├── radia_design_ui.md              # Especificação de layouts e fluxos de UI
-│   ├── new_provider_guide.md           # Guia para criação de novos provedores de IA
-│   └── task.md                         # Checklist de tarefas de desenvolvimento
+│   ├── images/                         # Capturas de tela e mockups da UI
+│   ├── backlog.md / backlog.en.md      # Quadro Kanban e backlog de evolução técnica
+│   ├── roadmap.md / roadmap.en.md      # Planejamento estratégico de milestones
+│   ├── features.md / features.en.md    # Catálogo de recursos e matriz de compatibilidade
+│   ├── install_config.md / .en.md      # Guia de instalação e chaves de API
+│   ├── compliance.md / .en.md          # Avisos legais, privacidade e compliance
+│   ├── new_provider_guide.md / .en.md  # Guia para adicionar novos provedores
+│   ├── user_guide_*.md                 # Guias detalhados de uso (chat, editor, stack trace)
+│   └── radia_design_ui.md              # Especificação original de layouts e UI
 │
 ├── RadIA.groupproj                     # Grupo de Projetos do Delphi
-├── RadIA.dpk                           # Pacote Delphi de design-time
-├── RadIA.dproj                         # Configurações do projeto de pacote
+├── RadIA.dpk                           # Pacote Delphi de design-time (BPL)
+├── RadIA.dproj                         # Configurações do projeto Delphi
+├── RadIA.rc                            # Arquivo de recursos de compilação
 │
-├── Source/
-│   ├── Core/                           # Units centrais (Interfaces, tipos, configurações)
-│   ├── Providers/                      # Clientes de API das IAs (Gemini, OpenAI, Claude)
-│   ├── Integration/                    # Integração com a Open Tools API da IDE (Wizards, Hooks)
-│   └── UI/                             # Formulários e Frames VCL
-│       └── Web/                        # Template Web (HTML/CSS/JS) para WebView2
+├── Source/                             # Código-fonte principal do plugin
+│   ├── Core/                           # Units centrais (interfaces, configurações, DTOs)
+│   ├── Providers/                      # Clientes de API (Gemini, OpenAI, Claude, Ollama)
+│   ├── Integration/                    # Integração com a Open Tools API da IDE (Hooks, Options)
+│   └── UI/                             # Telas, Frames e diálogos em VCL
+│       └── Web/                        # Componentes locais do chat em HTML5/JS (WebView2)
+│           └── vendor/                 # Bibliotecas de terceiros (Prism, Marked, diff2html)
 │
-└── Tests/                              # Testes de Integração e Unitários (DUnitX)
+├── Tests/                              # Testes de Integração e Unitários (DUnitX)
+│   └── Source/                         # Units com as classes de testes
+│
+├── .editorconfig                       # Padrão de formatação e quebra de linhas do projeto
+├── agents.md                           # Diretrizes e restrições para agentes de IA (LLMs)
+├── build.ps1                           # Script PowerShell de build e instalação automatizada
+├── eslint.config.js                    # Configurações do linter ESLint do Javascript
+└── package.json                        # Gerenciador npm de dependências de linter e scripts
 ```
 
 ### 7. Termos de Uso e Compliance Corporativo
