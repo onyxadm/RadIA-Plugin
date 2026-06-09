@@ -116,11 +116,20 @@ type
     memTemplateBody: TMemo;
     btnSaveTemplate: TButton;
     btnRestoreDefaults: TButton;
+    lblTemplateSlash: TLabel;
+    edtTemplateSlash: TEdit;
+    chkIsProjectGenerator: TCheckBox;
+    btnExportTemplates: TButton;
+    btnImportTemplates: TButton;
+    dlgsTemplatesSave: TSaveDialog;
+    dlgsTemplatesOpen: TOpenDialog;
     procedure lstTemplatesClick(Sender: TObject);
     procedure btnNewTemplateClick(Sender: TObject);
     procedure btnDeleteTemplateClick(Sender: TObject);
     procedure btnSaveTemplateClick(Sender: TObject);
     procedure btnRestoreDefaultsClick(Sender: TObject);
+    procedure btnExportTemplatesClick(Sender: TObject);
+    procedure btnImportTemplatesClick(Sender: TObject);
     procedure grpGeminiAuthTypeClick(Sender: TObject);
     procedure grpOpenAIAuthTypeClick(Sender: TObject);
     procedure lnkGeminiGetKeyClick(Sender: TObject);
@@ -686,6 +695,14 @@ begin
   edtTemplateDesc.StyleElements := edtTemplateDesc.StyleElements - [seClient, seBorder];
   edtTemplateDesc.Color := LColors.InputBgColor;
   edtTemplateDesc.Font.Color := LColors.TextColor;
+  
+  edtTemplateSlash.StyleElements := edtTemplateSlash.StyleElements - [seClient, seBorder];
+  edtTemplateSlash.Color := LColors.InputBgColor;
+  edtTemplateSlash.Font.Color := LColors.TextColor;
+  
+  chkIsProjectGenerator.StyleElements := chkIsProjectGenerator.StyleElements - [seClient, seBorder];
+  chkIsProjectGenerator.Font.Color := LColors.TextColor;
+  
   memTemplateBody.StyleElements := memTemplateBody.StyleElements - [seClient, seBorder];
   memTemplateBody.Color := LColors.InputBgColor;
   memTemplateBody.Font.Color := LColors.TextColor;
@@ -694,6 +711,8 @@ begin
   lblTemplateName.Font.Color := LColors.TextColor;
   lblTemplateDesc.StyleElements := lblTemplateDesc.StyleElements - [seClient, seBorder];
   lblTemplateDesc.Font.Color := LColors.TextColor;
+  lblTemplateSlash.StyleElements := lblTemplateSlash.StyleElements - [seClient, seBorder];
+  lblTemplateSlash.Font.Color := LColors.TextColor;
   lblTemplateBody.StyleElements := lblTemplateBody.StyleElements - [seClient, seBorder];
   lblTemplateBody.Font.Color := LColors.TextColor;
 
@@ -999,6 +1018,8 @@ begin
     edtTemplateName.Text := '';
     edtTemplateDesc.Text := '';
     memTemplateBody.Text := '';
+    edtTemplateSlash.Text := '';
+    chkIsProjectGenerator.Checked := False;
     Exit;
   end;
 
@@ -1008,6 +1029,8 @@ begin
     edtTemplateName.Text := LTemplate.Name;
     edtTemplateDesc.Text := LTemplate.Description;
     memTemplateBody.Text := LTemplate.Template;
+    edtTemplateSlash.Text := LTemplate.SlashCommand;
+    chkIsProjectGenerator.Checked := LTemplate.IsProjectGenerator;
   end;
 end;
 
@@ -1017,6 +1040,8 @@ begin
   edtTemplateName.Text := '';
   edtTemplateDesc.Text := '';
   memTemplateBody.Text := '';
+  edtTemplateSlash.Text := '';
+  chkIsProjectGenerator.Checked := False;
   edtTemplateName.SetFocus;
 end;
 
@@ -1035,6 +1060,7 @@ begin
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
     FTemplateManager.DeleteTemplate(LName);
+    FTemplateManager.Save; // Salva o JSON local após excluir
     PopulateTemplatesList;
     lstTemplatesClick(nil);
   end;
@@ -1042,12 +1068,15 @@ end;
 
 procedure TFrameAIConfig.btnSaveTemplateClick(Sender: TObject);
 var
-  LName, LDesc, LBody: string;
+  LName, LDesc, LBody, LSlash: string;
+  LIsProjGen: Boolean;
   LIndex: Integer;
 begin
   LName := Trim(edtTemplateName.Text);
   LDesc := Trim(edtTemplateDesc.Text);
   LBody := memTemplateBody.Text;
+  LSlash := Trim(edtTemplateSlash.Text);
+  LIsProjGen := chkIsProjectGenerator.Checked;
 
   if LName.IsEmpty then
   begin
@@ -1055,7 +1084,8 @@ begin
     Exit;
   end;
 
-  FTemplateManager.AddTemplate(LName, LDesc, LBody);
+  FTemplateManager.AddTemplate(LName, LDesc, LBody, LIsProjGen, LSlash);
+  FTemplateManager.Save; // Salva o JSON local após salvar/atualizar
   PopulateTemplatesList;
   
   LIndex := lstTemplates.Items.IndexOf(LName);
@@ -1081,6 +1111,54 @@ begin
       lstTemplatesClick(nil);
     end;
     ShowMessage('Default templates restored successfully.');
+  end;
+end;
+
+procedure TFrameAIConfig.btnExportTemplatesClick(Sender: TObject);
+begin
+  if dlgsTemplatesSave.Execute then
+  begin
+    try
+      FTemplateManager.ExportToFile(dlgsTemplatesSave.FileName);
+      ShowMessage('Templates exported successfully.');
+    except
+      on E: Exception do
+        ShowMessage('Failed to export templates: ' + E.Message);
+    end;
+  end;
+end;
+
+procedure TFrameAIConfig.btnImportTemplatesClick(Sender: TObject);
+var
+  LErrorMsg: string;
+  LMerge: Boolean;
+  LConfirm: Integer;
+begin
+  if dlgsTemplatesOpen.Execute then
+  begin
+    LConfirm := MessageDlg('Deseja mesclar os templates importados com os atuais?' + sLineBreak +
+      'Escolha "Yes" para mesclar ou "No" para apagar os templates atuais e usar apenas os importados.',
+      mtConfirmation, [mbYes, mbNo, mbCancel], 0);
+      
+    if LConfirm = mrCancel then
+      Exit;
+      
+    LMerge := LConfirm = mrYes;
+    
+    if FTemplateManager.ImportFromFile(dlgsTemplatesOpen.FileName, LMerge, LErrorMsg) then
+    begin
+      PopulateTemplatesList;
+      if lstTemplates.Count > 0 then
+      begin
+        lstTemplates.ItemIndex := 0;
+        lstTemplatesClick(nil);
+      end;
+      ShowMessage('Templates imported successfully.');
+    end
+    else
+    begin
+      ShowMessage('Import failed: ' + LErrorMsg);
+    end;
   end;
 end;
 
