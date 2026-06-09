@@ -251,28 +251,58 @@ Version v0.0.15 introduced the complete segregation of default prompt templates 
 
 ---
 
-## 🔲 v0.1.0 — Automation & Auditing (Next Version)
+## 🔲 v0.1.0 — Automation, Auditing, and Quick Wins (Next Version)
 
-### 1. Automatic Code Review on Save
+### 1. Memory Leak & FastMM Analyzer (Quick Win)
+*   **Goal**: Allow developers to paste raw FastMM dump logs (FastMM4/FastMM5) in the sidebar chat and receive the exact allocation source line in the project codebase, along with structural fix suggestions (proper `try..finally` blocks and `Owner` bindings).
+*   **Impact**: ⭐⭐⭐⭐⭐ High
+*   **Complexity**: Low
+
+### 2. Smart SQL Optimizer in Editor (Quick Win)
+*   **Goal**: Detect SQL command strings within active Pascal code and offer a context-aware refactoring suggestion to optimize performance, recommend database indexes, and validate syntax matching the configured database dialect.
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Low
+
+### 3. Automatic Code Review on Save
 *   **Goal**: Silently analyze the active unit on save and signal in the RadIA panel if the AI found points of attention (e.g., potential bugs, duplicated code, or missing exception handling).
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 2. Applied Refactoring History
+### 4. Applied Refactoring History
 *   **Goal**: Maintain an auditable log of every time the **[Apply Changes]** button was clicked, recording the original snippet, the applied snippet, the date, and the file, allowing future manual review.
 *   **Impact**: ⭐⭐⭐ Medium
 *   **Complexity**: Low
 
 ---
 
-## 🔲 v0.2.0 — Administration & Diagnostics
+## 🔲 v0.2.0 — Administration and Structural Analysis
 
-### 6. Version Migration Assistant (Smart Migrate)
+### 5. Uses Clause Optimizer (Clean Uses)
+*   **Goal**: Scan the active unit's `uses` clause to recommend removing unused imports, and suggest auto-importing system or third-party units when recognized types are typed without their corresponding declarations.
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 6. Mock Generator for Unit Tests
+*   **Goal**: Scan the constructors and dependencies of a selected Pascal class to generate mock classes automatically (pure mock interface implementation or integrating the `Delphi-Mocks` framework), easing the implementation of isolated unit tests.
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 7. OpenAPI/Swagger Documentation Generator (Horse, RAD Server)
+*   **Goal**: Scan routing and controller configurations of modern Delphi APIs to automatically export a Swagger specification (JSON/YAML) and map matching request/response DTO schemas.
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 8. Bidirectional Semantic Analysis (DFM vs PAS)
+*   **Goal**: Perform a cross-file analysis between the visual form file (`.dfm`) and the code unit (`.pas`) to point out and safely clean up orphaned components and empty event handlers cluttering the codebase.
+*   **Impact**: ⭐⭐⭐⭐ High
+*   **Complexity**: Medium
+
+### 9. Version Migration Assistant (Smart Migrate)
 *   **Goal**: Contextual menu or sidebar action to rewrite legacy/procedural code blocks utilizing modern Delphi features (Unicode, PPL, FireDAC).
 *   **Impact**: ⭐⭐⭐⭐ High
 *   **Complexity**: Medium
 
-### 7. Cache Management Panel
+### 10. Cache Management Panel
 *   **Goal**: Display an internal administration screen for the response cache, allowing users to view cached entries, delete specific ones, and see the total cache file size without manually editing JSON.
 *   **Impact**: ⭐⭐⭐ Medium
 *   **Complexity**: Medium
@@ -281,12 +311,16 @@ Version v0.0.15 introduced the complete segregation of default prompt templates 
 
 ## 💡 Future Ideas (v0.3.0+)
 
-The items below are still in the conceptual stage and are being evaluated for technical feasibility with the Open Tools API:
+The items below are still in the conceptual stage and are being evaluated for technical feasibility with the Open Tools API and depend on complex refactorings or low-level hooks:
 
+- **BDE/ADO/dbExpress ➔ DEXT with FireDAC Migration:** Deep, structural migration of manual data access datasets and connections embedded in visual forms towards the object-oriented DEXT ORM, leveraging FireDAC as the physical transport engine (Complexity: High).
+- **Legacy Form Decomposer (Code-Behind Extractor):** Surgical extraction of business logic tightly coupled in code-behind visual event handlers towards decoupled, service-oriented classes, generating clean interfaces and hooks (Complexity: High).
+- **Threads and PPL (Parallel Programming Library) Assistant:** Detect heavy synchronous operations in the editor and rewrite them to run asynchronously using `TTask.Run` with thread-safe UI updates wrapped in `TThread.Queue` (Complexity: High).
+- **Automated Internationalization (i18n Wizard):** Scan PAS and DFM to locate hardcoded display strings, extract them to external localization resources, and replace occurrences with runtime translation functions (Complexity: High).
 - **Smart Inline Autocomplete (Ghost Text):** Real-time gray text code suggestions inside the editor similar to Copilot (Complexity: High).
 - **IDE Debugger Auto Hook:** Dynamic capture and automatic explanation of active exceptions raised during debug sessions (Complexity: High).
-- **Automatic project documentation generation** (scan units and generate a complete `docs/API.md`).
-- **Native macOS/Linux support** via FPC/Lazarus (feasibility analysis).
+- **Automatic project documentation generation:** Scan the project directories and files to compile and generate a structured `docs/API.md` summary (Complexity: Medium).
+- **Native macOS/Linux support:** Port the UI and editor integrations to Lazarus / Free Pascal (Complexity: High).
 
 ---
 
