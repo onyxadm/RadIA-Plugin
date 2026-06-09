@@ -362,7 +362,7 @@ end;
 procedure TFrameAIChat.InitializeWebView;
 begin
   EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
-  UpdateWebViewNavigation;
+  EdgeBrowser.CreateWebView;
 end;
 
 procedure TFrameAIChat.UpdateWebViewNavigation;
