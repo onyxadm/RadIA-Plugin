@@ -339,14 +339,33 @@ begin
   if not Assigned(APopupMenu) then
     Exit;
 
-  // Destruir preventivamente componentes órfãos anteriores de mesmo nome para evitar erro de nome duplicado na IDE
+  // Se o menu do RadIA já estiver presente na hierarquia de itens, não fazemos nada.
+  if Assigned(APopupMenu.Items.Find('mnuRadIARoot')) then
+    Exit;
+
+  // Destruir apenas se o item principal não estiver visível, mas por algum motivo o componente
+  // de mesmo nome ainda existir no Owner (órfão), evitando erros de "Duplicate name" na IDE.
   LComp := APopupMenu.FindComponent('mnuRadIARoot');
   if Assigned(LComp) then
-    LComp.Free;
+  begin
+    try
+      LComp.Free;
+    except
+      on E: Exception do
+        TLogger.Log('InjectMenuIntoPopupMenu: Error freeing orphaned mnuRadIARoot: ' + E.Message, 'EditorHook');
+    end;
+  end;
 
   LComp := APopupMenu.FindComponent('mnuRadIASeparator');
   if Assigned(LComp) then
-    LComp.Free;
+  begin
+    try
+      LComp.Free;
+    except
+      on E: Exception do
+        TLogger.Log('InjectMenuIntoPopupMenu: Error freeing orphaned mnuRadIASeparator: ' + E.Message, 'EditorHook');
+    end;
+  end;
 
   TLogger.Log('Injecting RadIA menu items into EditorLocalMenu', 'EditorHook');
 
