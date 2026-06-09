@@ -250,30 +250,58 @@ A versão v0.0.15 introduziu a segregação completa dos templates padrões de p
 - **Testes Unitários:**
   * Inclusão de testes de unidade cobrindo detecção de templates nativos, criação de overlays e restauração ao padrão. Todos os **116 testes unitários DUnitX aprovados**.
 
----
+## 🔲 v0.1.0 — Automação, Auditoria e Ganhos Rápidos (Próxima Versão)
 
-## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
+### 1. Analisador de Memory Leaks & FastMM (Quick Win)
+*   **Objetivo**: Permitir colar logs de dumps brutos do FastMM (FastMM4/FastMM5) no chat lateral e receber a localização exata da alocação que falhou no código fonte, bem como a sugestão de correção (estruturas `try..finally` e `Owner` adequados).
+*   **Impacto**: ⭐⭐⭐⭐⭐ Alto
+*   **Complexidade**: Baixa
 
-### 1. Revisão Automática de Código no Save
+### 2. Smart SQL Optimizer no Editor (Quick Win)
+*   **Objetivo**: Detectar strings de comandos SQL dentro do código Pascal ativo e oferecer uma refatoração assistida para otimização de performance, indexação sugerida e validação de sintaxe conforme o dialeto do banco de dados configurado.
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Baixa
+
+### 3. Revisão Automática de Código no Save
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção (ex: possíveis bugs, código duplicado ou falta de tratamento de exceção).
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 2. Histórico de Refatorações Aplicadas
+### 4. Histórico de Refatorações Aplicadas
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão **[Aplicar Alteração]** foi acionado, registrando o trecho original, o trecho aplicado, a data e o arquivo, permitindo revisão manual posterior.
 *   **Impacto**: ⭐⭐⭐ Médio
 *   **Complexidade**: Baixa
 
 ---
 
-## 🔲 v0.2.0 — Administração e Diagnóstico
+## 🔲 v0.2.0 — Administração e Análise Estrutural
 
-### 6. Assistente de Migração de Versão (Smart Migrate)
+### 5. Otimizador de Cláusula Uses (Clean Uses)
+*   **Objetivo**: Analisar a cláusula `uses` da unit ativa para sugerir a remoção de imports órfãos e sugerir a importação automática de units do sistema ou de terceiros quando classes conhecidas forem digitadas sem seus respectivos imports.
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 6. Gerador de Mocks para Testes Unitários
+*   **Objetivo**: Analisar os construtores e dependências de uma classe Pascal selecionada para gerar classes Mock automatizadas (puros com interfaces ou integrando o framework `Delphi-Mocks`), facilitando a escrita de testes isolados.
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 7. Gerador de Documentação OpenAPI/Swagger (Horse, RAD Server)
+*   **Objetivo**: Varrer as configurações de rotas e controllers de APIs Delphi modernas para extrair automaticamente a especificação Swagger (JSON/YAML) e mapear os esquemas JSON dos DTOs associados.
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 8. Análise Semântica Bidirecional (DFM vs PAS)
+*   **Objetivo**: Varrer de forma cruzada o arquivo visual de formulário (`.dfm`) e a unit `.pas` para sinalizar e remover com segurança componentes órfãos e declarações de eventos vazios que continuam declarados e poluindo o código.
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 9. Assistente de Migração de Versão (Smart Migrate)
 *   **Objetivo**: Comando contextual de menu ou chat lateral para reescrever trechos selecionados de código procedurais/legados usando recursos modernos do Delphi (Unicode, PPL, FireDAC).
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 7. Painel de Gerenciamento do Cache
+### 10. Painel de Gerenciamento do Cache
 *   **Objetivo**: Exibir uma tela de administração interna do cache de respostas, permitindo visualizar entradas em cache, limpar entradas específicas e ver o tamanho total do arquivo de cache sem editar o JSON manualmente.
 *   **Impacto**: ⭐⭐⭐ Médio
 *   **Complexidade**: Média
@@ -282,12 +310,16 @@ A versão v0.0.15 introduziu a segregação completa dos templates padrões de p
 
 ## 💡 Ideias Futuras (v0.3.0+)
 
-Os itens abaixo ainda estão em fase de concepção e avaliação de viabilidade técnica com a Open Tools API:
+Os itens abaixo ainda estão em fase de concepção e avaliação de viabilidade técnica com a Open Tools API e dependem de refatorações complexas ou hooks de baixo nível:
 
+- **Conversão BDE/ADO/dbExpress ➔ DEXT com FireDAC:** Migração profunda e estruturada de persistência de dados manual legada e acoplada em formulários para o DEXT ORM de forma orientada a objetos usando FireDAC por baixo (Complexidade: Alta).
+- **Decompositor de Formulários Legados (Code-Behind Extractor):** Extração cirúrgica de lógica de negócio acoplada nos eventos visuais do code-behind para classes de serviço independentes, criando acoplamentos limpos e interfaces (Complexidade: Alta).
+- **Assistente de Threads e PPL (Parallel Programming Library):** Identificar trechos síncronos demorados no editor e reescrevê-los para execução segura em segundo plano usando `TTask.Run` e sincronizações de UI com `TThread.Queue` (Complexidade: Alta).
+- **Internacionalização Automática (i18n Wizard):** Varrer PAS e DFM para extrair strings literais exibidas na tela, organizá-las em arquivos de localização centralizados e substituir as ocorrências no código por chamadas de funções de tradução (Complexidade: Alta).
 - **Autocompletar Inline Inteligente (Ghost Text):** Sugestões de código em tempo real no editor de código com texto acinzentado estilo Copilot (Complexidade: Alta).
 - **Integração Automática com Depurador da IDE:** Captura dinâmica e análise automática de exceções ativas durante sessões de depuração de código (Complexidade: Alta).
-- **Geração automática de documentação de projeto** (varrer units e gerar um `docs/API.md` completo).
-- **Suporte nativo a macOS/Linux** via FPC/Lazarus (análise de viabilidade).
+- **Geração automática de documentação de projeto:** Varrer a estrutura de diretórios e unidades do projeto para compilar e gerar um `docs/API.md` estruturado (Complexidade: Média).
+- **Suporte nativo a macOS/Linux:** Portar a UI e integrações de editor para o Lazarus / Free Pascal (Complexidade: Alta).
 
 ---
 
