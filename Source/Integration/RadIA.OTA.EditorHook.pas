@@ -66,6 +66,9 @@ var
   // Global dictionary to track original OnPopup events for intercepted menus
   FInterceptedMenus: TDictionary<TPopupMenu, TNotifyEvent> = nil;
 
+threadvar
+  GExecutingPopup: Boolean;
+
 { TRadIAEditorHook }
 
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
@@ -266,7 +269,8 @@ begin
   LEventCurrent := APopupMenu.OnPopup;
   LMethodCurrent := TMethod(LEventCurrent);
 
-  if LMethodCurrent.Code <> LMethodHook.Code then
+  // Re-hook se o manipulador atual não for o nosso (comparando Code e Data para garantir que aponta para nossa instância viva)
+  if (LMethodCurrent.Code <> LMethodHook.Code) or (LMethodCurrent.Data <> LMethodHook.Data) then
   begin
     if FInterceptedMenus.ContainsKey(APopupMenu) then
     begin
@@ -278,6 +282,7 @@ begin
       TLogger.Log('Hooking OnPopup of EditorLocalMenu', 'EditorHook');
       FInterceptedMenus.Add(APopupMenu, LEventCurrent);
     end;
+    
     APopupMenu.OnPopup := LEventHook;
   end;
 end;
@@ -303,30 +308,39 @@ var
   LPopupMenu: TPopupMenu;
   LOldOnPopup: TNotifyEvent;
 begin
+  // Disjuntor para quebrar loops infinitos de recursão mútua com outros hooks de terceiros
+  if GExecutingPopup then
+    Exit;
+
+  GExecutingPopup := True;
   try
-    if Sender is TPopupMenu then
-    begin
-      LPopupMenu := TPopupMenu(Sender);
-      try
-        InjectMenuIntoPopupMenu(LPopupMenu);
-      except
-        on E: Exception do
-          TLogger.Log('EditorMenuPopup: Error injecting RadIA menu: ' + E.Message, 'EditorHook');
-      end;
-      
-      if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) and Assigned(LOldOnPopup) then
+    try
+      if Sender is TPopupMenu then
       begin
+        LPopupMenu := TPopupMenu(Sender);
         try
-          LOldOnPopup(Sender);
+          InjectMenuIntoPopupMenu(LPopupMenu);
         except
           on E: Exception do
-            TLogger.Log('EditorMenuPopup: Error executing original OnPopup: ' + E.Message, 'EditorHook');
+            TLogger.Log('EditorMenuPopup: Error injecting RadIA menu: ' + E.Message, 'EditorHook');
+        end;
+        
+        if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) and Assigned(LOldOnPopup) then
+        begin
+          try
+            LOldOnPopup(Sender);
+          except
+            on E: Exception do
+              TLogger.Log('EditorMenuPopup: Error executing original OnPopup: ' + E.Message, 'EditorHook');
+          end;
         end;
       end;
+    except
+      on E: Exception do
+        TLogger.Log('EditorMenuPopup: General error: ' + E.Message, 'EditorHook');
     end;
-  except
-    on E: Exception do
-      TLogger.Log('EditorMenuPopup: General error: ' + E.Message, 'EditorHook');
+  finally
+    GExecutingPopup := False;
   end;
 end;
 
