@@ -218,24 +218,21 @@ end;
 
 procedure TRadIAEditorHook.ActiveControlChange(Sender: TObject);
 var
-  LActiveControl: TControl;
+  I: Integer;
   LForm: TCustomForm;
 begin
   try
     if Assigned(Screen) then
     begin
-      LActiveControl := Screen.ActiveControl;
-      if Assigned(LActiveControl) then
+      for I := 0 to Screen.FormCount - 1 do
       begin
-        LForm := GetParentForm(LActiveControl);
-        if Assigned(LForm) and SameText(LForm.ClassName, 'TEditWindow') then
-        begin
-          try
+        try
+          LForm := Screen.Forms[I];
+          if Assigned(LForm) and SameText(LForm.ClassName, 'TEditWindow') then
             HookPopupMenu(LForm);
-          except
-            on E: Exception do
-              TLogger.Log('ActiveControlChange: Error hooking form: ' + E.Message, 'EditorHook');
-          end;
+        except
+          on E: Exception do
+            TLogger.Log('ActiveControlChange: Error checking form ' + IntToStr(I) + ': ' + E.Message, 'EditorHook');
         end;
       end;
     end;
