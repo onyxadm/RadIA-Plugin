@@ -63,6 +63,8 @@ RadIA is built entirely in Object Pascal (Delphi) using the **Open Tools API (OT
 The user interface uses a hybrid architecture:
 1.  **VCL Layout:** Handles the window docking, settings dialog, toolbars, registry storage, and integration actions.
 2.  **Edge WebView2 Engine:** Displays the message history using local HTML5, CSS (incorporating glassmorphism/modern dark UI that adapts to the IDE theme), and JavaScript libraries (Prism.js and Marked.js) to render rich markdown and copyable code blocks without freezing the main IDE thread.
+3.  **MVP (Model-View-Presenter) Pattern:** Presentation logic and flow coordination (such as sending messages, changing providers, and saving configuration) are completely decoupled from VCL forms and encapsulated in Presenters (`TChatPresenter` and `TConfigPresenter`), allowing UI components to act as passive Views.
+4.  **Storage Abstraction (`ISettingsStorage`):** For better maintainability and testing isolation, the option persistence layer has been abstracted. In production, settings are stored in the Windows Registry (`TRegistrySettingsStorage`), while unit tests run against an in-memory storage (`TMemorySettingsStorage`), ensuring tests do not corrupt the developer's local registry keys.
 
 ### 4. Prerequisites
 *   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria, 12 Athens, or 13 Florence (or newer).
