@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Templates;
+unit RadIA.Tests.Templates;
 
 interface
 
@@ -24,6 +24,14 @@ type
     procedure TestTemplateManager_Persistence;
     [Test]
     procedure TestResolveTemplate_ReplacesPlaceholder;
+    [Test]
+    procedure TestSystemTemplates_AreLoadedFromCode;
+    [Test]
+    procedure TestOverlay_CustomPromptOverridesDefault;
+    [Test]
+    procedure TestOverlay_RestoreRevertsToOriginal;
+    [Test]
+    procedure TestMigration_CleansRedundantOverlays;
   end;
 
 implementation
@@ -113,6 +121,94 @@ begin
   LResolved := FManager.ResolveTemplate('Custom Temp', CODE_SNIPPET);
   
   Assert.AreEqual('Optimise this: var I: Integer;', LResolved);
+end;
+
+procedure TTestRadIATemplates.TestSystemTemplates_AreLoadedFromCode;
+var
+  LTemplates: TArray<TPromptTemplate>;
+  LTemp: TPromptTemplate;
+begin
+  LTemplates := FManager.GetTemplates;
+  Assert.IsTrue(Length(LTemplates) >= 8, 'Should contain all default templates');
+  
+  for LTemp in LTemplates do
+  begin
+    Assert.IsTrue(LTemp.IsSystem, 'Defaults should be marked as system templates');
+    Assert.IsFalse(LTemp.IsCustomized, 'Defaults should not be customized initially');
+  end;
+end;
+
+procedure TTestRadIATemplates.TestOverlay_CustomPromptOverridesDefault;
+var
+  LTemplate: TPromptTemplate;
+  LTempFile: string;
+const
+  SYS_NAME = 'Review Clean Code Delphi';
+  CUSTOM_PROMPT = 'Review this custom style: {code}';
+begin
+  FManager.AddTemplate(SYS_NAME, 'Custom Desc', CUSTOM_PROMPT, False, '/explain');
+  FManager.Save;
+  
+  Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
+  Assert.IsTrue(LTemplate.IsSystem, 'Should still be marked as system template');
+  Assert.IsTrue(LTemplate.IsCustomized, 'Should be marked as customized');
+  Assert.AreEqual(CUSTOM_PROMPT, LTemplate.Template);
+  
+  LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  if TFile.Exists(LTempFile) then
+    TFile.Delete(LTempFile);
+end;
+
+procedure TTestRadIATemplates.TestOverlay_RestoreRevertsToOriginal;
+var
+  LTemplate: TPromptTemplate;
+  LOriginalTemplate: string;
+  LTempFile: string;
+const
+  SYS_NAME = 'Review Clean Code Delphi';
+begin
+  Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
+  LOriginalTemplate := LTemplate.Template;
+  
+  FManager.AddTemplate(SYS_NAME, LTemplate.Description, 'Modified body {code}', LTemplate.IsProjectGenerator, LTemplate.SlashCommand);
+  Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
+  Assert.IsTrue(LTemplate.IsCustomized);
+  
+  FManager.RestoreDefaultTemplate(SYS_NAME);
+  
+  Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
+  Assert.IsFalse(LTemplate.IsCustomized);
+  Assert.AreEqual(LOriginalTemplate, LTemplate.Template);
+  
+  LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  if TFile.Exists(LTempFile) then
+    TFile.Delete(LTempFile);
+end;
+
+procedure TTestRadIATemplates.TestMigration_CleansRedundantOverlays;
+var
+  LTempFile: string;
+  LJSON: string;
+  LTemplate: TPromptTemplate;
+const
+  LEGACY_JSON = '[{"name":"Review Clean Code Delphi","description":"Review Pascal code applying Clean Code and SOLID","template":"Review the following Delphi Pascal code block applying Clean Code, readability, and optimization principles:\r\n\r\n{code}","isProjectGenerator":false,"slashCommand":"/explain"}]';
+begin
+  LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  ForceDirectories(TPath.GetDirectoryName(LTempFile));
+  TFile.WriteAllText(LTempFile, LEGACY_JSON, TEncoding.UTF8);
+  
+  FManager.Load;
+  
+  Assert.IsTrue(FManager.FindTemplate('Review Clean Code Delphi', LTemplate));
+  Assert.IsTrue(LTemplate.IsSystem);
+  Assert.IsFalse(LTemplate.IsCustomized, 'Redundant overlay should have been removed and reverted to raw system template');
+  
+  if TFile.Exists(LTempFile) then
+  begin
+    LJSON := TFile.ReadAllText(LTempFile, TEncoding.UTF8);
+    Assert.IsTrue(LJSON.Contains('[]') or (LJSON = ''), 'JSON file should be empty of redundant templates');
+    TFile.Delete(LTempFile);
+  end;
 end;
 
 initialization
