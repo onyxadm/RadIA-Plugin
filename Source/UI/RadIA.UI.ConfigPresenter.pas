@@ -46,6 +46,8 @@ type
     procedure SetSystemPrompt(const AValue: string);
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetInjectDelphiVersion: Boolean;
+    procedure SetInjectDelphiVersion(const AValue: Boolean);
     function GetLogEnabled: Boolean;
     procedure SetLogEnabled(const AValue: Boolean);
     function GetLogPath: string;
@@ -215,6 +217,7 @@ begin
   FView.SetAwsSessionToken(FConfig.AwsSessionToken);
 
   FView.SetSmartConfigEnabled(FConfig.SmartConfigEnabled);
+  FView.SetInjectDelphiVersion(FConfig.InjectDelphiVersion);
 
   // Load Advanced Parameters for registered providers
   for LProviderId in FProvidersList do
@@ -327,6 +330,7 @@ begin
   FConfig.OllamaBaseUrl := LOllamaUrl;
   FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
   FConfig.SmartConfigEnabled := FView.GetSmartConfigEnabled;
+  FConfig.InjectDelphiVersion := FView.GetInjectDelphiVersion;
 
   for LProviderId in FProvidersList do
   begin

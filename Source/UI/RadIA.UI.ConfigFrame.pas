@@ -155,6 +155,7 @@ type
     
     tsGeneral: TTabSheet;
     pnlGeneral: TPanel;
+    chkInjectDelphiVersion: TCheckBox;
     chkLogEnabled: TCheckBox;
     lblLogPath: TLabel;
     edtLogPath: TEdit;
@@ -217,6 +218,8 @@ type
     procedure SetSystemPrompt(const AValue: string);
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetInjectDelphiVersion: Boolean;
+    procedure SetInjectDelphiVersion(const AValue: Boolean);
     function GetLogEnabled: Boolean;
     procedure SetLogEnabled(const AValue: Boolean);
     function GetLogPath: string;
@@ -315,29 +318,37 @@ begin
   FChkSmartConfig.Height := 23;
   FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
 
+  chkInjectDelphiVersion := TCheckBox.Create(Self);
+  chkInjectDelphiVersion.Parent := pnlGeneral;
+  chkInjectDelphiVersion.Left := 16;
+  chkInjectDelphiVersion.Top := 48;
+  chkInjectDelphiVersion.Width := 300;
+  chkInjectDelphiVersion.Height := 23;
+  chkInjectDelphiVersion.Caption := 'Inject Delphi version in prompt';
+
   chkLogEnabled := TCheckBox.Create(Self);
   chkLogEnabled.Parent := pnlGeneral;
   chkLogEnabled.Left := 16;
-  chkLogEnabled.Top := 48;
+  chkLogEnabled.Top := 80;
   chkLogEnabled.Width := 200;
   chkLogEnabled.Caption := 'Enable logging';
 
   lblLogPath := TLabel.Create(Self);
   lblLogPath.Parent := pnlGeneral;
   lblLogPath.Left := 16;
-  lblLogPath.Top := 80;
+  lblLogPath.Top := 112;
   lblLogPath.Caption := 'Log Folder Path:';
 
   edtLogPath := TEdit.Create(Self);
   edtLogPath.Parent := pnlGeneral;
   edtLogPath.Left := 16;
-  edtLogPath.Top := 98;
+  edtLogPath.Top := 130;
   edtLogPath.Width := 320;
 
   btnBrowseLogPath := TButton.Create(Self);
   btnBrowseLogPath.Parent := pnlGeneral;
   btnBrowseLogPath.Left := 342;
-  btnBrowseLogPath.Top := 96;
+  btnBrowseLogPath.Top := 128;
   btnBrowseLogPath.Width := 30;
   btnBrowseLogPath.Height := 23;
   btnBrowseLogPath.Caption := '...';
@@ -346,20 +357,20 @@ begin
   lblLogMaxSize := TLabel.Create(Self);
   lblLogMaxSize.Parent := pnlGeneral;
   lblLogMaxSize.Left := 16;
-  lblLogMaxSize.Top := 136;
+  lblLogMaxSize.Top := 168;
   lblLogMaxSize.Caption := 'Max Log File Size (KB):';
 
   edtLogMaxSize := TEdit.Create(Self);
   edtLogMaxSize.Parent := pnlGeneral;
   edtLogMaxSize.Left := 16;
-  edtLogMaxSize.Top := 154;
+  edtLogMaxSize.Top := 186;
   edtLogMaxSize.Width := 100;
   edtLogMaxSize.NumbersOnly := True;
 
   grpQuota := TGroupBox.Create(Self);
   grpQuota.Parent := pnlGeneral;
   grpQuota.Left := 16;
-  grpQuota.Top := 192;
+  grpQuota.Top := 224;
   grpQuota.Width := 356;
   grpQuota.Height := 140;
   grpQuota.Caption := ' Local Token Quota ';
@@ -783,6 +794,11 @@ begin
     tsGeneral.StyleElements := tsGeneral.StyleElements - [seClient, seBorder];
     TTabSheetColorHack(tsGeneral).ParentBackground := False;
     TTabSheetColorHack(tsGeneral).Color := LColors.BgBase;
+  end;
+  if Assigned(chkInjectDelphiVersion) then
+  begin
+    chkInjectDelphiVersion.StyleElements := chkInjectDelphiVersion.StyleElements - [seClient, seBorder];
+    chkInjectDelphiVersion.Font.Color := LColors.TextColor;
   end;
   if Assigned(chkLogEnabled) then
   begin
@@ -1240,6 +1256,8 @@ function TFrameAIConfig.GetSystemPrompt: string; begin Result := memSystemPrompt
 procedure TFrameAIConfig.SetSystemPrompt(const AValue: string); begin memSystemPrompt.Text := AValue; end;
 function TFrameAIConfig.GetSmartConfigEnabled: Boolean; begin Result := FChkSmartConfig.Checked; end;
 procedure TFrameAIConfig.SetSmartConfigEnabled(const AValue: Boolean); begin FChkSmartConfig.Checked := AValue; end;
+function TFrameAIConfig.GetInjectDelphiVersion: Boolean; begin Result := chkInjectDelphiVersion.Checked; end;
+procedure TFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean); begin chkInjectDelphiVersion.Checked := AValue; end;
 function TFrameAIConfig.GetLogEnabled: Boolean; begin Result := chkLogEnabled.Checked; end;
 procedure TFrameAIConfig.SetLogEnabled(const AValue: Boolean); begin chkLogEnabled.Checked := AValue; end;
 function TFrameAIConfig.GetLogPath: string; begin Result := edtLogPath.Text; end;

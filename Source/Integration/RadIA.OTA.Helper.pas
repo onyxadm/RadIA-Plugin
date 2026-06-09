@@ -20,6 +20,7 @@ type
     class function GetCurrentEditBuffer: IOTAEditBuffer;
     class function GetCurrentEditView: IOTAEditView;
     class function OpenProjectInIDE(const AProjectPath: string): Boolean;
+    class function GetDelphiVersionName: string;
   end;
 
 implementation
@@ -290,6 +291,31 @@ begin
     LModuleServices.OpenModule(AProjectPath);
     Result := True;
   end;
+end;
+
+class function TRadIAOTAHelper.GetDelphiVersionName: string;
+begin
+  {$IF CompilerVersion = 37.0}
+  Result := 'Delphi 13 Florence';
+  {$ELSEIF CompilerVersion = 36.0}
+  Result := 'Delphi 12 Athens';
+  {$ELSEIF CompilerVersion = 35.0}
+  Result := 'Delphi 11 Alexandria';
+  {$ELSEIF CompilerVersion = 34.0}
+  Result := 'Delphi 10.4 Sydney';
+  {$ELSEIF CompilerVersion = 33.0}
+  Result := 'Delphi 10.3 Rio';
+  {$ELSEIF CompilerVersion = 32.0}
+  Result := 'Delphi 10.2 Tokyo';
+  {$ELSEIF CompilerVersion = 31.0}
+  Result := 'Delphi 10.1 Berlin';
+  {$ELSEIF CompilerVersion = 30.0}
+  Result := 'Delphi 10 Seattle';
+  {$ELSEIF CompilerVersion = 29.0}
+  Result := 'Delphi XE8';
+  {$ELSE}
+  Result := 'Delphi (CompilerVersion ' + FloatToStr(CompilerVersion) + ')';
+  {$ENDIF}
 end;
 
 end.

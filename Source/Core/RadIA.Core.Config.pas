@@ -35,6 +35,7 @@ type
     FAwsSecretAccessKey: string;
     FAwsRegion: string;
     FAwsSessionToken: string;
+    FInjectDelphiVersion: Boolean;
 
     { Dynamic String-based settings (avoiding TDictionary generics due to BPL RTL unloading bugs) }
     FApiKeysList: TStringList;
@@ -129,6 +130,8 @@ type
     procedure SetQuotaCycleStart(const AValue: TDateTime);
     function GetActiveSessionId: string;
     procedure SetActiveSessionId(const AValue: string);
+    function GetInjectDelphiVersion: Boolean;
+    procedure SetInjectDelphiVersion(const AValue: Boolean);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -239,6 +242,7 @@ begin
   FAutocompleteProvider := 'Gemini';
   FAutocompleteModel := 'gemini-1.5-flash';
   FAutocompleteDelay := 300;
+  FInjectDelphiVersion := True;
   
   Load;
 end;
@@ -393,6 +397,7 @@ begin
     FAutocompleteProvider := FStorage.ReadString('AutocompleteProvider', 'Gemini');
     FAutocompleteModel := ReadRegString('AutocompleteModel', 'gemini-1.5-flash');
     FAutocompleteDelay := ReadRegInt('AutocompleteDelay', 300);
+    FInjectDelphiVersion := ReadRegInt('InjectDelphiVersion', 1) <> 0;
     FAzureApiVersion   := ReadRegString('AzureApiVersion', '2024-02-15-preview');
     FAwsRegion         := ReadRegString('AwsRegion', 'us-east-1');
     try
@@ -544,6 +549,7 @@ begin
     FStorage.WriteString('AutocompleteProvider', FAutocompleteProvider);
     FStorage.WriteString('AutocompleteModel', FAutocompleteModel);
     FStorage.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
+    FStorage.WriteInteger('InjectDelphiVersion', IfThen(FInjectDelphiVersion, 1, 0));
     FStorage.WriteString('AzureApiVersion', FAzureApiVersion);
     FStorage.WriteString('AwsRegion', FAwsRegion);
     FStorage.WriteString('AwsAccessKeyId', ProtectString(FAwsAccessKeyId));
@@ -805,6 +811,16 @@ begin
   if AProviderName.IsEmpty then
     Exit;
   FAuthTypesList.Values[AProviderName.ToLower] := AValue;
+end;
+
+function TRadIAConfig.GetInjectDelphiVersion: Boolean;
+begin
+  Result := FInjectDelphiVersion;
+end;
+
+procedure TRadIAConfig.SetInjectDelphiVersion(const AValue: Boolean);
+begin
+  FInjectDelphiVersion := AValue;
 end;
 
 function TRadIAConfig.GetAutocompleteEnabled: Boolean;

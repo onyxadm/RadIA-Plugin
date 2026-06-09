@@ -27,6 +27,7 @@ type
 
     SystemPrompt: string;
     SmartConfigEnabled: Boolean;
+    InjectDelphiVersion: Boolean;
     LogEnabled: Boolean;
     LogPath: string;
     LogMaxSize: string;
@@ -99,6 +100,8 @@ type
     procedure SetSystemPrompt(const AValue: string);
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetInjectDelphiVersion: Boolean;
+    procedure SetInjectDelphiVersion(const AValue: Boolean);
     function GetLogEnabled: Boolean;
     procedure SetLogEnabled(const AValue: Boolean);
     function GetLogPath: string;
@@ -177,6 +180,7 @@ begin
   FolderDialogResult := True;
   CloseViewCalled := False;
   FocusTemplateNameCalled := False;
+  InjectDelphiVersion := True;
 end;
 
 destructor TMockConfigView.Destroy;
@@ -268,6 +272,8 @@ function TMockConfigView.GetSystemPrompt: string; begin Result := SystemPrompt; 
 procedure TMockConfigView.SetSystemPrompt(const AValue: string); begin SystemPrompt := AValue; end;
 function TMockConfigView.GetSmartConfigEnabled: Boolean; begin Result := SmartConfigEnabled; end;
 procedure TMockConfigView.SetSmartConfigEnabled(const AValue: Boolean); begin SmartConfigEnabled := AValue; end;
+function TMockConfigView.GetInjectDelphiVersion: Boolean; begin Result := InjectDelphiVersion; end;
+procedure TMockConfigView.SetInjectDelphiVersion(const AValue: Boolean); begin InjectDelphiVersion := AValue; end;
 function TMockConfigView.GetLogEnabled: Boolean; begin Result := LogEnabled; end;
 procedure TMockConfigView.SetLogEnabled(const AValue: Boolean); begin LogEnabled := AValue; end;
 function TMockConfigView.GetLogPath: string; begin Result := LogPath; end;

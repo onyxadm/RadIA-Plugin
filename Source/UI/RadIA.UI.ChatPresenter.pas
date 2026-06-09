@@ -150,6 +150,9 @@ begin
   FLifecycleGuard := TLifecycleGuard.Create;
   FActiveModels := [];
 
+  TRadIAWebViewBridgeProvider.OnSendPrompt := OnWebViewBridgeSendPrompt;
+  TRadIAWebViewBridgeProvider.OnCancel := OnWebViewBridgeCancel;
+
   if Assigned(AConfig) then
     FConfig := AConfig
   else
@@ -171,6 +174,9 @@ end;
 
 destructor TChatPresenter.Destroy;
 begin
+  TRadIAWebViewBridgeProvider.OnSendPrompt := nil;
+  TRadIAWebViewBridgeProvider.OnCancel := nil;
+
   if Assigned(FLifecycleGuard) then
     (FLifecycleGuard as ILifecycleGuard).Invalidate;
 
@@ -693,6 +699,15 @@ begin
                 Self.PostToWebView('add_message', 'assistant', '**Error:** ' + AError, False, LActiveProvider, LActiveModel);
                 Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
               end;
+
+              var LIsWebError := SameText(AError, 'WebView Login session is not ready or active.') or
+                                 SameText(AError, 'Input textarea not found in page.') or
+                                 SameText(AError, 'Send button not found in page.');
+              if LIsWebError then
+              begin
+                Self.HandleOnbtnWebLoginConnectClick;
+              end;
+
               Exit;
             end;
 
@@ -1010,6 +1025,16 @@ begin
         procedure
         begin
           Self.HandleOnbtnWebLoginConnectClick;
+        end));
+    end
+    else if LAction = 'error' then
+    begin
+      LText := LJson.GetValue<string>('text', '');
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          TRadIAWebViewBridgeProvider.ReceiveChunk('', True, LText);
         end));
     end
     else if LAction = 'update_stream' then
@@ -1427,12 +1452,23 @@ begin
       end;
     end;
 
-    if Length(FActiveModels) > 0 then
-      LDefaultModels := FActiveModels
-    else if TProviderRegistry.GetProvider(LActiveProvider, LMeta) then
-      LDefaultModels := LMeta.DefaultModels
+    if LIsWebLogin then
+    begin
+      if TProviderRegistry.GetProvider('WebViewBridge', LMeta) then
+        LDefaultModels := LMeta.DefaultModels
+      else
+        LDefaultModels := ['Web-Browser'];
+      LActiveModel := 'Web-Browser';
+    end
     else
-      LDefaultModels := [];
+    begin
+      if Length(FActiveModels) > 0 then
+        LDefaultModels := FActiveModels
+      else if TProviderRegistry.GetProvider(LActiveProvider, LMeta) then
+        LDefaultModels := LMeta.DefaultModels
+      else
+        LDefaultModels := [];
+    end;
       
     for LModel in LDefaultModels do
     begin

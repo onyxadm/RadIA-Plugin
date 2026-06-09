@@ -38,7 +38,6 @@ type
     FCacheManager: TRadIACacheManager;
     FActiveProvider: IIAProvider;
 
-    function GetEffectiveSystemPrompt: string;
     function BuildEffectiveHistory(const ASystemPrompt: string;
       const ATrimmedHistory: TArray<IChatMessage>): TArray<IChatMessage>;
     function SerializeHistoryToJson(const AHistory: TArray<IChatMessage>): string;
@@ -47,6 +46,8 @@ type
   public
     constructor Create(const AConfig: IAIConfig);
     destructor Destroy; override;
+
+    function GetEffectiveSystemPrompt: string;
 
     procedure ResolveParameters(const AProviderName: string; const AProfile: TAIRequestProfile;
       out ATemperature: Double; out AMaxTokens: Integer);
@@ -198,17 +199,28 @@ var
   LSystemPrompt: string;
   LProjectFolder: string;
   LProjectContext: string;
+  LDelphiVersionPrompt: string;
 begin
   LSystemPrompt := FConfig.SystemPrompt;
+  
+  if FConfig.InjectDelphiVersion then
+  begin
+    LDelphiVersionPrompt := 'The user is writing code using Embarcadero ' + TRadIAOTAHelper.GetDelphiVersionName + '. ' +
+                            'Make sure any code, syntax, keywords, and RTL components you generate are fully compatible and compile ' +
+                            'in this version. Avoid newer language features that are not supported in ' + TRadIAOTAHelper.GetDelphiVersionName + '.';
+    
+    if LSystemPrompt.IsEmpty then
+      LSystemPrompt := LDelphiVersionPrompt
+    else
+      LSystemPrompt := LSystemPrompt + sLineBreak + sLineBreak + LDelphiVersionPrompt;
+  end;
+
   LProjectFolder := TRadIAOTAHelper.GetActiveProjectFolder;
   if not LProjectFolder.IsEmpty then
   begin
     if TProjectContextLoader.LoadContext(LProjectFolder, LProjectContext) and not LProjectContext.IsEmpty then
     begin
-      if LSystemPrompt.IsEmpty then
-        LSystemPrompt := LProjectContext
-      else
-        LSystemPrompt := LProjectContext + sLineBreak + sLineBreak + LSystemPrompt;
+      LSystemPrompt := LProjectContext + sLineBreak + sLineBreak + LSystemPrompt;
     end;
   end;
   Result := LSystemPrompt;
