@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Gemini;
+unit RadIA.Provider.Gemini;
 
 interface
 
@@ -29,8 +29,8 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections, System.NetEncoding,
-  System.Math, RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
+  System.JSON, System.Threading, System.Generics.Collections, System.Net.URLClient, System.NetEncoding,
+  System.SyncObjs, System.Math, RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
 
 { TRadIAGeminiProvider }
 
@@ -240,11 +240,14 @@ begin
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
-    TThread.Queue(nil,
-      procedure
-      begin
-        ACallback(GetAvailableModels, 'API Key is missing for Google Gemini. Using fallback models.');
-      end);
+    if not GIsShuttingDown then
+    begin
+      TThread.Queue(nil,
+        procedure
+        begin
+          ACallback(GetAvailableModels, 'API Key is missing for Google Gemini. Using fallback models.');
+        end);
+    end;
     Exit;
   end;
 
@@ -265,90 +268,101 @@ begin
                  LModelsArray: TArray<string>;
                  LErrorMsg: string;
                begin
-                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-                 LProviderRef.GetProviderId;
-                 LModelsList := TList<string>.Create;
                  try
+                   System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+                   LProviderRef.GetProviderId;
+                   LModelsList := TList<string>.Create;
                    try
-                     LResponseText := DoGetRequest(LUrl, nil);
-                     LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
-                     if Assigned(LJson) then
-                     begin
-                       try
-                         LModelsArr := LJson.GetValue('models') as TJSONArray;
-                         if Assigned(LModelsArr) then
-                         begin
-                           for LVal in LModelsArr do
+                     try
+                       LResponseText := DoGetRequest(LUrl, nil, 5000); // Timeout rápido de 5 segundos para busca de modelos
+                       LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
+                       if Assigned(LJson) then
+                       begin
+                         try
+                           LModelsArr := LJson.GetValue('models') as TJSONArray;
+                           if Assigned(LModelsArr) then
                            begin
-                             if LVal is TJSONObject then
+                             for LVal in LModelsArr do
                              begin
-                               LModelObj := LVal as TJSONObject;
-                               LName := LModelObj.GetValue<string>('name', '');
-
-                               if not LName.IsEmpty then
+                               if LVal is TJSONObject then
                                begin
-                                 LCanGenerate := False;
-                                 LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
-                                 if Assigned(LMethodsArr) then
+                                 LModelObj := LVal as TJSONObject;
+                                 LName := LModelObj.GetValue<string>('name', '');
+
+                                 if not LName.IsEmpty then
                                  begin
-                                   for LMethodVal in LMethodsArr do
+                                   LCanGenerate := False;
+                                   LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
+                                   if Assigned(LMethodsArr) then
                                    begin
-                                     if SameText(LMethodVal.Value, 'generateContent') then
+                                     for LMethodVal in LMethodsArr do
                                      begin
-                                       LCanGenerate := True;
-                                       Break;
+                                       if SameText(LMethodVal.Value, 'generateContent') then
+                                       begin
+                                         LCanGenerate := True;
+                                         Break;
+                                       end;
                                      end;
                                    end;
-                                 end;
 
-                                 if LCanGenerate then
-                                 begin
-                                   if LName.StartsWith('models/') then
-                                     LName := LName.Substring(7);
-                                   LModelsList.Add(LName);
+                                   if LCanGenerate then
+                                   begin
+                                     if LName.StartsWith('models/') then
+                                       LName := LName.Substring(7);
+                                     LModelsList.Add(LName);
+                                   end;
                                  end;
                                end;
                              end;
                            end;
+                         finally
+                           LJson.Free;
                          end;
-                       finally
-                         LJson.Free;
+                       end;
+
+                       if LModelsList.Count = 0 then
+                         LModelsArray := GetAvailableModels
+                       else
+                         LModelsArray := LModelsList.ToArray;
+
+                       if not GIsShuttingDown then
+                       begin
+                         TThread.Queue(nil,
+                           TThreadProcedure(
+                             procedure
+                             begin
+                               ACallback(LModelsArray, '');
+                             end
+                           )
+                         );
+                       end;
+                     except
+                       on E: Exception do
+                       begin
+                         LErrorMsg := E.ClassName + ': ' + E.Message;
+                         LModelsArray := GetAvailableModels;
+                         if not GIsShuttingDown then
+                         begin
+                           TThread.Queue(nil,
+                             TThreadProcedure(
+                               procedure
+                               begin
+                                 ACallback(LModelsArray, LErrorMsg);
+                               end
+                             )
+                           );
+                         end;
                        end;
                      end;
-
-                     if LModelsList.Count = 0 then
-                       LModelsArray := GetAvailableModels
-                     else
-                       LModelsArray := LModelsList.ToArray;
-
-                     TThread.Queue(nil,
-                       TThreadProcedure(
-                         procedure
-                         begin
-                           ACallback(LModelsArray, '');
-                         end
-                       )
-                     );
-                   except
-                     on E: Exception do
-                     begin
-                       LErrorMsg := E.ClassName + ': ' + E.Message;
-                       LModelsArray := GetAvailableModels;
-                       TThread.Queue(nil,
-                         TThreadProcedure(
-                           procedure
-                           begin
-                             ACallback(LModelsArray, LErrorMsg);
-                           end
-                         )
-                       );
-                     end;
+                   finally
+                     LModelsList.Free;
                    end;
                  finally
-                   LModelsList.Free;
+                   TInterlocked.Decrement(GActiveThreadCount);
                  end;
                end;
 
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTaskProc);
 end;
 

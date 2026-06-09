@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Ollama;
+unit RadIA.Provider.Ollama;
 
 interface
 
@@ -29,7 +29,8 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections, System.Math, RadIA.Core.ProviderRegistry;
+  System.JSON, System.Threading, System.Generics.Collections, System.Math, RadIA.Core.ProviderRegistry,
+  System.SyncObjs;
 
 { TRadIAOllamaProvider }
 
@@ -177,70 +178,81 @@ begin
                  LModelsArray: TArray<string>;
                  LErrorMsg: string;
                begin
-                 System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-                 LProviderRef.GetProviderId;
-                 LModelsList := TList<string>.Create;
                  try
+                   System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+                   LProviderRef.GetProviderId;
+                   LModelsList := TList<string>.Create;
                    try
-                     LResponseText := DoGetRequest(LUrl, nil);
-                     LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
-                     if Assigned(LJson) then
-                     begin
-                       try
-                         LModelsArr := LJson.GetValue('models') as TJSONArray;
-                         if Assigned(LModelsArr) then
-                         begin
-                           for LVal in LModelsArr do
+                     try
+                       LResponseText := DoGetRequest(LUrl, nil, 5000); // Timeout rápido de 5 segundos para busca de modelos
+                       LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
+                       if Assigned(LJson) then
+                       begin
+                         try
+                           LModelsArr := LJson.GetValue('models') as TJSONArray;
+                           if Assigned(LModelsArr) then
                            begin
-                             if LVal is TJSONObject then
+                             for LVal in LModelsArr do
                              begin
-                               LModelObj := LVal as TJSONObject;
-                               LName := LModelObj.GetValue<string>('name', '');
-                               if not LName.IsEmpty then
-                                 LModelsList.Add(LName);
+                               if LVal is TJSONObject then
+                               begin
+                                 LModelObj := LVal as TJSONObject;
+                                 LName := LModelObj.GetValue<string>('name', '');
+                                 if not LName.IsEmpty then
+                                   LModelsList.Add(LName);
+                               end;
                              end;
                            end;
+                         finally
+                           LJson.Free;
                          end;
-                       finally
-                         LJson.Free;
+                       end;
+                       
+                       LModelsList.Sort;
+                       
+                       if LModelsList.Count = 0 then
+                         LModelsArray := GetAvailableModels
+                       else
+                         LModelsArray := LModelsList.ToArray;
+                         
+                       if not GIsShuttingDown then
+                       begin
+                         TThread.Queue(nil,
+                           TThreadProcedure(
+                             procedure
+                             begin
+                               ACallback(LModelsArray, '');
+                             end
+                           )
+                         );
+                       end;
+                     except
+                       on E: Exception do
+                       begin
+                         LErrorMsg := E.ClassName + ': ' + E.Message;
+                         LModelsArray := GetAvailableModels;
+                         if not GIsShuttingDown then
+                         begin
+                           TThread.Queue(nil,
+                             TThreadProcedure(
+                               procedure
+                               begin
+                                 ACallback(LModelsArray, LErrorMsg);
+                               end
+                             )
+                           );
+                         end;
                        end;
                      end;
-                     
-                     LModelsList.Sort;
-                     
-                     if LModelsList.Count = 0 then
-                       LModelsArray := GetAvailableModels
-                     else
-                       LModelsArray := LModelsList.ToArray;
-                       
-                     TThread.Queue(nil,
-                       TThreadProcedure(
-                         procedure
-                         begin
-                           ACallback(LModelsArray, '');
-                         end
-                       )
-                     );
-                   except
-                     on E: Exception do
-                     begin
-                       LErrorMsg := E.ClassName + ': ' + E.Message;
-                       LModelsArray := GetAvailableModels;
-                       TThread.Queue(nil,
-                         TThreadProcedure(
-                           procedure
-                           begin
-                             ACallback(LModelsArray, LErrorMsg);
-                           end
-                         )
-                       );
-                     end;
+                   finally
+                     LModelsList.Free;
                    end;
                  finally
-                   LModelsList.Free;
+                   TInterlocked.Decrement(GActiveThreadCount);
                  end;
                end;
 
+  TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTaskProc);
 end;
 

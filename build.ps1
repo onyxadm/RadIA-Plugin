@@ -138,6 +138,19 @@ switch ($compilerVersion) {
 }
 
 Write-Host "Versao do Delphi correspondente (DelphiVer): $delphiVer" -ForegroundColor Green
+# 4.1 Ajustar automaticamente a arquitetura do plugin conforme a versao da IDE
+if ($compilerVersion -ge 37.0) {
+    if (-not $IDE64) {
+        Write-Host "Detectado Delphi 13 ou superior (IDE de 64 bits). Ativando flag -IDE64 automaticamente." -ForegroundColor Yellow
+        $IDE64 = $true
+    }
+} else {
+    if ($IDE64) {
+        Write-Host "AVISO: A IDE do Delphi nas versoes anteriores ao Delphi 13 e de 32 bits." -ForegroundColor Yellow
+        Write-Host "       A flag -IDE64 foi desativada pois o plugin deve ser compilado em Win32 para carregar na IDE." -ForegroundColor Yellow
+        $IDE64 = $false
+    }
+}
 
 
 # Processar Desinstalacao (se a flag -Uninstall for fornecida)
@@ -361,7 +374,7 @@ if ($Install) {
     $targetBpl = "$targetBplDir\RadIA.bpl"
     $targetDcp = "$targetDcpDir\RadIA.dcp"
 
-    # 9.1 Garantir existencia de WebView2Loader.dll na pasta da IDE
+    # 9.1 Garantir existencia de WebView2Loader.dll na pasta da IDE correspondente a arquitetura
     $rootDir = "C:\Program Files (x86)\Embarcadero\Studio\$delphiVer"
     if ($selectedInstall) {
         $rootDir = $selectedInstall.RootDir
@@ -370,21 +383,27 @@ if ($Install) {
     $ideBin64Dir = Join-Path $rootDir "bin64"
     $dllName = "WebView2Loader.dll"
 
-    if (-not (Test-Path "$ideBinDir\$dllName")) {
-        Write-Host "WebView2Loader.dll (32-bit) nao encontrada em $ideBinDir." -ForegroundColor Yellow
-        $redist32 = ".\Redist\Win32\$dllName"
-        if (Test-Path $redist32) {
-            Write-Host "Solicitando privilegios para copiar WebView2Loader.dll (32-bit) para a pasta bin da IDE..." -ForegroundColor Yellow
-            Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$redist32' -Destination '$ideBinDir\$dllName' -Force" -Wait
+    # Copiar a DLL de 32-bit apenas se a IDE for de 32-bit (Delphi 12 ou anterior, sem flag IDE64)
+    if (($compilerVersion -lt 37.0) -and (-not $IDE64)) {
+        if (-not (Test-Path "$ideBinDir\$dllName")) {
+            Write-Host "WebView2Loader.dll (32-bit) nao encontrada em $ideBinDir." -ForegroundColor Yellow
+            $redist32 = ".\Redist\Win32\$dllName"
+            if (Test-Path $redist32) {
+                Write-Host "Solicitando privilegios para copiar WebView2Loader.dll (32-bit) para a pasta bin da IDE..." -ForegroundColor Yellow
+                Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$redist32' -Destination '$ideBinDir\$dllName' -Force" -Wait
+            }
         }
     }
 
-    if (-not (Test-Path "$ideBin64Dir\$dllName")) {
-        Write-Host "WebView2Loader.dll (64-bit) nao encontrada em $ideBin64Dir." -ForegroundColor Yellow
-        $redist64 = ".\Redist\Win64\$dllName"
-        if (Test-Path $redist64) {
-            Write-Host "Solicitando privilegios para copiar WebView2Loader.dll (64-bit) para a pasta bin64 da IDE..." -ForegroundColor Yellow
-            Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$redist64' -Destination '$ideBin64Dir\$dllName' -Force" -Wait
+    # Copiar a DLL de 64-bit apenas se a IDE for de 64-bit (Delphi 13 ou superior, ou com flag IDE64)
+    if (($compilerVersion -ge 37.0) -or $IDE64) {
+        if (-not (Test-Path "$ideBin64Dir\$dllName")) {
+            Write-Host "WebView2Loader.dll (64-bit) nao encontrada em $ideBin64Dir." -ForegroundColor Yellow
+            $redist64 = ".\Redist\Win64\$dllName"
+            if (Test-Path $redist64) {
+                Write-Host "Solicitando privilegios para copiar WebView2Loader.dll (64-bit) para a pasta bin64 da IDE..." -ForegroundColor Yellow
+                Start-Process powershell -Verb RunAs -ArgumentList "-Command Copy-Item -Path '$redist64' -Destination '$ideBin64Dir\$dllName' -Force" -Wait
+            }
         }
     }
 

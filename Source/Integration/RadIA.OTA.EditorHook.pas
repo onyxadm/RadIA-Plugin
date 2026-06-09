@@ -138,15 +138,19 @@ begin
 
   TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
 
-  if Assigned(Screen) then
+  if Assigned(Screen) and (not GIsShuttingDown) then
   begin
-    Screen.OnActiveFormChange := FOldActiveFormChange;
-    Screen.OnActiveControlChange := FOldActiveControlChange;
+    try
+      Screen.OnActiveFormChange := FOldActiveFormChange;
+      Screen.OnActiveControlChange := FOldActiveControlChange;
+    except
+      // ignora silenciosamente se Screen estiver instavel no shutdown
+    end;
   end;
   
   FInstalled := False;
     
-  if Assigned(Screen) then
+  if Assigned(Screen) and (not GIsShuttingDown) then
   begin
     for I := 0 to Screen.FormCount - 1 do
     begin
@@ -162,16 +166,19 @@ begin
   if Assigned(FInterceptedMenus) then
   begin
     try
-      // Restore all original OnPopup handlers
-      for LMenu in FInterceptedMenus.Keys do
+      // Apenas restaura os menus se a IDE nao estiver em shutdown, pois no shutdown os menus ja podem ter sido destruidos.
+      if not GIsShuttingDown then
       begin
-        try
-          LOldOnPopup := FInterceptedMenus.Items[LMenu];
-          LMenu.OnPopup := LOldOnPopup;
-          RemoveMenuFromPopupMenu(LMenu);
-        except
-          on E: Exception do
-            TLogger.Log('Uninstall: Error restoring popup menu: ' + E.Message, 'EditorHook');
+        for LMenu in FInterceptedMenus.Keys do
+        begin
+          try
+            LOldOnPopup := FInterceptedMenus.Items[LMenu];
+            LMenu.OnPopup := LOldOnPopup;
+            RemoveMenuFromPopupMenu(LMenu);
+          except
+            on E: Exception do
+              TLogger.Log('Uninstall: Error restoring popup menu: ' + E.Message, 'EditorHook');
+          end;
         end;
       end;
     finally

@@ -236,6 +236,32 @@ begin
   end;
 
   FPresenter.Free;
+  
+  if not GIsShuttingDown then
+  begin
+    if Assigned(FEdgeBrowserWeb) then
+    begin
+      FEdgeBrowserWeb.Parent := nil;
+      FreeAndNil(FEdgeBrowserWeb);
+    end;
+    if Assigned(FpnlBrowserWeb) then
+    begin
+      FreeAndNil(FpnlBrowserWeb);
+    end;
+    if Assigned(EdgeBrowser) then
+    begin
+      EdgeBrowser.Parent := nil;
+      FreeAndNil(EdgeBrowser);
+    end;
+  end
+  else
+  begin
+    if Assigned(FEdgeBrowserWeb) then
+      FEdgeBrowserWeb.Parent := nil;
+    if Assigned(EdgeBrowser) then
+      EdgeBrowser.Parent := nil;
+  end;
+
   inherited Destroy;
 end;
 
@@ -259,7 +285,7 @@ procedure TFrameAIChat.CreateEdgeBrowser;
 begin
   if not Assigned(EdgeBrowser) then
   begin
-    EdgeBrowser := TEdgeBrowser.Create(Self);
+    EdgeBrowser := TEdgeBrowser.Create(nil);
     EdgeBrowser.Parent := pnlBrowser;
     EdgeBrowser.Align := alClient;
     EdgeBrowser.AlignWithMargins := True;
@@ -299,12 +325,15 @@ begin
     LEdgeToFree := EdgeBrowser;
     EdgeBrowser := nil;
     LEdgeToFree.Parent := nil;
-    TThread.Queue(nil,
-      TThreadProcedure(
-      procedure
-      begin
-        LEdgeToFree.Free;
-      end));
+    if not GIsShuttingDown then
+    begin
+      TThread.Queue(nil,
+        TThreadProcedure(
+        procedure
+        begin
+          LEdgeToFree.Free;
+        end));
+    end;
   end;
   inherited DestroyWnd;
 end;
@@ -661,14 +690,20 @@ end;
 { IChatView Implementation }
 
 procedure TFrameAIChat.SetRequestState(const AInProgress: Boolean);
+var
+  LJson: TJSONObject;
 begin
-  TThread.Queue(nil,
-    TThreadProcedure(
-    procedure
-    begin
-      Self.UpdateSendButtonVisual(AInProgress);
-      Self.btnSend.Enabled := True;
-    end));
+  Self.UpdateSendButtonVisual(AInProgress);
+  Self.btnSend.Enabled := True;
+
+  LJson := TJSONObject.Create;
+  try
+    LJson.AddPair('action', 'set_request_state');
+    LJson.AddPair('inProgress', AInProgress);
+    PostMessageToWeb(LJson.ToJSON);
+  finally
+    LJson.Free;
+  end;
 end;
 
 procedure TFrameAIChat.UpdateTokensStats(const AStats: string);
@@ -916,7 +951,7 @@ begin
 
   if not Assigned(FEdgeBrowserWeb) then
   begin
-    FEdgeBrowserWeb := TEdgeBrowser.Create(Self);
+    FEdgeBrowserWeb := TEdgeBrowser.Create(nil);
     FEdgeBrowserWeb.Parent := FpnlBrowserWeb;
     FEdgeBrowserWeb.Align := alClient;
     FEdgeBrowserWeb.OnCreateWebViewCompleted := EdgeBrowserWebCreateWebViewCompleted;

@@ -60,6 +60,7 @@ type
     FCurrentBackgroundUrl: string;
     FLoginPopupOpen: Boolean;
     FOwnsService: Boolean;
+    FModelsProvider: IIAProvider;
 
     procedure HandleBackgroundLoginComplete;
     procedure UpdateModelsCombo;
@@ -129,7 +130,8 @@ implementation
 uses
   System.IOUtils, System.JSON.Builders, RadIA.Core.Config, RadIA.Core.Logger,
   RadIA.Core.ProviderRegistry, RadIA.Core.ConversationExporter,
-  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge, RadIA.OTA.Helper;
+  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge, RadIA.OTA.Helper,
+  System.SyncObjs;
 
 { Helper Functions }
 
@@ -193,11 +195,24 @@ end;
 
 destructor TChatPresenter.Destroy;
 begin
+  if Assigned(FModelsProvider) then
+  begin
+    try
+      FModelsProvider.CancelCurrentRequest;
+    except
+      // Silencia
+    end;
+    FModelsProvider := nil;
+  end;
+
   TRadIAWebViewBridgeProvider.OnSendPrompt := nil;
   TRadIAWebViewBridgeProvider.OnCancel := nil;
 
   if Assigned(FLifecycleGuard) then
     (FLifecycleGuard as ILifecycleGuard).Invalidate;
+
+  if Assigned(FAIService) then
+    FAIService.CancelCurrentRequest;
 
   FPromptHistoryManager.Free;
   FTemplateManager.Free;
@@ -298,9 +313,20 @@ var
 begin
   FView.UpdateModels(['Loading...'], 'Loading...', False);
   LGuard := FLifecycleGuard as ILifecycleGuard;
-
+ 
   try
-    LProvider := FAIService.CreateActiveProvider;
+    if Assigned(FModelsProvider) then
+    begin
+      try
+        FModelsProvider.CancelCurrentRequest;
+      except
+        // Silencia
+      end;
+      FModelsProvider := nil;
+    end;
+ 
+    FModelsProvider := FAIService.CreateActiveProvider;
+    LProvider := FModelsProvider;
     LProvider.FetchAvailableModelsAsync(
       procedure(AModels: TArray<string>; AError: string)
       begin
@@ -313,6 +339,9 @@ begin
             if not LGuard.IsAlive then
               Exit;
               
+            if FModelsProvider = LProvider then
+              FModelsProvider := nil;
+ 
             if Assigned(LProvider) then
             begin
               Self.FActiveModels := AModels;
@@ -688,8 +717,9 @@ begin
             if not SameText(Self.FSessionManager.ActiveSessionId, LSessionId) then
             begin
               TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.', [LSessionId, Self.FSessionManager.ActiveSessionId]), 'UI');
-              if AIsDone and (not LFullResponse.IsEmpty) then
+              if AIsDone and (not LFullResponse.IsEmpty) and (not GIsShuttingDown) then
               begin
+                TInterlocked.Increment(GActiveThreadCount);
                 TThread.CreateAnonymousThread(
                   procedure
                   var
@@ -697,11 +727,15 @@ begin
                     LAssistantMsg: IChatMessage;
                   begin
                     try
-                      LOrigHistory := Self.FSessionManager.LoadSessionHistory(LSessionId);
-                      LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
-                      LOrigHistory := LOrigHistory + [LAssistantMsg];
-                      Self.FSessionManager.SaveSessionHistory(LSessionId, LOrigHistory);
-                    except
+                      try
+                        LOrigHistory := Self.FSessionManager.LoadSessionHistory(LSessionId);
+                        LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+                        LOrigHistory := LOrigHistory + [LAssistantMsg];
+                        Self.FSessionManager.SaveSessionHistory(LSessionId, LOrigHistory);
+                      except
+                      end;
+                    finally
+                      TInterlocked.Decrement(GActiveThreadCount);
                     end;
                   end).Start;
               end;

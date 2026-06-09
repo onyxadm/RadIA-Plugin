@@ -111,3 +111,39 @@ Antes de entregar qualquer tarefa ou código modificado, execute os seguintes pa
     npx eslint
     ```
     Nenhum erro de linting deve ser deixado para trás.
+
+---
+
+## 6. Ciclo de Vida e Gerenciamento de WebView2 (TEdgeBrowser) no Shutdown
+
+O RadIA roda acoplado ao processo da IDE (`bds.exe`). A integração com a WebView2 (`TEdgeBrowser`) exige cuidados extremos no encerramento da IDE para evitar deadlocks COM e Access Violations em `rtl290.bpl`:
+
+### 6.1 Instanciação com Owner nulo (`nil`)
+*   **Regra:** Qualquer componente `TEdgeBrowser` (ou descendente que faça interface COM com WebView2) criado dinamicamente deve ser instanciado passando `nil` como Owner em vez de `Self` ou do Parent Form/Frame.
+*   **Exemplo:**
+    ```pascal
+    EdgeBrowser := TEdgeBrowser.Create(nil); // Correto: evita destruicao automatica forçada pela VCL
+    ```
+*   **Por que:** Se for criado com `Self` (o Frame/Form) como Owner, o destrutor ancestral da VCL (`inherited Destroy`) forçará a liberação síncrona do componente. No shutdown da IDE, o loop de mensagens da thread principal está desativando e chamadas de destruição COM síncronas travam a IDE por tempo indeterminado ou geram crash.
+
+### 6.2 Supressão do `.Free` no Shutdown da IDE
+*   **Regra:** Nos destrutores (`Destroy`) e manipuladores de janela (`DestroyWnd`), verifique sempre a flag global `GIsShuttingDown`. Se for `True`, **NUNCA** chame `.Free` em instâncias de `TEdgeBrowser`. Apenas defina `Parent := nil` se necessário e ignore a liberação manual.
+*   **Por que:** No shutdown da IDE, o próprio Windows cuidará de desalocar os handles, a memória do processo principal `bds.exe` e todos os subprocessos filhos `msedgewebview2.exe` de forma robusta e instantânea. Chamar o destrutor do WebView2 ativamente nesse estágio causa travamento de até 1 minuto.
+*   **Exemplo de Destruição Correta:**
+    ```pascal
+    if not GIsShuttingDown then
+    begin
+      if Assigned(EdgeBrowser) then
+        FreeAndNil(EdgeBrowser);
+    end
+    else
+    begin
+      if Assigned(EdgeBrowser) then
+        EdgeBrowser.Parent := nil; // Desassocia visualmente sem chamar Free
+    end;
+    ```
+
+### 6.3 Pinning da BPL do Plugin
+*   **Regra:** O plugin incrementa a contagem de referência do módulo BPL no construtor do Wizard (`TRadIAWizard.Create`) via `GetModuleHandleEx` e decrementa no `Destroy` apenas se `not GIsShuttingDown`.
+*   **Por que:** Isso garante que o código executável da BPL permaneça mapeado na memória física do Delphi mesmo se a IDE fechar enquanto houver threads assíncronas de background finalizando suas operações de rede, evitando Access Violations por endereços de memória inválidos.
+
