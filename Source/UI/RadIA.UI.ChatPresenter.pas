@@ -983,7 +983,10 @@ begin
   SendSessionsUpdateToWeb;
   
   if FRequestInProgress then
+  begin
+    FView.SetRequestState(True);
     PostToWebView('show_typing', '', '');
+  end;
 
   LActiveProvider := FConfig.GetActiveProvider;
   if not GetWebLoginUrl(LActiveProvider).IsEmpty then
