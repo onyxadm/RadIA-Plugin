@@ -240,12 +240,13 @@
           isDone: false
         });
         lastText = text;
+        generatingTimeout = 0; // Reset timeout because text content is still growing
       }
 
       if (!isGenerating && lastText.length > 0) {
-        // Damos uma margem de segurança de 8 ciclos (2.4 segundos) para ter certeza de que a geração terminou
+        // Allow up to 15 cycles (4.5 seconds) of silence/inactivity before declaring done
         generatingTimeout++;
-        if (generatingTimeout >= 8) {
+        if (generatingTimeout >= 15) {
           log('Geração concluída.');
           clearInterval(monitorInterval);
           monitorInterval = null;
