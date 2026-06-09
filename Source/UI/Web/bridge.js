@@ -272,9 +272,9 @@
       if (!isGenerating && lastText.length > 0) {
         generatingTimeout++;
         // Se detectamos que o botão de stop/loading funcionou antes, confiamos no isGenerating=false.
-        // O silêncio necessário é de apenas 4 ciclos (1.2 segundo).
-        // Se o botão nunca foi detectado (detector falhou), usamos um silêncio de segurança de 25 ciclos (7.5 segundos).
-        const requiredCycles = wasGeneratingDetected ? 4 : 25;
+        // O silêncio necessário é de apenas 2 ciclos (600ms).
+        // Se o botão nunca foi detectado (detector falhou), usamos um silêncio de segurança de 15 ciclos (4.5 segundos).
+        const requiredCycles = wasGeneratingDetected ? 2 : 15;
         if (generatingTimeout >= requiredCycles) {
           log('Geração concluída.');
           clearInterval(monitorInterval);
