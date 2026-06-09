@@ -41,6 +41,7 @@ contains
   RadIA.Core.Interfaces in 'Source\Core\RadIA.Core.Interfaces.pas',
   RadIA.Core.Logger in 'Source\Core\RadIA.Core.Logger.pas',
   RadIA.Core.Config in 'Source\Core\RadIA.Core.Config.pas',
+  RadIA.Core.SettingsStorage in 'Source\Core\RadIA.Core.SettingsStorage.pas',
   RadIA.Core.ProviderRegistry in 'Source\Core\RadIA.Core.ProviderRegistry.pas',
   RadIA.Core.Cache in 'Source\Core\RadIA.Core.Cache.pas',
   RadIA.Core.Service in 'Source\Core\RadIA.Core.Service.pas',

@@ -3,13 +3,15 @@ unit RadIA.Core.Config;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage;
+  System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces, 
+  RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Core.SettingsStorage;
 
 type
   TRadIAConfig = class(TInterfacedObject, IAIConfig)
   private
     class var FBaseRegistryPath: string;
     class var FInstance: TRadIAConfig;
+    class var FStorage: ISettingsStorage;
     FActiveProvider: string;
     FSystemPrompt: string;
     FOllamaBaseUrl: string;
@@ -47,9 +49,9 @@ type
     procedure SaveToPath(const APath: string);
     function ProtectString(const AValue: string): string;
     function UnprotectString(const AValue: string): string;
-    function ReadRegString(const AReg: TObject; const AKey: string; const ADefault: string): string;
-    function ReadRegInt(const AReg: TObject; const AKey: string; const ADefault: Integer): Integer;
-    function ReadRegDouble(const AReg: TObject; const AKey: string; const ADefault: Double): Double;
+    function ReadRegString(const AKey: string; const ADefault: string): string;
+    function ReadRegInt(const AKey: string; const ADefault: Integer): Integer;
+    function ReadRegDouble(const AKey: string; const ADefault: Double): Double;
     procedure CheckAndResetQuotaCycle;
   protected
     function _AddRef: Integer; stdcall;
@@ -60,6 +62,7 @@ type
     class function GetInstance: IAIConfig;
     class procedure SetBaseRegistryPath(const APath: string);
     class function GetRegistryPath: string;
+    class procedure SetStorage(const AStorage: ISettingsStorage);
 
     { IAIConfig implementation }
     function GetActiveProvider: string;
@@ -197,6 +200,8 @@ end;
 constructor TRadIAConfig.Create;
 begin
   inherited Create;
+  if FStorage = nil then
+    FStorage := TRegistrySettingsStorage.Create;
   
   LogDebug('TRadIAConfig.Create: Active path = ' + GetRegistryPath);
 
@@ -267,52 +272,19 @@ end;
 
 { Registry read helpers — encapsulate the try/except boilerplate }
 
-function TRadIAConfig.ReadRegString(const AReg: TObject; const AKey: string;
-  const ADefault: string): string;
-var
-  LReg: TRegistry;
+function TRadIAConfig.ReadRegString(const AKey: string; const ADefault: string): string;
 begin
-  LReg := AReg as TRegistry;
-  try
-    if LReg.ValueExists(AKey) then
-      Result := LReg.ReadString(AKey)
-    else
-      Result := ADefault;
-  except
-    Result := ADefault;
-  end;
+  Result := FStorage.ReadString(AKey, ADefault);
 end;
 
-function TRadIAConfig.ReadRegInt(const AReg: TObject; const AKey: string;
-  const ADefault: Integer): Integer;
-var
-  LReg: TRegistry;
+function TRadIAConfig.ReadRegInt(const AKey: string; const ADefault: Integer): Integer;
 begin
-  LReg := AReg as TRegistry;
-  try
-    if LReg.ValueExists(AKey) then
-      Result := LReg.ReadInteger(AKey)
-    else
-      Result := ADefault;
-  except
-    Result := ADefault;
-  end;
+  Result := FStorage.ReadInteger(AKey, ADefault);
 end;
 
-function TRadIAConfig.ReadRegDouble(const AReg: TObject; const AKey: string;
-  const ADefault: Double): Double;
-var
-  LReg: TRegistry;
+function TRadIAConfig.ReadRegDouble(const AKey: string; const ADefault: Double): Double;
 begin
-  LReg := AReg as TRegistry;
-  try
-    if LReg.ValueExists(AKey) then
-      Result := LReg.ReadFloat(AKey)
-    else
-      Result := ADefault;
-  except
-    Result := ADefault;
-  end;
+  Result := FStorage.ReadFloat(AKey, ADefault);
 end;
 
 class function TRadIAConfig.GetRegistryPath: string;
@@ -349,7 +321,6 @@ end;
 
 procedure TRadIAConfig.LoadFromPath(const APath: string);
 var
-  LReg: TRegistry;
   LProvPath: string;
   LMaxHist: Integer;
   LMigratedPath: string;
@@ -360,174 +331,158 @@ var
   LMeta: TProviderMetadata;
 begin
   LogDebug('TRadIAConfig.Load starting. Path = ' + APath);
-  LReg := TRegistry.Create;
-  try
-    LReg.RootKey := HKEY_CURRENT_USER;
+  
+  { Se a nova chave não existe, tenta fazer a migração das chaves legadas }
+  if not FStorage.KeyExists(APath) then
+  begin
+    LogDebug('TRadIAConfig.Load: Path does not exist, checking for migration path...');
+    LMigratedPath := '';
     
-    { Se a nova chave não existe, tenta fazer a migração das chaves legadas }
-    if not LReg.KeyExists(APath) then
+    { 1. Se o caminho possui contra-barra, tenta migrar caminhos relativos à IDE }
+    if Pos('\', APath) > 0 then
     begin
-      LogDebug('TRadIAConfig.Load: Path does not exist, checking for migration path...');
-      LMigratedPath := '';
-      
-      { 1. Se o caminho possui contra-barra, tenta migrar caminhos relativos à IDE }
-      if Pos('\', APath) > 0 then
-      begin
-        LParentPath := Copy(APath, 1, LastDelimiter('\', APath));
-        if LReg.KeyExists(LParentPath + 'AIPlugin') then
-          LMigratedPath := LParentPath + 'AIPlugin'
-        else if LReg.KeyExists(LParentPath + 'RadIA') then
-          LMigratedPath := LParentPath + 'RadIA';
-      end;
-      
-      { 2. Fallbacks globais }
-      if LMigratedPath.IsEmpty then
-      begin
-        if LReg.KeyExists('Software\RadIA') then
-          LMigratedPath := 'Software\RadIA'
-        else if LReg.KeyExists('Software\RadAI') then
-          LMigratedPath := 'Software\RadAI';
-      end;
-
-      if not LMigratedPath.IsEmpty and (LMigratedPath <> APath) then
-      begin
-        LogDebug('TRadIAConfig.Load: Found migration path: ' + LMigratedPath);
-        LoadFromPath(LMigratedPath);
-        SaveToPath(APath);
-        Exit;
-      end;
+      LParentPath := Copy(APath, 1, LastDelimiter('\', APath));
+      if FStorage.KeyExists(LParentPath + 'AIPlugin') then
+        LMigratedPath := LParentPath + 'AIPlugin'
+      else if FStorage.KeyExists(LParentPath + 'RadIA') then
+        LMigratedPath := LParentPath + 'RadIA';
+    end;
+    
+    { 2. Fallbacks globais }
+    if LMigratedPath.IsEmpty then
+    begin
+      if FStorage.KeyExists('Software\RadIA') then
+        LMigratedPath := 'Software\RadIA'
+      else if FStorage.KeyExists('Software\RadAI') then
+        LMigratedPath := 'Software\RadAI';
     end;
 
-    { 1. Ler chaves globais da raiz }
-    if LReg.OpenKeyReadOnly(APath) then
+    if not LMigratedPath.IsEmpty and (LMigratedPath <> APath) then
     begin
-      LogDebug('TRadIAConfig.Load: Opened root path ' + APath);
-      FActiveProvider := 'Gemini';
-      if LReg.ValueExists('ActiveProvider') then
-      begin
-        if LReg.GetDataType('ActiveProvider') = rdString then
-          FActiveProvider := LReg.ReadString('ActiveProvider');
-      end;
-      FSystemPrompt      := ReadRegString(LReg, 'SystemPrompt', CDefaultSystemPrompt);
-      
-      { Fallback temporário das chaves legadas da raiz caso o usuário ainda não as tenha salvado nas subchaves }
-      FOllamaBaseUrl     := ReadRegString(LReg, 'OllamaBaseUrl', 'http://localhost:11434');
-      FOpenAICustomBaseUrl := ReadRegString(LReg, 'OpenAICustomBaseUrl', '');
-
-      LMaxHist := ReadRegInt(LReg, 'MaxHistoryMessages', 20);
-      FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, 20);
-      FSmartConfigEnabled := ReadRegInt(LReg, 'SmartConfigEnabled', 1) <> 0;
-      FLogEnabled := ReadRegInt(LReg, 'LogEnabled', 1) <> 0;
-      FLogPath := ReadRegString(LReg, 'LogPath', TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'Logs'));
-      FLogMaxSizeKB := ReadRegInt(LReg, 'LogMaxSizeKB', 1024);
-      FQuotaEnabled := ReadRegInt(LReg, 'QuotaEnabled', 0) <> 0;
-      FQuotaLimit := StrToInt64Def(ReadRegString(LReg, 'QuotaLimit', '1000000'), 1000000);
-      FQuotaUsed := StrToInt64Def(ReadRegString(LReg, 'QuotaUsed', '0'), 0);
-      FQuotaCycleStart := ReadRegDouble(LReg, 'QuotaCycleStart', Now);
-      FActiveSessionId := ReadRegString(LReg, 'ActiveSessionId', '');
-      
-      FAutocompleteEnabled := ReadRegInt(LReg, 'AutocompleteEnabled', 1) <> 0;
-      FAutocompleteProvider := 'Gemini';
-      if LReg.ValueExists('AutocompleteProvider') then
-      begin
-        if LReg.GetDataType('AutocompleteProvider') = rdString then
-          FAutocompleteProvider := LReg.ReadString('AutocompleteProvider');
-      end;
-      FAutocompleteModel := ReadRegString(LReg, 'AutocompleteModel', 'gemini-1.5-flash');
-      FAutocompleteDelay := ReadRegInt(LReg, 'AutocompleteDelay', 300);
-      FAzureApiVersion   := ReadRegString(LReg, 'AzureApiVersion', '2024-02-15-preview');
-      FAwsRegion         := ReadRegString(LReg, 'AwsRegion', 'us-east-1');
-      try
-        if LReg.ValueExists('AwsAccessKeyId') then
-          FAwsAccessKeyId := UnprotectString(LReg.ReadString('AwsAccessKeyId'));
-      except
-        FAwsAccessKeyId := '';
-      end;
-      try
-        if LReg.ValueExists('AwsSecretAccessKey') then
-          FAwsSecretAccessKey := UnprotectString(LReg.ReadString('AwsSecretAccessKey'));
-      except
-        FAwsSecretAccessKey := '';
-      end;
-      try
-        if LReg.ValueExists('AwsSessionToken') then
-          FAwsSessionToken := UnprotectString(LReg.ReadString('AwsSessionToken'));
-      except
-        FAwsSessionToken := '';
-      end;
-      
-      LReg.CloseKey;
-
-      CheckAndResetQuotaCycle;
-      TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
-    end
-    else
-      LogDebug('TRadIAConfig.Load: Failed to open root path ' + APath);
-
-    { Initialize default fallback models before loading subkeys }
-    LProviders := TProviderRegistry.GetProviders;
-    for LMeta in LProviders do
-    begin
-      if Length(LMeta.DefaultModels) > 0 then
-        FModelsList.Values[LMeta.Id.ToLower] := LMeta.DefaultModels[0];
+      LogDebug('TRadIAConfig.Load: Found migration path: ' + LMigratedPath);
+      LoadFromPath(LMigratedPath);
+      SaveToPath(APath);
+      Exit;
     end;
+  end;
 
-    { 2. Ler configurações específicas de cada provedor registrado em suas respectivas subchaves }
-    LSubKeys := TStringList.Create;
+  { 1. Ler chaves globais da raiz }
+  if FStorage.OpenKey(APath, False) then
+  begin
+    LogDebug('TRadIAConfig.Load: Opened root path ' + APath);
+    FActiveProvider := FStorage.ReadString('ActiveProvider', 'Gemini');
+    FSystemPrompt      := ReadRegString('SystemPrompt', CDefaultSystemPrompt);
+    
+    { Fallback temporário das chaves legadas da raiz caso o usuário ainda não as tenha salvado nas subchaves }
+    FOllamaBaseUrl     := ReadRegString('OllamaBaseUrl', 'http://localhost:11434');
+    FOpenAICustomBaseUrl := ReadRegString('OpenAICustomBaseUrl', '');
+
+    LMaxHist := ReadRegInt('MaxHistoryMessages', 20);
+    FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, 20);
+    FSmartConfigEnabled := ReadRegInt('SmartConfigEnabled', 1) <> 0;
+    FLogEnabled := ReadRegInt('LogEnabled', 1) <> 0;
+    FLogPath := ReadRegString('LogPath', TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'Logs'));
+    FLogMaxSizeKB := ReadRegInt('LogMaxSizeKB', 1024);
+    FQuotaEnabled := ReadRegInt('QuotaEnabled', 0) <> 0;
+    FQuotaLimit := StrToInt64Def(ReadRegString('QuotaLimit', '1000000'), 1000000);
+    FQuotaUsed := StrToInt64Def(ReadRegString('QuotaUsed', '0'), 0);
+    FQuotaCycleStart := ReadRegDouble('QuotaCycleStart', Now);
+    FActiveSessionId := ReadRegString('ActiveSessionId', '');
+    
+    FAutocompleteEnabled := ReadRegInt('AutocompleteEnabled', 1) <> 0;
+    FAutocompleteProvider := FStorage.ReadString('AutocompleteProvider', 'Gemini');
+    FAutocompleteModel := ReadRegString('AutocompleteModel', 'gemini-1.5-flash');
+    FAutocompleteDelay := ReadRegInt('AutocompleteDelay', 300);
+    FAzureApiVersion   := ReadRegString('AzureApiVersion', '2024-02-15-preview');
+    FAwsRegion         := ReadRegString('AwsRegion', 'us-east-1');
     try
-      if LReg.OpenKeyReadOnly(APath) then
-      begin
-        LReg.GetKeyNames(LSubKeys);
-        LReg.CloseKey;
-      end;
+      if FStorage.ValueExists('AwsAccessKeyId') then
+        FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AwsAccessKeyId', ''));
+    except
+      FAwsAccessKeyId := '';
+    end;
+    try
+      if FStorage.ValueExists('AwsSecretAccessKey') then
+        FAwsSecretAccessKey := UnprotectString(FStorage.ReadString('AwsSecretAccessKey', ''));
+    except
+      FAwsSecretAccessKey := '';
+    end;
+    try
+      if FStorage.ValueExists('AwsSessionToken') then
+        FAwsSessionToken := UnprotectString(FStorage.ReadString('AwsSessionToken', ''));
+    except
+      FAwsSessionToken := '';
+    end;
+    
+    FStorage.CloseKey;
 
-      for LSubKey in LSubKeys do
+    CheckAndResetQuotaCycle;
+    TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
+  end
+  else
+    LogDebug('TRadIAConfig.Load: Failed to open root path ' + APath);
+
+  { Initialize default fallback models before loading subkeys }
+  LProviders := TProviderRegistry.GetProviders;
+  for LMeta in LProviders do
+  begin
+    if Length(LMeta.DefaultModels) > 0 then
+      FModelsList.Values[LMeta.Id.ToLower] := LMeta.DefaultModels[0];
+  end;
+
+  { 2. Ler configurações específicas de cada provedor registrado em suas respectivas subchaves }
+  LSubKeys := TStringList.Create;
+  try
+    if FStorage.OpenKey(APath, False) then
+    begin
+      FStorage.GetKeyNames(LSubKeys);
+      FStorage.CloseKey;
+    end;
+
+    for LSubKey in LSubKeys do
+    begin
+      LProvPath := APath + '\' + LSubKey;
+      LogDebug('TRadIAConfig.Load: Reading subkey for provider ' + LSubKey);
+      if FStorage.OpenKey(LProvPath, False) then
       begin
-        LProvPath := APath + '\' + LSubKey;
-        LogDebug('TRadIAConfig.Load: Reading subkey for provider ' + LSubKey);
-        if LReg.OpenKeyReadOnly(LProvPath) then
+        { Load API Key }
+        if FStorage.ValueExists('ApiKey') then
         begin
-          { Load API Key }
-          if LReg.ValueExists('ApiKey') then
-          begin
-            try
-              FApiKeysList.Values[LSubKey.ToLower] := UnprotectString(LReg.ReadString('ApiKey'));
-            except
-              FApiKeysList.Values[LSubKey.ToLower] := '';
-            end;
+          try
+            FApiKeysList.Values[LSubKey.ToLower] := UnprotectString(FStorage.ReadString('ApiKey', ''));
+          except
+            FApiKeysList.Values[LSubKey.ToLower] := '';
           end;
-
-          { Load Model }
-          if LReg.ValueExists('Model') then
-            FModelsList.Values[LSubKey.ToLower] := LReg.ReadString('Model')
-          else if LReg.ValueExists('ActiveModel') then
-            FModelsList.Values[LSubKey.ToLower] := LReg.ReadString('ActiveModel');
-
-          { Load BaseURL }
-          if LReg.ValueExists('BaseURL') then
-          begin
-            FBaseUrlsList.Values[LSubKey.ToLower] := LReg.ReadString('BaseURL');
-            { Sync BaseURLs to legacy fields for backward compatibility }
-            if SameText(LSubKey, 'openai') then
-              FOpenAICustomBaseUrl := LReg.ReadString('BaseURL')
-            else if SameText(LSubKey, 'ollama') then
-              FOllamaBaseUrl := LReg.ReadString('BaseURL');
-          end;
-
-          { Load advanced numeric parameters }
-          FTemperaturesList.Values[LSubKey.ToLower] := FloatToStr(ReadRegDouble(LReg, 'Temperature', 0.7), TFormatSettings.Invariant);
-          FMaxTokensList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt(LReg, 'MaxTokens', 2048));
-          FTimeoutsList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt(LReg, 'Timeout', 60));
-          FAuthTypesList.Values[LSubKey.ToLower] := ReadRegString(LReg, 'AuthType', 'api_key');
-
-          LReg.CloseKey;
         end;
+
+        { Load Model }
+        if FStorage.ValueExists('Model') then
+          FModelsList.Values[LSubKey.ToLower] := FStorage.ReadString('Model', '')
+        else if FStorage.ValueExists('ActiveModel') then
+          FModelsList.Values[LSubKey.ToLower] := FStorage.ReadString('ActiveModel', '');
+
+        { Load BaseURL }
+        if FStorage.ValueExists('BaseURL') then
+        begin
+          FBaseUrlsList.Values[LSubKey.ToLower] := FStorage.ReadString('BaseURL', '');
+          { Sync BaseURLs to legacy fields for backward compatibility }
+          if SameText(LSubKey, 'openai') then
+            FOpenAICustomBaseUrl := FStorage.ReadString('BaseURL', '')
+          else if SameText(LSubKey, 'ollama') then
+            FOllamaBaseUrl := FStorage.ReadString('BaseURL', '');
+        end;
+
+        { Load advanced numeric parameters }
+        FTemperaturesList.Values[LSubKey.ToLower] := FloatToStr(ReadRegDouble('Temperature', 0.7), TFormatSettings.Invariant);
+        FMaxTokensList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt('MaxTokens', 2048));
+        FTimeoutsList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt('Timeout', 60));
+        FAuthTypesList.Values[LSubKey.ToLower] := ReadRegString('AuthType', 'api_key');
+
+        FStorage.CloseKey;
       end;
-    finally
-      LSubKeys.Free;
     end;
   finally
-    LReg.Free;
+    LSubKeys.Free;
   end;
 end;
 
@@ -562,80 +517,73 @@ end;
 
 procedure TRadIAConfig.SaveToPath(const APath: string);
 var
-  LReg: TRegistry;
   LKey: string;
   LProvPath: string;
   LProviders: TArray<TProviderMetadata>;
   LMeta: TProviderMetadata;
 begin
   LogDebug('TRadIAConfig.Save starting. Path = ' + APath);
-  LReg := TRegistry.Create;
-  try
-    LReg.RootKey := HKEY_CURRENT_USER;
+  
+  { 1. Salvar chaves globais na raiz }
+  if FStorage.OpenKey(APath, True) then
+  begin
+    FStorage.WriteString('ActiveProvider', FActiveProvider);
+    FStorage.WriteString('SystemPrompt', FSystemPrompt);
+    FStorage.WriteInteger('MaxHistoryMessages', FMaxHistoryMessages);
+    FStorage.WriteInteger('SmartConfigEnabled', IfThen(FSmartConfigEnabled, 1, 0));
+    FStorage.WriteInteger('LogEnabled', IfThen(FLogEnabled, 1, 0));
+    FStorage.WriteString('LogPath', FLogPath);
+    FStorage.WriteInteger('LogMaxSizeKB', FLogMaxSizeKB);
+    FStorage.WriteInteger('QuotaEnabled', IfThen(FQuotaEnabled, 1, 0));
+    FStorage.WriteString('QuotaLimit', FQuotaLimit.ToString);
+    FStorage.WriteString('QuotaUsed', FQuotaUsed.ToString);
+    FStorage.WriteFloat('QuotaCycleStart', FQuotaCycleStart);
+    FStorage.WriteString('ActiveSessionId', FActiveSessionId);
     
-    { 1. Salvar chaves globais na raiz }
-    if LReg.OpenKey(APath, True) then
+    FStorage.WriteInteger('AutocompleteEnabled', IfThen(FAutocompleteEnabled, 1, 0));
+    FStorage.WriteString('AutocompleteProvider', FAutocompleteProvider);
+    FStorage.WriteString('AutocompleteModel', FAutocompleteModel);
+    FStorage.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
+    FStorage.WriteString('AzureApiVersion', FAzureApiVersion);
+    FStorage.WriteString('AwsRegion', FAwsRegion);
+    FStorage.WriteString('AwsAccessKeyId', ProtectString(FAwsAccessKeyId));
+    FStorage.WriteString('AwsSecretAccessKey', ProtectString(FAwsSecretAccessKey));
+    FStorage.WriteString('AwsSessionToken', ProtectString(FAwsSessionToken));
+    
+    { Sync legacy BaseURLs to root just in case }
+    FStorage.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
+    FStorage.WriteString('OpenAICustomBaseUrl', FOpenAICustomBaseUrl);
+    FStorage.CloseKey;
+
+    TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
+  end;
+
+  { Sync memory fields to legacy URLs for consistency }
+  SetProviderBaseUrl('openai', FOpenAICustomBaseUrl);
+  SetProviderBaseUrl('ollama', FOllamaBaseUrl);
+
+  { 2. Salvar chaves de todos os provedores em subchaves dedicadas }
+  LProviders := TProviderRegistry.GetProviders;
+  for LMeta in LProviders do
+  begin
+    LKey := LMeta.Id;
+    LProvPath := APath + '\' + LKey;
+    if FStorage.OpenKey(LProvPath, True) then
     begin
-      LReg.WriteString('ActiveProvider', FActiveProvider);
-      LReg.WriteString('SystemPrompt', FSystemPrompt);
-      LReg.WriteInteger('MaxHistoryMessages', FMaxHistoryMessages);
-      LReg.WriteInteger('SmartConfigEnabled', IfThen(FSmartConfigEnabled, 1, 0));
-      LReg.WriteInteger('LogEnabled', IfThen(FLogEnabled, 1, 0));
-      LReg.WriteString('LogPath', FLogPath);
-      LReg.WriteInteger('LogMaxSizeKB', FLogMaxSizeKB);
-      LReg.WriteInteger('QuotaEnabled', IfThen(FQuotaEnabled, 1, 0));
-      LReg.WriteString('QuotaLimit', FQuotaLimit.ToString);
-      LReg.WriteString('QuotaUsed', FQuotaUsed.ToString);
-      LReg.WriteFloat('QuotaCycleStart', FQuotaCycleStart);
-      LReg.WriteString('ActiveSessionId', FActiveSessionId);
-      
-      LReg.WriteInteger('AutocompleteEnabled', IfThen(FAutocompleteEnabled, 1, 0));
-      LReg.WriteString('AutocompleteProvider', FAutocompleteProvider);
-      LReg.WriteString('AutocompleteModel', FAutocompleteModel);
-      LReg.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
-      LReg.WriteString('AzureApiVersion', FAzureApiVersion);
-      LReg.WriteString('AwsRegion', FAwsRegion);
-      LReg.WriteString('AwsAccessKeyId', ProtectString(FAwsAccessKeyId));
-      LReg.WriteString('AwsSecretAccessKey', ProtectString(FAwsSecretAccessKey));
-      LReg.WriteString('AwsSessionToken', ProtectString(FAwsSessionToken));
-      
-      { Sync legacy BaseURLs to root just in case }
-      LReg.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
-      LReg.WriteString('OpenAICustomBaseUrl', FOpenAICustomBaseUrl);
-      LReg.CloseKey;
+      FStorage.WriteString('ApiKey', ProtectString(GetApiKey(LKey)));
+      FStorage.WriteString('Model', GetActiveModel(LKey));
 
-      TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
+      if FBaseUrlsList.IndexOfName(LKey.ToLower) >= 0 then
+        FStorage.WriteString('BaseURL', GetProviderBaseUrl(LKey));
+
+      FStorage.WriteFloat('Temperature', GetTemperature(LKey));
+      FStorage.WriteInteger('MaxTokens', GetMaxTokens(LKey));
+      FStorage.WriteInteger('Timeout', GetTimeout(LKey));
+      FStorage.WriteString('AuthType', GetProviderAuthType(LKey));
+
+      FStorage.CloseKey;
+      LogDebug('TRadIAConfig.Save: Saved ApiKey and Model (' + GetActiveModel(LKey) + ') for ' + LKey);
     end;
-
-    { Sync memory fields to legacy URLs for consistency }
-    SetProviderBaseUrl('openai', FOpenAICustomBaseUrl);
-    SetProviderBaseUrl('ollama', FOllamaBaseUrl);
-
-    { 2. Salvar chaves de todos os provedores em subchaves dedicadas }
-    LProviders := TProviderRegistry.GetProviders;
-    for LMeta in LProviders do
-    begin
-      LKey := LMeta.Id;
-      LProvPath := APath + '\' + LKey;
-      if LReg.OpenKey(LProvPath, True) then
-      begin
-        LReg.WriteString('ApiKey', ProtectString(GetApiKey(LKey)));
-        LReg.WriteString('Model', GetActiveModel(LKey));
-
-        if FBaseUrlsList.IndexOfName(LKey.ToLower) >= 0 then
-          LReg.WriteString('BaseURL', GetProviderBaseUrl(LKey));
-
-        LReg.WriteFloat('Temperature', GetTemperature(LKey));
-        LReg.WriteInteger('MaxTokens', GetMaxTokens(LKey));
-        LReg.WriteInteger('Timeout', GetTimeout(LKey));
-        LReg.WriteString('AuthType', GetProviderAuthType(LKey));
-
-        LReg.CloseKey;
-        LogDebug('TRadIAConfig.Save: Saved ApiKey and Model (' + GetActiveModel(LKey) + ') for ' + LKey);
-      end;
-    end;
-  finally
-    LReg.Free;
   end;
 end;
 
@@ -1062,6 +1010,13 @@ begin
   if FInstance = nil then
     FInstance := TRadIAConfig.Create;
   Result := FInstance;
+end;
+
+class procedure TRadIAConfig.SetStorage(const AStorage: ISettingsStorage);
+begin
+  FStorage := AStorage;
+  if Assigned(FInstance) then
+    FInstance.Load;
 end;
 
 function TRadIAConfig._AddRef: Integer;
