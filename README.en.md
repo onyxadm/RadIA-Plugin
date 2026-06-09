@@ -90,6 +90,14 @@ If you prefer to run a local proxy compatible with the OpenAI API (Phase 1), thi
 
 👉 [**GitHub Copilot Configuration Guide (docs/copilot_proxy_guide.en.md)**](docs/copilot_proxy_guide.en.md)
 
+### 5.3 User and Feature Reference Guides
+
+To get the most out of RadIA features in your daily development workflow, check our detailed reference guides:
+
+*   👉 [**Editor Integration & Code Generation Guide (docs/user_guide_editor_generation.en.md)**](docs/user_guide_editor_generation.en.md): Context-aware editor actions, Smart Diff visual comparison, XML documentation, DTO converter, and full-project prompt generation.
+*   👉 [**Diagnostics & Code Analysis Guide (docs/user_guide_diagnostics_analysis.en.md)**](docs/user_guide_diagnostics_analysis.en.md): Smart Build Debugger compilation assistance, call stack parsing via Stack Trace Assistant, and memory leak static auditing.
+*   👉 [**Chat Panel & Session Management Guide (docs/user_guide_chat_sessions.en.md)**](docs/user_guide_chat_sessions.en.md): Input text shortcuts, prompt history navigation, persistent multi-sessions, and prompt template backups.
+
 ---
 
 ### 6. Repository Structure
