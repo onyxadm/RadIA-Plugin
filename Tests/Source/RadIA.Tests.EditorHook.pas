@@ -15,6 +15,7 @@ type
     FOnPopup2Called: Boolean;
     procedure DummyOnPopup(Sender: TObject);
     procedure DummyOnPopup2(Sender: TObject);
+    procedure DummyOnPopupClearsMenu(Sender: TObject);
   public
     [SetUp]
     procedure SetUp;
@@ -25,6 +26,8 @@ type
     procedure TestInitialHooking;
     [Test]
     procedure TestReHookingWhenOverridden;
+    [Test]
+    procedure TestRadIAMenuSurvivesOriginalPopupRebuild;
     [Test]
     procedure TestUnhooking;
   end;
@@ -60,6 +63,17 @@ end;
 procedure TTestEditorHook.DummyOnPopup2(Sender: TObject);
 begin
   FOnPopup2Called := True;
+end;
+
+procedure TTestEditorHook.DummyOnPopupClearsMenu(Sender: TObject);
+var
+  LItem: TMenuItem;
+begin
+  FOnPopupCalled := True;
+  FPopupMenu.Items.Clear;
+  LItem := TMenuItem.Create(FPopupMenu);
+  LItem.Caption := 'Cut';
+  FPopupMenu.Items.Add(LItem);
 end;
 
 procedure TTestEditorHook.TestInitialHooking;
@@ -101,6 +115,22 @@ begin
     FPopupMenu.OnPopup(FPopupMenu);
     
   Assert.IsTrue(FOnPopup2Called, 'The overridden IDE handler should have been chained and executed by the hooker');
+end;
+
+procedure TTestEditorHook.TestRadIAMenuSurvivesOriginalPopupRebuild;
+var
+  LEventDummy: TNotifyEvent;
+begin
+  LEventDummy := DummyOnPopupClearsMenu;
+  FPopupMenu.OnPopup := LEventDummy;
+
+  FHook.HookMenuDirectly(FPopupMenu);
+
+  if Assigned(FPopupMenu.OnPopup) then
+    FPopupMenu.OnPopup(FPopupMenu);
+
+  Assert.IsTrue(FOnPopupCalled, 'The original IDE popup handler should run before RadIA injection');
+  Assert.IsNotNull(FPopupMenu.Items.Find('RadIA'), 'RadIA menu should be present after the original popup rebuilds the menu');
 end;
 
 procedure TTestEditorHook.TestUnhooking;

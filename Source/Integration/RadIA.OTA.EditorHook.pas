@@ -11,14 +11,27 @@ type
   private
     FOldActiveFormChange: TNotifyEvent;
     FInstalled: Boolean;
+    FIDENotifierIndex: Integer;
+    FEditorNotifiers: TInterfaceList;
+    {$IFNDEF TESTS}
+    FTimer: TTimer;
+    {$ENDIF}
     
     procedure ActiveFormChange(Sender: TObject);
+    procedure QueueHookActiveEditor;
+    procedure InstallEditorNotifiers;
+    procedure RemoveEditorNotifiers;
+    procedure TryAddSourceEditorNotifier(const ASourceEditor: IOTASourceEditor);
     procedure HookPopupMenu(AForm: TCustomForm);
     procedure UnhookPopupMenu(AForm: TCustomForm);
+    procedure HookControlPopupMenus(AControl: TControl);
+    procedure UnhookControlPopupMenus(AControl: TControl);
     function FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
+    function IsEditorPopupMenu(APopupMenu: TPopupMenu): Boolean;
     procedure EditorMenuPopup(Sender: TObject);
     procedure InjectMenuIntoPopupMenu(APopupMenu: TPopupMenu);
     procedure RemoveMenuFromPopupMenu(APopupMenu: TPopupMenu);
+    function FindMenuItemByName(const AItems: TMenuItem; const AName: string): TMenuItem;
 
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
@@ -30,6 +43,9 @@ type
     procedure OnShowChatExecute(Sender: TObject);
 
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
+    {$IFNDEF TESTS}
+    procedure OnTimerEvent(Sender: TObject);
+    {$ENDIF}
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -67,18 +83,146 @@ var
 threadvar
   GExecutingPopup: Boolean;
 
+type
+  TRadIAIDEEditorNotifier = class(TNotifierObject, IOTAIDENotifier)
+  private
+    FHook: TRadIAEditorHook;
+  public
+    constructor Create(AHook: TRadIAEditorHook);
+    procedure FileNotification(NotifyCode: TOTAFileNotification; const FileName: string; var Cancel: Boolean);
+    procedure BeforeCompile(const Project: IOTAProject; var Cancel: Boolean); overload;
+    procedure AfterCompile(Succeeded: Boolean); overload;
+  end;
+
+  TRadIASourceEditorNotifier = class(TNotifierObject, IOTANotifier, IOTAEditorNotifier)
+  private
+    FHook: TRadIAEditorHook;
+    FSourceEditor: IOTASourceEditor;
+    FIndex: Integer;
+    procedure RemoveNotifier;
+  public
+    constructor Create(AHook: TRadIAEditorHook; const ASourceEditor: IOTASourceEditor);
+    destructor Destroy; override;
+    procedure Destroyed;
+    procedure ViewActivated(const View: IOTAEditView);
+    procedure ViewNotification(const View: IOTAEditView; Operation: TOperation);
+  end;
+
+  TControlAccess = class(TControl);
+
+{ TRadIAIDEEditorNotifier }
+
+constructor TRadIAIDEEditorNotifier.Create(AHook: TRadIAEditorHook);
+begin
+  inherited Create;
+  FHook := AHook;
+end;
+
+procedure TRadIAIDEEditorNotifier.AfterCompile(Succeeded: Boolean);
+begin
+end;
+
+procedure TRadIAIDEEditorNotifier.BeforeCompile(const Project: IOTAProject; var Cancel: Boolean);
+begin
+  Cancel := False;
+end;
+
+procedure TRadIAIDEEditorNotifier.FileNotification(NotifyCode: TOTAFileNotification; const FileName: string; var Cancel: Boolean);
+var
+  LModuleServices: IOTAModuleServices;
+  LModule: IOTAModule;
+  LSourceEditor: IOTASourceEditor;
+  I: Integer;
+begin
+  Cancel := False;
+  if NotifyCode <> ofnFileOpened then
+    Exit;
+
+  if not SameText(ExtractFileExt(FileName), '.pas') then
+    Exit;
+
+  if not Assigned(FHook) then
+    Exit;
+
+  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
+  begin
+    LModule := LModuleServices.FindModule(FileName);
+    if Assigned(LModule) then
+    begin
+      for I := 0 to LModule.GetModuleFileCount - 1 do
+      begin
+        if Supports(LModule.GetModuleFileEditor(I), IOTASourceEditor, LSourceEditor) then
+          FHook.TryAddSourceEditorNotifier(LSourceEditor);
+      end;
+    end;
+  end;
+
+  FHook.QueueHookActiveEditor;
+end;
+
+{ TRadIASourceEditorNotifier }
+
+constructor TRadIASourceEditorNotifier.Create(AHook: TRadIAEditorHook; const ASourceEditor: IOTASourceEditor);
+begin
+  inherited Create;
+  FHook := AHook;
+  FSourceEditor := ASourceEditor;
+  FIndex := -1;
+  if Assigned(FSourceEditor) then
+    FIndex := FSourceEditor.AddNotifier(Self);
+end;
+
+destructor TRadIASourceEditorNotifier.Destroy;
+begin
+  RemoveNotifier;
+  inherited Destroy;
+end;
+
+procedure TRadIASourceEditorNotifier.Destroyed;
+begin
+  RemoveNotifier;
+end;
+
+procedure TRadIASourceEditorNotifier.RemoveNotifier;
+begin
+  if Assigned(FSourceEditor) and (FIndex >= 0) then
+  begin
+    FSourceEditor.RemoveNotifier(FIndex);
+    FIndex := -1;
+    FSourceEditor := nil;
+  end;
+end;
+
+procedure TRadIASourceEditorNotifier.ViewActivated(const View: IOTAEditView);
+begin
+  if Assigned(FHook) then
+    FHook.QueueHookActiveEditor;
+end;
+
+procedure TRadIASourceEditorNotifier.ViewNotification(const View: IOTAEditView; Operation: TOperation);
+begin
+  if (Operation = opInsert) and Assigned(FHook) then
+    FHook.QueueHookActiveEditor;
+end;
+
 { TRadIAEditorHook }
 
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   FOldActiveFormChange := nil;
+  FIDENotifierIndex := -1;
+  FEditorNotifiers := TInterfaceList.Create;
+  {$IFNDEF TESTS}
+  FTimer := nil;
+  {$ENDIF}
   FInstalled := False;
 end;
 
 destructor TRadIAEditorHook.Destroy;
 begin
   Uninstall;
+  FEditorNotifiers.Free;
   inherited Destroy;
 end;
 
@@ -94,6 +238,14 @@ begin
 
   FOldActiveFormChange := Screen.OnActiveFormChange;
   Screen.OnActiveFormChange := ActiveFormChange;
+  InstallEditorNotifiers;
+
+{$IFNDEF TESTS}
+  FTimer := TTimer.Create(Self);
+  FTimer.Interval := 1000;
+  FTimer.OnTimer := OnTimerEvent;
+  FTimer.Enabled := True;
+{$ENDIF}
 
   FInstalled := True;
   
@@ -122,6 +274,14 @@ begin
 
   TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
 
+  {$IFNDEF TESTS}
+  if Assigned(FTimer) then
+  begin
+    FTimer.Enabled := False;
+    FreeAndNil(FTimer);
+  end;
+  {$ENDIF}
+
   if Assigned(Screen) and (not GIsShuttingDown) then
   begin
     try
@@ -132,6 +292,7 @@ begin
   end;
   
   FInstalled := False;
+  RemoveEditorNotifiers;
     
   if Assigned(Screen) and (not GIsShuttingDown) then
   begin
@@ -181,12 +342,19 @@ begin
       LActiveForm := Screen.ActiveForm;
       if Assigned(LActiveForm) and SameText(LActiveForm.ClassName, 'TEditWindow') then
       begin
-        try
-          HookPopupMenu(LActiveForm);
-        except
-          on E: Exception do
-            TLogger.Log('ActiveFormChange: Error hooking active form: ' + E.Message, 'EditorHook');
-        end;
+        // Defer menu hooking to prevent interfering with editor/elision tree construction
+        TThread.ForceQueue(nil,
+          TThreadProcedure(
+          procedure
+          begin
+            try
+              if Assigned(Screen) and (Screen.ActiveForm = LActiveForm) then
+                HookPopupMenu(LActiveForm);
+            except
+              on E: Exception do
+                TLogger.Log('ActiveFormChange Defer: Error hooking active form: ' + E.Message, 'EditorHook');
+            end;
+          end));
       end;
     end;
   except
@@ -206,6 +374,127 @@ begin
   end;
 end;
 
+procedure TRadIAEditorHook.QueueHookActiveEditor;
+begin
+  TThread.Queue(nil,
+    TThreadProcedure(
+    procedure
+    var
+      I: Integer;
+    begin
+      if (not FInstalled) or GIsShuttingDown then
+        Exit;
+
+      if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+      begin
+        try
+          HookPopupMenu(Screen.ActiveForm);
+        except
+          on E: Exception do
+            TLogger.Log('QueueHookActiveEditor: Error hooking active form: ' + E.Message, 'EditorHook');
+        end;
+      end;
+
+      if Assigned(Screen) then
+      begin
+        for I := 0 to Screen.FormCount - 1 do
+        begin
+          if SameText(Screen.Forms[I].ClassName, 'TEditWindow') and
+             Screen.Forms[I].HandleAllocated and Screen.Forms[I].Visible then
+          begin
+            try
+              HookPopupMenu(Screen.Forms[I]);
+            except
+              on E: Exception do
+                TLogger.Log('QueueHookActiveEditor: Error hooking edit window: ' + E.Message, 'EditorHook');
+            end;
+          end;
+        end;
+      end;
+    end));
+end;
+
+procedure TRadIAEditorHook.InstallEditorNotifiers;
+var
+  LOTAServices: IOTAServices;
+  LModuleServices: IOTAModuleServices;
+  LModule: IOTAModule;
+  LSourceEditor: IOTASourceEditor;
+  I: Integer;
+  J: Integer;
+begin
+  {$IFDEF TESTS}
+  Exit;
+  {$ENDIF}
+
+  if FIDENotifierIndex < 0 then
+  begin
+    if Supports(BorlandIDEServices, IOTAServices, LOTAServices) then
+      FIDENotifierIndex := LOTAServices.AddNotifier(TRadIAIDEEditorNotifier.Create(Self));
+  end;
+
+  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
+  begin
+    for I := 0 to LModuleServices.ModuleCount - 1 do
+    begin
+      LModule := LModuleServices.Modules[I];
+      if not Assigned(LModule) then
+        Continue;
+
+      for J := 0 to LModule.GetModuleFileCount - 1 do
+      begin
+        if Supports(LModule.GetModuleFileEditor(J), IOTASourceEditor, LSourceEditor) and
+           SameText(ExtractFileExt(LSourceEditor.FileName), '.pas') then
+        begin
+          TryAddSourceEditorNotifier(LSourceEditor);
+        end;
+      end;
+    end;
+  end;
+end;
+
+procedure TRadIAEditorHook.RemoveEditorNotifiers;
+var
+  LOTAServices: IOTAServices;
+begin
+  {$IFDEF TESTS}
+  Exit;
+  {$ENDIF}
+
+  FEditorNotifiers.Clear;
+
+  if (FIDENotifierIndex >= 0) and Supports(BorlandIDEServices, IOTAServices, LOTAServices) then
+  begin
+    try
+      LOTAServices.RemoveNotifier(FIDENotifierIndex);
+    except
+      on E: Exception do
+        TLogger.Log('RemoveEditorNotifiers: Error removing IDE notifier: ' + E.Message, 'EditorHook');
+    end;
+    FIDENotifierIndex := -1;
+  end;
+end;
+
+procedure TRadIAEditorHook.TryAddSourceEditorNotifier(const ASourceEditor: IOTASourceEditor);
+var
+  LNotifier: IOTAEditorNotifier;
+begin
+  {$IFDEF TESTS}
+  Exit;
+  {$ENDIF}
+
+  if not Assigned(ASourceEditor) then
+    Exit;
+
+  try
+    LNotifier := TRadIASourceEditorNotifier.Create(Self, ASourceEditor);
+    FEditorNotifiers.Add(LNotifier);
+  except
+    on E: Exception do
+      TLogger.Log('TryAddSourceEditorNotifier: Error adding source editor notifier: ' + E.Message, 'EditorHook');
+  end;
+end;
+
 
 function TRadIAEditorHook.FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
 var
@@ -220,9 +509,47 @@ begin
   end;
 end;
 
+function TRadIAEditorHook.IsEditorPopupMenu(APopupMenu: TPopupMenu): Boolean;
+  function HasCaption(const AItem: TMenuItem; const ACaption: string): Boolean;
+  var
+    I: Integer;
+    LCaption: string;
+  begin
+    Result := False;
+    if not Assigned(AItem) then
+      Exit;
+
+    for I := 0 to AItem.Count - 1 do
+    begin
+      LCaption := StringReplace(AItem[I].Caption, '&', '', [rfReplaceAll]);
+      if SameText(LCaption, ACaption) then
+        Exit(True);
+
+      if HasCaption(AItem[I], ACaption) then
+        Exit(True);
+    end;
+  end;
+begin
+  Result := False;
+  if not Assigned(APopupMenu) then
+    Exit;
+
+  if SameText(APopupMenu.Name, 'EditorLocalMenu') then
+    Exit(True);
+
+  Result :=
+    HasCaption(APopupMenu.Items, 'Cut') or
+    HasCaption(APopupMenu.Items, 'Copy') or
+    HasCaption(APopupMenu.Items, 'Paste') or
+    HasCaption(APopupMenu.Items, 'Select All') or
+    HasCaption(APopupMenu.Items, 'Editor Options') or
+    HasCaption(APopupMenu.Items, 'Read Only');
+end;
+
 procedure TRadIAEditorHook.HookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
+  I: Integer;
 begin
   if not Assigned(AForm) then
     Exit;
@@ -231,14 +558,26 @@ begin
   if not SameText(AForm.ClassName, 'TEditWindow') then
     Exit;
 
+  if (not AForm.HandleAllocated) or (not AForm.Visible) then
+    Exit;
+
   LPopupMenu := FindEditorPopupMenu(AForm);
   if Assigned(LPopupMenu) then
     HookMenuDirectly(LPopupMenu);
+
+  HookControlPopupMenus(AForm);
+
+  for I := 0 to AForm.ComponentCount - 1 do
+  begin
+    if AForm.Components[I] is TPopupMenu then
+      HookMenuDirectly(TPopupMenu(AForm.Components[I]));
+  end;
 end;
 
 procedure TRadIAEditorHook.UnhookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
+  I: Integer;
 begin
   if not Assigned(AForm) then
     Exit;
@@ -246,9 +585,58 @@ begin
   if not SameText(AForm.ClassName, 'TEditWindow') then
     Exit;
 
+  if not AForm.HandleAllocated then
+    Exit;
+
   LPopupMenu := FindEditorPopupMenu(AForm);
   if Assigned(LPopupMenu) then
     UnhookMenuDirectly(LPopupMenu);
+
+  UnhookControlPopupMenus(AForm);
+
+  for I := 0 to AForm.ComponentCount - 1 do
+  begin
+    if AForm.Components[I] is TPopupMenu then
+      UnhookMenuDirectly(TPopupMenu(AForm.Components[I]));
+  end;
+end;
+
+procedure TRadIAEditorHook.HookControlPopupMenus(AControl: TControl);
+var
+  I: Integer;
+  LWinControl: TWinControl;
+begin
+  if not Assigned(AControl) then
+    Exit;
+
+  if Assigned(TControlAccess(AControl).PopupMenu) then
+    HookMenuDirectly(TControlAccess(AControl).PopupMenu);
+
+  if AControl is TWinControl then
+  begin
+    LWinControl := TWinControl(AControl);
+    for I := 0 to LWinControl.ControlCount - 1 do
+      HookControlPopupMenus(LWinControl.Controls[I]);
+  end;
+end;
+
+procedure TRadIAEditorHook.UnhookControlPopupMenus(AControl: TControl);
+var
+  I: Integer;
+  LWinControl: TWinControl;
+begin
+  if not Assigned(AControl) then
+    Exit;
+
+  if Assigned(TControlAccess(AControl).PopupMenu) then
+    UnhookMenuDirectly(TControlAccess(AControl).PopupMenu);
+
+  if AControl is TWinControl then
+  begin
+    LWinControl := TWinControl(AControl);
+    for I := 0 to LWinControl.ControlCount - 1 do
+      UnhookControlPopupMenus(LWinControl.Controls[I]);
+  end;
 end;
 
 procedure TRadIAEditorHook.HookMenuDirectly(APopupMenu: TPopupMenu);
@@ -318,13 +706,7 @@ begin
       if Sender is TPopupMenu then
       begin
         LPopupMenu := TPopupMenu(Sender);
-        try
-          InjectMenuIntoPopupMenu(LPopupMenu);
-        except
-          on E: Exception do
-            TLogger.Log('EditorMenuPopup: Error injecting RadIA menu: ' + E.Message, 'EditorHook');
-        end;
-        
+
         if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) and Assigned(LOldOnPopup) then
         begin
           try
@@ -334,6 +716,18 @@ begin
               TLogger.Log('EditorMenuPopup: Error executing original OnPopup: ' + E.Message, 'EditorHook');
           end;
         end;
+
+        if IsEditorPopupMenu(LPopupMenu) then
+        begin
+          try
+            InjectMenuIntoPopupMenu(LPopupMenu);
+          except
+            on E: Exception do
+              TLogger.Log('EditorMenuPopup: Error injecting RadIA menu: ' + E.Message, 'EditorHook');
+          end;
+        end
+        else
+          TLogger.Log('EditorMenuPopup: Skipping non-editor popup menu: ' + LPopupMenu.Name, 'EditorHook');
       end;
     except
       on E: Exception do
@@ -341,6 +735,25 @@ begin
     end;
   finally
     GExecutingPopup := False;
+  end;
+end;
+
+function TRadIAEditorHook.FindMenuItemByName(const AItems: TMenuItem; const AName: string): TMenuItem;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if not Assigned(AItems) then
+    Exit;
+
+  for I := 0 to AItems.Count - 1 do
+  begin
+    if SameText(AItems[I].Name, AName) then
+      Exit(AItems[I]);
+
+    Result := FindMenuItemByName(AItems[I], AName);
+    if Assigned(Result) then
+      Exit;
   end;
 end;
 
@@ -354,7 +767,7 @@ begin
     Exit;
 
   // Se o menu do RadIA já estiver presente na hierarquia de itens, não fazemos nada.
-  if Assigned(APopupMenu.Items.Find('mnuRadIARoot')) then
+  if Assigned(FindMenuItemByName(APopupMenu.Items, 'mnuRadIARoot')) then
     Exit;
 
   // Destruir apenas se o item principal não estiver visível, mas por algum motivo o componente
@@ -423,10 +836,10 @@ begin
   LSubItem := TMenuItem.Create(APopupMenu);
   LSubItem.Caption := '-';
   LSubItem.Name := 'mnuRadIASeparator';
-  APopupMenu.Items.Add(LSubItem);
 
-  // Add RadIA menu to the VCL PopupMenu
-  APopupMenu.Items.Add(LRootItem);
+  // Keep RadIA visible as the first editor action group.
+  APopupMenu.Items.Insert(0, LRootItem);
+  APopupMenu.Items.Insert(1, LSubItem);
 end;
 
 procedure TRadIAEditorHook.RemoveMenuFromPopupMenu(APopupMenu: TPopupMenu);
@@ -436,11 +849,11 @@ begin
   if not Assigned(APopupMenu) then
     Exit;
 
-  LItem := APopupMenu.Items.Find('mnuRadIARoot');
+  LItem := FindMenuItemByName(APopupMenu.Items, 'mnuRadIARoot');
   if Assigned(LItem) then
     LItem.Free;
 
-  LItem := APopupMenu.Items.Find('mnuRadIASeparator');
+  LItem := FindMenuItemByName(APopupMenu.Items, 'mnuRadIASeparator');
   if Assigned(LItem) then
     LItem.Free;
 end;
@@ -582,7 +995,23 @@ begin
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 
+{$IFNDEF TESTS}
+procedure TRadIAEditorHook.OnTimerEvent(Sender: TObject);
+begin
+  if not FInstalled then
+    Exit;
 
+  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+  begin
+    try
+      HookPopupMenu(Screen.ActiveForm);
+    except
+      on E: Exception do
+        TLogger.Log('OnTimerEvent: Error checking/hooking active form: ' + E.Message, 'EditorHook');
+    end;
+  end;
+end;
+{$ENDIF}
 
 initialization
   // Ensure the FInterceptedMenus dictionary is nil at startup
