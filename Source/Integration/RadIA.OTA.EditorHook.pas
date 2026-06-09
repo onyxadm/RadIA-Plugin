@@ -550,17 +550,22 @@ begin
 end;
 
 procedure TRadIAEditorHook.OnTimerEvent(Sender: TObject);
+var
+  I: Integer;
 begin
   if not FInstalled then
     Exit;
 
-  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+  if Assigned(Screen) then
   begin
-    try
-      HookPopupMenu(Screen.ActiveForm);
-    except
-      on E: Exception do
-        TLogger.Log('OnTimerEvent: Error checking/hooking active form: ' + E.Message, 'EditorHook');
+    for I := 0 to Screen.FormCount - 1 do
+    begin
+      try
+        HookPopupMenu(Screen.Forms[I]);
+      except
+        on E: Exception do
+          TLogger.Log('OnTimerEvent: Error checking form ' + IntToStr(I) + ': ' + E.Message, 'EditorHook');
+      end;
     end;
   end;
 end;
