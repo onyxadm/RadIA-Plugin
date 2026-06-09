@@ -218,11 +218,19 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Lançamento do template nativo `'Create Project Delphi Architecture'` (`/createprojectarch`) incorporando injeção de dependências, injeção sistemática de blocos `try..finally` e guia de nomenclatura Pascal.
     *   Atualização da cobertura de testes unitários em `RadIA.Tests.Templates.pas` cobrindo fluxos de backup e esquema.
 
+### 28. Arquitetura de Templates Segregada (Nativo vs. Usuário com Overlays) - Item #12c
+*   **Descrição**: Segregação de templates padrões embutidos dos customizados em disco, permitindo atualizações automáticas do plugin sem sobrescrever personalizações do usuário, com suporte a overlays e restauração de fábrica.
+*   **Detalhes**:
+    *   Carregamento em duas camadas com mesclagem em runtime no `TPromptTemplateManager`.
+    *   Limpeza automática de templates redundantes não modificados no AppData do usuário (`CleanRedundantUserTemplates`).
+    *   Tela de opções aprimorada com legendas de origem (`lblTemplateOrigin`) e lógica contextual de exclusão/restauração.
+    *   Suíte de testes unitários expandida com 116 testes DUnitX aprovados com sucesso.
+
 ---
 
 ## ⏳ Em Desenvolvimento
 
-*   *Nenhum item em desenvolvimento ativo no momento. Aguardando validação de testes.*
+*   *Nenhum item em desenvolvimento ativo no momento.*
 
 ---
 

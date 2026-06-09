@@ -234,6 +234,23 @@ Version v0.0.14 brings total flexibility to prompt management and project templa
 
 ---
 
+## ✅ v0.0.15 — Two-Layer Template Architecture and Overlays (Completed)
+
+Version v0.0.15 introduced the complete segregation of default prompt templates defined in the code from those created or modified by the user (saved to disk), ensuring that default prompt updates propagate automatically:
+
+- **Physical-Logical Template Segregation:**
+  * Clean, delta storage in local `templates.json` file (contains only new user templates or customization overlays).
+  * Dynamic runtime merging (`BuildActiveTemplates`) between hardcoded system templates and user overrides.
+- **Redundant Data Higienization (Auto-Migration):**
+  * Automatic cleaning (`CleanRedundantUserTemplates`) of redundant items in the local JSON that match the updated plugin source code exactly.
+- **Premium Origin Management UX:**
+  * Dynamic origin label (`Origin: Default System (Read-Only)`, `Origin: Default System (Customized)`, and `Origin: User Custom`) programmatically created in the options frame.
+  * Smart VCL buttons control logic (Delete button changes to **"Restore Default"** for overlays, clearing the override and re-enabling the original system properties).
+- **Unit Testing:**
+  * Added unit tests covering default template detection, overlay creation, and restoring defaults. **All 116 DUnitX unit tests passed successfully**.
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save

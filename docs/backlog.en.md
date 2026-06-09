@@ -218,11 +218,19 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Designed the `'Create Project Delphi Architecture'` template (`/createprojectarch`) enforcing interface inversion, memory safety try..finally guards, and Pascal conventions.
     *   Updated and verified all unit tests in `RadIA.Tests.Templates.pas` checking schemas, constraints, and backups.
 
+### 28. Segregated Template Architecture (System vs. User with Overlays) - Item #12c
+*   **Description**: Segregated default prompt templates inside source code from customized user templates on disk, allowing automatic updates of plugin prompts without breaking user adjustments, with overlay and factory restore supports.
+*   **Details**:
+    *   Two-layer configuration files loaded with runtime merge in `TPromptTemplateManager`.
+    *   Automatic cleansing (`CleanRedundantUserTemplates`) of redundant templates on user AppData matching raw code defaults.
+    *   Enhanced options frame VCL settings rendering dynamic source captions (`lblTemplateOrigin`) and contextual delete/restore options.
+    *   Expanded DUnitX unit test suite containing 116 tests successfully verified.
+
 ---
 
 ## ⏳ In Development
 
-*   *No active development items at the moment. Awaiting tests verification.*
+*   *No active development items at the moment.*
 
 ---
 

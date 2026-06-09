@@ -235,6 +235,23 @@ A versão v0.0.14 trouxe flexibilidade total para gerenciamento de prompts e tem
 
 ---
 
+## ✅ v0.0.15 — Arquitetura de Templates em Duas Camadas e Overlays (Concluído)
+
+A versão v0.0.15 introduziu a segregação completa dos templates padrões de prompts definidos no código daqueles criados ou modificados pelo usuário (gravados em disco), garantindo que atualizações de prompts padrões no código se propaguem automaticamente:
+
+- **Segregação Físico-Lógica de Templates:**
+  * Armazenamento limpo e delta no arquivo local `templates.json` (contém apenas novos templates do usuário ou overlays de customização).
+  * Mesclagem dinâmica de runtime (`BuildActiveTemplates`) entre os templates embutidos do sistema e os customizados do usuário.
+- **Higienização de Dados Redundantes (Auto-Migration):**
+  * Limpeza automática (`CleanRedundantUserTemplates`) de itens redundantes no JSON local que coincidem exatamente com a versão atualizada do código do plugin.
+- **Premium UX de Gerenciamento de Origem:**
+  * Indicador dinâmico de origem (`Origin: Default System (Read-Only)`, `Origin: Default System (Customized)` e `Origin: User Custom`) criado programaticamente no frame de opções.
+  * Lógica inteligente de controle dos botões VCL (botão Excluir vira **"Restaurar Padrão"** para overlays, limpando a customização e reativando as propriedades originais do sistema).
+- **Testes Unitários:**
+  * Inclusão de testes de unidade cobrindo detecção de templates nativos, criação de overlays e restauração ao padrão. Todos os **116 testes unitários DUnitX aprovados**.
+
+---
+
 ## 🔲 v0.1.0 — Automação e Auditoria (Próxima Versão)
 
 ### 1. Revisão Automática de Código no Save
