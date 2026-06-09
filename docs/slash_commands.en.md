@@ -21,3 +21,17 @@ Simply type the `/` character in the chat input area. A floating popup menu will
 | `/template` | Opens the quick prompt template library selector. | — |
 | `/stacktrace` | Analyzes exception logs (MadExcept, EurekaLog, or RTL) and points to the root cause. | Sends the active unit file from the editor as context for the error line number. |
 | `/review` | Runs a comprehensive static analysis of the active unit looking for leaks and anti-patterns. | Sends the full source code of the active editor file. |
+| `/createproject` | Generates a complete vanilla Delphi project on disk and loads it in the IDE based on text specs. | — |
+| `/createprojectarch` | Generates a Clean Architecture (SOLID) Delphi project on disk and loads it in the IDE. | — |
+
+---
+
+## Customization and Command Backups
+
+RadIA allows you to edit, delete, or add new commands and prompt templates directly from the plugin options inside the IDE (`Tools -> Options -> RadIA -> Templates`).
+
+Each template registry can define:
+- **Slash Command**: The command string that triggers the template in chat (e.g., `/explain`).
+- **Is Project Generator**: A boolean marking if the template produces executable files on disk.
+- **Import/Export**: Export your templates to JSON files and import them on other machines transactionally, with options to Merge with existing templates or completely Overwrite them.
+

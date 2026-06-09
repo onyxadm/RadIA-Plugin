@@ -1341,48 +1341,118 @@ function TFrameAIChat.PreProcessPrompt(const APromptText: string): string;
 var
   LActiveCode: string;
   LTemplate: TPromptTemplate;
-  LResolved: string;
+  LFound: Boolean;
+  LCommand: string;
+  LArgument: string;
+  LFirstSpace: Integer;
   LTemplateName: string;
-  LStackTrace: string;
+  LTemp: TPromptTemplate;
 begin
   Result := APromptText;
+  LFound := False;
+  LActiveCode := '';
 
-  if APromptText.StartsWith('/createproject', True) then
+  LCommand := Trim(APromptText);
+  LArgument := '';
+  LFirstSpace := APromptText.IndexOf(' ');
+  if LFirstSpace > 0 then
   begin
-    LTemplateName := Trim(APromptText.Substring(14));
-    if FTemplateManager.FindTemplate('Create Project Delphi', LTemplate) then
-      Result := LTemplate.Template.Replace('{specification}', LTemplateName);
-  end
-  else if APromptText.StartsWith('/template', True) then
+    LCommand := APromptText.Substring(0, LFirstSpace).Trim;
+    LArgument := APromptText.Substring(LFirstSpace + 1).Trim;
+  end;
+
+  // 1. Suporte especial para /template <nome>
+  if SameText(LCommand, '/template') then
   begin
-    LTemplateName := Trim(APromptText.Substring(10));
+    LTemplateName := LArgument;
     if not LTemplateName.IsEmpty then
+    begin
+      if FTemplateManager.FindTemplate(LTemplateName, LTemplate) then
+      begin
+        LFound := True;
+      end;
+    end;
+  end
+  // 2. Mapeamento de Aliases Retrô (caso não exista um slash command personalizado para eles)
+  else if SameText(LCommand, '/review') then
+  begin
+    LFound := False;
+    for LTemp in FTemplateManager.GetTemplates do
+    begin
+      if SameText(LTemp.SlashCommand, '/review') then
+      begin
+        LTemplate := LTemp;
+        LFound := True;
+        Break;
+      end;
+    end;
+    if not LFound then
+      LFound := FTemplateManager.FindTemplate('Review Leaks and SOLID', LTemplate);
+  end
+  else if SameText(LCommand, '/refactor') then
+  begin
+    LFound := False;
+    for LTemp in FTemplateManager.GetTemplates do
+    begin
+      if SameText(LTemp.SlashCommand, '/refactor') then
+      begin
+        LTemplate := LTemp;
+        LFound := True;
+        Break;
+      end;
+    end;
+    if not LFound then
+      LFound := FTemplateManager.FindTemplate('Review Clean Code Delphi', LTemplate);
+  end
+  else if SameText(LCommand, '/optimize') then
+  begin
+    LFound := False;
+    for LTemp in FTemplateManager.GetTemplates do
+    begin
+      if SameText(LTemp.SlashCommand, '/optimize') then
+      begin
+        LTemplate := LTemp;
+        LFound := True;
+        Break;
+      end;
+    end;
+    if not LFound then
+      LFound := FTemplateManager.FindTemplate('Analyze Performance', LTemplate);
+  end
+  // 3. Busca dinâmica por SlashCommand cadastrado nos templates
+  else if LCommand.StartsWith('/') then
+  begin
+    for LTemp in FTemplateManager.GetTemplates do
+    begin
+      if SameText(LTemp.SlashCommand, LCommand) then
+      begin
+        LTemplate := LTemp;
+        LFound := True;
+        Break;
+      end;
+    end;
+  end;
+
+  // Se encontrou o template correspondente, resolve as substituições
+  if LFound then
+  begin
+    Result := LTemplate.Template;
+
+    // Se o template contiver o placeholder {code}, busca o texto do editor
+    if Result.Contains('{code}') then
     begin
       if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
         TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
-      
-      LResolved := FTemplateManager.ResolveTemplate(LTemplateName, LActiveCode);
-      if not LResolved.IsEmpty then
-        Result := LResolved;
+      Result := Result.Replace('{code}', LActiveCode);
     end;
-  end
-  else if APromptText.StartsWith('/review', True) then
-  begin
-    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
-      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
-      
-    LResolved := FTemplateManager.ResolveTemplate('Review Leaks and SOLID', LActiveCode);
-    if not LResolved.IsEmpty then
-      Result := LResolved;
-  end
-  else if APromptText.StartsWith('/stacktrace', True) then
-  begin
-    LStackTrace := Trim(APromptText.Substring(11));
-    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
-      TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False);
-      
-    if FTemplateManager.FindTemplate('Analyze Stack Trace', LTemplate) then
-      Result := LTemplate.Template.Replace('{stacktrace}', LStackTrace).Replace('{code}', LActiveCode);
+
+    // Substitui os placeholders comuns de argumentos
+    if Result.Contains('{specification}') then
+      Result := Result.Replace('{specification}', LArgument)
+    else if Result.Contains('{stacktrace}') then
+      Result := Result.Replace('{stacktrace}', LArgument)
+    else if Result.Contains('{argument}') then
+      Result := Result.Replace('{argument}', LArgument);
   end;
 end;
 
@@ -2079,7 +2149,10 @@ var
   LJson: TJSONObject;
   LProviders: TJSONArray;
   LModels: TJSONArray;
+  LSlashCommands: TJSONArray;
   LProvObj: TJSONObject;
+  LSlashObj: TJSONObject;
+  LTemplate: TPromptTemplate;
   I: Integer;
   LActiveProvider: string;
   LAuthType: string;
@@ -2094,6 +2167,7 @@ begin
   LJson := TJSONObject.Create;
   LProviders := TJSONArray.Create;
   LModels := TJSONArray.Create;
+  LSlashCommands := TJSONArray.Create;
   try
     for I := 0 to cbProvider.Items.Count - 1 do
     begin
@@ -2108,9 +2182,23 @@ begin
       LModels.Add(cbModel.Items[I]);
     end;
 
+    for LTemplate in FTemplateManager.GetTemplates do
+    begin
+      if not LTemplate.SlashCommand.IsEmpty then
+      begin
+        LSlashObj := TJSONObject.Create;
+        LSlashObj.AddPair('command', LTemplate.SlashCommand);
+        LSlashObj.AddPair('description', LTemplate.Description);
+        LSlashObj.AddPair('name', LTemplate.Name);
+        LSlashObj.AddPair('isProjectGenerator', TJSONBool.Create(LTemplate.IsProjectGenerator));
+        LSlashCommands.AddElement(LSlashObj);
+      end;
+    end;
+
     LJson.AddPair('action', 'initialize_config');
     LJson.AddPair('providers', LProviders);
     LJson.AddPair('models', LModels);
+    LJson.AddPair('slashCommands', LSlashCommands);
     LJson.AddPair('activeProvider', cbProvider.Text);
     LJson.AddPair('activeModel', cbModel.Text);
     LJson.AddPair('isWebLogin', TJSONBool.Create(LIsWebLogin));

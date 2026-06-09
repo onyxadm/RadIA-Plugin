@@ -216,6 +216,41 @@ Version v0.0.13 introduced support for automatically generating entire Delphi pr
 
 ---
 
+## ✅ v0.0.14 — Dynamic Templates, Backup, and New Project Architecture (Completed)
+
+Version v0.0.14 brings total flexibility to prompt management and project templates in the IDE, alongside support for importable backups and an optimized project generator:
+
+- **Dynamic Slash Commands Customization:**
+  * Complete removal of hardcoded static ifs during command preprocessing. RadIA now dynamically iterates through active templates to match slash commands and replace their placeholders.
+  * Automated synchronization of slash commands with the web frontend (WebView2) for dynamic autocomplete in the chat view.
+- **Template Backup & Restore Mechanism:**
+  * Dedicated buttons and native Windows dialogs integrated into the VCL settings frame (`Tools -> Options -> RadIA -> Templates`).
+  * Structural import/export using JSON files with strict validation of mandatory attributes (`name` and `template`).
+  * Transactional support to merge imported files with existing templates or completely overwrite them.
+- **Clean Architecture Delphi Project Template (`/createprojectarch`):**
+  * Created the new native template `'Create Project Delphi Architecture'` incorporating robust architectural guidelines (SOLID, interface-driven dependency inversion, business logic isolation, and systematic try..finally blocks to guarantee zero memory leaks).
+- **Test Suite & Refinement:**
+  * Sychronized unit tests to cover import validation, merge vs. overwrite behaviors, schema assertions, and export functions. **All 112 DUnitX tests passed successfully**.
+
+---
+
+## ✅ v0.0.15 — Two-Layer Template Architecture and Overlays (Completed)
+
+Version v0.0.15 introduced the complete segregation of default prompt templates defined in the code from those created or modified by the user (saved to disk), ensuring that default prompt updates propagate automatically:
+
+- **Physical-Logical Template Segregation:**
+  * Clean, delta storage in local `templates.json` file (contains only new user templates or customization overlays).
+  * Dynamic runtime merging (`BuildActiveTemplates`) between hardcoded system templates and user overrides.
+- **Redundant Data Higienization (Auto-Migration):**
+  * Automatic cleaning (`CleanRedundantUserTemplates`) of redundant items in the local JSON that match the updated plugin source code exactly.
+- **Premium Origin Management UX:**
+  * Dynamic origin label (`Origin: Default System (Read-Only)`, `Origin: Default System (Customized)`, and `Origin: User Custom`) programmatically created in the options frame.
+  * Smart VCL buttons control logic (Delete button changes to **"Restore Default"** for overlays, clearing the override and re-enabling the original system properties).
+- **Unit Testing:**
+  * Added unit tests covering default template detection, overlay creation, and restoring defaults. **All 116 DUnitX unit tests passed successfully**.
+
+---
+
 ## 🔲 v0.1.0 — Automation & Auditing (Next Version)
 
 ### 1. Automatic Code Review on Save

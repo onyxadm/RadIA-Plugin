@@ -764,9 +764,16 @@ object FrameAIConfig: TFrameAIConfig
           Height = 15
           Caption = 'Description:'
         end
-        object lblTemplateBody: TLabel
+        object lblTemplateSlash: TLabel
           Left = 14
           Top = 106
+          Width = 83
+          Height = 15
+          Caption = 'Slash Command:'
+        end
+        object lblTemplateBody: TLabel
+          Left = 14
+          Top = 156
           Width = 52
           Height = 15
           Caption = 'Template:'
@@ -785,13 +792,28 @@ object FrameAIConfig: TFrameAIConfig
           Height = 23
           TabOrder = 1
         end
-        object memTemplateBody: TMemo
+        object edtTemplateSlash: TEdit
           Left = 14
           Top = 124
-          Width = 425
-          Height = 235
-          ScrollBars = ssVertical
+          Width = 200
+          Height = 23
           TabOrder = 2
+        end
+        object chkIsProjectGenerator: TCheckBox
+          Left = 230
+          Top = 126
+          Width = 190
+          Height = 19
+          Caption = 'Gera Projeto Completo'
+          TabOrder = 3
+        end
+        object memTemplateBody: TMemo
+          Left = 14
+          Top = 174
+          Width = 425
+          Height = 185
+          ScrollBars = ssVertical
+          TabOrder = 4
         end
         object btnSaveTemplate: TButton
           Left = 14
@@ -799,8 +821,26 @@ object FrameAIConfig: TFrameAIConfig
           Width = 110
           Height = 28
           Caption = 'Save Template'
-          TabOrder = 3
+          TabOrder = 5
           OnClick = btnSaveTemplateClick
+        end
+        object btnExportTemplates: TButton
+          Left = 132
+          Top = 377
+          Width = 85
+          Height = 28
+          Caption = 'Exportar...'
+          TabOrder = 6
+          OnClick = btnExportTemplatesClick
+        end
+        object btnImportTemplates: TButton
+          Left = 224
+          Top = 377
+          Width = 85
+          Height = 28
+          Caption = 'Importar...'
+          TabOrder = 7
+          OnClick = btnImportTemplatesClick
         end
         object btnRestoreDefaults: TButton
           Left = 319
@@ -808,10 +848,24 @@ object FrameAIConfig: TFrameAIConfig
           Width = 120
           Height = 28
           Caption = 'Restore Defaults'
-          TabOrder = 4
+          TabOrder = 8
           OnClick = btnRestoreDefaultsClick
         end
       end
     end
+  end
+  object dlgsTemplatesSave: TSaveDialog
+    DefaultExt = 'json'
+    Filter = 'JSON Files (*.json)|*.json'
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
+    Left = 328
+    Top = 8
+  end
+  object dlgsTemplatesOpen: TOpenDialog
+    DefaultExt = 'json'
+    Filter = 'JSON Files (*.json)|*.json'
+    Options = [ofHideReadOnly, ofFileMustExist, ofEnableSizing]
+    Left = 368
+    Top = 8
   end
 end

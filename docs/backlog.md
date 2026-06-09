@@ -197,19 +197,40 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Criação da aba VCL correspondente na interface de opções da IDE do Delphi com campos persistidos criptograficamente para as chaves IAM da AWS (Access Key, Secret Key, Region e Session Token).
     *   Inclusão de novos testes unitários em `RadIA.Tests.ProvidersEx.pas`, totalizando a aprovação de **112 testes verdes** na suite completa de testes.
 
+### 25. Geração de Projeto Completo (Prompt-Based) - Item #24b
+*   **Descrição**: Criação automatizada de projetos Delphi completos baseados em especificações textuais de chat, salvando-os em discos e abrindo-os de forma automática na IDE.
+*   **Detalhes**:
+    *   Desenvolvimento do serviço transacional `TRadIAProjectGenerator` em `RadIA.Core.ProjectGenerator.pas`.
+    *   Exigência de pasta limpa/vazia para salvamento e tratamento transacional (rollback em caso de falha de gravação de arquivos).
+    *   Parser e renderização visual premium dos arquivos gerados na interface WebView2 com atalhos de navegação e destaque na tela.
+
+### 26. Assistente de Stack Trace, Análise Estática de Código e Menu Popup - Itens #23, #24, #25
+*   **Descrição**: Lançamento dos comandos de barra integrados `/stacktrace` e `/bugs`, juntamente com menu flutuante de sugestões de autocompletar ao digitar `/` no chat.
+*   **Detalhes**:
+    *   Mapeamento estático e dinâmico de prompts, com injeção automática de contexto do editor (código da unit ativa ou trechos selecionados).
+    *   Popup flutuante de sugestões renderizado com suporte a teclado (`↑`/`↓`/`Enter`/`Esc`) e cliques no mouse no chat do WebView2.
+
+### 27. Templates Dinâmicos, Backup de Prompt e Nova Arquitetura - Item #12b
+*   **Descrição**: Customização dinâmica total de prompts/templates e slash commands, com diálogos de importação/exportação na VCL e suporte à arquitetura limpa (SOLID).
+*   **Detalhes**:
+    *   Remoção de condicionais rígidos no Delphi no processamento de slash commands; varredura totalmente dinâmica pela classe `TPromptTemplateManager` com placeholders (`{code}`, `{specification}`, `{stacktrace}`, `{argument}`).
+    *   Diálogos de importação/exportação com verificação transacional JSON de estrutura de arquivos e opções de mesclar (*Merge*) ou sobrescrever (*Overwrite*).
+    *   Lançamento do template nativo `'Create Project Delphi Architecture'` (`/createprojectarch`) incorporando injeção de dependências, injeção sistemática de blocos `try..finally` e guia de nomenclatura Pascal.
+    *   Atualização da cobertura de testes unitários em `RadIA.Tests.Templates.pas` cobrindo fluxos de backup e esquema.
+
+### 28. Arquitetura de Templates Segregada (Nativo vs. Usuário com Overlays) - Item #12c
+*   **Descrição**: Segregação de templates padrões embutidos dos customizados em disco, permitindo atualizações automáticas do plugin sem sobrescrever personalizações do usuário, com suporte a overlays e restauração de fábrica.
+*   **Detalhes**:
+    *   Carregamento em duas camadas com mesclagem em runtime no `TPromptTemplateManager`.
+    *   Limpeza automática de templates redundantes não modificados no AppData do usuário (`CleanRedundantUserTemplates`).
+    *   Tela de opções aprimorada com legendas de origem (`lblTemplateOrigin`) e lógica contextual de exclusão/restauração.
+    *   Suíte de testes unitários expandida com 117 testes DUnitX aprovados com sucesso.
 
 ---
 
 ## ⏳ Em Desenvolvimento
 
-### 1. Assistente de Stack Trace (Debug Companion - Fase 1) - Item #23
-*   **Objetivo**: Analisar Stack Traces colados no chat (de exceções da IDE, MadExcept ou EurekaLog), apontando a unidade e o método causador do erro com sugestão de correção.
-
-### 2. Analisador de Memory Leaks e Anti-patterns (Análise Estática) - Item #24
-*   **Objetivo**: Analisar assincronamente a unit ativa no editor em busca de vazamentos de memória (ausência de try..finally) e violações semânticas de SOLID/Clean Code.
-
-### 3. Menu de Atalho Popup para Slash Commands (/) - Item #25
-*   **Objetivo**: Exibir um popup moderno de atalhos e autocompletar ao digitar `/` no chat.
+*   *Nenhum item em desenvolvimento ativo no momento.*
 
 ---
 
@@ -227,5 +248,6 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
 ### 4. Autocompletar Inline Inteligente (Ghost Text) (Item #26)
 *   **Objetivo**: Sugestões de código em tempo real no editor de código com texto acinzentado estilo Copilot/Cursor.
 *   **Nota de Arquitetura**: A pesquisa técnica e prototipagem na ToolsAPI (utilizando `INTAEditViewNotifier.PaintLine`, isolamento de Canvas GDI com `SaveDC`/`RestoreDC`, debounce síncrono e interceptação de teclas VK_TAB/VK_ESCAPE com `IOTAKeyboardBinding`) foram concluídas. O desenvolvimento foi temporariamente pausado devido a restrições no ciclo de repaints síncronos da IDE que afetam a estabilidade do cursor nativo em High DPI. Os módulos foram arquivados para futura evolução quando novas APIs de pintura assíncrona da Embarcadero forem avaliadas.
+
 
 

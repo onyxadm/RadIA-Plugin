@@ -197,19 +197,40 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Added a custom VCL tab inside the Delphi IDE's options frame with DPAPI-encrypted settings fields for AWS Access Key, Secret Key, Region, and Session Token.
     *   Added corresponding unit tests inside `RadIA.Tests.ProvidersEx.pas`, achieving **112 successful tests** inside the full test suite.
 
+### 25. Complete Project Generation (Prompt-Based) - Item #24b
+*   **Description**: Automated creation of Delphi projects (.dpr, .pas, .dfm) from a prompt, saving them to a designated empty folder on disk, and natively loading them in the IDE.
+*   **Details**:
+    *   Developed the transactional file-saver and folder structure analyzer `TRadIAProjectGenerator` inside `RadIA.Core.ProjectGenerator.pas`.
+    *   Mandated empty directory verification and transactional rollback to discard files on writing exceptions.
+    *   Created a premium project view panel inside WebView2 displaying files by type with scroll-to-view and code block highlighting.
+
+### 26. Stack Trace Assistant, Static Code Analysis & Popup Menu - Items #23, #24, #25
+*   **Description**: Built-in slash commands `/stacktrace` and `/bugs` targeting contextual exception trace analysis and memory leak scans, alongside a dynamic autocomplete popup menu in WebView2 chat.
+*   **Details**:
+    *   Configured editor active unit text context injection.
+    *   Rendered floating chat popup suggestions supporting keyboard arrow navigation and mouse selection clicks.
+
+### 27. Dynamic Templates, Prompt Backups & New Architecture - Item #12b
+*   **Description**: Complete dynamic customization of prompt templates and slash commands, coupled with settings UI backup utilities and SOLID architecture project templates.
+*   **Details**:
+    *   Replaced hardcoded preprocessing ifs with a fully dynamic template dictionary scan featuring `{code}`, `{specification}`, `{stacktrace}`, and `{argument}` placeholders.
+    *   Integrated Windows VCL template import/export dialogs verifying JSON syntax and offering Merge vs. Overwrite transactional loading options.
+    *   Designed the `'Create Project Delphi Architecture'` template (`/createprojectarch`) enforcing interface inversion, memory safety try..finally guards, and Pascal conventions.
+    *   Updated and verified all unit tests in `RadIA.Tests.Templates.pas` checking schemas, constraints, and backups.
+
+### 28. Segregated Template Architecture (System vs. User with Overlays) - Item #12c
+*   **Description**: Segregated default prompt templates inside source code from customized user templates on disk, allowing automatic updates of plugin prompts without breaking user adjustments, with overlay and factory restore supports.
+*   **Details**:
+    *   Two-layer configuration files loaded with runtime merge in `TPromptTemplateManager`.
+    *   Automatic cleansing (`CleanRedundantUserTemplates`) of redundant templates on user AppData matching raw code defaults.
+    *   Enhanced options frame VCL settings rendering dynamic source captions (`lblTemplateOrigin`) and contextual delete/restore options.
+    *   Expanded DUnitX unit test suite containing 117 tests successfully verified.
 
 ---
 
 ## ⏳ In Development
 
-### 1. Stack Trace Assistant (Debug Companion - Phase 1) - Item #23
-*   **Goal**: Analyze pasted Stack Traces (from IDE exceptions, MadExcept, or EurekaLog) to pinpoint the failing unit/method and suggest fixes.
-
-### 2. Memory Leak & Anti-pattern Analyzer (Static Analysis) - Item #24
-*   **Goal**: Asynchronously analyze the active unit in the editor to locate memory leaks (e.g., missing try..finally) and semantic violations of SOLID/Clean Code.
-
-### 3. Popup Shortcut Menu for Slash Commands (/) - Item #25
-*   **Goal**: Show a modern shortcut and autocomplete popup when typing `/` in the chat input.
+*   *No active development items at the moment.*
 
 ---
 
@@ -227,5 +248,6 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
 ### 4. Smart Inline Autocomplete (Ghost Text) (Item #26)
 *   **Goal**: Real-time code completion suggestions directly onto the code editor with ghost text styling like Copilot/Cursor.
 *   **Architecture Note**: Technical research and prototyping on the ToolsAPI (utilizing `INTAEditViewNotifier.PaintLine`, GDI Canvas isolation with `SaveDC`/`RestoreDC`, synchronous debounce, and key interception VK_TAB/VK_ESCAPE with `IOTAKeyboardBinding`) have been completed. Development has been temporarily paused due to restrictions in the IDE's synchronous repaint cycle that affect the native cursor's stability in High DPI. Modules have been archived for future evolution when new asynchronous painting APIs from Embarcadero are evaluated.
+
 
 

@@ -18,7 +18,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, Vcl.FileCtrl, Vcl.Forms, Winapi.Windows,
+  System.IOUtils, System.JSON, Vcl.Dialogs, Vcl.Forms, Winapi.Windows,
   RadIA.OTA.Helper, RadIA.Core.Logger;
 
 { TRadIAProjectGenerator }
@@ -38,6 +38,7 @@ var
   LWrittenFiles: TStringList;
   LProjectFileToOpen: string;
   LFileEntries: TArray<string>;
+  LOpenDlg: TFileOpenDialog;
 begin
   Result := False;
   AErrorMsg := '';
@@ -71,12 +72,18 @@ begin
       Exit;
     end;
 
-    { 1. Ask user for destination folder }
+    { 1. Ask user for destination folder using modern FileOpenDialog }
     LChosenDir := '';
-    if not Vcl.FileCtrl.SelectDirectory('Select a completely empty folder for the project', '', LChosenDir, [sdNewFolder, sdShowShares], nil) then
-    begin
-      // User cancelled silently
-      Exit;
+    LOpenDlg := TFileOpenDialog.Create(nil);
+    try
+      LOpenDlg.Title := 'Select a completely empty folder for the project';
+      LOpenDlg.Options := [fdoPickFolders, fdoPathMustExist, fdoForceFileSystem];
+      if LOpenDlg.Execute then
+      begin
+        LChosenDir := LOpenDlg.FileName;
+      end;
+    finally
+      LOpenDlg.Free;
     end;
 
     if LChosenDir.IsEmpty then
