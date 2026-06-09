@@ -13,7 +13,7 @@ The board below summarizes the current status of mapped short and medium-term fe
 | **Smart SQL Optimizer in Editor** | 🔲 Planned | 🟢 Low | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Delphi Compiler & OS Warning Scanner** | 🔲 Planned | 🟢 Low | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Automatic Code Review on Save** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.1.0 |
-| **Applied Refactoring History** | 🔲 Planned | 🟢 Low | 🟡 Medium | v0.1.0 |
+| **Applied Refactoring History** | 🔲 Planned | 🟢 Low | ⭐⭐⭐ Medium | v0.1.0 |
 | **Uses Clause Optimizer (Clean Uses)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
 | **Mock Generator for Unit Tests** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
 | **Smart Multi-Unit Trace Resolver** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐⭐ Critical | v0.2.0 |
@@ -21,14 +21,14 @@ The board below summarizes the current status of mapped short and medium-term fe
 | **OpenAPI/Swagger Documentation Generator** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
 | **Bidirectional Semantic Analysis (DFM x PAS)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
 | **Version Migration Assistant (Smart Migrate)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
-| **Cache Management Panel** | 🔲 Planned | 🟡 Medium | 🟡 Medium | v0.2.0 |
+| **Cache Management Panel** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐ Medium | v0.2.0 |
 | **BDE/ADO/dbExpress ➔ DEXT with FireDAC Migration** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
 | **Legacy Form Decomposer (Code-Behind)** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
 | **Threads and PPL Assistant** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
 | **Automated Internationalization (i18n Wizard)** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
 | **Smart Inline Autocomplete (Ghost Text)** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
 | **IDE Debugger Auto Hook (OTA)** | 🔲 Planned | 🔴 High | ⭐⭐⭐⭐ High | v0.3.0+ |
-| **Project Docs Auto Generation (API.md)** | 🔲 Planned | 🟡 Medium | 🟡 Medium | v0.3.0+ |
+| **Project Docs Auto Generation (API.md)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐ Medium | v0.3.0+ |
 | **Native macOS/Linux Support (Lazarus)** | 🔲 Planned | 🔴 High | 🟢 Low | v0.3.0+ |
 
 ---
