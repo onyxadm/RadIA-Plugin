@@ -1,0 +1,14 @@
+{
+  "name": "radia-plugin",
+  "version": "1.0.0",
+  "description": "RadIA - AI Assistant for Delphi IDE",
+  "main": "eslint.config.js",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "private": true
+}
