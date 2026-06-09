@@ -257,12 +257,17 @@ A versão v0.0.15 introduziu a segregação completa dos templates padrões de p
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Baixa
 
-### 2. Revisão Automática de Código no Save
+### 2. Delphi Compiler & OS Warning Scanner (Quick Win)
+*   **Objetivo**: Analisar o código selecionado buscando warnings e armadilhas específicas do ecossistema Delphi/Windows (Unicode strings, threads sem sincronização com UI, vazamentos de GDI handles).
+*   **Impacto**: ⭐⭐⭐⭐ Alto
+*   **Complexidade**: Baixa
+
+### 3. Revisão Automática de Código no Save
 *   **Objetivo**: Analisar a unit silenciosamente ao salvar e sinalizar no painel do RadIA se a IA encontrou pontos de atenção (ex: possíveis bugs, código duplicado ou falta de tratamento de exceção).
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 3. Histórico de Refatorações Aplicadas
+### 4. Histórico de Refatorações Aplicadas
 *   **Objetivo**: Manter um log auditável de todas as vezes que o botão **[Aplicar Alteração]** foi acionado, registrando o trecho original, o trecho aplicado, a data e o arquivo, permitindo revisão manual posterior.
 *   **Impacto**: ⭐⭐⭐ Médio
 *   **Complexidade**: Baixa
@@ -281,22 +286,32 @@ A versão v0.0.15 introduziu a segregação completa dos templates padrões de p
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 7. Gerador de Documentação OpenAPI/Swagger (Horse, RAD Server)
+### 7. Smart Multi-Unit Trace Resolver
+*   **Objetivo**: Rastrear e ler automaticamente do projeto ativo os trechos específicos das unidades citadas em um log de stack trace colado, fornecendo contexto global de múltiplos arquivos para a IA solucionar erros complexos de runtime.
+*   **Impacto**: ⭐⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 8. Assistente de Log de Exceção (MadExcept / EurekaLog Context Extractor)
+*   **Objetivo**: Analisar logs estruturados de ferramentas de diagnóstico de crash coletando dados do estado e valores das variáveis locais no momento do erro para fornecer a IA inspecionabilidade exata de runtime.
+*   **Impacto**: ⭐⭐⭐⭐⭐ Alto
+*   **Complexidade**: Média
+
+### 9. Gerador de Documentação OpenAPI/Swagger (Horse, RAD Server)
 *   **Objetivo**: Varrer as configurações de rotas e controllers de APIs Delphi modernas para extrair automaticamente a especificação Swagger (JSON/YAML) e mapear os esquemas JSON dos DTOs associados.
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 8. Análise Semântica Bidirecional (DFM vs PAS)
+### 10. Análise Semântica Bidirecional (DFM vs PAS)
 *   **Objetivo**: Varrer de forma cruzada o arquivo visual de formulário (`.dfm`) e a unit `.pas` para sinalizar e remover com segurança componentes órfãos e declarações de eventos vazios que continuam declarados e poluindo o código.
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 9. Assistente de Migração de Versão (Smart Migrate)
+### 11. Assistente de Migração de Versão (Smart Migrate)
 *   **Objetivo**: Comando contextual de menu ou chat lateral para reescrever trechos selecionados de código procedurais/legados usando recursos modernos do Delphi (Unicode, PPL, FireDAC).
 *   **Impacto**: ⭐⭐⭐⭐ Alto
 *   **Complexidade**: Média
 
-### 10. Painel de Gerenciamento do Cache
+### 12. Painel de Gerenciamento do Cache
 *   **Objetivo**: Exibir uma tela de administração interna do cache de respostas, permitindo visualizar entradas em cache, limpar entradas específicas e ver o tamanho total do arquivo de cache sem editar o JSON manualmente.
 *   **Impacto**: ⭐⭐⭐ Médio
 *   **Complexidade**: Média
