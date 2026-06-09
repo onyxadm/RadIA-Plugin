@@ -58,6 +58,9 @@ This option compiles the plugin, copies the binaries to the official public Delp
 
 > **Note:** The plugin automatically discovers available models from the Ollama server via `/api/tags`. If the connection fails, it falls back to a built-in list of well-known model names.
 
+> [!TIP]
+> **Resolving Ollama CORS Issues:** If the plugin encounters Cross-Origin Resource Sharing (CORS) connection errors when making requests to a remote Ollama server, make sure to define the `OLLAMA_ORIGINS=*` environment variable on the hosting server before starting the Ollama service. This will authorize traffic originating from RadIA's WebView2 component.
+
 ---
 
 ## 3. API Key Acquisition Guide by Provider
@@ -99,6 +102,11 @@ Enter the obtained keys in the plugin settings (**Settings** at the top of the c
 9. **AWS Bedrock**
    * **How to obtain:** Through the AWS Console (Amazon Web Services).
    * **Instructions:** Enable access to your desired models (such as Anthropic Claude or Meta Llama) inside the Bedrock console. Create IAM access credentials inside the AWS console to obtain an **Access Key ID** and a **Secret Access Key**. In the RadIA options frame, configure these fields, enter the AWS **Region** where Bedrock is provisioned (e.g., `us-east-1`), and optionally provide the **Session Token** if you are using temporary IAM credentials.
+
+   > [!IMPORTANT]
+   > **IAM Permissions and Model Access in Bedrock:** 
+   > * The IAM access key used must have security policies attached that allow executing the actions `bedrock:InvokeModel` and `bedrock:InvokeModelWithResponseStream`.
+   > * By default, AWS Bedrock requires you to request access to models individually in the AWS Console of your desired region (*Model Access* menu). Make sure that access to the models you plan to use (such as Anthropic Claude 3) has already been requested and granted before trying to connect them in RadIA.
 
 > **Note on Dynamic and Enterprise Providers:** You can also dynamically add new OpenAI-compatible API providers (such as GitHub Copilot or third-party proxies) by saving JSON configuration files under `%APPDATA%\RadIA\providers\`. For more details, check our [Guide for Adding New Providers (docs/new_provider_guide.en.md)](new_provider_guide.en.md) and the [GitHub Copilot Configuration Guide (docs/copilot_proxy_guide.en.md)](copilot_proxy_guide.en.md).
 

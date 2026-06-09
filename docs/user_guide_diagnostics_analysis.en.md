@@ -45,3 +45,7 @@ Memory management in Delphi for desktop platforms is manual. The absence of `try
    * **Exception Handling**: Empty or overly generic `try..except` blocks that silence critical system errors.
    * **SOLID & Clean Code Principles**: Highly coupled code, methods with excessive lines of code, or classes with multiple responsibilities.
 5. Refactoring suggestions will be displayed in the chat panel, allowing you to use the *Smart Diff* comparison tool to apply changes directly.
+
+> [!WARNING]
+> **Limitations of Static Memory Analysis:**
+> The memory leak validation performed by the AI during the `/bugs` command is a **static, structural analysis of the code**. It scans for suspicious syntactic patterns (like the absence of `try..finally` blocks). This **does not replace** Delphi's dynamic runtime execution test mechanisms. It is highly recommended to keep `ReportMemoryLeaksOnShutdown := True` enabled in debug mode within your application, or use profiling tools (such as FastMM4, MadExcept, or EurekaLog) for runtime validation.

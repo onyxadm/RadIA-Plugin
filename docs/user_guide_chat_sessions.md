@@ -65,3 +65,7 @@ Os templates permitem criar atalhos personalizados (Slash Commands) com instruç
 *   **Importar**: Clique em **Importar** e selecione o arquivo JSON de backup. O RadIA validará as propriedades e exibirá duas opções de integração:
     *   *Merge (Mesclar)*: Adiciona as novas customizações preservando os templates locais já configurados.
     *   *Overwrite (Sobrescrever)*: Substitui inteiramente a biblioteca local pelo conteúdo do backup.
+
+> [!CAUTION]
+> **Atenção ao Sobrescrever Templates:**
+> A opção **Overwrite (Sobrescrever)** apaga de forma irreversível todos os seus templates customizados e novos comandos locais que não estiverem inclusos no arquivo JSON de backup importado. Recomendamos que você faça uma exportação de segurança da sua biblioteca atual antes de executar uma importação por sobrescrita.

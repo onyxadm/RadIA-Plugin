@@ -45,3 +45,7 @@ O gerenciamento de memória em Delphi para plataformas desktop é manual. A aus�
    * **Tratamento de Exceções**: Blocos `try..except` vazios ou genéricos demais que silenciam erros graves do sistema.
    * **Regras de SOLID e Clean Code**: Código excessivamente acoplado, métodos com linhas de código excessivas ou classes com multiplas responsabilidades.
 5. As sugestões de refatorações serão exibidas no painel de chat, permitindo a comparação no *Smart Diff* para aplicação direta.
+
+> [!WARNING]
+> **Limitações da Análise Estática de Memória:**
+> A verificação de memory leaks realizada pela IA no comando `/bugs` é uma **análise estática e estrutural de código**. Ela busca padrões sintáticos suspeitos (como a ausência de blocos `try..finally`). Isso **não substitui** os mecanismos dinâmicos de teste de execução do Delphi. É altamente recomendado manter o `ReportMemoryLeaksOnShutdown := True` ativado em modo de debug na sua aplicação ou usar ferramentas de perfilamento (como FastMM4, MadExcept ou EurekaLog) para a validação em runtime.

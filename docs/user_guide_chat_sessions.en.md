@@ -65,3 +65,7 @@ Templates allow you to create custom shortcuts (Slash Commands) containing reusa
 *   **Import**: Click **Import** and select the backup JSON file. RadIA will validate the schema and offer two integration choices:
     *   *Merge*: Adds the new overrides while preserving already configured local templates.
     *   *Overwrite*: Completely replaces the local library with the backup content.
+
+> [!CAUTION]
+> **Warning on Overwriting Templates:**
+> The **Overwrite** option irreversibly deletes all your custom templates and new local commands that are not included in the imported backup JSON file. We strongly recommend making a safety export of your current library before executing an overwrite import.

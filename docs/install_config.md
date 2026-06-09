@@ -58,6 +58,9 @@ O **Ollama** permite executar LLMs de código aberto (Llama 3, Mistral, Phi-3, C
 
 > **Nota:** O plugin descobre automaticamente os modelos disponíveis no servidor Ollama via `/api/tags`. Se a conexão falhar, exibirá modelos padrão conhecidos como fallback.
 
+> [!TIP]
+> **Resolução de Erros de CORS no Ollama:** Caso o plugin encontre erros de conexão de origem cruzada (CORS) ao realizar requisições para um servidor Ollama remoto, certifique-se de definir a variável de ambiente `OLLAMA_ORIGINS=*` no servidor de hospedagem antes de iniciar o serviço do Ollama. Isso habilitará o tráfego a partir do componente WebView2 do RadIA.
+
 ---
 
 ## 3. Guia de Obtenção de Chaves de API por Provedor
@@ -99,6 +102,11 @@ Insira as chaves obtidas nas configurações do plugin (**Settings** no topo do 
 9. **AWS Bedrock**
    * **Como obter:** Através do Console da AWS (Amazon Web Services).
    * **Instruções:** Habilite o acesso aos modelos desejados (como Claude da Anthropic ou Llama da Meta) na console do Bedrock. Crie credenciais de acesso IAM no console da AWS para obter uma **Access Key ID** e uma **Secret Access Key**. Nas opções do RadIA, configure esses dois campos, informe a **Região** da AWS onde o Bedrock está provisionado (ex: `us-east-1`) e, opcionalmente, forneça o **Session Token** se estiver utilizando credenciais temporárias do IAM.
+
+   > [!IMPORTANT]
+   > **Permissões IAM e Acesso a Modelos no Bedrock:** 
+   > * A chave de acesso IAM utilizada deve possuir políticas de segurança anexadas que permitam a execução das ações `bedrock:InvokeModel` e `bedrock:InvokeModelWithResponseStream`.
+   > * Por padrão, a AWS Bedrock exige que você solicite acesso aos modelos individualmente no Console AWS da região desejada (menu *Model Access*). Certifique-se de que o acesso aos modelos que planeja utilizar (como Claude 3 da Anthropic) já foi solicitado e concedido antes de tentar conectá-los no RadIA.
 
 > **Nota sobre Provedores Dinâmicos e Corporativos:** Você também pode adicionar de forma dinâmica novos provedores compatíveis com a API OpenAI (incluindo o GitHub Copilot ou proxies de terceiros) salvando arquivos JSON em `%APPDATA%\RadIA\providers\`. Para mais detalhes, consulte o [Guia para Adição de Novos Provedores (docs/new_provider_guide.md)](new_provider_guide.md) e o [Guia de Configuração do GitHub Copilot (docs/copilot_proxy_guide.md)](copilot_proxy_guide.md).
 

@@ -84,6 +84,9 @@ Uma das ferramentas mais poderosas do RadIA é a habilidade de estruturar e salv
 4. **Fluxo de Gravação**:
    * Clique em **Gerar Arquivos** na UI do chat.
    * Um diálogo nativo do Windows será exibido para você selecionar a pasta de destino.
-   * > [!IMPORTANT]
-     > Por medidas de segurança e para evitar sobregravações acidentais de código, a pasta selecionada **deve estar vazia**. O RadIA bloqueará a gravação caso a pasta possua outros arquivos.
+
+> [!IMPORTANT]
+> **Gravação Segura de Projetos:**
+> Por medidas de segurança e para evitar sobregravações acidentais de código existente, a pasta selecionada para a geração do projeto **deve estar totalmente vazia**. O RadIA bloqueará o processo de gravação física no disco caso a pasta possua quaisquer outros arquivos.
+
 5. **Abertura na IDE**: Assim que a gravação é concluída com sucesso, o RadIA aciona a Open Tools API e **carrega o novo projeto gerado automaticamente** na IDE do Delphi, pronto para compilação.

@@ -94,6 +94,12 @@ initialization
 end.
 ```
 
+> [!IMPORTANT]
+> **Nomenclatura do Provider ID:**
+> O primeiro argumento do `TProviderMetadata.Create` (neste exemplo, `'AwesomeAI'`) serve como a identificação física do provedor e será usado como o nome da subchave na persistência de chaves de API e configurações dentro do Registro do Windows (ex: `HKEY_CURRENT_USER\Software\RadIA\AwesomeAI`). 
+> * Ele **deve conter apenas caracteres alfanuméricos simples** (ex: `[A-Za-z0-9]`).
+> * **Nunca utilize espaços, acentos, barras ou caracteres especiais**, pois isso causará falhas de gravação e leitura no Registro do Windows.
+
 ### 5. Adicionar a Unit ao Pacote do Plugin (`RadIA.dpk`)
 Adicione a nova unit no arquivo `RadIA.dpk` (e no `Tests/RadIATests.dpr` se aplicável) para que o compilador a inclua no build:
 

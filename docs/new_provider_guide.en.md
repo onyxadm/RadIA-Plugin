@@ -94,6 +94,12 @@ initialization
 end.
 ```
 
+> [!IMPORTANT]
+> **Provider ID Naming Conventions:**
+> The first argument of `TProviderMetadata.Create` (in this example, `'AwesomeAI'`) acts as the physical identification key for the provider and will be used as the Windows Registry subkey name for API keys and configuration persistence (e.g., `HKEY_CURRENT_USER\Software\RadIA\AwesomeAI`). 
+> * It **must contain only simple alphanumeric characters** (e.g., `[A-Za-z0-9]`).
+> * **Never use spaces, accents, slashes, or special characters**, as this will cause read/write failures when accessing the Windows Registry.
+
 ### 5. Add the Unit to the Package (`RadIA.dpk`)
 Add your new unit to the `RadIA.dpk` package file (and `Tests/RadIATests.dpr` if applicable) so that the compiler includes it during compilation:
 
