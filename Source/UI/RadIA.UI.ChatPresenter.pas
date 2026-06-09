@@ -54,6 +54,7 @@ type
     FWebViewReady: Boolean;
     FWebFilesDir: string;
     FLifecycleGuard: IInterface;
+    FActiveModels: TArray<string>;
 
     procedure LoadConfig;
     procedure UpdateModelsCombo;
@@ -147,6 +148,7 @@ begin
   FLoadingConfig := False;
   FWebViewReady := False;
   FLifecycleGuard := TLifecycleGuard.Create;
+  FActiveModels := [];
 
   if Assigned(AConfig) then
     FConfig := AConfig
@@ -278,6 +280,7 @@ begin
               
             if Assigned(LProvider) then
             begin
+              Self.FActiveModels := AModels;
               LProvId := LProvider.GetProviderId;
               LActiveModel := Self.FConfig.GetActiveModel(LProvId);
               
@@ -307,6 +310,7 @@ begin
   if FLoadingConfig then
     Exit;
 
+  FActiveModels := [];
   FConfig.SetActiveProvider(AProviderName);
   FConfig.Save;
   UpdateModelsCombo;
@@ -1423,7 +1427,9 @@ begin
       end;
     end;
 
-    if TProviderRegistry.GetProvider(LActiveProvider, LMeta) then
+    if Length(FActiveModels) > 0 then
+      LDefaultModels := FActiveModels
+    else if TProviderRegistry.GetProvider(LActiveProvider, LMeta) then
       LDefaultModels := LMeta.DefaultModels
     else
       LDefaultModels := [];
