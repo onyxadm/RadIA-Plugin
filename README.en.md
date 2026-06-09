@@ -104,29 +104,47 @@ To get the most out of RadIA features in your daily development workflow, check 
 ```
 PluginDelphiIA/
 │
-├── docs/                               # Documentation & Visuals
-│   ├── images/
-│   │   ├── radia_ui_mockup.png         # IDE Chat Integration Mockup
-│   │   ├── radia_options_mockup.png    # IDE Settings Panel Mockup (Tools -> Options)
-│   │   └── radia_diff_ui_mockup.png    # Side-by-Side Diff View Mockup
-│   ├── install_config.en.md            # Detailed installation and API keys guide
-│   ├── implementation_plan.md          # Architectural Planning
-│   ├── radia_design_ui.md              # UI Elements & Flow Design
-│   ├── new_provider_guide.en.md        # Guide for adding new AI Providers
-│   └── task.md                         # Checklist of Development Tasks
+├── .github/                            # GitHub configurations and templates
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md               # Bug report template (PT)
+│   │   ├── bug_report.en.md            # Bug report template (EN)
+│   │   ├── feature_request.md          # Feature request template (PT)
+│   │   ├── feature_request.en.md       # Feature request template (EN)
+│   │   └── config.yml                  # Template chooser configuration
+│   └── pull_request_template.md        # Bilingual Pull Request template
 │
-├── RadIA.groupproj                     # Delphi Project Group
-├── RadIA.dpk                           # Design-time Package source
-├── RadIA.dproj                         # Package project settings
+├── docs/                               # Documentation and visual resources
+│   ├── images/                         # UI screenshots and mockups
+│   ├── backlog.md / backlog.en.md      # Kanban board and technical evolution backlog
+│   ├── roadmap.md / roadmap.en.md      # Strategic milestones planning
+│   ├── features.md / features.en.md    # Feature catalog and compatibility matrix
+│   ├── install_config.md / .en.md      # Installation and API keys guide
+│   ├── compliance.md / .en.md          # Legal notices, privacy, and compliance
+│   ├── new_provider_guide.md / .en.md  # Guide to adding new providers
+│   ├── user_guide_*.md                 # Detailed usage manuals (chat, editor, stack trace)
+│   └── radia_design_ui.md              # Original UI specification and layouts
 │
-├── Source/
-│   ├── Core/                           # Interfaces, Core types, Configs
-│   ├── Providers/                      # Google, OpenAI, Claude HTTP API clients
-│   ├── Integration/                    # ToolsAPI Wizards, Hooks, Register classes
-│   └── UI/                             # VCL Frames, Forms, and WebView files
-│       └── Web/                        # HTML, CSS, JS template files for WebView2
+├── RadIA.groupproj                     # Delphi Project Group solution
+├── RadIA.dpk                           # Delphi design-time package source (BPL)
+├── RadIA.dproj                         # Delphi package project configurations
+├── RadIA.rc                            # Resource script file
 │
-└── Tests/                              # Unit Tests (DUnitX)
+├── Source/                             # Core plugin source code
+│   ├── Core/                           # Core units (interfaces, settings, DTOs)
+│   ├── Providers/                      # AI API Clients (Gemini, OpenAI, Claude, Ollama)
+│   ├── Integration/                    # ToolsAPI IDE integration (hooks, wizards, options)
+│   └── UI/                             # VCL Forms, Frames, and dialog windows
+│       └── Web/                        # Local HTML5/JS chat resources (WebView2)
+│           └── vendor/                 # Third-party libraries (Prism, Marked, diff2html)
+│
+├── Tests/                              # DUnitX Integration and Unit Tests
+│   └── Source/                         # Unit tests implementation files
+│
+├── .editorconfig                       # Formatting and line ending standards
+├── agents.md                           # Guidelines and restrictions for AI agents (LLMs)
+├── build.ps1                           # Automated build and installation script
+├── eslint.config.js                    # ESLint Javascript linter settings
+└── package.json                        # Node npm package dependencies and scripts
 ```
 
 ### 7. Terms of Use and Corporate Compliance
