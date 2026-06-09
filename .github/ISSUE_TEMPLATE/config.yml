@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "💬 GitHub Discussions"
+    url: "https://github.com/regyssilveira/RadIA-Plugin/discussions"
+    about: "Faça perguntas ou discuta ideias com a comunidade / Ask questions or discuss ideas with the community."
+  - name: "📖 Documentação do RadIA (Docs)"
+    url: "https://github.com/regyssilveira/RadIA-Plugin/tree/main/docs"
+    about: "Leia os guias e manuais de uso oficiais / Read the official usage guides and reference manuals."
