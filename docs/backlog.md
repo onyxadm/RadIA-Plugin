@@ -41,7 +41,7 @@ O quadro abaixo resume o status atual das features mapeadas a curto e médio pra
 
 ## 🔲 2. Próximos Passos (Planned Backlog)
 
-Para detalhes completos de objetivos, impactos e referências técnicas de cada funcionalidade futura, consulte a [Matriz de Priorização de Features (docs/feature_prioritization_matrix.md)](feature_prioritization_matrix.md) ou o [Roadmap de Evolução (ROADMAP.md)](../ROADMAP.md).
+Para detalhes completos de objetivos, impactos e referências técnicas de cada funcionalidade futura, consulte a [Matriz de Priorização de Features (docs/feature_prioritization_matrix.md)](feature_prioritization_matrix.md) ou o [Roadmap de Evolução (docs/roadmap.md)](roadmap.md).
 
 ---
 

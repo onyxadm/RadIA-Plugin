@@ -4,8 +4,8 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 
 > [!NOTE]
 > O RadIA segue um modelo de desenvolvimento **open-source orientado à comunidade**.
-> *   Para uma visualização detalhada das prioridades, estimativas de esforço e impacto de cada recurso, consulte a [Matriz de Priorização (docs/feature_prioritization_matrix.md)](docs/feature_prioritization_matrix.md).
-> *   Para os detalhes técnicos das implementações passadas e pendentes (como nomes de classes, testes DUnitX aprovados e commits), consulte o [Backlog de Evolução Técnica (docs/backlog.md)](docs/backlog.md).
+> *   Para uma visualização detalhada das prioridades, estimativas de esforço e impacto de cada recurso, consulte a [Matriz de Priorização (feature_prioritization_matrix.md)](feature_prioritization_matrix.md).
+> *   Para os detalhes técnicos das implementações passadas e pendentes (como nomes de classes, testes DUnitX aprovados e commits), consulte o [Backlog de Evolução Técnica (backlog.md)](backlog.md).
 
 ---
 
@@ -18,7 +18,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Segurança de que novas atualizações do plugin trazem prompts novos da comunidade sem sobrescrever ou apagar suas personalizações locais.
   *   **Destaques**: Segregação de templates nativos e de usuário, indicador visual de origem no menu de configurações e opção de "Restaurar Padrão".
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.15)](docs/backlog.md#v0015--arquitetura-de-templates-em-duas-camadas-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.15)](backlog.md#v0015--arquitetura-de-templates-em-duas-camadas-clique-para-expandir).*
 </details>
 
 <details>
@@ -26,7 +26,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Liberdade para criar comandos personalizados barra (`/`) associados a prompts repetitivos e facilidade para migrar e compartilhar sua biblioteca de templates de IA entre computadores.
   *   **Destaques**: Customização dinâmica total de comandos barra, backup em JSON com controle de importação (mesclar ou sobrescrever) e template nativo de Clean Architecture Delphi.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.14)](docs/backlog.md#v0014--templates-dinâmicos-e-backup-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.14)](backlog.md#v0014--templates-dinâmicos-e-backup-clique-para-expandir).*
 </details>
 
 <details>
@@ -34,7 +34,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Velocidade extrema no início de novas ideias e microsserviços. A IA cria a estrutura completa de pastas e arquivos e os carrega diretamente na sua IDE prontos para uso.
   *   **Destaques**: Gerador transacional de arquivos, painel visual com design *glassmorphism* no chat e abertura automática do projeto gerado na IDE do Delphi.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.13)](docs/backlog.md#v0013--geração-de-projetos-delphi-inteiros-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.13)](backlog.md#v0013--geração-de-projetos-delphi-inteiros-clique-para-expandir).*
 </details>
 
 <details>
@@ -42,7 +42,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Integração com os modelos de ponta da Amazon (Anthropic Claude, Llama 3) em ambientes corporativos rígidos que demandam segurança em nuvens AWS.
   *   **Destaques**: Suporte nativo ao AWS Bedrock, assinador criptográfico SigV4 e parser de streaming binário.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.12)](docs/backlog.md#v0012--provedor-aws-bedrock-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.12)](backlog.md#v0012--provedor-aws-bedrock-clique-para-expandir).*
 </details>
 
 <details>
@@ -50,7 +50,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Expansão do catálogo de IAs nativas de ponta do plugin para atender a políticas de compliance de TI internas de diferentes empresas.
   *   **Destaques**: Suporte nativo para Azure OpenAI, Alibaba Qwen 2.5 e Mistral AI, com abas dedicadas e atalhos na tela de opções da IDE.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.11)](docs/backlog.md#v0011--provedores-azure-qwen-e-mistral-ai-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.11)](backlog.md#v0011--provedores-azure-qwen-e-mistral-ai-clique-para-expandir).*
 </details>
 
 <details>
@@ -58,7 +58,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Autenticação oficial e simplificada com a IA de desenvolvimento mais popular do mundo diretamente do painel do RadIA, sem a necessidade de proxies locais.
   *   **Destaques**: Suporte nativo ao GitHub Copilot na nuvem, fluxo de login interativo por PIN do dispositivo e importação do token ativo do VS Code em um clique.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.10)](docs/backlog.md#v0010--conexão-nativa-ao-github-copilot-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.10)](backlog.md#v0010--conexão-nativa-ao-github-copilot-clique-para-expandir).*
 </details>
 
 <details>
@@ -66,7 +66,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Facilidade de implantação em computadores de desenvolvimento que rodam múltiplas versões da IDE do Delphi simultaneamente (ex: Alexandria e Athens).
   *   **Destaques**: Instalador PowerShell interativo com autodescoberta do registro do Windows e correções de encodings de consoles locais.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.9)](docs/backlog.md#v009--suporte-multi-ide-no-build-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.9)](backlog.md#v009--suporte-multi-ide-no-build-clique-para-expandir).*
 </details>
 
 <details>
@@ -74,7 +74,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Autonomia de uso com modelos de IA locais e offline rodando em servidores corporativos ou computadores locais pelo LM Studio.
   *   **Destaques**: Provedor nativo do LM Studio e aba dedicada Claro/Escuro de configurações.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.8)](docs/backlog.md#v008--provedor-local-lm-studio-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.8)](backlog.md#v008--provedor-local-lm-studio-clique-para-expandir).*
 </details>
 
 <details>
@@ -89,7 +89,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Extensibilidade imediata. Permite cadastrar qualquer nova IA de mercado compatível com a API da OpenAI apenas salvando um arquivo JSON, sem necessitar reinstalar ou compilar o plugin.
   *   **Destaques**: Provedores dinâmicos configuráveis por JSON local e conexões iniciais de proxies do Copilot.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.6)](docs/backlog.md#v006--provedores-dinâmicos-via-json-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.6)](backlog.md#v006--provedores-dinâmicos-via-json-clique-para-expandir).*
 </details>
 
 <details>
@@ -104,7 +104,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Automatização de tarefas manuais repetitivas (como criar classes DTO) e análise rápida de pilha de erros no código ativo.
   *   **Destaques**: Conversor DTO (JSON/SQL para Pascal), Assistente de Stack Trace em relatórios de exceções, análise estática de memory leaks e popup visual flutuante de sugestões barra (`/`).
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.4)](docs/backlog.md#v004--produtividade--análise-estática-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.4)](backlog.md#v004--produtividade--análise-estática-clique-para-expandir).*
 </details>
 
 <details>
@@ -112,7 +112,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Garantia de que o plugin rode em background na IDE sem causar travamentos, vazamentos de memória da BPL ou Access Violations durante o uso diário.
   *   **Destaques**: Barramento central de registro dinâmico de IAs e ciclo de vida robusto com threads secundárias.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.3)](docs/backlog.md#v003--estabilidade-de-runtime-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.3)](backlog.md#v003--estabilidade-de-runtime-clique-para-expandir).*
 </details>
 
 <details>
@@ -120,7 +120,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: Organização das conversas por projetos e controle direto sobre os custos das chaves de API.
   *   **Destaques**: Sidebar de chat de múltiplas sessões persistentes, controle local de orçamento de tokens mensal na barra de status e integração com OpenRouter.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.2)](docs/backlog.md#v002--múltiplas-sessões-e-gestão-de-consumo-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.2)](backlog.md#v002--múltiplas-sessões-e-gestão-de-consumo-clique-para-expandir).*
 </details>
 
 <details>
@@ -128,7 +128,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
   *   **Valor Entregue**: A IA acoplada de forma nativa e fluida à IDE do Delphi, trazendo respostas incrementais rápidas e atalhos na tela.
   *   **Destaques**: Chat lateral VCL integrado com Edge WebView2, suporte a 6 provedores, streaming SSE, histórico local, atalhos contextuais no editor de código, comparador visual Diff de alterações, Smart Build Debugger e documentação XML automática.
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.1)](docs/backlog.md#v001--lançamento-inicial-clique-para-expandir).*
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.1)](backlog.md#v001--lançamento-inicial-clique-para-expandir).*
 </details>
 
 ---
