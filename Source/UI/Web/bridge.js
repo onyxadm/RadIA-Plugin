@@ -229,11 +229,13 @@
   let lastText = '';
   let generatingTimeout = 0;
   let previousResponseElement = null;
+  let wasGeneratingDetected = false;
 
   function startMonitoring() {
     log('Iniciando monitoramento de resposta...');
     lastText = '';
     generatingTimeout = 0;
+    wasGeneratingDetected = false;
     
     // Captura o elemento da última resposta existente ANTES de começar a nova
     previousResponseElement = currentSite.getLastResponseElement();
@@ -252,6 +254,9 @@
 
       const text = getMarkdownFromElement(currentEl);
       const isGenerating = currentSite.isGenerating();
+      if (isGenerating) {
+        wasGeneratingDetected = true;
+      }
 
       if (text && text !== lastText) {
         log('Enviando resposta completa de streaming:', text.length, 'bytes');
@@ -265,10 +270,12 @@
       }
 
       if (!isGenerating && lastText.length > 0) {
-        // Allow up to 100 cycles (30 seconds) of silence/inactivity before declaring done
-        // to prevent premature cutting of long assistant responses or during network slowness
         generatingTimeout++;
-        if (generatingTimeout >= 100) {
+        // Se detectamos que o botão de stop/loading funcionou antes, confiamos no isGenerating=false.
+        // O silêncio necessário é de apenas 4 ciclos (1.2 segundo).
+        // Se o botão nunca foi detectado (detector falhou), usamos um silêncio de segurança de 25 ciclos (7.5 segundos).
+        const requiredCycles = wasGeneratingDetected ? 4 : 25;
+        if (generatingTimeout >= requiredCycles) {
           log('Geração concluída.');
           clearInterval(monitorInterval);
           monitorInterval = null;
