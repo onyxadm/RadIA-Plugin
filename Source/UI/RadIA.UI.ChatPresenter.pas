@@ -66,7 +66,7 @@ type
     function IsProviderConfigured(const AProviderId: string): Boolean;
 
     procedure SendInitialConfigToWeb;
-    procedure SendModelsUpdateToWeb;
+    procedure SendModelsUpdateToWeb(const AModels: TArray<string>; const AActiveModel: string);
     procedure SendSessionsUpdateToWeb;
     procedure PostToWebView(const AAction, ARole, AText: string; const AProvider: string = ''; const AModel: string = ''); overload;
     procedure PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean; const AProvider: string = ''; const AModel: string = ''); overload;
@@ -289,7 +289,7 @@ begin
               end;
               
               Self.FView.UpdateModels(AModels, LActiveModel, True);
-              Self.SendModelsUpdateToWeb;
+              Self.SendModelsUpdateToWeb(AModels, LActiveModel);
             end;
           end
         );
@@ -1383,29 +1383,103 @@ end;
 procedure TChatPresenter.SendInitialConfigToWeb;
 var
   LJson: TJSONObject;
+  LProvidersJson: TJSONArray;
+  LModelsJson: TJSONArray;
+  LSlashCommandsJson: TJSONArray;
+  LProviders: TArray<TProviderMetadata>;
+  LActiveProvider: string;
+  LActiveModel: string;
+  LAuthType: string;
+  LIsWebLogin: Boolean;
+  LTemplate: TPromptTemplate;
+  LSlashObj: TJSONObject;
+  LProvObj: TJSONObject;
+  I: Integer;
+  LMeta: TProviderMetadata;
+  LDefaultModels: TArray<string>;
+  LModel: string;
 begin
+  if not FWebViewReady then Exit;
+
+  LActiveProvider := FConfig.GetActiveProvider;
+  LActiveModel := FConfig.GetActiveModel(LActiveProvider);
+  LAuthType := FConfig.GetProviderAuthType(LActiveProvider);
+  LIsWebLogin := SameText(LAuthType, 'web_login');
+
   LJson := TJSONObject.Create;
+  LProvidersJson := TJSONArray.Create;
+  LModelsJson := TJSONArray.Create;
+  LSlashCommandsJson := TJSONArray.Create;
   try
-    LJson.AddPair('action', 'init_config');
-    LJson.AddPair('provider', FConfig.GetActiveProvider);
-    LJson.AddPair('model', FConfig.GetActiveModel(FConfig.GetActiveProvider));
+    LProviders := TProviderRegistry.GetProviders;
+    for I := 0 to Length(LProviders) - 1 do
+    begin
+      if IsProviderConfigured(LProviders[I].Id) then
+      begin
+        LProvObj := TJSONObject.Create;
+        LProvObj.AddPair('name', LProviders[I].DisplayName);
+        LProvObj.AddPair('value', LProviders[I].Id);
+        LProvidersJson.AddElement(LProvObj);
+      end;
+    end;
+
+    if TProviderRegistry.GetProvider(LActiveProvider, LMeta) then
+      LDefaultModels := LMeta.DefaultModels
+    else
+      LDefaultModels := [];
+      
+    for LModel in LDefaultModels do
+    begin
+      LModelsJson.Add(LModel);
+    end;
+
+    for LTemplate in FTemplateManager.GetTemplates do
+    begin
+      if not LTemplate.SlashCommand.IsEmpty then
+      begin
+        LSlashObj := TJSONObject.Create;
+        LSlashObj.AddPair('command', LTemplate.SlashCommand);
+        LSlashObj.AddPair('description', LTemplate.Description);
+        LSlashObj.AddPair('name', LTemplate.Name);
+        LSlashObj.AddPair('isProjectGenerator', TJSONBool.Create(LTemplate.IsProjectGenerator));
+        LSlashCommandsJson.AddElement(LSlashObj);
+      end;
+    end;
+
+    LJson.AddPair('action', 'initialize_config');
+    LJson.AddPair('providers', LProvidersJson);
+    LJson.AddPair('models', LModelsJson);
+    LJson.AddPair('slashCommands', LSlashCommandsJson);
+    LJson.AddPair('activeProvider', LActiveProvider);
+    LJson.AddPair('activeModel', LActiveModel);
+    LJson.AddPair('isWebLogin', TJSONBool.Create(LIsWebLogin));
+
     FView.PostMessageToWeb(LJson.ToJSON);
   finally
     LJson.Free;
   end;
 end;
 
-procedure TChatPresenter.SendModelsUpdateToWeb;
+procedure TChatPresenter.SendModelsUpdateToWeb(const AModels: TArray<string>; const AActiveModel: string);
 var
   LJson: TJSONObject;
-  LModelsArray: TJSONArray;
+  LModels: TJSONArray;
+  LModel: string;
 begin
+  if not FWebViewReady then Exit;
+
   LJson := TJSONObject.Create;
+  LModels := TJSONArray.Create;
   try
-    LJson.AddPair('action', 'models_update');
-    LModelsArray := TJSONArray.Create;
-    
-    LJson.AddPair('models', LModelsArray);
+    for LModel in AModels do
+    begin
+      LModels.Add(LModel);
+    end;
+
+    LJson.AddPair('action', 'update_models');
+    LJson.AddPair('models', LModels);
+    LJson.AddPair('activeModel', AActiveModel);
+
     FView.PostMessageToWeb(LJson.ToJSON);
   finally
     LJson.Free;
