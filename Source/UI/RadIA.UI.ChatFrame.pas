@@ -346,6 +346,11 @@ begin
   
   if not TDirectory.Exists(LSourceDir) then
   begin
+    LSourceDir := TPath.GetFullPath(TPath.Combine(LModuleDir, '..\Web'));
+  end;
+  
+  if not TDirectory.Exists(LSourceDir) then
+  begin
     LSourceDir := TPath.GetFullPath(TPath.Combine(LModuleDir, '..\..\..\Source\UI\Web'));
   end;
   
