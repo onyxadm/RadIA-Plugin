@@ -84,6 +84,9 @@ One of RadIA's most powerful capabilities is structuring and saving a complete D
 4. **Saving Workflow**:
    * Click **Generate Files** in the chat UI.
    * A native Windows folder selection dialog will open.
-   * > [!IMPORTANT]
-     > For security reasons and to avoid accidentally overwriting existing code, the selected folder **must be completely empty**. RadIA will block saving if files already exist in the chosen directory.
+
+> [!IMPORTANT]
+> **Safe Project Generation:**
+> For security reasons and to avoid accidentally overwriting existing code, the selected folder for project generation **must be completely empty**. RadIA will block the physical saving process if the chosen directory contains any files.
+
 5. **Loading in the IDE**: Once the files are successfully written, RadIA triggers the Open Tools API and **automatically loads the newly generated project** into the Delphi IDE, ready to compile.
