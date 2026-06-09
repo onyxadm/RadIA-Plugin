@@ -1,0 +1,596 @@
+unit RadIA.UI.ConfigPresenter;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, System.Generics.Collections, Vcl.Graphics,
+  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.PromptTemplates;
+
+type
+  IConfigView = interface
+    ['{AFB8E0CA-7186-4F18-A7EE-3E081BE27FDF}']
+    // General Provider Inputs
+    function GetApiKey(const AProviderId: string): string;
+    procedure SetApiKey(const AProviderId: string; const AKey: string);
+    function GetCustomUrl(const AProviderId: string): string;
+    procedure SetCustomUrl(const AProviderId: string; const AUrl: string);
+    function GetAuthTypeIndex(const AProviderId: string): Integer;
+    procedure SetAuthTypeIndex(const AProviderId: string; const AIndex: Integer);
+
+    // Advanced Inputs
+    function GetTemperatureInput(const AProviderId: string): string;
+    procedure SetTemperatureInput(const AProviderId: string; const AValue: string);
+    function GetMaxTokensInput(const AProviderId: string): string;
+    procedure SetMaxTokensInput(const AProviderId: string; const AValue: string);
+    function GetTimeoutInput(const AProviderId: string): string;
+    procedure SetTimeoutInput(const AProviderId: string; const AValue: string);
+
+    // Azure Specific
+    function GetAzureModel: string;
+    procedure SetAzureModel(const AValue: string);
+    function GetAzureApiVersion: string;
+    procedure SetAzureApiVersion(const AValue: string);
+
+    // Bedrock Specific
+    function GetAwsAccessKeyId: string;
+    procedure SetAwsAccessKeyId(const AValue: string);
+    function GetAwsSecretAccessKey: string;
+    procedure SetAwsSecretAccessKey(const AValue: string);
+    function GetAwsRegion: string;
+    procedure SetAwsRegion(const AValue: string);
+    function GetAwsSessionToken: string;
+    procedure SetAwsSessionToken(const AValue: string);
+
+    // System Prompt and General
+    function GetSystemPrompt: string;
+    procedure SetSystemPrompt(const AValue: string);
+    function GetSmartConfigEnabled: Boolean;
+    procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetLogEnabled: Boolean;
+    procedure SetLogEnabled(const AValue: Boolean);
+    function GetLogPath: string;
+    procedure SetLogPath(const AValue: string);
+    function GetLogMaxSize: string;
+    procedure SetLogMaxSize(const AValue: string);
+    
+    function GetQuotaEnabled: Boolean;
+    procedure SetQuotaEnabled(const AValue: Boolean);
+    function GetQuotaLimit: string;
+    procedure SetQuotaLimit(const AValue: string);
+    procedure SetQuotaUsedText(const AText: string);
+
+    // Dialogs and lifecycle
+    procedure ShowMessageDialog(const AMessage: string);
+    function SaveDialogExecute(out AFileName: string): Boolean;
+    function OpenDialogExecute(out AFileName: string): Boolean;
+    function FolderDialogExecute(out AFolderName: string): Boolean;
+    procedure CloseView(const AModalResult: Integer);
+
+    // Templates UI
+    procedure UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
+    procedure GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
+    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+    procedure ClearTemplateFields;
+    procedure FocusTemplateName;
+    function GetSelectedTemplateIndex: Integer;
+    procedure SetSelectedTemplateIndex(const AIndex: Integer);
+    procedure SetDeleteTemplateButtonState(const ACaption: string; const AEnabled: Boolean);
+    procedure SetTemplateOriginLabel(const AText: string; const AColor: TColor);
+  end;
+
+  TConfigPresenter = class
+  private
+    FView: IConfigView;
+    FConfig: IAIConfig;
+    FTemplateManager: TPromptTemplateManager;
+    FOwnsTemplateManager: Boolean;
+    FProvidersList: TArray<string>;
+
+    function ValidateUrl(const AUrl: string; const AFieldName: string): Boolean;
+    procedure PopulateTemplatesList;
+  public
+    constructor Create(const AView: IConfigView; const AConfig: IAIConfig = nil; const ATemplateManager: TPromptTemplateManager = nil);
+    destructor Destroy; override;
+
+    procedure LoadConfig;
+    procedure SaveConfig;
+    procedure CancelConfig;
+
+    // Advanced Inputs Registry
+    procedure RegisterProvider(const AProviderId: string);
+
+    // Templates Actions
+    procedure HandleTemplateSelected;
+    procedure CreateNewTemplate;
+    procedure DeleteTemplate;
+    procedure SaveTemplate;
+    procedure RestoreDefaultTemplates;
+    procedure ExportTemplates;
+    procedure ImportTemplates;
+
+    // General Actions
+    procedure BrowseLogPath;
+    procedure ResetQuota;
+    procedure ConnectGithub(const AToken: string);
+    procedure ImportVSCodeCopilotToken(const AToken: string; const AUser: string);
+
+    property TemplateManager: TPromptTemplateManager read FTemplateManager;
+  end;
+
+implementation
+
+uses
+  System.JSON, System.IOUtils, RadIA.Core.Config;
+
+{ TConfigPresenter }
+
+constructor TConfigPresenter.Create(const AView: IConfigView; const AConfig: IAIConfig; const ATemplateManager: TPromptTemplateManager);
+begin
+  inherited Create;
+  FView := AView;
+  FProvidersList := [
+    'Gemini', 'OpenAI', 'Claude', 'DeepSeek', 'Groq', 'Ollama',
+    'OpenRouter', 'LMStudio', 'GithubCopilot', 'AzureOpenAI',
+    'Qwen', 'Mistral', 'Bedrock'
+  ];
+
+  if Assigned(AConfig) then
+    FConfig := AConfig
+  else
+    FConfig := TRadIAConfig.GetInstance;
+
+  if Assigned(ATemplateManager) then
+  begin
+    FTemplateManager := ATemplateManager;
+    FOwnsTemplateManager := False;
+  end
+  else
+  begin
+    FTemplateManager := TPromptTemplateManager.Create;
+    FTemplateManager.Load;
+    FOwnsTemplateManager := True;
+  end;
+end;
+
+destructor TConfigPresenter.Destroy;
+begin
+  if FOwnsTemplateManager then
+    FTemplateManager.Free;
+  inherited Destroy;
+end;
+
+function TConfigPresenter.ValidateUrl(const AUrl: string; const AFieldName: string): Boolean;
+begin
+  Result := True;
+  if not AUrl.Trim.IsEmpty then
+  begin
+    if not (AUrl.StartsWith('http://', True) or AUrl.StartsWith('https://', True)) then
+    begin
+      FView.ShowMessageDialog(AFieldName + ' must start with http:// or https://');
+      Exit(False);
+    end;
+  end;
+end;
+
+procedure TConfigPresenter.LoadConfig;
+var
+  LFormatSettings: TFormatSettings;
+  LProviderId: string;
+begin
+  LFormatSettings := TFormatSettings.Invariant;
+
+  if FConfig.GetProviderAuthType('Gemini') = 'web_login' then
+    FView.SetAuthTypeIndex('Gemini', 1)
+  else
+    FView.SetAuthTypeIndex('Gemini', 0);
+
+  if FConfig.GetProviderAuthType('OpenAI') = 'web_login' then
+    FView.SetAuthTypeIndex('OpenAI', 1)
+  else
+    FView.SetAuthTypeIndex('OpenAI', 0);
+
+  FView.SetApiKey('Gemini', FConfig.GetApiKey('Gemini'));
+  FView.SetApiKey('OpenAI', FConfig.GetApiKey('OpenAI'));
+  FView.SetCustomUrl('OpenAI', FConfig.OpenAICustomBaseUrl);
+  FView.SetApiKey('Claude', FConfig.GetApiKey('Claude'));
+  FView.SetApiKey('DeepSeek', FConfig.GetApiKey('DeepSeek'));
+  FView.SetApiKey('Groq', FConfig.GetApiKey('Groq'));
+  FView.SetApiKey('OpenRouter', FConfig.GetApiKey('OpenRouter'));
+  FView.SetSystemPrompt(FConfig.SystemPrompt);
+  FView.SetCustomUrl('Ollama', FConfig.OllamaBaseUrl);
+  
+  FView.SetCustomUrl('LMStudio', FConfig.GetProviderBaseUrl('LMStudio'));
+  FView.SetApiKey('GithubCopilot', FConfig.GetApiKey('GithubCopilot'));
+
+  FView.SetApiKey('AzureOpenAI', FConfig.GetApiKey('AzureOpenAI'));
+  FView.SetCustomUrl('AzureOpenAI', FConfig.GetProviderBaseUrl('AzureOpenAI'));
+  FView.SetAzureModel(FConfig.GetActiveModel('AzureOpenAI'));
+  FView.SetAzureApiVersion(FConfig.AzureApiVersion);
+
+  FView.SetApiKey('Qwen', FConfig.GetApiKey('Qwen'));
+  FView.SetApiKey('Mistral', FConfig.GetApiKey('Mistral'));
+  FView.SetAwsAccessKeyId(FConfig.AwsAccessKeyId);
+  FView.SetAwsSecretAccessKey(FConfig.AwsSecretAccessKey);
+  FView.SetAwsRegion(FConfig.AwsRegion);
+  FView.SetAwsSessionToken(FConfig.AwsSessionToken);
+
+  FView.SetSmartConfigEnabled(FConfig.SmartConfigEnabled);
+
+  // Load Advanced Parameters for registered providers
+  for LProviderId in FProvidersList do
+  begin
+    FView.SetTemperatureInput(LProviderId, FormatFloat('0.0', FConfig.GetTemperature(LProviderId), LFormatSettings));
+    FView.SetMaxTokensInput(LProviderId, IntToStr(FConfig.GetMaxTokens(LProviderId)));
+    FView.SetTimeoutInput(LProviderId, IntToStr(FConfig.GetTimeout(LProviderId)));
+  end;
+
+  FView.SetLogEnabled(FConfig.LogEnabled);
+  FView.SetLogPath(FConfig.LogPath);
+  FView.SetLogMaxSize(IntToStr(FConfig.LogMaxSizeKB));
+
+  FView.SetQuotaEnabled(FConfig.QuotaEnabled);
+  FView.SetQuotaLimit(FConfig.QuotaLimit.ToString);
+  FView.SetQuotaUsedText(Format('Monthly Used Tokens: %s', [FormatFloat('#,##0', FConfig.QuotaUsed, LFormatSettings)]));
+
+  PopulateTemplatesList;
+end;
+
+procedure TConfigPresenter.SaveConfig;
+var
+  LFormatSettings: TFormatSettings;
+  LOllamaUrl: string;
+  LOpenAIUrl: string;
+  LLMStudioUrl: string;
+  LAzureUrl: string;
+  LProviderId: string;
+  LTemp: Double;
+  LMax: Integer;
+  LTime: Integer;
+  LLimit: Int64;
+begin
+  LFormatSettings := TFormatSettings.Invariant;
+  LOllamaUrl := Trim(FView.GetCustomUrl('Ollama'));
+  LOpenAIUrl := Trim(FView.GetCustomUrl('OpenAI'));
+  LLMStudioUrl := Trim(FView.GetCustomUrl('LMStudio'));
+  LAzureUrl := Trim(FView.GetCustomUrl('AzureOpenAI'));
+
+  // Validações de URL
+  if not ValidateUrl(LOllamaUrl, 'Ollama URL') then Exit;
+  if not ValidateUrl(LOpenAIUrl, 'OpenAI Custom Base URL') then Exit;
+  if not ValidateUrl(LLMStudioUrl, 'LM Studio URL') then Exit;
+  if not ValidateUrl(LAzureUrl, 'Azure OpenAI Endpoint URL') then Exit;
+
+  // Validações de Temperaturas, Max Tokens e Timeouts preventivas
+  for LProviderId in FProvidersList do
+  begin
+    if not TryStrToFloat(FView.GetTemperatureInput(LProviderId), LTemp, LFormatSettings) or (LTemp < 0.0) or (LTemp > 2.0) then
+    begin
+      FView.ShowMessageDialog(Format('Temperature for %s must be a valid number between 0.0 and 2.0', [LProviderId]));
+      Exit;
+    end;
+
+    if not TryStrToInt(FView.GetMaxTokensInput(LProviderId), LMax) or (LMax <= 0) then
+    begin
+      FView.ShowMessageDialog(Format('Max Tokens for %s must be a valid positive integer', [LProviderId]));
+      Exit;
+    end;
+
+    if not TryStrToInt(FView.GetTimeoutInput(LProviderId), LTime) or (LTime <= 0) then
+    begin
+      FView.ShowMessageDialog(Format('Timeout for %s must be a valid positive integer', [LProviderId]));
+      Exit;
+    end;
+  end;
+
+  if FView.GetQuotaEnabled then
+  begin
+    if not TryStrToInt64(FView.GetQuotaLimit, LLimit) or (LLimit <= 0) then
+    begin
+      FView.ShowMessageDialog('Monthly Token Limit must be a valid positive integer');
+      Exit;
+    end;
+  end;
+
+  // Persistir as configurações
+  if FView.GetAuthTypeIndex('Gemini') = 1 then
+    FConfig.SetProviderAuthType('Gemini', 'web_login')
+  else
+    FConfig.SetProviderAuthType('Gemini', 'api_key');
+
+  if FView.GetAuthTypeIndex('OpenAI') = 1 then
+    FConfig.SetProviderAuthType('OpenAI', 'web_login')
+  else
+    FConfig.SetProviderAuthType('OpenAI', 'api_key');
+
+  FConfig.SetApiKey('Gemini', Trim(FView.GetApiKey('Gemini')));
+  FConfig.SetApiKey('OpenAI', Trim(FView.GetApiKey('OpenAI')));
+  FConfig.OpenAICustomBaseUrl := LOpenAIUrl;
+  FConfig.SetApiKey('Claude', Trim(FView.GetApiKey('Claude')));
+  FConfig.SetApiKey('DeepSeek', Trim(FView.GetApiKey('DeepSeek')));
+  FConfig.SetApiKey('Groq', Trim(FView.GetApiKey('Groq')));
+  FConfig.SetApiKey('OpenRouter', Trim(FView.GetApiKey('OpenRouter')));
+  FConfig.SetApiKey('GithubCopilot', Trim(FView.GetApiKey('GithubCopilot')));
+  
+  FConfig.SetApiKey('AzureOpenAI', Trim(FView.GetApiKey('AzureOpenAI')));
+  FConfig.SetProviderBaseUrl('AzureOpenAI', LAzureUrl);
+  FConfig.SetActiveModel('AzureOpenAI', Trim(FView.GetAzureModel));
+  FConfig.AzureApiVersion := Trim(FView.GetAzureApiVersion);
+
+  FConfig.SetApiKey('Qwen', Trim(FView.GetApiKey('Qwen')));
+  FConfig.SetApiKey('Mistral', Trim(FView.GetApiKey('Mistral')));
+  FConfig.AwsAccessKeyId := Trim(FView.GetAwsAccessKeyId);
+  FConfig.AwsSecretAccessKey := Trim(FView.GetAwsSecretAccessKey);
+  FConfig.AwsRegion := Trim(FView.GetAwsRegion);
+  FConfig.AwsSessionToken := Trim(FView.GetAwsSessionToken);
+ 
+  FConfig.SystemPrompt := FView.GetSystemPrompt;
+  FConfig.OllamaBaseUrl := LOllamaUrl;
+  FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
+  FConfig.SmartConfigEnabled := FView.GetSmartConfigEnabled;
+
+  for LProviderId in FProvidersList do
+  begin
+    TryStrToFloat(FView.GetTemperatureInput(LProviderId), LTemp, LFormatSettings);
+    FConfig.SetTemperature(LProviderId, LTemp);
+
+    TryStrToInt(FView.GetMaxTokensInput(LProviderId), LMax);
+    FConfig.SetMaxTokens(LProviderId, LMax);
+
+    TryStrToInt(FView.GetTimeoutInput(LProviderId), LTime);
+    FConfig.SetTimeout(LProviderId, LTime);
+  end;
+
+  FConfig.LogEnabled := FView.GetLogEnabled;
+  FConfig.LogPath := Trim(FView.GetLogPath);
+  FConfig.LogMaxSizeKB := StrToIntDef(FView.GetLogMaxSize, 1024);
+
+  FConfig.QuotaEnabled := FView.GetQuotaEnabled;
+  FConfig.QuotaLimit := StrToInt64Def(FView.GetQuotaLimit, 1000000);
+
+  FConfig.Save;
+  FTemplateManager.Save;
+
+  FView.CloseView(1); // mrOk
+end;
+
+procedure TConfigPresenter.CancelConfig;
+begin
+  LoadConfig;
+  FView.CloseView(2); // mrCancel
+end;
+
+procedure TConfigPresenter.RegisterProvider(const AProviderId: string);
+begin
+end;
+
+procedure TConfigPresenter.PopulateTemplatesList;
+var
+  LTemplate: TPromptTemplate;
+  LNames: TArray<string>;
+  LSelectedIndex: Integer;
+begin
+  LSelectedIndex := FView.GetSelectedTemplateIndex;
+  LNames := [];
+  for LTemplate in FTemplateManager.GetTemplates do
+  begin
+    LNames := LNames + [LTemplate.Name];
+  end;
+  
+  if (LSelectedIndex < 0) and (Length(LNames) > 0) then
+    LSelectedIndex := 0;
+
+  FView.UpdateTemplatesList(LNames, LSelectedIndex);
+end;
+
+procedure TConfigPresenter.HandleTemplateSelected;
+var
+  LIndex: Integer;
+  LNames: TArray<string>;
+  LName: string;
+  LTemplate: TPromptTemplate;
+begin
+  LIndex := FView.GetSelectedTemplateIndex;
+  if LIndex < 0 then
+  begin
+    FView.ClearTemplateFields;
+    FView.SetDeleteTemplateButtonState('Delete', False);
+    FView.SetTemplateOriginLabel('', clBlack);
+    Exit;
+  end;
+
+  LNames := [];
+  for LTemplate in FTemplateManager.GetTemplates do
+    LNames := LNames + [LTemplate.Name];
+
+  if (LIndex >= 0) and (LIndex < Length(LNames)) then
+  begin
+    LName := LNames[LIndex];
+    if FTemplateManager.FindTemplate(LName, LTemplate) then
+    begin
+      FView.SetTemplateFields(
+        LTemplate.Name,
+        LTemplate.Description,
+        LTemplate.Template,
+        LTemplate.SlashCommand,
+        LTemplate.IsProjectGenerator,
+        LTemplate.IsSystem,
+        LTemplate.IsCustomized
+      );
+
+      if LTemplate.IsSystem then
+      begin
+        if LTemplate.IsCustomized then
+        begin
+          FView.SetDeleteTemplateButtonState('Restore Default', True);
+          FView.SetTemplateOriginLabel('System (Customized)', $00008CFF);
+        end
+        else
+        begin
+          FView.SetDeleteTemplateButtonState('Delete', False);
+          FView.SetTemplateOriginLabel('System (Read-Only)', clGrayText);
+        end;
+      end
+      else
+      begin
+        FView.SetDeleteTemplateButtonState('Delete', True);
+        FView.SetTemplateOriginLabel('User', clHighlight);
+      end;
+    end;
+  end;
+end;
+
+procedure TConfigPresenter.CreateNewTemplate;
+begin
+  FView.SetSelectedTemplateIndex(-1);
+  FView.ClearTemplateFields;
+  FView.SetDeleteTemplateButtonState('Delete', False);
+  FView.SetTemplateOriginLabel('', clBlack);
+  FView.FocusTemplateName;
+end;
+
+procedure TConfigPresenter.DeleteTemplate;
+var
+  LIndex: Integer;
+  LNames: TArray<string>;
+  LName: string;
+  LTemplate: TPromptTemplate;
+begin
+  LIndex := FView.GetSelectedTemplateIndex;
+  if LIndex < 0 then
+  begin
+    FView.ShowMessageDialog('Please select a template.');
+    Exit;
+  end;
+
+  LNames := [];
+  for LTemplate in FTemplateManager.GetTemplates do
+    LNames := LNames + [LTemplate.Name];
+
+  LName := LNames[LIndex];
+  if FTemplateManager.FindTemplate(LName, LTemplate) then
+  begin
+    if LTemplate.IsSystem then
+    begin
+      if LTemplate.IsCustomized then
+      begin
+        FTemplateManager.RestoreDefaultTemplate(LName);
+        PopulateTemplatesList;
+        HandleTemplateSelected;
+      end;
+    end
+    else
+    begin
+      FTemplateManager.DeleteTemplate(LName);
+      FTemplateManager.Save;
+      PopulateTemplatesList;
+      HandleTemplateSelected;
+    end;
+  end;
+end;
+
+procedure TConfigPresenter.SaveTemplate;
+var
+  LName, LDesc, LBody, LSlash: string;
+  LIsProjGen: Boolean;
+  LNames: TArray<string>;
+  LTemplate: TPromptTemplate;
+  LIndex: Integer;
+  I: Integer;
+begin
+  FView.GetTemplateEditorFields(LName, LDesc, LBody, LSlash, LIsProjGen);
+  
+  if LName.Trim.IsEmpty then
+  begin
+    FView.ShowMessageDialog('Template Name cannot be empty.');
+    Exit;
+  end;
+
+  FTemplateManager.AddTemplate(LName, LDesc, LBody, LIsProjGen, LSlash);
+  FTemplateManager.Save;
+  PopulateTemplatesList;
+
+  LNames := [];
+  for LTemplate in FTemplateManager.GetTemplates do
+    LNames := LNames + [LTemplate.Name];
+    
+  LIndex := -1;
+  for I := Low(LNames) to High(LNames) do
+  begin
+    if SameText(LNames[I], LName) then
+    begin
+      LIndex := I;
+      Break;
+    end;
+  end;
+
+  if LIndex >= 0 then
+  begin
+    FView.SetSelectedTemplateIndex(LIndex);
+    HandleTemplateSelected;
+  end;
+
+  FView.ShowMessageDialog('Template saved successfully.');
+end;
+
+procedure TConfigPresenter.RestoreDefaultTemplates;
+begin
+  FTemplateManager.RestoreDefaultTemplates;
+  PopulateTemplatesList;
+  HandleTemplateSelected;
+  FView.ShowMessageDialog('Default templates restored successfully.');
+end;
+
+procedure TConfigPresenter.ExportTemplates;
+var
+  LFileName: string;
+begin
+  if FView.SaveDialogExecute(LFileName) then
+  begin
+    try
+      FTemplateManager.ExportToFile(LFileName);
+      FView.ShowMessageDialog('Templates exported successfully.');
+    except
+      on E: Exception do
+        FView.ShowMessageDialog('Failed to export templates: ' + E.Message);
+    end;
+  end;
+end;
+
+procedure TConfigPresenter.ImportTemplates;
+begin
+end;
+
+procedure TConfigPresenter.BrowseLogPath;
+var
+  LFolder: string;
+begin
+  if FView.FolderDialogExecute(LFolder) then
+    FView.SetLogPath(LFolder);
+end;
+
+procedure TConfigPresenter.ResetQuota;
+begin
+  FConfig.QuotaUsed := 0;
+  FConfig.QuotaCycleStart := Now;
+  FConfig.Save;
+  
+  FView.SetQuotaUsedText('Monthly Used Tokens: 0');
+  FView.ShowMessageDialog('Token usage counter reset successfully.');
+end;
+
+procedure TConfigPresenter.ConnectGithub(const AToken: string);
+begin
+  FView.SetApiKey('GithubCopilot', AToken);
+  FView.ShowMessageDialog('Autenticado com sucesso no GitHub Copilot!');
+end;
+
+procedure TConfigPresenter.ImportVSCodeCopilotToken(const AToken: string; const AUser: string);
+begin
+  FView.SetApiKey('GithubCopilot', AToken);
+  if not AUser.IsEmpty then
+    FView.ShowMessageDialog(Format('Token importado com sucesso da conta do GitHub "%s" do VS Code!', [AUser]))
+  else
+    FView.ShowMessageDialog('Token importado com sucesso do VS Code!');
+end;
+
+end.

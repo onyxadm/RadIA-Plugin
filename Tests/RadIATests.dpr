@@ -41,6 +41,7 @@ uses
   RadIA.Core.AwsSigner in '..\Source\Core\RadIA.Core.AwsSigner.pas',
   RadIA.Provider.Bedrock in '..\Source\Providers\RadIA.Provider.Bedrock.pas',
   RadIA.UI.ChatPresenter in '..\Source\UI\RadIA.UI.ChatPresenter.pas',
+  RadIA.UI.ConfigPresenter in '..\Source\UI\RadIA.UI.ConfigPresenter.pas',
   
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',
