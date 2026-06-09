@@ -276,6 +276,18 @@ begin
   for I := FUserTemplates.Count - 1 downto 0 do
   begin
     LUser := FUserTemplates[I];
+    
+    // Force upgrade of legacy templates missing 'uses' or 'Generics' rules
+    if SameText(LUser.Name, 'Create Project Delphi') or SameText(LUser.Name, 'Create Project Delphi Architecture') then
+    begin
+      if not LUser.Template.Contains('uses') or not LUser.Template.Contains('Generics') then
+      begin
+        FUserTemplates.Delete(I);
+        LChanged := True;
+        Continue;
+      end;
+    end;
+
     for J := 0 to FDefaultTemplates.Count - 1 do
     begin
       LDefault := FDefaultTemplates[J];
