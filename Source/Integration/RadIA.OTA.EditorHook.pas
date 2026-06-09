@@ -3,17 +3,18 @@ unit RadIA.OTA.EditorHook;
 interface
 
 uses
-  System.Classes, System.SysUtils, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI;
+  System.Classes, System.SysUtils, Vcl.Controls, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI;
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
   TRadIAEditorHook = class(TComponent)
   private
     FOldActiveFormChange: TNotifyEvent;
+    FOldActiveControlChange: TNotifyEvent;
     FInstalled: Boolean;
-    FTimer: TTimer;
     
     procedure ActiveFormChange(Sender: TObject);
+    procedure ActiveControlChange(Sender: TObject);
     procedure HookPopupMenu(AForm: TCustomForm);
     procedure UnhookPopupMenu(AForm: TCustomForm);
     function FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
@@ -31,7 +32,6 @@ type
     procedure OnShowChatExecute(Sender: TObject);
 
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
-    procedure OnTimerEvent(Sender: TObject);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -75,6 +75,7 @@ constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   FOldActiveFormChange := nil;
+  FOldActiveControlChange := nil;
   FInstalled := False;
 end;
 
@@ -97,20 +98,31 @@ begin
   FOldActiveFormChange := Screen.OnActiveFormChange;
   Screen.OnActiveFormChange := ActiveFormChange;
 
-  FTimer := TTimer.Create(Self);
-  FTimer.Interval := 1000;
-  FTimer.OnTimer := OnTimerEvent;
-  FTimer.Enabled := True;
+  FOldActiveControlChange := Screen.OnActiveControlChange;
+  Screen.OnActiveControlChange := ActiveControlChange;
 
   FInstalled := True;
   
-  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+  if Assigned(Screen) then
   begin
-    try
-      HookPopupMenu(Screen.ActiveForm);
-    except
-      on E: Exception do
-        TLogger.Log('Install: Error hooking active form: ' + E.Message, 'EditorHook');
+    if Assigned(Screen.ActiveForm) then
+    begin
+      try
+        HookPopupMenu(Screen.ActiveForm);
+      except
+        on E: Exception do
+          TLogger.Log('Install: Error hooking active form: ' + E.Message, 'EditorHook');
+      end;
+    end;
+    
+    if Assigned(Screen.ActiveControl) then
+    begin
+      try
+        ActiveControlChange(nil);
+      except
+        on E: Exception do
+          TLogger.Log('Install: Error executing initial ActiveControlChange: ' + E.Message, 'EditorHook');
+      end;
     end;
   end;
 end;
@@ -126,14 +138,11 @@ begin
 
   TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
 
-  if Assigned(FTimer) then
-  begin
-    FTimer.Enabled := False;
-    FreeAndNil(FTimer);
-  end;
-
   if Assigned(Screen) then
+  begin
     Screen.OnActiveFormChange := FOldActiveFormChange;
+    Screen.OnActiveControlChange := FOldActiveControlChange;
+  end;
   
   FInstalled := False;
     
@@ -203,6 +212,46 @@ begin
     except
       on E: Exception do
         TLogger.Log('ActiveFormChange: Error executing original OnActiveFormChange: ' + E.Message, 'EditorHook');
+    end;
+  end;
+end;
+
+procedure TRadIAEditorHook.ActiveControlChange(Sender: TObject);
+var
+  LActiveControl: TControl;
+  LForm: TCustomForm;
+begin
+  try
+    if Assigned(Screen) then
+    begin
+      LActiveControl := Screen.ActiveControl;
+      if Assigned(LActiveControl) then
+      begin
+        LForm := GetParentForm(LActiveControl);
+        if Assigned(LForm) and SameText(LForm.ClassName, 'TEditWindow') then
+        begin
+          try
+            HookPopupMenu(LForm);
+          except
+            on E: Exception do
+              TLogger.Log('ActiveControlChange: Error hooking form: ' + E.Message, 'EditorHook');
+          end;
+        end;
+      end;
+    end;
+  except
+    on E: Exception do
+      TLogger.Log('ActiveControlChange: General error: ' + E.Message, 'EditorHook');
+  end;
+
+  // Garantir que o manipulador original da IDE seja sempre executado
+  if Assigned(FOldActiveControlChange) then
+  begin
+    try
+      FOldActiveControlChange(Sender);
+    except
+      on E: Exception do
+        TLogger.Log('ActiveControlChange: Error executing original: ' + E.Message, 'EditorHook');
     end;
   end;
 end;
@@ -582,26 +631,7 @@ begin
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 
-procedure TRadIAEditorHook.OnTimerEvent(Sender: TObject);
-var
-  I: Integer;
-begin
-  if not FInstalled then
-    Exit;
 
-  if Assigned(Screen) then
-  begin
-    for I := 0 to Screen.FormCount - 1 do
-    begin
-      try
-        HookPopupMenu(Screen.Forms[I]);
-      except
-        on E: Exception do
-          TLogger.Log('OnTimerEvent: Error checking form ' + IntToStr(I) + ': ' + E.Message, 'EditorHook');
-      end;
-    end;
-  end;
-end;
 
 initialization
   // Ensure the FInterceptedMenus dictionary is nil at startup
