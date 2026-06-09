@@ -224,7 +224,7 @@ This document tracks tasks and ideas for the evolution of the RadIA plugin, deta
     *   Two-layer configuration files loaded with runtime merge in `TPromptTemplateManager`.
     *   Automatic cleansing (`CleanRedundantUserTemplates`) of redundant templates on user AppData matching raw code defaults.
     *   Enhanced options frame VCL settings rendering dynamic source captions (`lblTemplateOrigin`) and contextual delete/restore options.
-    *   Expanded DUnitX unit test suite containing 116 tests successfully verified.
+    *   Expanded DUnitX unit test suite containing 117 tests successfully verified.
 
 ---
 

@@ -224,7 +224,7 @@ Este documento registra as tarefas e ideias de evolução do plugin RadIA, detal
     *   Carregamento em duas camadas com mesclagem em runtime no `TPromptTemplateManager`.
     *   Limpeza automática de templates redundantes não modificados no AppData do usuário (`CleanRedundantUserTemplates`).
     *   Tela de opções aprimorada com legendas de origem (`lblTemplateOrigin`) e lógica contextual de exclusão/restauração.
-    *   Suíte de testes unitários expandida com 116 testes DUnitX aprovados com sucesso.
+    *   Suíte de testes unitários expandida com 117 testes DUnitX aprovados com sucesso.
 
 ---
 
