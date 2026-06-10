@@ -12,6 +12,8 @@ uses
   RadIA.Core.Types in '..\Source\Core\RadIA.Core.Types.pas',
   RadIA.Core.Interfaces in '..\Source\Core\RadIA.Core.Interfaces.pas',
   RadIA.Core.Logger in '..\Source\Core\RadIA.Core.Logger.pas',
+  RadIA.Core.ConfigDefaults in '..\Source\Core\RadIA.Core.ConfigDefaults.pas',
+  RadIA.Core.CredentialProtector in '..\Source\Core\RadIA.Core.CredentialProtector.pas',
   RadIA.Core.Config in '..\Source\Core\RadIA.Core.Config.pas',
   RadIA.Core.SettingsStorage in '..\Source\Core\RadIA.Core.SettingsStorage.pas',
   RadIA.Core.ProviderRegistry in '..\Source\Core\RadIA.Core.ProviderRegistry.pas',

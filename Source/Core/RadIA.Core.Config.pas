@@ -140,64 +140,14 @@ type
 implementation
 
 uses
-  Winapi.Windows, System.Win.Registry, System.NetEncoding, System.Math, System.IOUtils, ToolsAPI,
-  RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
-
-const
-  CDefaultSystemPrompt =
-    'You are a Delphi Senior Software Architect. Always reply in the user''s language.' + sLineBreak +
-    'When generating, refactoring, or optimizing code:' + sLineBreak +
-    '1. Output ONLY the specific Pascal code block requested (e.g., a procedure, function, class, or code snippet).' + sLineBreak +
-    '2. Do NOT wrap the code in a complete Delphi unit (no "unit", "interface", "implementation", or "end.") unless I explicitly ask you to create a full file.' + sLineBreak +
-    '3. Do NOT include any conversational preamble, intro, or concluding remarks before or after the code block.' + sLineBreak +
-    '4. If technical explanation is necessary, keep it extremely brief, bulleted, and placed after the code.' + sLineBreak +
-    '5. Adhere strictly to Clean Code, SOLID principles, and proper Delphi resource management (e.g., try..finally).' + sLineBreak +
-    '6. Always wrap the Pascal code in a standard markdown code block using triple backticks and the "pascal" language identifier (e.g., ```pascal ... ```). Do NOT output raw unformatted code or inline single backticks.';
-
-{ Windows DPAPI Declarations }
-type
-  TDataBlob = record
-    cbData: DWORD;
-    pbData: PByte;
-  end;
-  PDataBlob = ^TDataBlob;
-
-function CryptProtectData(pDataIn: PDataBlob; szDataDescr: LPCWSTR;
-  pOptionalEntropy: PDataBlob; pvReserved: Pointer;
-  pPromptStruct: Pointer; dwFlags: DWORD;
-  pDataOut: PDataBlob): BOOL; stdcall; external 'crypt32.dll';
-
-function CryptUnprotectData(pDataIn: PDataBlob; ppszDataDescr: Pointer;
-  pOptionalEntropy: PDataBlob; pvReserved: Pointer;
-  pPromptStruct: Pointer; dwFlags: DWORD;
-  pDataOut: PDataBlob): BOOL; stdcall; external 'crypt32.dll';
+  System.Math, System.IOUtils, ToolsAPI, RadIA.Core.Logger, RadIA.Core.ProviderRegistry,
+  RadIA.Core.ConfigDefaults, RadIA.Core.CredentialProtector;
 
 { TRadIAConfig }
 
 procedure LogDebug(const AMsg: string);
 begin
   TLogger.Log(AMsg, 'Config');
-end;
-
-function CleanApiKey(const AValue: string): string;
-var
-  I: Integer;
-  C: Char;
-begin
-  Result := '';
-  for I := 1 to Length(AValue) do
-  begin
-    C := AValue[I];
-    if ((C >= 'a') and (C <= 'z')) or
-       ((C >= 'A') and (C <= 'Z')) or
-       ((C >= '0') and (C <= '9')) or
-       (C = '.') or (C = '-') or (C = '_') or
-       (C = '/') or (C = '+') or (C = '=') or
-       (C = '@') or (C = ':') then
-    begin
-      Result := Result + C;
-    end;
-  end;
 end;
 
 constructor TRadIAConfig.Create;
@@ -216,32 +166,32 @@ begin
   FBaseUrlsList := TStringList.Create;
   FAuthTypesList := TStringList.Create;
 
-  FActiveProvider := 'Gemini';
+  FActiveProvider := TConfigDefaults.ActiveProvider;
   FSystemPrompt := CDefaultSystemPrompt;
-  FOllamaBaseUrl := 'http://localhost:11434';
-  FMaxHistoryMessages := 20;
+  FOllamaBaseUrl := TConfigDefaults.OllamaBaseUrl;
+  FMaxHistoryMessages := TConfigDefaults.MaxHistoryMessages;
   FOpenAICustomBaseUrl := '';
-  FAzureApiVersion := '2024-02-15-preview';
+  FAzureApiVersion := TConfigDefaults.AzureApiVersion;
   FAwsAccessKeyId := '';
   FAwsSecretAccessKey := '';
-  FAwsRegion := 'us-east-1';
+  FAwsRegion := TConfigDefaults.AwsRegion;
   FAwsSessionToken := '';
   
   FSmartConfigEnabled := True;
   FLogEnabled := True;
-  FLogPath := TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'Logs');
-  FLogMaxSizeKB := 1024;
+  FLogPath := TConfigDefaults.LogPath;
+  FLogMaxSizeKB := TConfigDefaults.LogMaxSizeKB;
 
   FQuotaEnabled := False;
-  FQuotaLimit := 1000000;
+  FQuotaLimit := TConfigDefaults.QuotaLimit;
   FQuotaUsed := 0;
   FQuotaCycleStart := Now;
   FActiveSessionId := '';
   
   FAutocompleteEnabled := True;
-  FAutocompleteProvider := 'Gemini';
-  FAutocompleteModel := 'gemini-1.5-flash';
-  FAutocompleteDelay := 300;
+  FAutocompleteProvider := TConfigDefaults.AutocompleteProvider;
+  FAutocompleteModel := TConfigDefaults.AutocompleteModel;
+  FAutocompleteDelay := TConfigDefaults.AutocompleteDelay;
   FInjectDelphiVersion := True;
   
   Load;
@@ -374,32 +324,34 @@ begin
   if FStorage.OpenKey(APath, False) then
   begin
     LogDebug('TRadIAConfig.Load: Opened root path ' + APath);
-    FActiveProvider := FStorage.ReadString('ActiveProvider', 'Gemini');
+    FActiveProvider := FStorage.ReadString('ActiveProvider', TConfigDefaults.ActiveProvider);
     FSystemPrompt      := ReadRegString('SystemPrompt', CDefaultSystemPrompt);
     
     { Fallback temporário das chaves legadas da raiz caso o usuário ainda não as tenha salvado nas subchaves }
-    FOllamaBaseUrl     := ReadRegString('OllamaBaseUrl', 'http://localhost:11434');
+    FOllamaBaseUrl     := ReadRegString('OllamaBaseUrl', TConfigDefaults.OllamaBaseUrl);
     FOpenAICustomBaseUrl := ReadRegString('OpenAICustomBaseUrl', '');
 
-    LMaxHist := ReadRegInt('MaxHistoryMessages', 20);
-    FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, 20);
+    LMaxHist := ReadRegInt('MaxHistoryMessages', TConfigDefaults.MaxHistoryMessages);
+    FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, TConfigDefaults.MaxHistoryMessages);
     FSmartConfigEnabled := ReadRegInt('SmartConfigEnabled', 1) <> 0;
     FLogEnabled := ReadRegInt('LogEnabled', 1) <> 0;
-    FLogPath := ReadRegString('LogPath', TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'Logs'));
-    FLogMaxSizeKB := ReadRegInt('LogMaxSizeKB', 1024);
+    FLogPath := ReadRegString('LogPath', TConfigDefaults.LogPath);
+    FLogMaxSizeKB := ReadRegInt('LogMaxSizeKB', TConfigDefaults.LogMaxSizeKB);
     FQuotaEnabled := ReadRegInt('QuotaEnabled', 0) <> 0;
-    FQuotaLimit := StrToInt64Def(ReadRegString('QuotaLimit', '1000000'), 1000000);
+    FQuotaLimit := StrToInt64Def(
+      ReadRegString('QuotaLimit', TConfigDefaults.QuotaLimit.ToString),
+      TConfigDefaults.QuotaLimit);
     FQuotaUsed := StrToInt64Def(ReadRegString('QuotaUsed', '0'), 0);
     FQuotaCycleStart := ReadRegDouble('QuotaCycleStart', Now);
     FActiveSessionId := ReadRegString('ActiveSessionId', '');
     
     FAutocompleteEnabled := ReadRegInt('AutocompleteEnabled', 1) <> 0;
-    FAutocompleteProvider := FStorage.ReadString('AutocompleteProvider', 'Gemini');
-    FAutocompleteModel := ReadRegString('AutocompleteModel', 'gemini-1.5-flash');
-    FAutocompleteDelay := ReadRegInt('AutocompleteDelay', 300);
+    FAutocompleteProvider := FStorage.ReadString('AutocompleteProvider', TConfigDefaults.AutocompleteProvider);
+    FAutocompleteModel := ReadRegString('AutocompleteModel', TConfigDefaults.AutocompleteModel);
+    FAutocompleteDelay := ReadRegInt('AutocompleteDelay', TConfigDefaults.AutocompleteDelay);
     FInjectDelphiVersion := ReadRegInt('InjectDelphiVersion', 1) <> 0;
-    FAzureApiVersion   := ReadRegString('AzureApiVersion', '2024-02-15-preview');
-    FAwsRegion         := ReadRegString('AwsRegion', 'us-east-1');
+    FAzureApiVersion   := ReadRegString('AzureApiVersion', TConfigDefaults.AzureApiVersion);
+    FAwsRegion         := ReadRegString('AwsRegion', TConfigDefaults.AwsRegion);
     try
       if FStorage.ValueExists('AwsAccessKeyId') then
         FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AwsAccessKeyId', ''));
@@ -478,10 +430,16 @@ begin
         end;
 
         { Load advanced numeric parameters }
-        FTemperaturesList.Values[LSubKey.ToLower] := FloatToStr(ReadRegDouble('Temperature', 0.7), TFormatSettings.Invariant);
-        FMaxTokensList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt('MaxTokens', 2048));
-        FTimeoutsList.Values[LSubKey.ToLower] := IntToStr(ReadRegInt('Timeout', 60));
-        FAuthTypesList.Values[LSubKey.ToLower] := ReadRegString('AuthType', 'api_key');
+        FTemperaturesList.Values[LSubKey.ToLower] := FloatToStr(
+          ReadRegDouble('Temperature', TConfigDefaults.Temperature),
+          TFormatSettings.Invariant);
+        FMaxTokensList.Values[LSubKey.ToLower] := IntToStr(
+          ReadRegInt('MaxTokens', TConfigDefaults.MaxTokens));
+        FTimeoutsList.Values[LSubKey.ToLower] := IntToStr(
+          ReadRegInt('Timeout', TConfigDefaults.Timeout));
+        FAuthTypesList.Values[LSubKey.ToLower] := ReadRegString(
+          'AuthType',
+          TConfigDefaults.ProviderAuthType);
 
         FStorage.CloseKey;
       end;
@@ -492,27 +450,8 @@ begin
 end;
 
 function TRadIAConfig.ProtectString(const AValue: string): string;
-var
-  LInBlob, LOutBlob: TDataBlob;
-  LBytes: TBytes;
 begin
-  Result := '';
-  if AValue.IsEmpty then
-    Exit;
-
-  LBytes := TEncoding.UTF8.GetBytes(AValue);
-  LInBlob.cbData := Length(LBytes);
-  LInBlob.pbData := @LBytes[0];
-
-  if CryptProtectData(@LInBlob, nil, nil, nil, nil, 0, @LOutBlob) then
-  begin
-    try
-      Result := TNetEncoding.Base64.EncodeBytesToString(LOutBlob.pbData, LOutBlob.cbData);
-      Result := Result.Replace(#13, '').Replace(#10, '');
-    finally
-      LocalFree(HLOCAL(LOutBlob.pbData));
-    end;
-  end;
+  Result := TCredentialProtector.Protect(AValue);
 end;
 
 procedure TRadIAConfig.Save;
@@ -652,7 +591,7 @@ function TRadIAConfig.GetAzureApiVersion: string;
 begin
   Result := FAzureApiVersion;
   if Result.IsEmpty then
-    Result := '2024-02-15-preview';
+    Result := TConfigDefaults.AzureApiVersion;
 end;
 
 procedure TRadIAConfig.SetAzureApiVersion(const AValue: string);
@@ -684,7 +623,7 @@ function TRadIAConfig.GetAwsRegion: string;
 begin
   Result := FAwsRegion;
   if Result.IsEmpty then
-    Result := 'us-east-1';
+    Result := TConfigDefaults.AwsRegion;
 end;
 
 procedure TRadIAConfig.SetAwsRegion(const AValue: string);
@@ -715,7 +654,7 @@ procedure TRadIAConfig.SetApiKey(const AProviderName: string; const AKey: string
 begin
   if AProviderName.IsEmpty then
     Exit;
-  FApiKeysList.Values[AProviderName.ToLower] := CleanApiKey(AKey);
+  FApiKeysList.Values[AProviderName.ToLower] := TCredentialProtector.CleanApiKey(AKey);
 end;
 
 function TRadIAConfig.GetActiveModel(const AProviderName: string): string;
@@ -737,9 +676,9 @@ var
   LStr: string;
 begin
   if AProviderName.IsEmpty then
-    Exit(0.7);
+    Exit(TConfigDefaults.Temperature);
   LStr := FTemperaturesList.Values[AProviderName.ToLower];
-  Result := StrToFloatDef(LStr, 0.7, TFormatSettings.Invariant);
+  Result := StrToFloatDef(LStr, TConfigDefaults.Temperature, TFormatSettings.Invariant);
 end;
 
 procedure TRadIAConfig.SetTemperature(const AProviderName: string; const AValue: Double);
@@ -754,9 +693,9 @@ var
   LStr: string;
 begin
   if AProviderName.IsEmpty then
-    Exit(2048);
+    Exit(TConfigDefaults.MaxTokens);
   LStr := FMaxTokensList.Values[AProviderName.ToLower];
-  Result := StrToIntDef(LStr, 2048);
+  Result := StrToIntDef(LStr, TConfigDefaults.MaxTokens);
 end;
 
 procedure TRadIAConfig.SetMaxTokens(const AProviderName: string; const AValue: Integer);
@@ -771,9 +710,9 @@ var
   LStr: string;
 begin
   if AProviderName.IsEmpty then
-    Exit(60);
+    Exit(TConfigDefaults.Timeout);
   LStr := FTimeoutsList.Values[AProviderName.ToLower];
-  Result := StrToIntDef(LStr, 60);
+  Result := StrToIntDef(LStr, TConfigDefaults.Timeout);
 end;
 
 procedure TRadIAConfig.SetTimeout(const AProviderName: string; const AValue: Integer);
@@ -800,10 +739,10 @@ end;
 function TRadIAConfig.GetProviderAuthType(const AProviderName: string): string;
 begin
   if AProviderName.IsEmpty then
-    Exit('api_key');
+    Exit(TConfigDefaults.ProviderAuthType);
   Result := FAuthTypesList.Values[AProviderName.ToLower];
   if Result.IsEmpty then
-    Result := 'api_key';
+    Result := TConfigDefaults.ProviderAuthType;
 end;
 
 procedure TRadIAConfig.SetProviderAuthType(const AProviderName: string; const AValue: string);
@@ -980,45 +919,8 @@ begin
 end;
 
 function TRadIAConfig.UnprotectString(const AValue: string): string;
-var
-  LInBlob, LOutBlob: TDataBlob;
-  LBytes: TBytes;
 begin
-  Result := '';
-  if AValue.IsEmpty then
-    Exit;
-
-  LogDebug('TRadIAConfig.UnprotectString: Input string length: ' + IntToStr(Length(AValue)));
-  try
-    LBytes := TNetEncoding.Base64.DecodeStringToBytes(AValue);
-  except
-    on E: Exception do
-    begin
-      LogDebug('TRadIAConfig.UnprotectString: Base64 decode failed: ' + E.Message);
-      Exit;
-    end;
-  end;
-
-  if Length(LBytes) = 0 then
-  begin
-    LogDebug('TRadIAConfig.UnprotectString: Base64 decoded bytes length is 0');
-    Exit;
-  end;
-
-  LInBlob.cbData := Length(LBytes);
-  LInBlob.pbData := @LBytes[0];
-
-  if CryptUnprotectData(@LInBlob, nil, nil, nil, nil, 0, @LOutBlob) then
-  begin
-    try
-      SetLength(LBytes, LOutBlob.cbData);
-      Move(LOutBlob.pbData^, LBytes[0], LOutBlob.cbData);
-      Result := CleanApiKey(TEncoding.UTF8.GetString(LBytes));
-      LogDebug('TRadIAConfig.UnprotectString: Decrypted and cleaned successfully. Result length: ' + IntToStr(Length(Result)));
-    finally
-      LocalFree(HLOCAL(LOutBlob.pbData));
-    end;
-  end;
+  Result := TCredentialProtector.Unprotect(AValue);
 end;
 
 class function TRadIAConfig.GetInstance: IAIConfig;
