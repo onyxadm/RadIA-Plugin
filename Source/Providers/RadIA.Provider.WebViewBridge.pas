@@ -90,6 +90,7 @@ begin
   TLogger.Log('WebViewBridge.SendPromptStreamAsync started.', 'Provider');
   FCancelled := False;
   FActiveCallback := ACallback;
+  EnsureBridge;
   
   if Assigned(FOnSendPrompt) then
   begin
@@ -105,7 +106,7 @@ begin
   end
   else
   begin
-    TLogger.Log('WebViewBridge Error: FOnSendPrompt event not assigned by ChatFrame.', 'Provider');
+    TLogger.Log('WebViewBridge Error: Web Login bridge is not available.', 'Provider');
     if Assigned(ACallback) then
       ACallback('', True, 'WebView Login session is not ready or active.');
   end;

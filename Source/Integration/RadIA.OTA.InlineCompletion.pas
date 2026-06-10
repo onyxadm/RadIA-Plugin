@@ -54,7 +54,7 @@ implementation
 uses
   Winapi.Windows, RadIA.Core.Config, RadIA.Core.Interfaces, RadIA.Core.Types,
   RadIA.Core.InlineCompletion, RadIA.Core.InlineCompletionService, RadIA.Core.Logger,
-  RadIA.OTA.Helper, RadIA.Provider.WebViewBridge;
+  RadIA.OTA.Helper;
 
 var
   GKeyboardBindingIndex: Integer = -1;
@@ -256,7 +256,6 @@ procedure TRadIAInlineCompletionKeyboardBinding.RequestCompletion(const Context:
   KeyCode: TShortcut; var BindingResult: TKeyBindingResult);
 var
   LConfig: IAIConfig;
-  LProviderName: string;
   LSourceText: string;
   LView: IOTAEditView;
   LFileName: string;
@@ -272,10 +271,6 @@ begin
     LConfig := TRadIAConfig.GetInstance;
     if not LConfig.GetAutocompleteEnabled then
       Exit;
-
-    LProviderName := LConfig.GetAutocompleteProvider;
-    if SameText(LConfig.GetProviderAuthType(LProviderName), 'web_login') then
-      TRadIAWebViewBridgeProvider.EnsureBridge;
 
     if not TRadIAOTAHelper.GetActiveEditorText(LSourceText, False) then
       Exit;
