@@ -707,6 +707,7 @@ begin
   pnlInput.Color := AColors.BgBase;
   pnlSessions.Color := AColors.BgBase;
   pnlSessionsHeader.Color := AColors.BgBase;
+  pnlBrowser.Color := AColors.BgBase;
   
   lblTitle.Font.Color := AColors.TextColor;
   lblContext.Font.Color := AColors.TextColor;

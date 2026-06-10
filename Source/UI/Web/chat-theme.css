@@ -8,6 +8,7 @@
   padding: 0;
 }
 
+:root.dark-theme,
 body.dark-theme {
   --bg-base:        #181a20;
   --bg-panel:       #1f212a;
@@ -30,6 +31,7 @@ body.dark-theme {
   --green-apply:    #10b981;
 }
 
+:root.light-theme,
 body.light-theme {
   --bg-base:        #f8fafc;
   --bg-panel:       #ffffff;

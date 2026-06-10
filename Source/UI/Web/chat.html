@@ -10,25 +10,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/prism-tomorrow.min.css">
   <script>
-    const cssCacheBust = Date.now();
-    ['chat-theme.css', 'chat.css'].forEach((href) => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = href + '?v=' + cssCacheBust;
-      document.head.appendChild(link);
-    });
+    const initialTheme = new URLSearchParams(window.location.search).get('theme');
+    const safeInitialTheme = ['light', 'dark'].includes(initialTheme) ? initialTheme : 'light';
+    document.documentElement.className = safeInitialTheme + '-theme';
   </script>
+  <link rel="stylesheet" href="chat-theme.css">
+  <link rel="stylesheet" href="chat.css">
   <script src="vendor/marked.min.js"></script>
   <script src="vendor/prism.min.js"></script>
   <script src="vendor/prism-pascal.min.js"></script>
 </head>
 
-<body class="light-theme">
+<body>
   <script>
-    const initialTheme = new URLSearchParams(window.location.search).get('theme');
-    if (['light', 'dark'].includes(initialTheme)) {
-      document.body.className = initialTheme + '-theme';
-    }
+    document.body.className = safeInitialTheme + '-theme';
   </script>
   <header id="chat-header">
     <div class="header-left">
