@@ -278,6 +278,7 @@ var
   LTime: Integer;
   LLimit: Int64;
   LInlineNumber: Integer;
+  LInlineProvider: string;
 begin
   LFormatSettings := TFormatSettings.Invariant;
   LOllamaUrl := Trim(FView.GetCustomUrl('Ollama'));
@@ -342,9 +343,16 @@ begin
 
   if FView.GetAutocompleteEnabled then
   begin
-    if Trim(FView.GetAutocompleteProvider).IsEmpty then
+    LInlineProvider := Trim(FView.GetAutocompleteProvider);
+    if LInlineProvider.IsEmpty then
     begin
       FView.ShowMessageDialog('Select a configured provider for inline completion');
+      Exit;
+    end;
+
+    if FView.GetAuthTypeIndex(LInlineProvider) = 1 then
+    begin
+      FView.ShowMessageDialog('Inline completion requires an API or local provider');
       Exit;
     end;
 
