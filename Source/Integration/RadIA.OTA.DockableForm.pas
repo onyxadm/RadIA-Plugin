@@ -67,7 +67,7 @@ var
 begin
   FormRadIADockable := Self;
   inherited Create(AOwner);
-  Caption := 'RadIA Chat';
+  Caption := 'Rad IA Chat';
   Name := 'FormRadIADockable';
   DeskSection := 'FormRadIADockable';
   AutoSave := True;

@@ -10,7 +10,7 @@ type
   { Provider page configuration tag }
   TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio, ptSystem, ptTemplates);
 
-  { INTAAddInOptions implementation for RadIA Options }
+  { INTAAddInOptions implementation for Rad IA Options }
   TRadIAAddInOptions = class(TInterfacedObject, INTAAddInOptions)
   private
     FTag: TRadIAPageTag;
@@ -54,13 +54,13 @@ end;
 function TRadIAAddInOptions.GetCaption: string;
 begin
   case FTag of
-    ptNone: Result := 'RadIA.General';
-    ptSystem: Result := 'RadIA.System Prompt';
-    ptTemplates: Result := 'RadIA.Templates';
+    ptNone: Result := 'Rad IA.General';
+    ptSystem: Result := 'Rad IA.System Prompt';
+    ptTemplates: Result := 'Rad IA.Templates';
     ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio: 
-      Result := 'RadIA.AI Providers.' + FTitle;
+      Result := 'Rad IA.AI Providers.' + FTitle;
   else
-    Result := 'RadIA.' + FTitle;
+    Result := 'Rad IA.' + FTitle;
   end;
 end;
 

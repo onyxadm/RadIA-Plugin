@@ -766,7 +766,7 @@ begin
   if not Assigned(APopupMenu) then
     Exit;
 
-  // Nothing to do if the RadIA menu is already present.
+  // Nothing to do if the Rad IA menu is already present.
   if Assigned(FindMenuItemByName(APopupMenu.Items, 'mnuRadIARoot')) then
     Exit;
 
@@ -794,12 +794,12 @@ begin
     end;
   end;
 
-  TLogger.Log('Injecting RadIA menu items into EditorLocalMenu', 'EditorHook');
+  TLogger.Log('Injecting Rad IA menu items into EditorLocalMenu', 'EditorHook');
 
   // Root Submenu Item
   LRootItem := TMenuItem.Create(APopupMenu);
   LRootItem.Name := 'mnuRadIARoot';
-  LRootItem.Caption := 'RadIA';
+  LRootItem.Caption := 'Rad IA';
 
   // Action Submenu Items - Owner MUST be LRootItem so they are automatically freed when LRootItem is freed
   LSubItem := TMenuItem.Create(LRootItem);
@@ -837,7 +837,7 @@ begin
   LSubItem.Caption := '-';
   LSubItem.Name := 'mnuRadIASeparator';
 
-  // Keep RadIA visible as the first editor action group.
+  // Keep Rad IA visible as the first editor action group.
   APopupMenu.Items.Insert(0, LRootItem);
   APopupMenu.Items.Insert(1, LSubItem);
 end;
@@ -866,7 +866,7 @@ begin
     Exit;
     
   LItem := TMenuItem.Create(AMenuItem);
-  LItem.Caption := 'RadIA Chat Panel';
+  LItem.Caption := 'Rad IA Chat Panel';
   LItem.OnClick := OnShowChatExecute;
   AMenuItem.Add(LItem);
   

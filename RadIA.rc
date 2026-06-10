@@ -15,13 +15,13 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "CompanyName", "RadIA Open Source Project\0"
-            VALUE "FileDescription", "RadIA - AI Assistant for Delphi IDE\0"
+            VALUE "CompanyName", "Rad IA Open Source Project\0"
+            VALUE "FileDescription", "Rad IA - AI Assistant for Delphi IDE\0"
             VALUE "FileVersion", "0.0.15.0\0"
             VALUE "InternalName", "RadIA\0"
             VALUE "LegalCopyright", "Copyright (c) 2026\0"
             VALUE "OriginalFilename", "RadIA.bpl\0"
-            VALUE "ProductName", "RadIA\0"
+            VALUE "ProductName", "Rad IA\0"
             VALUE "ProductVersion", "0.0.15.0\0"
         END
     END

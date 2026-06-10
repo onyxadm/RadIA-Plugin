@@ -103,7 +103,7 @@ begin
     if Assigned(SplashScreenServices) then
     begin
       SplashScreenServices.AddPluginBitmap(
-        'RadIA AI Assistant',
+        'Rad IA AI Assistant',
         LBitmap.Handle,
         False,
         'Open Source (BYOK)'
@@ -114,10 +114,10 @@ begin
     if Supports(BorlandIDEServices, IOTAAboutBoxServices, LAboutServices) then
     begin
       GAboutBoxIndex := LAboutServices.AddPluginInfo(
-        'RadIA AI Assistant',
-        'RadIA - AI Assistant for Delphi IDE' + sLineBreak +
+        'Rad IA AI Assistant',
+        'Rad IA - AI Assistant for Delphi IDE' + sLineBreak +
         'Provides sidebar chat, code refactoring, context parsing, and smart diff.' + sLineBreak +
-        'Copyright (c) 2026 RadIA Open Source Project',
+        'Copyright (c) 2026 Rad IA Open Source Project',
         LBitmap.Handle,
         False,
         'Apache 2.0 License',
@@ -315,7 +315,7 @@ end;
 
 function TRadIAWizard.GetName: string;
 begin
-  Result := 'RadIA';
+  Result := 'Rad IA';
 end;
 
 function TRadIAWizard.GetState: TWizardState;
@@ -411,7 +411,8 @@ begin
     begin
       for I := 0 to LToolsMenu.Count - 1 do
       begin
-        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or 
+        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
+           SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or 
            SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsAlreadyPopulated := True;
@@ -452,7 +453,8 @@ begin
     begin
       for I := 0 to LToolsMenu.Count - 1 do
       begin
-        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or 
+        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
+           SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or 
            SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsPopulated := True;
@@ -499,6 +501,7 @@ begin
         begin
           try
             if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
+               SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or
                SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
             begin
               LToolsMenu.Items[I].Free;
