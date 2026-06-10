@@ -286,13 +286,13 @@ var
 begin
   LogDebug('TRadIAConfig.Load starting. Path = ' + APath);
   
-  { Se a nova chave não existe, tenta fazer a migração das chaves legadas }
+  { If the new key does not exist, try to migrate legacy keys. }
   if not FStorage.KeyExists(APath) then
   begin
     LogDebug('TRadIAConfig.Load: Path does not exist, checking for migration path...');
     LMigratedPath := '';
     
-    { 1. Se o caminho possui contra-barra, tenta migrar caminhos relativos à IDE }
+    { 1. If the path contains a backslash, try IDE-relative legacy paths. }
     if Pos('\', APath) > 0 then
     begin
       LParentPath := Copy(APath, 1, LastDelimiter('\', APath));
@@ -302,7 +302,7 @@ begin
         LMigratedPath := LParentPath + 'RadIA';
     end;
     
-    { 2. Fallbacks globais }
+    { 2. Global fallbacks. }
     if LMigratedPath.IsEmpty then
     begin
       if FStorage.KeyExists('Software\RadIA') then
@@ -320,14 +320,14 @@ begin
     end;
   end;
 
-  { 1. Ler chaves globais da raiz }
+  { 1. Read global keys from the root path. }
   if FStorage.OpenKey(APath, False) then
   begin
     LogDebug('TRadIAConfig.Load: Opened root path ' + APath);
     FActiveProvider := FStorage.ReadString('ActiveProvider', TConfigDefaults.ActiveProvider);
     FSystemPrompt      := ReadRegString('SystemPrompt', CDefaultSystemPrompt);
     
-    { Fallback temporário das chaves legadas da raiz caso o usuário ainda não as tenha salvado nas subchaves }
+    { Temporary fallback for legacy root keys until provider subkeys are saved. }
     FOllamaBaseUrl     := ReadRegString('OllamaBaseUrl', TConfigDefaults.OllamaBaseUrl);
     FOpenAICustomBaseUrl := ReadRegString('OpenAICustomBaseUrl', '');
 
@@ -356,19 +356,31 @@ begin
       if FStorage.ValueExists('AwsAccessKeyId') then
         FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AwsAccessKeyId', ''));
     except
-      FAwsAccessKeyId := '';
+      on E: Exception do
+      begin
+        LogDebug('TRadIAConfig.Load: Failed to unprotect AwsAccessKeyId: ' + E.Message);
+        FAwsAccessKeyId := '';
+      end;
     end;
     try
       if FStorage.ValueExists('AwsSecretAccessKey') then
         FAwsSecretAccessKey := UnprotectString(FStorage.ReadString('AwsSecretAccessKey', ''));
     except
-      FAwsSecretAccessKey := '';
+      on E: Exception do
+      begin
+        LogDebug('TRadIAConfig.Load: Failed to unprotect AwsSecretAccessKey: ' + E.Message);
+        FAwsSecretAccessKey := '';
+      end;
     end;
     try
       if FStorage.ValueExists('AwsSessionToken') then
         FAwsSessionToken := UnprotectString(FStorage.ReadString('AwsSessionToken', ''));
     except
-      FAwsSessionToken := '';
+      on E: Exception do
+      begin
+        LogDebug('TRadIAConfig.Load: Failed to unprotect AwsSessionToken: ' + E.Message);
+        FAwsSessionToken := '';
+      end;
     end;
     
     FStorage.CloseKey;
@@ -387,7 +399,7 @@ begin
       FModelsList.Values[LMeta.Id.ToLower] := LMeta.DefaultModels[0];
   end;
 
-  { 2. Ler configurações específicas de cada provedor registrado em suas respectivas subchaves }
+  { 2. Read registered provider-specific settings from dedicated subkeys. }
   LSubKeys := TStringList.Create;
   try
     if FStorage.OpenKey(APath, False) then
@@ -408,7 +420,11 @@ begin
           try
             FApiKeysList.Values[LSubKey.ToLower] := UnprotectString(FStorage.ReadString('ApiKey', ''));
           except
-            FApiKeysList.Values[LSubKey.ToLower] := '';
+            on E: Exception do
+            begin
+              LogDebug('TRadIAConfig.Load: Failed to unprotect API key for ' + LSubKey + ': ' + E.Message);
+              FApiKeysList.Values[LSubKey.ToLower] := '';
+            end;
           end;
         end;
 

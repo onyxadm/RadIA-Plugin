@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -17,7 +17,6 @@
 </head>
 
 <body class="dark-theme">
-  <!-- Header do Assistente (Mockup 1:1) -->
   <header id="chat-header">
     <div class="header-left">
       <div class="header-logo">
@@ -83,23 +82,18 @@
     </div>
   </header>
 
-  <!-- Layout Principal Flexível -->
   <div id="main-layout">
-    <!-- Sidebar Retrátil de Histórico (HTML Premium) -->
     <aside id="sessions-sidebar" class="collapsed">
       <div class="sidebar-header">
         <span>CHATS</span>
         <button id="btn-new-chat-sidebar" title="New Session">+</button>
       </div>
       <div id="sessions-list">
-        <!-- Sessions will be dynamically appended here -->
       </div>
     </aside>
 
-    <!-- Wrapper do Chat (Histórico + Digitação) -->
     <div id="chat-wrapper">
       <main id="chat-container">
-        <!-- Messages will be appended here -->
       </main>
 
       <footer id="chat-footer">
@@ -127,11 +121,9 @@
             </select>
           </div>
           <div class="selector-wrapper">
-            <!-- Native select kept hidden for event compatibility -->
             <select id="select-model" style="display: none;">
               <option value="">Model...</option>
             </select>
-            <!-- Custom dropdown with search field -->
             <div class="custom-dropdown-wrapper" id="model-dropdown-wrapper">
               <div class="custom-dropdown-trigger" id="model-dropdown-trigger">
                 <span id="model-dropdown-value">Model...</span>
@@ -141,7 +133,6 @@
                   <input type="text" id="model-search-input" placeholder="Search model..." autocomplete="off">
                 </div>
                 <div class="custom-dropdown-options" id="model-options-list">
-                  <!-- Options inserted dynamically -->
                 </div>
               </div>
             </div>
@@ -156,7 +147,6 @@
       </footer>
     </div>
 
-    <!-- Wrapper do Gerador (JSON / DDL -> Delphi DTO) -->
     <div id="generators-wrapper" class="hidden">
       <main id="generators-container">
         <div class="generator-card">

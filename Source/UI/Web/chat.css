@@ -1,10 +1,4 @@
-﻿/* =========================================================
-   RadIA Chat layout and components
-   ========================================================= */
-
-/* ----------------------------------------------------------
-   Header Integrado (Mockup 1:1)
-   ---------------------------------------------------------- */
+﻿
 #chat-header {
   height: 52px;
   background-color: var(--bg-panel);
@@ -68,9 +62,6 @@
   font-weight: 500;
 }
 
-/* ----------------------------------------------------------
-   Ãrea de Mensagens
-   ---------------------------------------------------------- */
 #chat-container {
   flex: 1;
   overflow-y: auto;
@@ -92,9 +83,6 @@
   border-radius: 4px;
 }
 
-/* ----------------------------------------------------------
-   Estrutura da Mensagem (Estilo Mockup)
-   ---------------------------------------------------------- */
 .message-wrapper {
   display: flex;
   gap: 12px;
@@ -177,7 +165,6 @@
   border-radius: 4px;
 }
 
-/* Tabelas em Markdown */
 .message-content table {
   width: 100%;
   border-collapse: collapse;
@@ -214,9 +201,6 @@ body.light-theme .message-content tr:nth-child(even) {
   background-color: rgba(0, 0, 0, 0.015);
 }
 
-/* ----------------------------------------------------------
-   Bloco de CÃ³digo (Mockup 1:1)
-   ---------------------------------------------------------- */
 .code-block-container {
   margin: 16px 0;
   border-radius: 8px;
@@ -297,9 +281,6 @@ body.light-theme .apply-btn:hover {
   border: none;
 }
 
-/* ----------------------------------------------------------
-   Typing Indicator
-   ---------------------------------------------------------- */
 .typing-wrapper {
   display: flex;
   gap: 12px;
@@ -333,9 +314,6 @@ body.light-theme .apply-btn:hover {
   40%            { transform: scale(1.0); opacity: 1.0; }
 }
 
-/* ----------------------------------------------------------
-   Footer & Prompt Area (Mockup 1:1)
-   ---------------------------------------------------------- */
 #chat-footer {
   background-color: var(--bg-panel);
   border-top: 1px solid var(--border);
@@ -363,7 +341,6 @@ body.light-theme .apply-btn:hover {
   width: 100%;
 }
 
-/* CÃ¡psula de prompt estilo pÃ­lula arredondada */
 #prompt-capsule {
   display: flex;
   align-items: center;
@@ -425,7 +402,6 @@ body.light-theme .apply-btn:hover {
   transform: scale(0.95);
 }
 
-/* BotÃ£o stop (cÃ­rculo vermelho com quadrado) */
 #btn-send-prompt.stop-btn {
   background-color: #ef4444;
   color: #ffffff;
@@ -435,7 +411,7 @@ body.light-theme .apply-btn:hover {
 }
 
 #btn-send-prompt.stop-btn svg {
-  display: none; /* Esconde aviÃ£ozinho */
+  display: none; /* Hide the send icon while the stop state is active */
 }
 
 #btn-send-prompt.stop-btn::after {
@@ -447,9 +423,6 @@ body.light-theme .apply-btn:hover {
   display: block;
 }
 
-/* ----------------------------------------------------------
-   Seletores de Modelos Integrados na Base
-   ---------------------------------------------------------- */
 #model-selectors {
   display: flex;
   gap: 12px;
@@ -501,9 +474,6 @@ body.light-theme .apply-btn:hover {
   pointer-events: none;
 }
 
-/* ----------------------------------------------------------
-   Status bar (Tokens)
-   ---------------------------------------------------------- */
 #status-bar {
   font-size: 10px;
   font-family: Consolas, monospace;
@@ -519,9 +489,6 @@ body.light-theme .apply-btn:hover {
   display: none;
 }
 
-/* ----------------------------------------------------------
-   Layout FlexÃ­vel e Sidebar Premium (Mockup 1:1)
-   ---------------------------------------------------------- */
 #main-layout {
   display: flex;
   flex: 1;
@@ -709,9 +676,6 @@ body.light-theme .session-action-btn:hover {
   overflow: hidden;
 }
 
-/* ----------------------------------------------------------
-   Dropdown Customizado e FiltrÃ¡vel (Model Search)
-   ---------------------------------------------------------- */
 .custom-dropdown-wrapper {
   flex: 1;
   position: relative;
@@ -841,9 +805,6 @@ body.light-theme .session-action-btn:hover {
   font-weight: 600;
 }
 
-/* =========================================================
-   Estilos do Conversor DTO & Geradores (v0.1.0)
-   ========================================================= */
 #generators-wrapper {
   display: flex;
   flex-direction: column;
@@ -930,7 +891,6 @@ body.light-theme .session-action-btn:hover {
   transition: border-color 0.15s ease;
 }
 
-/* Adicionando Ã­cone de seta customizado nos selects do gerador */
 .generator-form-group {
   position: relative;
 }
@@ -983,12 +943,10 @@ body.light-theme .session-action-btn:hover {
   margin: 0;
 }
 
-/* Ocultar elementos */
 .hidden {
   display: none !important;
 }
 
-/* AtivaÃ§Ã£o do botÃ£o do header */
 .header-action-btn.active {
   color: var(--accent-hover);
   border-bottom: 2px solid var(--accent);
@@ -996,9 +954,6 @@ body.light-theme .session-action-btn:hover {
   padding-bottom: 2px;
 }
 
-/* ----------------------------------------------------------
-   Popup de Slash Commands (/)
-   ---------------------------------------------------------- */
 #slash-commands-popup {
   position: absolute;
   bottom: 10px;
@@ -1085,9 +1040,6 @@ body.light-theme .session-action-btn:hover {
   flex-shrink: 0;
 }
 
-/* ----------------------------------------------------------
-   Painel de Projeto Delphi Gerado (v0.1.0)
-   ---------------------------------------------------------- */
 .radia-project-panel {
   margin: 20px 2px;
   background: rgba(31, 33, 42, 0.45);

@@ -1,8 +1,6 @@
-﻿// ============================================================
-//  RadIA Chat â€” JavaScript (Redesign Premium com Sidebar)
-// ============================================================
+﻿/* global postMessageToDelphi */
 
-// -- ConfiguraÃ§Ã£o do Marked com Prism para highlight de cÃ³digo --
+
 marked.setOptions({
   gfm: true,
   breaks: true,
@@ -19,7 +17,6 @@ marked.setOptions({
 const _codeRegistry = {};
 let _codeRegistryCounter = 0;
 
-// -- Ãcones SVG discretos e nÃ­tidos (Mockup 1:1) --
 const SVG_ICONS = {
   copy: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
   apply: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>`,
@@ -28,7 +25,6 @@ const SVG_ICONS = {
   trash: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
 };
 
-// -- Renderer de Markdown com botÃµes baseados em SVGs nÃ­tidos --
 const renderer = new marked.Renderer();
 renderer.code = function(codeOrToken, lang) {
   let code = '';
@@ -81,9 +77,6 @@ marked.use({
   breaks: true
 });
 
-// ============================================================
-//  Elementos do DOM
-// ============================================================
 const chatContainer   = document.getElementById('chat-container');
 const btnNewChat      = document.getElementById('btn-new-chat');
 const btnClearChat    = document.getElementById('btn-clear-chat');
@@ -104,12 +97,10 @@ const statusText      = document.getElementById('status-text');
 const contextBar      = document.getElementById('context-bar');
 const contextText     = document.getElementById('context-text');
 
-// Elementos da Sidebar
 const sessionsSidebar = document.getElementById('sessions-sidebar');
 const btnNewChatSidebar = document.getElementById('btn-new-chat-sidebar');
 const sessionsList    = document.getElementById('sessions-list');
 
-// Slash Commands Configuration
 let SLASH_COMMANDS = [
   { name: '/explain', desc: 'Explains the selected code in the editor', shortcut: 'Ctrl+Shift+E' },
   { name: '/refactor', desc: 'Optimizes and refactors the selected code', shortcut: 'Ctrl+Shift+R' },
@@ -125,7 +116,6 @@ let slashPopupVisible = false;
 let slashPopupSelectedIndex = 0;
 let filteredSlashCommands = [];
 
-// Elementos do Gerador
 const chatWrapper          = document.getElementById('chat-wrapper');
 const generatorsWrapper    = document.getElementById('generators-wrapper');
 const btnGenerators        = document.getElementById('btn-generators');
@@ -140,9 +130,6 @@ const generatorOutputCode  = document.getElementById('generator-output-code');
 
 let generatorAccumulatedCode = '';
 
-// ============================================================
-//  Nomes e Ã­cones dos remetentes (SVG Premium)
-// ============================================================
 const SENDER_INFO = {
   user: { 
     name: 'User', 
@@ -169,11 +156,7 @@ const _promptHistory = [];
 let _promptHistoryIndex = -1;
 let _promptDraft = '';
 
-// ============================================================
-//  Interface logic
-// ============================================================
 
-// Auto-expand do textarea ao digitar
 promptTextarea.addEventListener('input', () => {
   promptTextarea.style.height = 'auto';
   promptTextarea.style.height = promptTextarea.scrollHeight + 'px';
@@ -186,7 +169,6 @@ promptTextarea.addEventListener('input', () => {
   }
 });
 
-// Envio por Ctrl+Enter, e navegaÃ§Ã£o no histÃ³rico com Seta Cima/Baixo
 promptTextarea.addEventListener('keydown', (e) => {
   if (slashPopupVisible) {
     if (e.key === 'ArrowUp') {
@@ -215,7 +197,6 @@ promptTextarea.addEventListener('keydown', (e) => {
       e.preventDefault();
       handleSend();
     } else if (e.key === 'ArrowUp') {
-      // SÃ³ navega se o cursor estiver na primeira linha (sem \n antes do cursor)
       const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
       if (!textBeforeCursor.includes('\n')) {
         if (_promptHistory.length > 0) {
@@ -234,7 +215,6 @@ promptTextarea.addEventListener('keydown', (e) => {
         }
       }
     } else if (e.key === 'ArrowDown') {
-      // SÃ³ navega se o cursor estiver na Ãºltima linha (sem \n depois do cursor)
       const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
       if (!textAfterCursor.includes('\n')) {
         if (_promptHistoryIndex !== -1) {
@@ -267,7 +247,6 @@ function handleSend() {
   const text = promptTextarea.value.trim();
   if (!text) return;
 
-  // Salva no histÃ³rico de prompts locais enviados
   if (_promptHistory.length === 0 || _promptHistory[_promptHistory.length - 1] !== text) {
     _promptHistory.push(text);
     if (_promptHistory.length > 100) {
@@ -294,7 +273,6 @@ function showTab(tabName) {
   }
 }
 
-// Eventos dos botÃµes do topo
 btnGenerators.addEventListener('click', () => {
   if (generatorsWrapper.classList.contains('hidden')) {
     showTab('generators');
@@ -309,13 +287,12 @@ btnNewChat.addEventListener('click', () => {
 });
 
 btnClearChat.addEventListener('click', () => {
-  if (confirm('Limpar o histÃ³rico da conversa atual?')) {
+  if (confirm('Clear the current conversation history?')) {
     postMessageToDelphi({ action: 'clear_chat' });
   }
 });
 
 btnHistory.addEventListener('click', () => {
-  // Alterna o estado recolhido da sidebar HTML
   sessionsSidebar.classList.toggle('collapsed');
 });
 
@@ -324,13 +301,11 @@ if (btnWebLogin) {
   btnWebLogin.addEventListener('click', () => postMessageToDelphi({ action: 'web_login_connect' }));
 }
 
-// Novo chat pela sidebar
 btnNewChatSidebar.addEventListener('click', () => {
   showTab('chat');
   postMessageToDelphi({ action: 'new_chat' });
 });
 
-// AÃ§Ãµes do Gerador
 btnGenerateModel.addEventListener('click', () => {
   const inputVal = generatorInput.value.trim();
   if (!inputVal) return;
@@ -364,7 +339,6 @@ btnInsertGenerator.addEventListener('click', () => {
   setTimeout(() => { btnInsertGenerator.innerHTML = orig; }, 2000);
 });
 
-// MudanÃ§a de Provedores e Modelos
 selectProvider.addEventListener('change', () => {
   postMessageToDelphi({ action: 'change_provider', provider: selectProvider.value });
 });
@@ -373,7 +347,6 @@ selectModel.addEventListener('change', () => {
   postMessageToDelphi({ action: 'change_model', model: selectModel.value });
 });
 
-// Dropdown de Modelos Customizado (Busca)
 modelDropdownTrigger.addEventListener('click', (e) => {
   if (modelDropdownWrapper.classList.contains('disabled')) return;
   e.stopPropagation();
@@ -386,7 +359,7 @@ modelDropdownTrigger.addEventListener('click', (e) => {
 });
 
 modelSearchInput.addEventListener('click', (e) => {
-  e.stopPropagation(); // Impede fechar ao clicar no input de busca
+  e.stopPropagation();
 });
 
 modelSearchInput.addEventListener('input', () => {
@@ -405,7 +378,6 @@ function filterModels(query) {
   }
 }
 
-// Fechar dropdown e popup de slash commands ao clicar fora
 document.addEventListener('click', () => {
   modelDropdownWrapper.classList.remove('open');
   hideSlashPopup();
@@ -458,7 +430,6 @@ function renderSlashCommands() {
       ${cmd.shortcut ? `<span class="slash-command-shortcut">${cmd.shortcut}</span>` : ''}
     `;
     
-    // Usar mousedown em vez de click para evitar perda de foco antes do disparo
     item.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -477,9 +448,6 @@ function insertSlashCommand(name) {
   hideSlashPopup();
 }
 
-// ============================================================
-//  LÃ³gica do Chat (Add, Clear, Theme, etc.)
-// ============================================================
 function addMessage(role, text, provider, model) {
   hideTypingIndicator();
   if (text === undefined || text === null) {
@@ -524,7 +492,6 @@ function addMessage(role, text, provider, model) {
 
   chatContainer.appendChild(wrapper);
   
-  // RealÃ§a sintaxe usando Prism de forma assÃ­ncrona
   setTimeout(() => {
     Prism.highlightAllUnder(wrapper);
   }, 10);
@@ -588,7 +555,6 @@ function updateTokens(text) {
   }
 }
 
-// Typing Indicator
 let typingIndicatorEl = null;
 function showTypingIndicator() {
   if (typingIndicatorEl) return;
@@ -623,7 +589,6 @@ function hideTypingIndicator() {
   }
 }
 
-// Streaming
 let currentAssistantWrapper = null;
 let currentAssistantContent = null;
 let currentAssistantText    = '';
@@ -672,7 +637,6 @@ function appendMessage(text, isDone, provider, model) {
   currentAssistantText += text;
   currentAssistantContent.innerHTML = marked.parse(currentAssistantText);
   
-  // Executa Prism de forma contÃ­nua nos blocos de cÃ³digo adicionados
   Prism.highlightAllUnder(currentAssistantContent);
 
   chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -760,7 +724,7 @@ function processProjectFiles(contentElement) {
         <span class="file-item-name" title="${filepath}">${filepath}</span>
       </div>
       <div class="file-item-actions">
-        <button class="file-item-btn" title="Visualizar cÃ³digo do arquivo" onclick="scrollToBlock('${blockId}')">
+        <button class="file-item-btn" title="View file code" onclick="scrollToBlock('${blockId}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
             <circle cx="12" cy="12" r="3"></circle>
@@ -827,9 +791,6 @@ function scrollToBlock(blockId) {
   }
 }
 
-// ============================================================
-//  Controle de SeleÃ§Ã£o DinÃ¢mica (Providers & Models)
-// ============================================================
 function initializeConfig(data) {
   selectProvider.innerHTML = '';
   data.providers.forEach(p => {
@@ -961,9 +922,6 @@ function setContextText(text) {
   }
 }
 
-// ============================================================
-//  RenderizaÃ§Ã£o DinÃ¢mica do HistÃ³rico de SessÃµes (HTML Premium)
-// ============================================================
 function updateSessions(sessions, activeSessionId) {
   sessionsList.innerHTML = '';
 
@@ -979,15 +937,12 @@ function updateSessions(sessions, activeSessionId) {
       item.classList.add('active');
     }
 
-    // Nome da SessÃ£o (ou input para renomear)
     const nameEl = document.createElement('span');
     nameEl.classList.add('session-name');
     nameEl.textContent = session.name;
     
-    // Suporte a duplo clique para renomeaÃ§Ã£o inline rÃ¡pida
     nameEl.addEventListener('dblclick', () => startRename(item, session.id, nameEl));
 
-    // AÃ§Ãµes (Editar e Deletar)
     const actions = document.createElement('div');
     actions.classList.add('session-item-actions');
 
@@ -1017,7 +972,6 @@ function updateSessions(sessions, activeSessionId) {
     item.appendChild(nameEl);
     item.appendChild(actions);
 
-    // SeleÃ§Ã£o de SessÃ£o ao clicar no item
     item.addEventListener('click', (e) => {
       if (item.classList.contains('renaming')) return;
       showTab('chat');
@@ -1042,7 +996,6 @@ function startRename(item, sessionId, nameEl) {
   input.focus();
   input.select();
 
-  // FunÃ§Ã£o para salvar a renomeaÃ§Ã£o
   function saveRename() {
     const newName = input.value.trim();
     if (newName && newName !== currentName) {
@@ -1083,7 +1036,6 @@ function appendGeneratorCode(text, isDone) {
     try {
       Prism.highlightElement(generatorOutputCode);
     } catch (e) {
-      // Ignorar ou logar erro de realce silenciosamente
     }
     btnGenerateModel.disabled = false;
     btnGenerateModel.textContent = 'Generate Model';
@@ -1137,9 +1089,6 @@ function updateMessage(text, isDone, provider, model) {
   }
 }
 
-// ============================================================
-//  Listener de mensagens do Delphi (WebView2)
-// ============================================================
 if (window.chrome && window.chrome.webview) {
   window.chrome.webview.addEventListener('message', event => {
     const data = event.data;
@@ -1163,4 +1112,3 @@ if (window.chrome && window.chrome.webview) {
   });
   window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));
 }
-/* global postMessageToDelphi */

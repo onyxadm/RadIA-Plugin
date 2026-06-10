@@ -222,7 +222,8 @@ begin
     try
       FModelsProvider.CancelCurrentRequest;
     except
-      // Silencia
+      on E: Exception do
+        TLogger.Log('Destroy: Error cancelling model provider: ' + E.Message, 'UI');
     end;
     FModelsProvider := nil;
   end;
@@ -342,7 +343,8 @@ begin
       try
         FModelsProvider.CancelCurrentRequest;
       except
-        // Silencia
+        on E: Exception do
+          TLogger.Log('UpdateModelsCombo: Error cancelling previous model provider: ' + E.Message, 'UI');
       end;
       FModelsProvider := nil;
     end;
@@ -681,7 +683,7 @@ begin
     FConfig.Load;
     if FConfig.QuotaUsed >= FConfig.QuotaLimit then
     begin
-      FView.ShowMessageDialog(Format('Não foi possível enviar a requisição: Cota mensal de tokens excedida (limite local de %s tokens atingido).',
+      FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local limit of %s tokens reached).',
         [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
       Exit;
     end;
@@ -773,7 +775,7 @@ begin
               
               if not LFullResponse.IsEmpty then
               begin
-                LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse + ' [Cancelado pelo usuário]', LActiveProvider, LActiveModel);
+                LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse + ' [Cancelled by user]', LActiveProvider, LActiveModel);
                 Self.FHistory := Self.FHistory + [LAssistantMsg];
                 Self.SaveChatHistory;
               end;
@@ -902,7 +904,7 @@ begin
     FConfig.Load;
     if FConfig.QuotaUsed >= FConfig.QuotaLimit then
     begin
-      FView.ShowMessageDialog(Format('Não foi possível enviar a requisição: Cota mensal de tokens excedida (limite local de %s tokens atingido).',
+      FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local limit of %s tokens reached).',
         [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
       Exit;
     end;
@@ -944,7 +946,7 @@ begin
               LDoneHandled := True;
               Self.FRequestInProgress := False;
               Self.FView.SetRequestState(False);
-              Self.PostToWebView('append_generator_code', '', ' [Cancelado pelo usuário]', True);
+              Self.PostToWebView('append_generator_code', '', ' [Cancelled by user]', True);
               Exit;
             end;
 

@@ -862,7 +862,7 @@ begin
   end;
 
   if SameText(btnDeleteTemplate.Caption, 'Restore Default') then
-    LConfirmMsg := 'Deseja realmente restaurar o template padrão "' + lstTemplates.Items[lstTemplates.ItemIndex] + '" para o conteúdo original?'
+    LConfirmMsg := 'Do you really want to restore the default template "' + lstTemplates.Items[lstTemplates.ItemIndex] + '" to its original content?'
   else
     LConfirmMsg := 'Are you sure you want to delete the template "' + lstTemplates.Items[lstTemplates.ItemIndex] + '"?';
 
@@ -899,8 +899,8 @@ var
 begin
   if dlgsTemplatesOpen.Execute then
   begin
-    LConfirm := MessageDlg('Deseja mesclar os templates importados com os atuais?' + sLineBreak +
-      'Escolha "Yes" para mesclar ou "No" para apagar os templates atuais e usar apenas os importados.',
+    LConfirm := MessageDlg('Do you want to merge imported templates with the current ones?' + sLineBreak +
+      'Choose "Yes" to merge or "No" to delete current templates and use only the imported ones.',
       mtConfirmation, [mbYes, mbNo, mbCancel], 0);
       
     if LConfirm = mrCancel then
@@ -1081,7 +1081,7 @@ begin
 
   if not TFile.Exists(LPath) then
   begin
-    ShowMessage('Não foi possível encontrar a configuração do Copilot no VS Code.');
+    ShowMessage('Could not find the Copilot configuration in VS Code.');
     Exit;
   end;
 
@@ -1113,7 +1113,7 @@ begin
           end;
         end;
         
-        ShowMessage('O arquivo de credenciais do VS Code foi encontrado, mas não continha um token válido.');
+        ShowMessage('The VS Code credentials file was found, but it did not contain a valid token.');
       finally
         LJson.Free;
       end;

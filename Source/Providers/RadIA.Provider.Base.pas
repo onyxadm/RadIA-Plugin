@@ -870,7 +870,7 @@ begin
         LModelsList := TList<string>.Create;
         try
           try
-            LResponseText := DoGetRequest(LUrl, LHeaders, 5000); // Timeout rápido de 5 segundos para busca de modelos
+            LResponseText := DoGetRequest(LUrl, LHeaders, 5000); // Fast 5-second timeout for model discovery
             LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
             if Assigned(LJson) then
             begin
