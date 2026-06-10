@@ -133,6 +133,7 @@ procedure TInlineCompletionService.RequestCompletion(const APrompt: string;
   const ACallback: TInlineCompletionCallback);
 var
   LRequest: TAIRequest;
+  LOrchestrator: IAIRequestOrchestrator;
 begin
   LRequest := TAIRequest.Create(
     APrompt,
@@ -141,11 +142,15 @@ begin
     [],
     rmComplete);
 
-  FOrchestrator.ExecuteAsync(LRequest,
+  LOrchestrator := FOrchestrator;
+  LOrchestrator.ExecuteAsync(LRequest,
     procedure(const AResponse: string; const AError: string; const AUsage: TTokenUsage)
     var
       LSuggestion: string;
     begin
+      if LOrchestrator = nil then
+        Exit;
+
       if not AError.IsEmpty then
         ACallback('', AError)
       else
