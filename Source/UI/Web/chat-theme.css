@@ -1,0 +1,61 @@
+/* =========================================================
+   RadIA Chat theme variables and base reset
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body.dark-theme {
+  --bg-base:        #181a20;
+  --bg-panel:       #1f212a;
+  --bg-elevated:    #2a2c35;
+  --bg-input:       #1f212a;
+  --fg-primary:     #e2e8f0;
+  --fg-secondary:   #94a3b8;
+  --fg-muted:       #64748b;
+  --border:         #2d3139;
+  --accent:         #007acc;
+  --accent-hover:   #0098ff;
+  --avatar-user:    #475569;
+  --avatar-ai:      #007acc;
+  --code-bg:        #0f1115;
+  --code-fg:        #e2e8f0;
+  --code-header:    #121212;
+  --scrollbar:      rgba(255, 255, 255, 0.08);
+  --green-apply:    #10b981;
+}
+
+body.light-theme {
+  --bg-base:        #f8fafc;
+  --bg-panel:       #ffffff;
+  --bg-elevated:    #f1f5f9;
+  --bg-input:       #ffffff;
+  --fg-primary:     #0f172a;
+  --fg-secondary:   #475569;
+  --fg-muted:       #94a3b8;
+  --border:         #e2e8f0;
+  --accent:         #005a9e;
+  --accent-hover:   #0078d4;
+  --avatar-user:    #64748b;
+  --avatar-ai:      #005a9e;
+  --code-bg:        #f8fafc;
+  --code-fg:        #0f172a;
+  --code-header:    #e2e8f0;
+  --scrollbar:      rgba(0, 0, 0, 0.08);
+  --green-apply:    #059669;
+}
+
+body {
+  font-family: 'Inter', "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  background-color: var(--bg-base);
+  color: var(--fg-primary);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

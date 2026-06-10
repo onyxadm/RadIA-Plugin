@@ -1,66 +1,6 @@
-/* =========================================================
-   RadIA Chat — Stylesheet Premium Redesign (100% WebView2)
-   Cores mapeadas 1:1 com o tema do Delphi IDE (dark/light)
+﻿/* =========================================================
+   RadIA Chat layout and components
    ========================================================= */
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Variables & Themes (Injected dynamically from Delphi) */
-body.dark-theme {
-  --bg-base:        #181a20;  /* Fundo escuro do painel (Mockup) */
-  --bg-panel:       #1f212a;  /* Fundo de cabeçalhos e rodapés */
-  --bg-elevated:    #2a2c35;  /* Headers de blocos de código */
-  --bg-input:       #1f212a;  /* Fundo da cápsula de prompt */
-  --fg-primary:     #e2e8f0;  /* Texto principal */
-  --fg-secondary:   #94a3b8;  /* Texto secundário / labels */
-  --fg-muted:       #64748b;  /* Placeholder */
-  --border:         #2d3139;  /* Bordas */
-  --accent:         #007acc;  /* Cor de destaque */
-  --accent-hover:   #0098ff;
-  --avatar-user:    #475569;
-  --avatar-ai:      #007acc;
-  --code-bg:        #0f1115;  /* Fundo do código (alto contraste) */
-  --code-fg:        #e2e8f0;
-  --code-header:    #121212;
-  --scrollbar:      rgba(255, 255, 255, 0.08);
-  --green-apply:    #10b981;
-}
-
-body.light-theme {
-  --bg-base:        #f8fafc;
-  --bg-panel:       #ffffff;
-  --bg-elevated:    #f1f5f9;
-  --bg-input:       #ffffff;
-  --fg-primary:     #0f172a;
-  --fg-secondary:   #475569;
-  --fg-muted:       #94a3b8;
-  --border:         #e2e8f0;
-  --accent:         #005a9e;
-  --accent-hover:   #0078d4;
-  --avatar-user:    #64748b;
-  --avatar-ai:      #005a9e;
-  --code-bg:        #f8fafc;
-  --code-fg:        #0f172a;
-  --code-header:    #e2e8f0;
-  --scrollbar:      rgba(0, 0, 0, 0.08);
-  --green-apply:    #059669;
-}
-
-body {
-  font-family: 'Inter', "Segoe UI", system-ui, -apple-system, sans-serif;
-  font-size: 13px;
-  line-height: 1.5;
-  background-color: var(--bg-base);
-  color: var(--fg-primary);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
 
 /* ----------------------------------------------------------
    Header Integrado (Mockup 1:1)
@@ -129,7 +69,7 @@ body {
 }
 
 /* ----------------------------------------------------------
-   Área de Mensagens
+   Ãrea de Mensagens
    ---------------------------------------------------------- */
 #chat-container {
   flex: 1;
@@ -275,7 +215,7 @@ body.light-theme .message-content tr:nth-child(even) {
 }
 
 /* ----------------------------------------------------------
-   Bloco de Código (Mockup 1:1)
+   Bloco de CÃ³digo (Mockup 1:1)
    ---------------------------------------------------------- */
 .code-block-container {
   margin: 16px 0;
@@ -423,7 +363,7 @@ body.light-theme .apply-btn:hover {
   width: 100%;
 }
 
-/* Cápsula de prompt estilo pílula arredondada */
+/* CÃ¡psula de prompt estilo pÃ­lula arredondada */
 #prompt-capsule {
   display: flex;
   align-items: center;
@@ -485,7 +425,7 @@ body.light-theme .apply-btn:hover {
   transform: scale(0.95);
 }
 
-/* Botão stop (círculo vermelho com quadrado) */
+/* BotÃ£o stop (cÃ­rculo vermelho com quadrado) */
 #btn-send-prompt.stop-btn {
   background-color: #ef4444;
   color: #ffffff;
@@ -495,7 +435,7 @@ body.light-theme .apply-btn:hover {
 }
 
 #btn-send-prompt.stop-btn svg {
-  display: none; /* Esconde aviãozinho */
+  display: none; /* Esconde aviÃ£ozinho */
 }
 
 #btn-send-prompt.stop-btn::after {
@@ -580,7 +520,7 @@ body.light-theme .apply-btn:hover {
 }
 
 /* ----------------------------------------------------------
-   Layout Flexível e Sidebar Premium (Mockup 1:1)
+   Layout FlexÃ­vel e Sidebar Premium (Mockup 1:1)
    ---------------------------------------------------------- */
 #main-layout {
   display: flex;
@@ -770,7 +710,7 @@ body.light-theme .session-action-btn:hover {
 }
 
 /* ----------------------------------------------------------
-   Dropdown Customizado e Filtrável (Model Search)
+   Dropdown Customizado e FiltrÃ¡vel (Model Search)
    ---------------------------------------------------------- */
 .custom-dropdown-wrapper {
   flex: 1;
@@ -990,7 +930,7 @@ body.light-theme .session-action-btn:hover {
   transition: border-color 0.15s ease;
 }
 
-/* Adicionando ícone de seta customizado nos selects do gerador */
+/* Adicionando Ã­cone de seta customizado nos selects do gerador */
 .generator-form-group {
   position: relative;
 }
@@ -1048,7 +988,7 @@ body.light-theme .session-action-btn:hover {
   display: none !important;
 }
 
-/* Ativação do botão do header */
+/* AtivaÃ§Ã£o do botÃ£o do header */
 .header-action-btn.active {
   color: var(--accent-hover);
   border-bottom: 2px solid var(--accent);

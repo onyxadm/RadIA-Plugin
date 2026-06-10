@@ -1,8 +1,8 @@
-// ============================================================
-//  RadIA Chat — JavaScript (Redesign Premium com Sidebar)
+﻿// ============================================================
+//  RadIA Chat â€” JavaScript (Redesign Premium com Sidebar)
 // ============================================================
 
-// -- Configuração do Marked com Prism para highlight de código --
+// -- ConfiguraÃ§Ã£o do Marked com Prism para highlight de cÃ³digo --
 marked.setOptions({
   gfm: true,
   breaks: true,
@@ -19,7 +19,7 @@ marked.setOptions({
 const _codeRegistry = {};
 let _codeRegistryCounter = 0;
 
-// -- Ícones SVG discretos e nítidos (Mockup 1:1) --
+// -- Ãcones SVG discretos e nÃ­tidos (Mockup 1:1) --
 const SVG_ICONS = {
   copy: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
   apply: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>`,
@@ -28,7 +28,7 @@ const SVG_ICONS = {
   trash: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
 };
 
-// -- Renderer de Markdown com botões baseados em SVGs nítidos --
+// -- Renderer de Markdown com botÃµes baseados em SVGs nÃ­tidos --
 const renderer = new marked.Renderer();
 renderer.code = function(codeOrToken, lang) {
   let code = '';
@@ -60,7 +60,7 @@ renderer.code = function(codeOrToken, lang) {
   _codeRegistry[id] = code;
 
   const isPascal = ['pascal', 'delphi', 'objectpascal'].includes(language.toLowerCase());
-  const headerTitle = isProjectFile ? `${language.toUpperCase()} • ${filepath}` : language.toUpperCase();
+  const headerTitle = isProjectFile ? `${language.toUpperCase()} â€¢ ${filepath}` : language.toUpperCase();
 
   return `
     <div class="code-block-container" ${isProjectFile ? `data-filepath="${filepath}" data-project-file="true"` : ''}>
@@ -141,7 +141,7 @@ const generatorOutputCode  = document.getElementById('generator-output-code');
 let generatorAccumulatedCode = '';
 
 // ============================================================
-//  Nomes e ícones dos remetentes (SVG Premium)
+//  Nomes e Ã­cones dos remetentes (SVG Premium)
 // ============================================================
 const SENDER_INFO = {
   user: { 
@@ -170,48 +170,7 @@ let _promptHistoryIndex = -1;
 let _promptDraft = '';
 
 // ============================================================
-//  Ponte de Comunicação (PostMessage)
-// ============================================================
-function postMessageToDelphi(payload) {
-  if (window.chrome && window.chrome.webview) {
-    window.chrome.webview.postMessage(JSON.stringify(payload));
-  }
-}
-
-// Redirect console logs to Delphi for debugging
-(function() {
-  const originalLog = console.log;
-  const originalError = console.error;
-  const originalWarn = console.warn;
-
-  function sendLog(type, args) {
-    const text = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
-    postMessageToDelphi({ action: 'log', text: `[${type}] ${text}` });
-  }
-
-  console.log = function(...args) {
-    originalLog.apply(console, args);
-    sendLog('LOG', args);
-  };
-  console.error = function(...args) {
-    originalError.apply(console, args);
-    sendLog('ERROR', args);
-  };
-  console.warn = function(...args) {
-    originalWarn.apply(console, args);
-    sendLog('WARN', args);
-  };
-
-  window.addEventListener('error', (event) => {
-    postMessageToDelphi({
-      action: 'log',
-      text: `[WINDOW_ERROR] ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`
-    });
-  });
-})();
-
-// ============================================================
-//  Lógica de Interface
+//  Interface logic
 // ============================================================
 
 // Auto-expand do textarea ao digitar
@@ -227,7 +186,7 @@ promptTextarea.addEventListener('input', () => {
   }
 });
 
-// Envio por Ctrl+Enter, e navegação no histórico com Seta Cima/Baixo
+// Envio por Ctrl+Enter, e navegaÃ§Ã£o no histÃ³rico com Seta Cima/Baixo
 promptTextarea.addEventListener('keydown', (e) => {
   if (slashPopupVisible) {
     if (e.key === 'ArrowUp') {
@@ -256,7 +215,7 @@ promptTextarea.addEventListener('keydown', (e) => {
       e.preventDefault();
       handleSend();
     } else if (e.key === 'ArrowUp') {
-      // Só navega se o cursor estiver na primeira linha (sem \n antes do cursor)
+      // SÃ³ navega se o cursor estiver na primeira linha (sem \n antes do cursor)
       const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
       if (!textBeforeCursor.includes('\n')) {
         if (_promptHistory.length > 0) {
@@ -275,7 +234,7 @@ promptTextarea.addEventListener('keydown', (e) => {
         }
       }
     } else if (e.key === 'ArrowDown') {
-      // Só navega se o cursor estiver na última linha (sem \n depois do cursor)
+      // SÃ³ navega se o cursor estiver na Ãºltima linha (sem \n depois do cursor)
       const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
       if (!textAfterCursor.includes('\n')) {
         if (_promptHistoryIndex !== -1) {
@@ -308,7 +267,7 @@ function handleSend() {
   const text = promptTextarea.value.trim();
   if (!text) return;
 
-  // Salva no histórico de prompts locais enviados
+  // Salva no histÃ³rico de prompts locais enviados
   if (_promptHistory.length === 0 || _promptHistory[_promptHistory.length - 1] !== text) {
     _promptHistory.push(text);
     if (_promptHistory.length > 100) {
@@ -335,7 +294,7 @@ function showTab(tabName) {
   }
 }
 
-// Eventos dos botões do topo
+// Eventos dos botÃµes do topo
 btnGenerators.addEventListener('click', () => {
   if (generatorsWrapper.classList.contains('hidden')) {
     showTab('generators');
@@ -350,7 +309,7 @@ btnNewChat.addEventListener('click', () => {
 });
 
 btnClearChat.addEventListener('click', () => {
-  if (confirm('Limpar o histórico da conversa atual?')) {
+  if (confirm('Limpar o histÃ³rico da conversa atual?')) {
     postMessageToDelphi({ action: 'clear_chat' });
   }
 });
@@ -371,7 +330,7 @@ btnNewChatSidebar.addEventListener('click', () => {
   postMessageToDelphi({ action: 'new_chat' });
 });
 
-// Ações do Gerador
+// AÃ§Ãµes do Gerador
 btnGenerateModel.addEventListener('click', () => {
   const inputVal = generatorInput.value.trim();
   if (!inputVal) return;
@@ -405,7 +364,7 @@ btnInsertGenerator.addEventListener('click', () => {
   setTimeout(() => { btnInsertGenerator.innerHTML = orig; }, 2000);
 });
 
-// Mudança de Provedores e Modelos
+// MudanÃ§a de Provedores e Modelos
 selectProvider.addEventListener('change', () => {
   postMessageToDelphi({ action: 'change_provider', provider: selectProvider.value });
 });
@@ -519,7 +478,7 @@ function insertSlashCommand(name) {
 }
 
 // ============================================================
-//  Lógica do Chat (Add, Clear, Theme, etc.)
+//  LÃ³gica do Chat (Add, Clear, Theme, etc.)
 // ============================================================
 function addMessage(role, text, provider, model) {
   hideTypingIndicator();
@@ -542,7 +501,7 @@ function addMessage(role, text, provider, model) {
   header.classList.add('message-header', info.headerClass);
   let headerText = info.name;
   if (role === 'assistant' && provider && model) {
-    headerText += ` • ${provider} (${model})`;
+    headerText += ` â€¢ ${provider} (${model})`;
   }
   header.textContent = headerText;
 
@@ -565,7 +524,7 @@ function addMessage(role, text, provider, model) {
 
   chatContainer.appendChild(wrapper);
   
-  // Realça sintaxe usando Prism de forma assíncrona
+  // RealÃ§a sintaxe usando Prism de forma assÃ­ncrona
   setTimeout(() => {
     Prism.highlightAllUnder(wrapper);
   }, 10);
@@ -696,7 +655,7 @@ function appendMessage(text, isDone, provider, model) {
     header.classList.add('message-header', info.headerClass);
     let headerText = info.name;
     if (provider && model) {
-      headerText += ` • ${provider} (${model})`;
+      headerText += ` â€¢ ${provider} (${model})`;
     }
     header.textContent = headerText;
 
@@ -713,7 +672,7 @@ function appendMessage(text, isDone, provider, model) {
   currentAssistantText += text;
   currentAssistantContent.innerHTML = marked.parse(currentAssistantText);
   
-  // Executa Prism de forma contínua nos blocos de código adicionados
+  // Executa Prism de forma contÃ­nua nos blocos de cÃ³digo adicionados
   Prism.highlightAllUnder(currentAssistantContent);
 
   chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -801,7 +760,7 @@ function processProjectFiles(contentElement) {
         <span class="file-item-name" title="${filepath}">${filepath}</span>
       </div>
       <div class="file-item-actions">
-        <button class="file-item-btn" title="Visualizar código do arquivo" onclick="scrollToBlock('${blockId}')">
+        <button class="file-item-btn" title="Visualizar cÃ³digo do arquivo" onclick="scrollToBlock('${blockId}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
             <circle cx="12" cy="12" r="3"></circle>
@@ -869,7 +828,7 @@ function scrollToBlock(blockId) {
 }
 
 // ============================================================
-//  Controle de Seleção Dinâmica (Providers & Models)
+//  Controle de SeleÃ§Ã£o DinÃ¢mica (Providers & Models)
 // ============================================================
 function initializeConfig(data) {
   selectProvider.innerHTML = '';
@@ -1003,7 +962,7 @@ function setContextText(text) {
 }
 
 // ============================================================
-//  Renderização Dinâmica do Histórico de Sessões (HTML Premium)
+//  RenderizaÃ§Ã£o DinÃ¢mica do HistÃ³rico de SessÃµes (HTML Premium)
 // ============================================================
 function updateSessions(sessions, activeSessionId) {
   sessionsList.innerHTML = '';
@@ -1020,15 +979,15 @@ function updateSessions(sessions, activeSessionId) {
       item.classList.add('active');
     }
 
-    // Nome da Sessão (ou input para renomear)
+    // Nome da SessÃ£o (ou input para renomear)
     const nameEl = document.createElement('span');
     nameEl.classList.add('session-name');
     nameEl.textContent = session.name;
     
-    // Suporte a duplo clique para renomeação inline rápida
+    // Suporte a duplo clique para renomeaÃ§Ã£o inline rÃ¡pida
     nameEl.addEventListener('dblclick', () => startRename(item, session.id, nameEl));
 
-    // Ações (Editar e Deletar)
+    // AÃ§Ãµes (Editar e Deletar)
     const actions = document.createElement('div');
     actions.classList.add('session-item-actions');
 
@@ -1058,7 +1017,7 @@ function updateSessions(sessions, activeSessionId) {
     item.appendChild(nameEl);
     item.appendChild(actions);
 
-    // Seleção de Sessão ao clicar no item
+    // SeleÃ§Ã£o de SessÃ£o ao clicar no item
     item.addEventListener('click', (e) => {
       if (item.classList.contains('renaming')) return;
       showTab('chat');
@@ -1083,7 +1042,7 @@ function startRename(item, sessionId, nameEl) {
   input.focus();
   input.select();
 
-  // Função para salvar a renomeação
+  // FunÃ§Ã£o para salvar a renomeaÃ§Ã£o
   function saveRename() {
     const newName = input.value.trim();
     if (newName && newName !== currentName) {
@@ -1151,7 +1110,7 @@ function updateMessage(text, isDone, provider, model) {
     header.classList.add('message-header', info.headerClass);
     let headerText = info.name;
     if (provider && model) {
-      headerText += ` • ${provider} (${model})`;
+      headerText += ` â€¢ ${provider} (${model})`;
     }
     header.textContent = headerText;
 
@@ -1204,3 +1163,4 @@ if (window.chrome && window.chrome.webview) {
   });
   window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));
 }
+/* global postMessageToDelphi */
