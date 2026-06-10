@@ -4,7 +4,7 @@
     if (DEBUG) console.log('[RadIABridge]', ...args);
   }
 
-  // --- CONFIGURAÇÃO DE SELETORES E CSS ---
+  // --- Selector and CSS configuration ---
   const CONFIGS = {
     chatgpt: {
       domain: 'chatgpt.com',
@@ -48,7 +48,7 @@
                document.querySelector('.send-button-container button');
       },
       isGenerating: () => {
-        // Verifica se há alguma animação de carregamento ativa ou se o botão de parar geração está visível
+        // Check whether loading animation or the stop button is visible
         return !!(document.querySelector('stop-button') ||
                   document.querySelector('.loading-spinner') ||
                   document.querySelector('button[aria-label="Stop"]') ||
@@ -74,7 +74,7 @@
   }
 
   if (!currentSite) {
-    log('Domínio não mapeado:', host);
+    log('Unmapped domain:', host);
     return;
   }
 
@@ -85,7 +85,7 @@
     try {
       const head = document.head || document.getElementsByTagName('head')[0];
       if (!head) {
-        log('Erro: document.head não encontrado para injeção de CSS.');
+        log('Error: document.head not found for CSS injection.');
         return;
       }
       if (document.getElementById('radia-clean-css')) return;
@@ -93,24 +93,24 @@
       style.id = 'radia-clean-css';
       style.innerHTML = currentSite.css;
       head.appendChild(style);
-      log('CSS limpo injetado.');
+      log('Cleanup CSS injected.');
     } catch (err) {
-      log('Erro ao injetar CSS de limpeza:', err);
+      log('Error injecting cleanup CSS:', err);
     }
   }
 
 
 
-  // --- COMUNICAÇÃO DE ENTRADA (Delphi -> WebView) ---
+  // --- Inbound communication (Delphi -> WebView) ---
   if (window.chrome && window.chrome.webview) {
     window.chrome.webview.addEventListener('message', event => {
       const msg = event.data;
-      log('Mensagem recebida do Delphi:', msg);
+      log('Message received from Delphi:', msg);
 
       if (msg && msg.action === 'send_prompt') {
         const inputEl = currentSite.getInput();
         if (!inputEl) {
-          log('Erro: Campo de input não localizado.');
+          log('Error: input field not found.');
           sendToDelphi({ action: 'error', text: 'Input textarea not found in page.' });
           return;
         }
@@ -122,19 +122,19 @@
           inputEl.innerText = msg.text;
         }
         
-        // Dispara eventos necessários para ativar o botão de enviar no site
+        // Dispatch the events required to enable the site send button
         inputEl.dispatchEvent(new Event('input', { bubbles: true }));
         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
 
-        // Pequeno delay para garantir que o framework JS da página valide o texto
+        // Small delay to let the page framework validate the text
         setTimeout(() => {
           const btn = currentSite.getSendButton();
           if (btn) {
-            log('Clicando no botão de enviar oficial...');
+            log('Clicking the official send button...');
             btn.click();
             startMonitoring();
           } else {
-            log('Erro: Botão de enviar não localizado.');
+            log('Error: send button not found.');
             sendToDelphi({ action: 'error', text: 'Send button not found in page.' });
           }
         }, 150);
@@ -147,21 +147,21 @@
     if (window.chrome && window.chrome.webview) {
       window.chrome.webview.postMessage(data);
     } else {
-      log('Simulação PostMessage:', data);
+      log('PostMessage simulation:', data);
     }
   }
 
-  // --- RECONSTRUÇÃO DE MARKDOWN E FORMATOS ---
+  // --- Markdown and format reconstruction ---
   function getMarkdownFromElement(el) {
     if (!el) return '';
     try {
       const clone = el.cloneNode(true);
       
-      // Remove botões internos (como botões de copiar ou o botão 'Inserir no Delphi' injetado)
+      // Remove internal buttons, including copy buttons and injected Insert into Delphi buttons
       const buttons = clone.querySelectorAll('button, .radia-insert-btn, [class*="copy" i]');
       buttons.forEach(btn => btn.remove());
       
-      // Localiza todos os elementos de bloco de código pre/code
+      // Find all pre/code block elements
       const preElements = clone.querySelectorAll('pre');
       preElements.forEach(pre => {
         const codeEl = pre.querySelector('code') || pre;
@@ -173,7 +173,7 @@
         if (langMatch) {
           lang = langMatch[1];
         } else {
-          // Fallback: tenta buscar no cabeçalho do bloco de código na página original
+          // Fallback: try to read the code block header in the original page
           const parent = pre.parentElement;
           if (parent) {
             const header = parent.querySelector('.code-header') || parent.querySelector('[class*="header" i]');
@@ -186,18 +186,18 @@
           }
         }
         
-        // Obtém o texto do código puro mantendo todas as quebras de linha (textContent)
+        // Read raw code text while preserving line breaks
         const codeText = codeEl.textContent || '';
         
-        // Cria a representação do bloco em Markdown clássico
+        // Create the classic Markdown representation for the block
         const markdownText = `\n\`\`\`${lang}\n${codeText.trim()}\n\`\`\`\n`;
         
         const textNode = document.createTextNode(markdownText);
         pre.parentNode.replaceChild(textNode, pre);
       });
 
-      // Adiciona quebras de linha explícitas para elementos de bloco comuns para evitar que o texto
-      // fique colado quando extraído em abas ocultas/background (onde innerText falha em formatar quebras).
+      // Add explicit line breaks for common block elements to avoid glued text
+      // when extracted in hidden/background tabs where innerText misses layout breaks.
       const blockTags = clone.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, br');
       blockTags.forEach(tag => {
         if (tag.tagName === 'BR') {
@@ -211,10 +211,10 @@
         }
       });
       
-      // Usamos textContent para ler o DOM bruto de forma independente de renderização visual/layout CSS
+      // Use textContent to read raw DOM independently of visual rendering and CSS layout
       let markdown = clone.textContent || '';
       
-      // Limpa quebras de linha consecutivas excessivas para manter a formatação limpa
+      // Collapse excessive consecutive line breaks to keep formatting clean
       markdown = markdown.replace(/\n{3,}/g, '\n\n');
       
       return markdown.trim();
@@ -237,18 +237,18 @@
     generatingTimeout = 0;
     wasGeneratingDetected = false;
     
-    // Captura o elemento da última resposta existente ANTES de começar a nova
+    // Capture the last existing response element before starting a new one
     previousResponseElement = currentSite.getLastResponseElement();
-    log('Elemento de resposta anterior:', previousResponseElement);
+    log('Previous response element:', previousResponseElement);
     
     if (monitorInterval) clearInterval(monitorInterval);
 
     monitorInterval = setInterval(() => {
       const currentEl = currentSite.getLastResponseElement();
       
-      // Se ainda não temos um elemento novo, ignoramos (espera o site criar o elemento de resposta do prompt atual)
+      // If no new element exists yet, wait for the site to create the current prompt response
       if (!currentEl || currentEl === previousResponseElement) {
-        log('Aguardando criação da nova bolha de resposta no DOM...');
+        log('Waiting for the new response bubble in the DOM...');
         return;
       }
 
@@ -271,12 +271,12 @@
 
       if (!isGenerating && lastText.length > 0) {
         generatingTimeout++;
-        // Se detectamos que o botão de stop/loading funcionou antes, confiamos no isGenerating=false.
-        // O silêncio necessário é de apenas 2 ciclos (600ms).
-        // Se o botão nunca foi detectado (detector falhou), usamos um silêncio de segurança de 15 ciclos (4.5 segundos).
+        // If the stop/loading button was detected before, trust isGenerating=false.
+        // Only 2 quiet cycles are required in that case (600ms).
+        // If the button was never detected, use a 15-cycle safety quiet period (4.5 seconds).
         const requiredCycles = wasGeneratingDetected ? 2 : 15;
         if (generatingTimeout >= requiredCycles) {
-          log('Geração concluída.');
+          log('Generation completed.');
           clearInterval(monitorInterval);
           monitorInterval = null;
 
@@ -293,7 +293,7 @@
     }, 300);
   }
 
-  // --- INJEÇÃO DE BOTÕES "INSERIR NO DELPHI" ---
+  // --- Inject "Insert into Delphi" buttons ---
 
   let observer = null;
   let injectTimeout = null;
@@ -335,7 +335,7 @@
       `;
       head.appendChild(style);
     } catch (err) {
-      log('Erro ao injetar CSS do botão:', err);
+      log('Error injecting button CSS:', err);
     }
   }
 
@@ -355,7 +355,7 @@
 
         const btn = document.createElement('button');
         btn.className = 'radia-insert-btn';
-        btn.title = 'Inserir este código diretamente no editor do Delphi';
+        btn.title = 'Insert this code directly into the Delphi editor';
         btn.innerHTML = `
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; width:12px; height:12px;">
             <polyline points="16 18 22 12 16 6"></polyline>
@@ -375,7 +375,7 @@
           let codeText = code.innerText;
           codeText = codeText.trim();
           
-          log('Solicitando aplicação de código no Delphi:', codeText.length, 'bytes');
+          log('Requesting code application in Delphi:', codeText.length, 'bytes');
           sendToDelphi({
             action: 'apply_code',
             code: codeText
@@ -395,7 +395,7 @@
         pre.setAttribute('data-radia-injected', 'true');
       });
     } catch (err) {
-      log('Erro ao injetar botões nos elementos pre:', err);
+      log('Error injecting buttons into pre elements:', err);
     }
   }
 
@@ -433,7 +433,7 @@
     try {
       const inputEl = currentSite.getInput();
       if (inputEl) {
-        log('Login concluído! Avisando o Delphi.');
+        log('Login completed. Notifying Delphi.');
         sendToDelphi({ action: 'login_complete' });
         loginSignaled = true;
         return true;
@@ -456,7 +456,7 @@
           checkLoginComplete();
           let shouldCheck = false;
           for (let mutation of mutations) {
-            // Ignora se a mutação foi originada por nossa injeção direta de botões
+            // Ignore mutations caused by our direct button injection
             let isOurBtn = false;
             mutation.addedNodes.forEach(node => {
               if (node.classList && (node.classList.contains('radia-insert-btn') || node.classList.contains('radia-insert-btn-css'))) {
@@ -480,15 +480,15 @@
             childList: true,
             subtree: true
           });
-          log('Observer de injeção de botões e bridge ativado com sucesso.');
+          log('Button injection observer and bridge enabled successfully.');
         } else {
-          log('Erro: document.body ausente ao tentar ativar o observer.');
+          log('Error: document.body is missing while enabling the observer.');
         }
       } else {
-        log('Aviso: MutationObserver não é suportado neste ambiente.');
+        log('Warning: MutationObserver is not supported in this environment.');
       }
     } catch (err) {
-      log('Erro ao inicializar MutationObserver:', err);
+      log('Error initializing MutationObserver:', err);
     }
   }
 

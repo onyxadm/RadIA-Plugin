@@ -56,7 +56,7 @@ renderer.code = function(codeOrToken, lang) {
   _codeRegistry[id] = code;
 
   const isPascal = ['pascal', 'delphi', 'objectpascal'].includes(language.toLowerCase());
-  const headerTitle = isProjectFile ? `${language.toUpperCase()} â€¢ ${filepath}` : language.toUpperCase();
+  const headerTitle = isProjectFile ? `${language.toUpperCase()} - ${filepath}` : language.toUpperCase();
 
   return `
     <div class="code-block-container" ${isProjectFile ? `data-filepath="${filepath}" data-project-file="true"` : ''}>
@@ -469,7 +469,7 @@ function addMessage(role, text, provider, model) {
   header.classList.add('message-header', info.headerClass);
   let headerText = info.name;
   if (role === 'assistant' && provider && model) {
-    headerText += ` â€¢ ${provider} (${model})`;
+    headerText += ` - ${provider} (${model})`;
   }
   header.textContent = headerText;
 
@@ -620,7 +620,7 @@ function appendMessage(text, isDone, provider, model) {
     header.classList.add('message-header', info.headerClass);
     let headerText = info.name;
     if (provider && model) {
-      headerText += ` â€¢ ${provider} (${model})`;
+      headerText += ` - ${provider} (${model})`;
     }
     header.textContent = headerText;
 
@@ -1062,7 +1062,7 @@ function updateMessage(text, isDone, provider, model) {
     header.classList.add('message-header', info.headerClass);
     let headerText = info.name;
     if (provider && model) {
-      headerText += ` â€¢ ${provider} (${model})`;
+      headerText += ` - ${provider} (${model})`;
     }
     header.textContent = headerText;
 

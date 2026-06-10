@@ -156,7 +156,7 @@ begin
           if (not LHasApiKey) and LRegApiKey.IsEmpty then
             LRegApiKey := 'dummy';
 
-          // Criar e marcar como dinâmico antes do registro
+          // Create and mark as dynamic before registration
           LMeta := TProviderMetadata.Create(
             LId,
             LDisplayName,
