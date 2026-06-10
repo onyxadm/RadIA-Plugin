@@ -452,6 +452,9 @@ end;
 
 procedure TChatPresenter.ClearChat;
 begin
+  if not CanChangeSession then
+    Exit;
+
   FHistory := [];
   FAccumulatedUsage := TTokenUsage.Empty;
   PostToWebView('clear_chat', '', '');

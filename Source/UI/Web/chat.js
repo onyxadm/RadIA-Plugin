@@ -116,6 +116,7 @@ let slashPopupSelectedIndex = 0;
 let filteredSlashCommands = [];
 
 const chatWrapper          = document.getElementById('chat-wrapper');
+const mainLayout           = document.getElementById('main-layout');
 const generatorsWrapper    = document.getElementById('generators-wrapper');
 const chatScrollbar        = document.getElementById('chat-scrollbar');
 const chatScrollbarThumb   = document.getElementById('chat-scrollbar-thumb');
@@ -258,6 +259,11 @@ function hideWelcomeScreen() {
 }
 
 function requestHistoryLoad() {
+  if (!canChangeSession()) {
+    showSessionLockedStatus();
+    return;
+  }
+
   historyLoadRequested = true;
   postMessageToDelphi({ action: 'load_history' });
 }
@@ -286,7 +292,7 @@ function showWelcomeScreen() {
         <path d="M3 4v5h5"></path>
         <path d="M12 7v5l3 2"></path>
       </svg>
-      <span>Load chat history</span>
+      <span>Open chats</span>
     </button>
   `;
 
@@ -341,8 +347,9 @@ function showSessionLockedStatus() {
 
 function updateSessionControlsState() {
   const disabled = requestInProgress;
-  btnHistory.disabled = disabled;
-  btnNewChatSidebar.disabled = disabled;
+  document.querySelectorAll('button').forEach(button => {
+    button.disabled = disabled && button !== btnSendPrompt;
+  });
   sessionsSidebar.classList.toggle('sessions-locked', disabled);
 }
 
@@ -453,10 +460,13 @@ function handleSend() {
 
 function showTab(tabName) {
   if (tabName === 'generators') {
+    sessionsSidebar.classList.add('collapsed');
+    mainLayout.classList.add('generator-mode');
     chatWrapper.classList.add('hidden');
     generatorsWrapper.classList.remove('hidden');
     btnGenerators.classList.add('active');
   } else {
+    mainLayout.classList.remove('generator-mode');
     generatorsWrapper.classList.add('hidden');
     chatWrapper.classList.remove('hidden');
     btnGenerators.classList.remove('active');
@@ -464,6 +474,10 @@ function showTab(tabName) {
 }
 
 btnGenerators.addEventListener('click', () => {
+  if (!canChangeSession()) {
+    showSessionLockedStatus();
+    return;
+  }
   if (generatorsWrapper.classList.contains('hidden')) {
     showTab('generators');
   } else {
@@ -472,6 +486,10 @@ btnGenerators.addEventListener('click', () => {
 });
 
 btnClearChat.addEventListener('click', () => {
+  if (!canChangeSession()) {
+    showSessionLockedStatus();
+    return;
+  }
   if (confirm('Clear the current conversation history?')) {
     postMessageToDelphi({ action: 'clear_chat' });
   }
@@ -482,15 +500,30 @@ btnHistory.addEventListener('click', () => {
     showSessionLockedStatus();
     return;
   }
+  if (!generatorsWrapper.classList.contains('hidden')) {
+    showTab('chat');
+  }
   if (sessionsSidebar.classList.contains('collapsed') && !historyLoadRequested) {
     requestHistoryLoad();
   }
   sessionsSidebar.classList.toggle('collapsed');
 });
 
-btnSettings.addEventListener('click', () => postMessageToDelphi({ action: 'open_settings' }));
+btnSettings.addEventListener('click', () => {
+  if (!canChangeSession()) {
+    showSessionLockedStatus();
+    return;
+  }
+  postMessageToDelphi({ action: 'open_settings' });
+});
 if (btnWebLogin) {
-  btnWebLogin.addEventListener('click', () => postMessageToDelphi({ action: 'web_login_connect' }));
+  btnWebLogin.addEventListener('click', () => {
+    if (!canChangeSession()) {
+      showSessionLockedStatus();
+      return;
+    }
+    postMessageToDelphi({ action: 'web_login_connect' });
+  });
 }
 
 btnNewChatSidebar.addEventListener('click', () => {
@@ -1172,6 +1205,10 @@ function updateSessions(sessions, activeSessionId) {
     btnRename.innerHTML = SVG_ICONS.edit;
     btnRename.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (!canChangeSession()) {
+        showSessionLockedStatus();
+        return;
+      }
       startRename(item, session.id, nameEl);
     });
 
@@ -1182,6 +1219,10 @@ function updateSessions(sessions, activeSessionId) {
     btnDelete.innerHTML = SVG_ICONS.trash;
     btnDelete.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (!canChangeSession()) {
+        showSessionLockedStatus();
+        return;
+      }
       if (confirm(`Excluir conversa "${session.name}"?`)) {
         postMessageToDelphi({ action: 'delete_session', id: session.id });
       }
@@ -1230,7 +1271,7 @@ function startRename(item, sessionId, nameEl) {
 
   function saveRename() {
     const newName = input.value.trim();
-    if (newName && newName !== currentName) {
+    if (newName && newName !== currentName && canChangeSession()) {
       postMessageToDelphi({ action: 'rename_session', id: sessionId, name: newName });
     }
     cleanup();
