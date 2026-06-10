@@ -50,6 +50,34 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
+  <summary><b>📦 v0.0.18 — Chat UX, Web Login, and Rad IA Branding Polish (Click to expand)</b></summary>
+
+  #### 1. Chat Welcome Experience and IDE Theme - Items #46, #47
+  *   **Description**: Refined chat startup and IDE theme adaptation to reduce visual noise and make first use more intuitive.
+  *   **Details**:
+      *   Added a welcome screen with a central animation, quick actions, and on-demand history loading.
+      *   Treats the Mountain Mist IDE theme as light, keeping only dark and light modes in the chat CSS.
+      *   Adjusted scrollbar width and fixed light-theme code blocks so Prism `pre` sections no longer show a dark border.
+      *   Reduced the visual flash during the first WebView2 paint.
+
+  #### 2. Sessions, Processing Locks, and Generator - Items #48, #49
+  *   **Description**: Fixed multiple-chat behavior to prevent context loss during in-flight responses and make navigation more predictable.
+  *   **Details**:
+      *   Selecting a conversation no longer moves it to the top of the list.
+      *   Session actions, toolbar buttons, edit, delete, create, clear, and conversation switching are locked while processing.
+      *   Empty sessions are no longer restored as extra chats on the next startup.
+      *   The **History** button was renamed to **Chats**, and the generator now takes the full area to prevent manipulating the chat list while it is open.
+
+  #### 3. Web Login and Visual Identity - Items #50, #51
+  *   **Description**: Improved the web login flow and aligned user-facing branding as **Rad IA**.
+  *   **Details**:
+      *   Web Login now shows clearer status messages, a visual fallback when the embedded browser takes too long to start, and a **Use Current Session** action for already-authenticated accounts.
+      *   UI text, IDE menu, splash/about, documentation, and package metadata were reviewed to display **Rad IA** separated.
+      *   Version metadata updated to `v0.0.18`.
+      *   Validated with a local Delphi 12 (`23.0`) build and web asset linting with no blocking errors.
+</details>
+
+<details>
   <summary><b>📦 v0.0.17 — Editor Menu and WebView2 Chat Stabilization (Click to expand)</b></summary>
 
   #### 1. Editor Code Formatting and Slash Commands - Items #43, #44

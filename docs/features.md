@@ -9,13 +9,15 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | Recurso | Categoria | Descrição | Status |
 | :--- | :--- | :--- | :--- |
 | **Chat Lateral Acoplável** | Chat UX | Painel integrado à IDE rodando WebView2 com suporte a Markdown e Pascal highlight. | ✅ Concluído |
+| **Tela Inicial do Chat** | Chat UX | Tela inicial com animação central, ações rápidas e carregamento de histórico sob demanda. | ✅ Concluído |
+| **Tema Integrado à IDE** | Chat UX | Adaptação Dark/Light ao tema do Delphi, incluindo Mountain Mist como light, scrollbar e blocos de código consistentes. | ✅ Concluído |
 | **Atalhos de Teclado** | Chat UX | Atalho `Ctrl + Enter` para enviar prompts e `Enter` para quebra de linha. | ✅ Concluído |
 | **Persistência de Layout** | Chat UX | Salvamento e restauração automática de tamanho/posição flutuante e visibilidade no startup. | ✅ Concluído |
 | **Streaming de Respostas** | Chat UX | Respostas incrementais token a token (SSE) nos provedores OpenAI, Gemini, Claude e Ollama. | ✅ Concluído |
 | **Múltiplas Sessões de Chat** | Chat UX | Criação, renomeação, exclusão e isolamento de conversas em barra lateral retrátil (bloqueadas durante requisições ativas). | ✅ Concluído |
-| **Histórico de Chat Persistente** | Chat UX | Salvamento automático e restauração de sessões anteriores de chat em JSON. | ✅ Concluído |
+| **Histórico de Chat Persistente** | Chat UX | Salvamento automático em JSON e restauração sob demanda das sessões anteriores de chat. | ✅ Concluído |
 | **Histórico de Prompts (↑/↓)** | Chat UX | Navegação rápida pelos prompts enviados anteriormente usando as setas do teclado. | ✅ Concluído |
-| **Cancelamento de Requisições** | Chat UX | Permite abortar chamadas ativas de IA de forma assíncrona (com botão stop ou automaticamente ao alternar/criar chats). | ✅ Concluído |
+| **Cancelamento de Requisições** | Chat UX | Permite abortar chamadas ativas de IA de forma assíncrona com botão stop e bloqueia ações de sessão durante processamento. | ✅ Concluído |
 | **Exportação de Conversa** | Chat UX | Botão para salvar histórico nos formatos Markdown (.md) ou HTML autônomo com Prism.js. | ✅ Concluído |
 | **Templates de Prompt** | Chat UX | Biblioteca de templates rápidos de prompt com substituição de código e o comando `/template`. | ✅ Concluído |
 | **Slash Commands Dinâmicos** | Chat UX | Mapeamento dinâmico de templates para comandos de barra (ex: `/createprojectarch`), sincronizados e autocompletados no WebView2. | ✅ Concluído |
@@ -23,7 +25,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Backup de Templates** | Chat UX | Exportação e importação transacional em JSON de templates com validação estrutural de esquema e opção de mesclagem na UI. | ✅ Concluído |
 | **Google Gemini** | Provedor | Suporte nativo aos modelos Gemini 1.5 Flash e Pro via chaves próprias (BYOK). | ✅ Concluído |
 | **OpenAI ChatGPT** | Provedor | Suporte nativo aos modelos GPT-4o, GPT-4o-mini e outros. | ✅ Concluído |
-| **Login Híbrido (Web Login)**| Provedor | Permite alternar entre BYOK (API Keys) ou Login Web (Plus/Pro) para OpenAI e Gemini, usando injeção inteligente de DOM/CSS para ocultar menus oficiais e ponte JS. | ✅ Concluído |
+| **Login Híbrido (Web Login)**| Provedor | Permite alternar entre BYOK (API Keys) ou Login Web (Plus/Pro) para OpenAI e Gemini, com tela orientativa, fallback para sessão atual e status claro. | ✅ Concluído |
 | **Anthropic Claude** | Provedor | Suporte nativo aos modelos Claude 3 Haiku e Claude 3.5 Sonnet. | ✅ Concluído |
 | **DeepSeek** | Provedor | Suporte nativo aos modelos DeepSeek Chat e Reasoning via chaves próprias (BYOK). | ✅ Concluído |
 | **Groq** | Provedor | Suporte nativo aos modelos Llama, Mixtral e Gemma na nuvem ultrarrápida da Groq via chaves próprias (BYOK). | ✅ Concluído |
@@ -47,6 +49,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Documentação XML Automática** | Geração | Geração automática de comentários `/// <summary>` sobre os métodos da unit. | ✅ Concluído |
 | **Conversor de DTO e Modelos** | Geração | Conversor de payload JSON ou DDL SQL para classes de dados (DTOs) ou records Object Pascal (com DEXT ORM, Aurelius, REST.Json ou Vanilla). | ✅ Concluído |
 | **Geração de Projeto Completo** | Geração | Geração automática de projetos Delphi (.dpr, .pas, .dfm) via prompt do assistente, salvando-os em pasta vazia e carregando-os na IDE. | ✅ Concluído |
+| **Generator em Tela Cheia** | Geração | Área de generator ocupa todo o painel e recolhe a lista de chats para evitar manipulação cruzada. | ✅ Concluído |
 | **Menu Popup de Slash Commands (/)** | Chat UX | Menu flutuante de sugestões e autocompletar ao digitar `/` na caixa de entrada do chat. | ✅ Concluído |
 | **Assistente de Stack Trace** | Integração | Analisador de logs de erro/stack trace integrado ao contexto da unit aberta. | ✅ Concluído |
 | **Análise Estática de Código** | Integração | Varredura de código em busca de memory leaks (ausência de try..finally) e anti-padrões SOLID/Clean Code. | ✅ Concluído |

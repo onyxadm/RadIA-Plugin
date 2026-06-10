@@ -9,13 +9,15 @@ This document contains the complete checklist, categorization, and development s
 | Feature | Category | Description | Status |
 | :--- | :--- | :--- | :--- |
 | **Dockable Sidebar Chat** | Chat UX | IDE-integrated panel running WebView2 with Markdown and Pascal highlighting. | ✅ Completed |
+| **Chat Welcome Screen** | Chat UX | Welcome screen with a central animation, quick actions, and on-demand history loading. | ✅ Completed |
+| **IDE Theme Integration** | Chat UX | Dark/Light adaptation to the Delphi theme, including Mountain Mist as light, scrollbar polish, and consistent code blocks. | ✅ Completed |
 | **Keyboard Shortcuts** | Chat UX | Shortcut `Ctrl + Enter` to send prompts and simple `Enter` for line breaks. | ✅ Completed |
 | **Layout Persistence** | Chat UX | Automatic saving and restoration of floating window size/position and visibility at startup. | ✅ Completed |
 | **Streaming Responses** | Chat UX | Real-time incremental token rendering (SSE) for OpenAI, Gemini, Claude, and Ollama. | ✅ Completed |
-| **Multiple Chat Sessions** | Chat UX | Create, rename, delete, and isolate conversations in a collapsible sidebar. | ✅ Completed |
-| **Persistent Chat History** | Chat UX | Automatic local JSON storage and reload of conversation history. | ✅ Completed |
+| **Multiple Chat Sessions** | Chat UX | Create, rename, delete, and isolate conversations in a collapsible sidebar, with actions locked during active requests. | ✅ Completed |
+| **Persistent Chat History** | Chat UX | Automatic local JSON storage and on-demand reload of previous chat sessions. | ✅ Completed |
 | **Prompt Navigation (↑/↓)** | Chat UX | Terminal-like keyboard arrow history lookup in prompt input. | ✅ Completed |
-| **Request Cancellation** | Chat UX | Abort active AI HTTP requests asynchronously using a dynamic stop button interface. | ✅ Completed |
+| **Request Cancellation** | Chat UX | Abort active AI HTTP requests asynchronously using a dynamic stop button and lock session actions while processing. | ✅ Completed |
 | **Export Conversation** | Chat UX | Save current active chats to Markdown (.md) or standalone rich HTML formats. | ✅ Completed |
 | **Prompt Templates** | Chat UX | Quick prompt template library with token replacement and the `/template` command. | ✅ Completed |
 | **Dynamic Slash Commands** | Chat UX | Dynamic mapping of templates to slash commands (e.g. `/createprojectarch`), synced and autocompleted in WebView2. | ✅ Completed |
@@ -23,7 +25,7 @@ This document contains the complete checklist, categorization, and development s
 | **Template Backup & Restore** | Chat UX | Transactional JSON import and export with schema validations and merge/overwrite UI options. | ✅ Completed |
 | **Google Gemini** | Provider | Native BYOK integration for Gemini 1.5 Pro and Gemini 1.5 Flash models. | ✅ Completed |
 | **OpenAI ChatGPT** | Provider | Native BYOK integration for GPT-4o, GPT-4o-mini, and others. | ✅ Completed |
-| **Hybrid Login (Web Login)**| Provider | Choose between BYOK (API Keys) or Web Login (Plus/Pro) for OpenAI and Gemini, using smart DOM/CSS injection and JS bridge. | ✅ Completed |
+| **Hybrid Login (Web Login)**| Provider | Choose between BYOK (API Keys) or Web Login (Plus/Pro) for OpenAI and Gemini, with a guided screen, current-session fallback, and clear status text. | ✅ Completed |
 | **Anthropic Claude** | Provider | Native BYOK integration for Claude 3 Haiku and Claude 3.5 Sonnet. | ✅ Completed |
 | **DeepSeek** | Provider | Native BYOK integration for DeepSeek Chat and Reasoning models. | ✅ Completed |
 | **Groq** | Provider | Native BYOK integration for Llama, Mixtral, and Gemma models via Groq's high-speed cloud. | ✅ Completed |
@@ -47,6 +49,7 @@ This document contains the complete checklist, categorization, and development s
 | **Auto XML Documentation** | Generation | Write Delphi-compliant XML help comments above methods automatically. | ✅ Completed |
 | **DTO & Model Converter** | Generation | Convert JSON or SQL DDL payloads into Object Pascal data classes (DTOs) or records (DEXT ORM, Aurelius, REST.Json, or Vanilla). | ✅ Completed |
 | **Complete Project Generation** | Generation | Automatic creation of Delphi projects (.dpr, .pas, .dfm) from a prompt, saving them to an empty folder and opening them in the IDE. | ✅ Completed |
+| **Full-Screen Generator** | Generation | Generator area uses the whole panel and collapses the chat list to avoid cross-session manipulation. | ✅ Completed |
 | **Slash Commands Popup Menu (/)** | Chat UX | Floating suggestions and autocomplete menu when typing `/` in the chat input. | ✅ Completed |
 | **Stack Trace Assistant** | Integration | Error log/stack trace analyzer integrated with active unit context. | ✅ Completed |
 | **Static Code Analysis** | Integration | Code scan for memory leaks (missing try..finally) and SOLID/Clean Code anti-patterns. | ✅ Completed |

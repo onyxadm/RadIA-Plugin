@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.18 — Chat UX, Web Login, and Rad IA Branding Polish (Completed)</b></summary>
+
+  *   **Delivered Value**: A clearer and more predictable daily chat experience, with smoother startup, IDE-aligned theming, protected sessions during processing, and a more helpful web login flow.
+  *   **Highlights**: welcome screen with quick actions, on-demand history loading, Mountain Mist treated as light, multiple chats no longer reordered on selection, actions locked during responses, full-screen generator, visual web login fallback, and the product name displayed as **Rad IA**.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.18)](backlog.en.md#v0018--chat-ux-web-login-and-rad-ia-branding-polish-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.17 — Stable Editor Menu and WebView2 Chat (Completed)</b></summary>
 
   *   **Value Delivered**: More predictable editor actions: selected code reaches the chat formatted, `/explain` no longer falls into review, and Delphi 12/13 load updated web assets consistently.

@@ -50,6 +50,34 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
+  <summary><b>📦 v0.0.18 — Polimento do Chat, Web Login e Marca Rad IA (Clique para expandir)</b></summary>
+
+  #### 1. Experiência Inicial e Tema do Chat - Itens #46, #47
+  *   **Descrição**: Refinamento da abertura do chat e da adaptação visual ao tema da IDE para reduzir ruído visual e tornar o primeiro uso mais intuitivo.
+  *   **Detalhes**:
+      *   Criação de uma tela inicial com animação central, atalhos rápidos e carregamento de histórico sob demanda.
+      *   Tratamento do tema Mountain Mist como light, mantendo apenas os modos dark e light no CSS do chat.
+      *   Ajuste da largura da scrollbar e correção do bloco de código no tema light para remover a borda escura ao redor do `pre`.
+      *   Redução do flash visual no primeiro carregamento do WebView2.
+
+  #### 2. Sessões, Bloqueios e Generator - Itens #48, #49
+  *   **Descrição**: Correção do comportamento de múltiplos chats para evitar perda de contexto durante respostas em andamento e tornar a navegação mais previsível.
+  *   **Detalhes**:
+      *   Selecionar uma conversa não a move mais para o topo da lista.
+      *   Ações de sessão, botões da barra superior, edição, exclusão, criação, limpeza e troca de conversa ficam bloqueados durante processamento.
+      *   Sessões vazias não são restauradas como chats extras no próximo carregamento.
+      *   O botão **History** foi renomeado para **Chats** e o generator passou a ocupar toda a área, evitando manipulação cruzada da lista de chats.
+
+  #### 3. Web Login e Identidade Visual - Itens #50, #51
+  *   **Descrição**: Melhoria do fluxo de login web e alinhamento da marca exibida ao usuário como **Rad IA**.
+  *   **Detalhes**:
+      *   Tela de Web Login ganhou status claros, fallback visual quando o browser embutido demora a iniciar e ação **Use Current Session** para contas já autenticadas.
+      *   Textos de UI, menu da IDE, splash/about, documentação e metadados do pacote foram revisados para exibir **Rad IA** separado.
+      *   Metadados de versão atualizados para `v0.0.18`.
+      *   Validação realizada com build local no Delphi 12 (`23.0`) e lint dos recursos web sem erros bloqueantes.
+</details>
+
+<details>
   <summary><b>📦 v0.0.17 — Estabilização do Menu do Editor e Chat WebView2 (Clique para expandir)</b></summary>
 
   #### 1. Formatação de Código e Slash Commands do Editor - Itens #43, #44

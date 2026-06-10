@@ -33,10 +33,10 @@ This project adopts clear language rules and design standards for both human dev
     *   Available primarily in Portuguese ([README.md](README.md)) with an English translation ([README.en.md](README.en.md)).
 
 ### 2. Features
-*   **Dockable Sidebar Chat:** A native-looking, dockable panel integrated into the Delphi IDE featuring a high-fidelity web-rendered chat window (Edge/WebView2) with full Markdown rendering and Delphi syntax highlighting.
+*   **Dockable Sidebar Chat:** A native-looking, dockable panel integrated into the Delphi IDE with a quick-action welcome screen, IDE-aligned Dark/Light themes, and a high-fidelity web-rendered chat window (Edge/WebView2) with full Markdown rendering and Delphi syntax highlighting.
 *   **Multi-Provider AI Support & Hybrid Connection:** Flexible hybrid connection model. Allows using your own API keys (BYOK) for **Google Gemini**, **OpenAI ChatGPT**, **Azure OpenAI**, **Anthropic Claude**, **AWS Bedrock**, **GitHub Copilot**, **DeepSeek**, **Groq**, **Alibaba Qwen**, **Mistral AI**, **OpenRouter**, **LM Studio**, and local **Ollama**, OR connecting directly to consumer personal/corporate accounts (**ChatGPT Plus/Pro** and **Gemini Advanced**) via official login inside WebView2, bypassing network blocks using smart DOM/CSS injection and JS-Delphi bridge.
 *   **Native GitHub Copilot Integration:** Official support to connect directly to GitHub Copilot servers in the cloud (both personal and corporate subscriptions) with an integrated OAuth Device Flow and one-click importing of active VS Code credentials.
-*   **Persistent Chat History:** Chat conversations are automatically saved locally in JSON format, restoring previous context whenever the IDE is closed and reopened.
+*   **Persistent Chat History:** Chat conversations are automatically saved locally in JSON format and can be loaded on demand from the welcome screen, avoiding chats being restored when the user does not need them.
 *   **Shortcuts and Prompt History:** Integrated productivity shortcuts: use `Ctrl + Enter` to send prompts, `Enter` for line breaks, and keyboard arrows `↑` (up) and `↓` (down) inside the text input area to quickly cycle through previously typed and sent prompts.
 *   **Context-Aware Editor Actions:** Right-click on any code selection to:
     *   *Explain Selected Code:* Analyze and explain the logic.
@@ -51,7 +51,7 @@ This project adopts clear language rules and design standards for both human dev
 *   **Customizable Slash Commands:** Run quick actions directly in the chat input (e.g., `/explain`, `/createprojectarch`). You can define new dynamic commands mapped to custom prompt templates in the plugin settings.
 *   **Template Library & Backup:** Panel to manage reusable prompt templates with smart token replacement (`{code}`, `{specification}`) and built-in dialogs to export and import backups (JSON) with merge support.
 *   **Secure API Key Registry Storage:** Keys are saved encrypted locally using the Windows Data Protection API (DPAPI) inside the Windows Registry.
-*   **Request Cancellation:** A dynamic circular stop button integrated inside the prompt input to abort active requests instantly and safely.
+*   **Request Cancellation and Action Locking:** A dynamic circular stop button integrated inside the prompt input aborts active requests instantly and safely. While processing, session actions, toolbar buttons, and chat switching are locked to preserve the active context.
 
 ### 2.1 Complete Feature Checklist
 

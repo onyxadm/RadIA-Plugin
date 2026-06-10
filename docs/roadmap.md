@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.18 — Polimento de UX do Chat, Web Login e Marca Rad IA (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Experiência mais clara e previsível no uso diário do chat, com abertura mais suave, tema alinhado à IDE, sessões protegidas durante processamento e login web mais orientativo.
+  *   **Destaques**: tela inicial com atalhos rápidos, histórico sob demanda, Mountain Mist tratado como light, múltiplos chats sem reordenação ao selecionar, bloqueio de ações durante respostas, generator em tela cheia, web login com fallback visual e marca exibida como **Rad IA**.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.18)](backlog.md#v0018--polimento-do-chat-web-login-e-marca-rad-ia-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.17 — Menu do Editor e Chat WebView2 Estáveis (Concluído)</b></summary>
 
   *   **Valor Entregue**: Experiência mais previsível ao usar ações do editor: código selecionado chega ao chat formatado, `/explain` não cai mais em review e Delphi 12/13 carregam os recursos web atualizados.

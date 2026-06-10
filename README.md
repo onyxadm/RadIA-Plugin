@@ -33,10 +33,10 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
     *   Disponível principalmente em Português ([README.md](README.md)) com tradução equivalente em Inglês ([README.en.md](README.en.md)).
 
 ### 2. Funcionalidades
-*   **Chat Lateral Acoplável (Dockable):** Painel integrado à IDE com visual nativo do Delphi, trazendo uma janela de chat em HTML5/JS moderno (WebView2) com suporte a Markdown e realce de sintaxe Pascal.
+*   **Chat Lateral Acoplável (Dockable):** Painel integrado à IDE com visual nativo do Delphi, tela inicial com atalhos rápidos, temas Dark/Light alinhados à IDE e janela de chat em HTML5/JS moderno (WebView2) com suporte a Markdown e realce de sintaxe Pascal.
 *   **Suporte a Múltiplas IAs & Conexão Híbrida:** Modelo híbrido flexível de conexão. Permite usar chaves de API próprias (BYOK) para **Google Gemini**, **OpenAI ChatGPT**, **Azure OpenAI**, **Anthropic Claude**, **AWS Bedrock**, **GitHub Copilot**, **DeepSeek**, **Groq**, **Alibaba Qwen**, **Mistral AI**, **OpenRouter**, **LM Studio** e **Ollama** local, OU conectar-se diretamente às suas contas pessoais/corporativas de consumo (**ChatGPT Plus/Pro** e **Gemini Advanced**) via login oficial no WebView2, contornando bloqueios de rede com injeção inteligente de DOM/CSS e ponte JS-Delphi.
 *   **Integração Nativa com GitHub Copilot:** Suporte oficial para conectar-se diretamente aos servidores do GitHub Copilot (pessoal ou corporativo) na nuvem, com fluxo de autenticação do dispositivo embutido (OAuth Device Flow) e importação em um clique das credenciais ativas do VS Code.
-*   **Histórico de Chat Persistente:** O histórico de conversas é salvo automaticamente localmente em formato JSON, restaurando o contexto ao fechar e abrir a IDE.
+*   **Histórico de Chat Persistente:** O histórico de conversas é salvo automaticamente localmente em formato JSON e pode ser carregado sob demanda na tela inicial, evitando restaurar chats que o usuário não quer abrir naquele momento.
 *   **Atalhos e Histórico de Prompts:** Atalhos integrados para aumentar a produtividade: `Ctrl + Enter` para enviar prompts, `Enter` para quebra de linha, e uso das setas `↑` (para cima) e `↓` (para baixo) na área de digitação para navegar rapidamente pelo histórico dos prompts que já foram digitados e enviados.
 *   **Ações de Contexto no Editor:** Clique com o botão direito em qualquer trecho de código selecionado para:
     *   *Explicar Código Selecionado:* Analisar didaticamente a lógica.
@@ -51,7 +51,7 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
 *   **Comandos de Barra Customizáveis (Slash Commands):** Execução de ações rápidas digitando comandos no chat (ex: `/explain`, `/createprojectarch`). Permite cadastrar novos comandos dinâmicos associados a templates de prompts personalizados pelas opções do plugin.
 *   **Biblioteca de Templates e Backup:** Interface para gerenciamento de prompts reutilizáveis com substituição inteligente de marcadores (`{code}`, `{specification}`) e diálogos para exportação e importação de backups (JSON) com suporte a mesclagem.
 *   **Armazenamento Seguro de Chaves:** Credenciais criptografadas localmente via Windows DPAPI e salvas no Registro do Windows.
-*   **Cancelamento de Requisições:** Botão de parada dinâmico redondo integrado na cápsula do prompt para interromper requisições assíncronas de forma segura. Ocorre também de forma automática ao criar, excluir ou alternar entre chats na barra lateral.
+*   **Cancelamento e Bloqueio de Ações:** Botão de parada dinâmico redondo integrado na cápsula do prompt para interromper requisições assíncronas de forma segura. Durante o processamento, ações de sessão, botões da barra superior e troca de chats ficam bloqueados para preservar o contexto ativo.
 
 ### 2.1 Tabela Completa de Recursos (Features)
 
