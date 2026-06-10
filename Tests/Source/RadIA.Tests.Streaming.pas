@@ -5,7 +5,7 @@ interface
 uses
   DUnitX.TestFramework, System.SysUtils, System.Classes, System.JSON, System.RTTI,
   RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage,
-  RadIA.Provider.Base, RadIA.Provider.OpenAI, RadIA.Provider.Gemini,
+  RadIA.Provider.Streaming, RadIA.Provider.Base, RadIA.Provider.OpenAI, RadIA.Provider.Gemini,
   RadIA.Provider.Claude, RadIA.Provider.Ollama, RadIA.Core.Config;
 
 type
@@ -41,6 +41,10 @@ type
     procedure TestOllama_SingleChunk;
     [Test]
     procedure TestOllama_DoneEvent;
+    [Test]
+    procedure TestUtf8ChunkDecoderKeepsSplitMultibyteCharacter;
+    [Test]
+    procedure TestUtf8ChunkDecoderReturnsAsciiImmediately;
   end;
 
 implementation
@@ -288,6 +292,39 @@ begin
   Assert.AreEqual(1, LCallbackCount);
   Assert.IsTrue(LIsDone);
   Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAStreaming.TestUtf8ChunkDecoderKeepsSplitMultibyteCharacter;
+var
+  LDecoder: TUtf8ChunkDecoder;
+  LBytes: TBytes;
+begin
+  LDecoder := TUtf8ChunkDecoder.Create;
+  try
+    SetLength(LBytes, 2);
+    LBytes[0] := Ord('O');
+    LBytes[1] := $C3;
+    Assert.AreEqual('O', LDecoder.Decode(LBytes));
+
+    SetLength(LBytes, 2);
+    LBytes[0] := $A1;
+    LBytes[1] := Ord('!');
+    Assert.AreEqual(#$00E1 + '!', LDecoder.Decode(LBytes));
+  finally
+    LDecoder.Free;
+  end;
+end;
+
+procedure TTestRadIAStreaming.TestUtf8ChunkDecoderReturnsAsciiImmediately;
+var
+  LDecoder: TUtf8ChunkDecoder;
+begin
+  LDecoder := TUtf8ChunkDecoder.Create;
+  try
+    Assert.AreEqual('plain text', LDecoder.Decode(TEncoding.UTF8.GetBytes('plain text')));
+  finally
+    LDecoder.Free;
+  end;
 end;
 
 initialization

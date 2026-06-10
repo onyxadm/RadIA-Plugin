@@ -55,6 +55,7 @@ contains
   RadIA.Core.Sessions in 'Source\Core\RadIA.Core.Sessions.pas',
   RadIA.Core.DTO.Generator in 'Source\Core\RadIA.Core.DTO.Generator.pas',
   RadIA.Core.ProjectGenerator in 'Source\Core\RadIA.Core.ProjectGenerator.pas',
+  RadIA.Provider.Streaming in 'Source\Providers\RadIA.Provider.Streaming.pas',
   RadIA.Provider.Base in 'Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in 'Source\Providers\RadIA.Provider.Gemini.pas',
   RadIA.Provider.OpenAI in 'Source\Providers\RadIA.Provider.OpenAI.pas',

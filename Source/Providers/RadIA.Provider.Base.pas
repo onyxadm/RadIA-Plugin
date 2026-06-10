@@ -4,19 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, System.Threading,
-  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage;
-
-type
-  { Custom stream that intercepts HTTP write calls to process SSE chunks in real time }
-  TStreamingTargetStream = class(TStream)
-  private
-    FOnWrite: TProc<TBytes>;
-  public
-    constructor Create(const AOnWrite: TProc<TBytes>);
-    function Write(const Buffer; Count: Longint): Longint; override;
-    function Read(var Buffer; Count: Longint): Longint; override;
-    function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
-  end;
+  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Streaming;
 
 type
   TParserFunc = reference to function(const AResponseJson: string; out AUsage: TTokenUsage): string;
@@ -100,6 +88,9 @@ implementation
 uses
   System.JSON, System.Generics.Collections, System.Math, RadIA.Core.Logger, System.SyncObjs;
 
+const
+  CLogPreviewMaxLength = 320;
+
 function MaskHeaders(const AHeaders: TNetHeaders): string;
 var
   LHeader: TNetHeader;
@@ -126,6 +117,21 @@ begin
   finally
     LList.Free;
   end;
+end;
+
+function SanitizePayloadPreview(const APayload: string): string;
+begin
+  Result := APayload.Replace(#13, ' ').Replace(#10, ' ').Trim;
+  if Length(Result) > CLogPreviewMaxLength then
+    Result := Copy(Result, 1, CLogPreviewMaxLength) + '...';
+end;
+
+procedure LogPayloadSummary(const AOperation, ALabel, APayload: string);
+begin
+  TLogger.Log(
+    Format('%s: %s length=%d preview=%s',
+      [AOperation, ALabel, Length(APayload), SanitizePayloadPreview(APayload)]),
+    'Provider');
 end;
 
 function ExtractErrorMessageFromJson(const AJsonStr: string): string;
@@ -264,7 +270,7 @@ var
 begin
   TLogger.Log(Format('DoPostRequest: URL=%s', [AUrl]), 'Provider');
   TLogger.Log(Format('DoPostRequest: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
-  TLogger.Log(Format('DoPostRequest: Body=%s', [ARequestBody]), 'Provider');
+  LogPayloadSummary('DoPostRequest', 'Request body', ARequestBody);
 
   FCancelled := False;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
@@ -291,7 +297,7 @@ begin
       end;
 
       Result := LResponse.ContentAsString(TEncoding.UTF8);
-      TLogger.Log(Format('DoPostRequest: Response Body=%s', [Result]), 'Provider');
+      LogPayloadSummary('DoPostRequest', 'Response body', Result);
     except
       on E: Exception do
       begin
@@ -314,7 +320,7 @@ var
 begin
   TLogger.Log(Format('DoPostRequestStream: URL=%s', [AUrl]), 'Provider');
   TLogger.Log(Format('DoPostRequestStream: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
-  TLogger.Log(Format('DoPostRequestStream: Body=%s', [ARequestBody]), 'Provider');
+  LogPayloadSummary('DoPostRequestStream', 'Request body', ARequestBody);
 
   FCancelled := False;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
@@ -356,91 +362,25 @@ end;
 procedure TRadIAProviderBase.DoPostRequestStreamString(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string; const AOnStringChunk: TProc<string>);
 var
-  LAccumulatedBytes: TBytes;
+  LDecoder: TUtf8ChunkDecoder;
 begin
-  LAccumulatedBytes := nil;
-  DoPostRequestStream(AUrl, AHeaders, ARequestBody,
-    procedure(ABytes: TBytes)
-    var
-      LCombined: TBytes;
-      LLenCombined, LLenChunk, LKeepCount: Integer;
-      LDecodableLen: Integer;
-      LDecodedStr: string;
-      I, LContinuations: Integer;
-      LStartByte: Byte;
-      LNeeded: Integer;
-    begin
-      if (Length(ABytes) > 0) and Assigned(AOnStringChunk) then
+  LDecoder := TUtf8ChunkDecoder.Create;
+  try
+    DoPostRequestStream(AUrl, AHeaders, ARequestBody,
+      procedure(ABytes: TBytes)
+      var
+        LDecodedStr: string;
       begin
-        LLenChunk := Length(ABytes);
-        if Length(LAccumulatedBytes) > 0 then
+        if Assigned(AOnStringChunk) then
         begin
-          SetLength(LCombined, Length(LAccumulatedBytes) + LLenChunk);
-          Move(LAccumulatedBytes[0], LCombined[0], Length(LAccumulatedBytes));
-          Move(ABytes[0], LCombined[Length(LAccumulatedBytes)], LLenChunk);
-        end
-        else
-        begin
-          LCombined := ABytes;
+          LDecodedStr := LDecoder.Decode(ABytes);
+          if not LDecodedStr.IsEmpty then
+            AOnStringChunk(LDecodedStr);
         end;
-
-        LLenCombined := Length(LCombined);
-        LDecodableLen := LLenCombined;
-        LKeepCount := 0;
-
-        I := LLenCombined - 1;
-        LContinuations := 0;
-        while (I >= 0) and (I >= LLenCombined - 4) do
-        begin
-          LStartByte := LCombined[I];
-          if LStartByte < $80 then
-            Break;
-
-          if (LStartByte >= $80) and (LStartByte <= $BF) then
-          begin
-            Inc(LContinuations);
-            Dec(I);
-            Continue;
-          end;
-
-          if LStartByte >= $C0 then
-          begin
-            LNeeded := 0;
-            if (LStartByte >= $C0) and (LStartByte <= $DF) then
-              LNeeded := 1
-            else if (LStartByte >= $E0) and (LStartByte <= $EF) then
-              LNeeded := 2
-            else if (LStartByte >= $F0) and (LStartByte <= $F7) then
-              LNeeded := 3;
-
-            if LContinuations < LNeeded then
-            begin
-              LKeepCount := LLenCombined - I;
-              LDecodableLen := I;
-            end;
-            Break;
-          end;
-
-          Dec(I);
-        end;
-
-        if LKeepCount > 0 then
-        begin
-          SetLength(LAccumulatedBytes, LKeepCount);
-          Move(LCombined[LDecodableLen], LAccumulatedBytes[0], LKeepCount);
-        end
-        else
-        begin
-          LAccumulatedBytes := nil;
-        end;
-
-        if LDecodableLen > 0 then
-        begin
-          LDecodedStr := TEncoding.UTF8.GetString(LCombined, 0, LDecodableLen);
-          AOnStringChunk(LDecodedStr);
-        end;
-      end;
-    end);
+      end);
+  finally
+    LDecoder.Free;
+  end;
 end;
 
 procedure TRadIAProviderBase.ExecuteRequestAsync(const AUrl: string; const AHeaders: TNetHeaders;
@@ -1007,38 +947,6 @@ begin
 
   TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTaskProc);
-end;
-
-{ TStreamingTargetStream }
-
-constructor TStreamingTargetStream.Create(const AOnWrite: TProc<TBytes>);
-begin
-  inherited Create;
-  FOnWrite := AOnWrite;
-end;
-
-function TStreamingTargetStream.Write(const Buffer; Count: Longint): Longint;
-var
-  LBytes: TBytes;
-begin
-  Result := Count;
-  TLogger.Log(Format('TStreamingTargetStream.Write: Count = %d', [Count]), 'Provider');
-  if (Count > 0) and Assigned(FOnWrite) then
-  begin
-    SetLength(LBytes, Count);
-    Move(Buffer, LBytes[0], Count);
-    FOnWrite(LBytes);
-  end;
-end;
-
-function TStreamingTargetStream.Read(var Buffer; Count: Longint): Longint;
-begin
-  Result := 0;
-end;
-
-function TStreamingTargetStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
-begin
-  Result := 0;
 end;
 
 { TRadIAOpenAICompatibleProvider }

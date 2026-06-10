@@ -30,6 +30,7 @@ uses
   RadIA.OTA.ContextParser in '..\Source\Integration\RadIA.OTA.ContextParser.pas',
   RadIA.OTA.MessageViewHook in '..\Source\Integration\RadIA.OTA.MessageViewHook.pas',
   RadIA.Core.Mediator in '..\Source\Core\RadIA.Core.Mediator.pas',
+  RadIA.Provider.Streaming in '..\Source\Providers\RadIA.Provider.Streaming.pas',
   RadIA.Provider.Base in '..\Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in '..\Source\Providers\RadIA.Provider.Gemini.pas',
   RadIA.Provider.OpenAI in '..\Source\Providers\RadIA.Provider.OpenAI.pas',
