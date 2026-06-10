@@ -19,7 +19,7 @@ uses
 
 type
   TOnRequestPromptProc = reference to procedure(const APrompt: string; const AOpenChat: Boolean);
-  TOnRequestDiffProc   = reference to procedure(const AOriginalCode: string);
+  TOnRequestDiffProc   = reference to procedure(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean);
 
   TRadIAMediator = class
   private
@@ -38,7 +38,7 @@ type
 
     { Dispatch (called by integration layer) }
     procedure RequestPrompt(const APrompt: string; const AOpenChat: Boolean);
-    procedure RequestDiff(const AOriginalCode: string);
+    procedure RequestDiff(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean = False);
 
     { Unregister (called on teardown) }
     procedure UnregisterPromptHandler;
@@ -94,10 +94,10 @@ begin
     FOnRequestPrompt(APrompt, AOpenChat);
 end;
 
-procedure TRadIAMediator.RequestDiff(const AOriginalCode: string);
+procedure TRadIAMediator.RequestDiff(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean);
 begin
   if Assigned(FOnRequestDiff) then
-    FOnRequestDiff(AOriginalCode);
+    FOnRequestDiff(AOriginalCode, AReplaceWholeBuffer);
 end;
 
 end.

@@ -16,7 +16,7 @@ type
     procedure UnregisterMenus;
     procedure RegisterOptions;
     procedure UnregisterOptions;
-    procedure OnRequestDiff(const AOriginalCode: string);
+    procedure OnRequestDiff(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean);
     procedure OnTimerEvent(Sender: TObject);
     procedure RestoreWindowVisibility;
   public
@@ -328,7 +328,7 @@ begin
   // Handled on menu and context clicks, nothing to execute on start
 end;
 
-procedure TRadIAWizard.OnRequestDiff(const AOriginalCode: string);
+procedure TRadIAWizard.OnRequestDiff(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean);
 var
   LForm: TFormAIDiff;
   LActiveFile: string;
@@ -345,7 +345,7 @@ begin
     LForm.InitializeDiff(ExtractFileName(LActiveFile), AOriginalCode);
     if LForm.ShowModal = mrOk then
     begin
-      TRadIAOTAHelper.ReplaceActiveEditorText(LForm.SuggestedCode);
+      TRadIAOTAHelper.ReplaceActiveEditorText(LForm.SuggestedCode, AReplaceWholeBuffer);
     end;
   finally
     LForm.Free;

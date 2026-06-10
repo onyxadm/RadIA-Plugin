@@ -49,6 +49,7 @@ type
     procedure OnFixErrorExecute(Sender: TObject);
     procedure OnShowChatExecute(Sender: TObject);
 
+    function GetEditorCodeContext(out ACode: string; out AUsedSelection: Boolean): Boolean;
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
     {$IFNDEF TESTS}
     procedure RequestDelayedHook;
@@ -876,25 +877,43 @@ begin
   AMenuItem.Add(LItem);
 end;
 
+function TRadIAEditorHook.GetEditorCodeContext(out ACode: string; out AUsedSelection: Boolean): Boolean;
+begin
+  Result := False;
+  ACode := '';
+  AUsedSelection := False;
+
+  if TRadIAOTAHelper.GetActiveEditorText(ACode, True) and (not ACode.Trim.IsEmpty) then
+  begin
+    AUsedSelection := True;
+    Exit(True);
+  end;
+
+  if TRadIAOTAHelper.GetActiveEditorText(ACode, False) and (not ACode.Trim.IsEmpty) then
+    Exit(True);
+end;
+
 procedure TRadIAEditorHook.SendCommandToChat(const ACommand: string; const APromptPrefix: string);
 var
-  LSelectedText: string;
+  LCode: string;
+  LUsedSelection: Boolean;
   LPrompt: string;
 begin
-  if not TRadIAOTAHelper.GetActiveEditorText(LSelectedText, True) then
+  if not GetEditorCodeContext(LCode, LUsedSelection) then
   begin
-    TLogger.Log(Format('SendCommandToChat failed: no active text selection for command %s', [ACommand]), 'EditorHook');
-    ShowMessage('Please select a block of code in the editor first.');
+    TLogger.Log(Format('SendCommandToChat failed: no active code for command %s', [ACommand]), 'EditorHook');
+    ShowMessage('No active code file open in the editor.');
     Exit;
   end;
 
-  TLogger.Log(Format('SendCommandToChat: Command=%s, SelectionLength=%d', [ACommand, Length(LSelectedText)]), 'EditorHook');
+  TLogger.Log(Format('SendCommandToChat: Command=%s, CodeLength=%d, UsedSelection=%s',
+    [ACommand, Length(LCode), BoolToStr(LUsedSelection, True)]), 'EditorHook');
   ShowRadIAChat;
 
   LPrompt := ACommand + sLineBreak +
     APromptPrefix + sLineBreak + sLineBreak +
     '```pascal' + sLineBreak +
-    LSelectedText.TrimRight + sLineBreak +
+    LCode.TrimRight + sLineBreak +
     '```';
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
@@ -911,17 +930,19 @@ end;
 
 procedure TRadIAEditorHook.OnOptimizeExecute(Sender: TObject);
 var
-  LSelectedText: string;
+  LCode: string;
+  LUsedSelection: Boolean;
 begin
-  if not TRadIAOTAHelper.GetActiveEditorText(LSelectedText, True) then
+  if not GetEditorCodeContext(LCode, LUsedSelection) then
   begin
-    TLogger.Log('OnOptimizeExecute failed: no active text selection', 'EditorHook');
-    ShowMessage('Please select a block of code to optimize first.');
+    TLogger.Log('OnOptimizeExecute failed: no active code', 'EditorHook');
+    ShowMessage('No active code file open in the editor.');
     Exit;
   end;
 
-  TLogger.Log(Format('OnOptimizeExecute: SelectionLength=%d', [Length(LSelectedText)]), 'EditorHook');
-  TRadIAMediator.Instance.RequestDiff(LSelectedText);
+  TLogger.Log(Format('OnOptimizeExecute: CodeLength=%d, UsedSelection=%s',
+    [Length(LCode), BoolToStr(LUsedSelection, True)]), 'EditorHook');
+  TRadIAMediator.Instance.RequestDiff(LCode, not LUsedSelection);
 end;
 
 procedure TRadIAEditorHook.OnTestsExecute(Sender: TObject);
@@ -936,18 +957,20 @@ end;
 
 procedure TRadIAEditorHook.OnDocExecute(Sender: TObject);
 var
-  LSelectedText: string;
+  LCode: string;
+  LUsedSelection: Boolean;
   LPrompt: string;
 begin
-  if not TRadIAOTAHelper.GetActiveEditorText(LSelectedText, True) then
+  if not GetEditorCodeContext(LCode, LUsedSelection) then
   begin
-    TLogger.Log('OnDocExecute failed: no active text selection', 'EditorHook');
-    ShowMessage('Please select a method block of code to document.');
+    TLogger.Log('OnDocExecute failed: no active code', 'EditorHook');
+    ShowMessage('No active code file open in the editor.');
     Exit;
   end;
 
-  TLogger.Log(Format('OnDocExecute: SelectionLength=%d', [Length(LSelectedText)]), 'EditorHook');
-  LPrompt := Format('/doc'#13#10'```pascal'#13#10'%s'#13#10'```', [LSelectedText]);
+  TLogger.Log(Format('OnDocExecute: CodeLength=%d, UsedSelection=%s',
+    [Length(LCode), BoolToStr(LUsedSelection, True)]), 'EditorHook');
+  LPrompt := Format('/doc'#13#10'```pascal'#13#10'%s'#13#10'```', [LCode]);
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 

@@ -12,7 +12,7 @@ type
     class function FormatTextWithIndent(const AText: string; const APosition: IOTAEditPosition): string;
   public
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
-    class function ReplaceActiveEditorText(const ANewText: string): Boolean;
+    class function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False): Boolean;
     class function InsertTextAtCursor(const AText: string): Boolean;
     class function GetActiveUnitName: string;
     class function GetActiveProjectName: string;
@@ -158,21 +158,47 @@ begin
   end;
 end;
 
-class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string): Boolean;
+class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean): Boolean;
 var
   LEditBuffer: IOTAEditBuffer;
   LEditBlock: IOTAEditBlock;
+  LEditReader: IOTAEditReader;
+  LEditWriter: IOTAEditWriter;
   LView: IOTAEditView;
   LPosition: IOTAEditPosition;
   LOptions: IOTABufferOptions;
   LSaveAutoIndent: Boolean;
   LFormattedText: string;
+  LBufferSize: Integer;
+  LUtf8Text: UTF8String;
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
   LView := GetCurrentEditView;
   if not Assigned(LEditBuffer) or not Assigned(LView) then
     Exit;
+
+  if AReplaceWholeBuffer then
+  begin
+    LEditReader := LEditBuffer.CreateReader;
+    LBufferSize := 0;
+    if Assigned(LEditReader) then
+      LBufferSize := LEditReader.GetText(0, nil, 0);
+    LEditReader := nil;
+
+    LEditWriter := LEditBuffer.CreateUndoableWriter;
+    if not Assigned(LEditWriter) then
+      Exit;
+
+    LEditWriter.CopyTo(0);
+    if LBufferSize > 0 then
+      LEditWriter.DeleteTo(LBufferSize);
+
+    LUtf8Text := UTF8String(ANewText);
+    LEditWriter.Insert(LUtf8Text);
+    Result := True;
+    Exit;
+  end;
 
   LEditBlock := LEditBuffer.EditBlock;
   if Assigned(LEditBlock) and (LEditBlock.Size > 0) then
