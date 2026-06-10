@@ -1,5 +1,5 @@
 // ============================================================
-// RadIA Chat WebView bridge
+// Rad IA Chat WebView bridge
 // ============================================================
 
 function postMessageToDelphi(payload) {

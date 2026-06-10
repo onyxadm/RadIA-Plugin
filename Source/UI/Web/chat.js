@@ -284,7 +284,7 @@ function showWelcomeScreen() {
         </svg>
       </span>
     </div>
-    <h1>How can RadIA help today?</h1>
+    <h1>How can Rad IA help today?</h1>
     <div class="welcome-actions"></div>
     <button type="button" class="welcome-history-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">

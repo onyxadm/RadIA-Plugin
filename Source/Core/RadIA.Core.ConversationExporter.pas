@@ -92,7 +92,7 @@ var
 begin
   LSb := TStringBuilder.Create;
   try
-    LSb.AppendLine('# Histórico de Conversa - RadIA');
+    LSb.AppendLine('# Histórico de Conversa - Rad IA');
     LSb.AppendLine(Format('- **Data**: %s', [DateTimeToStr(Now)]));
     LSb.AppendLine(Format('- **Provedor**: %s', [AProviderName]));
     LSb.AppendLine(Format('- **Modelo**: %s', [AModelName]));
@@ -112,7 +112,7 @@ begin
       end
       else
       begin
-        LSb.AppendLine('### 🤖 Assistente (RadIA)');
+        LSb.AppendLine('### 🤖 Assistente (Rad IA)');
         LSb.AppendLine(LMsg.Content);
       end;
       LSb.AppendLine;
@@ -140,7 +140,7 @@ begin
     LSb.AppendLine('<html>');
     LSb.AppendLine('<head>');
     LSb.AppendLine('  <meta charset="utf-8">');
-    LSb.AppendLine('  <title>Histórico de Conversa - RadIA</title>');
+    LSb.AppendLine('  <title>Histórico de Conversa - Rad IA</title>');
     LSb.AppendLine('  <style>');
     LSb.AppendLine('    body {');
     LSb.AppendLine('      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;');
@@ -167,7 +167,7 @@ begin
     LSb.AppendLine('  </style>');
     LSb.AppendLine('</head>');
     LSb.AppendLine('<body>');
-    LSb.AppendLine('  <h1>Histórico de Conversa - RadIA</h1>');
+    LSb.AppendLine('  <h1>Histórico de Conversa - Rad IA</h1>');
     LSb.AppendLine('  <div class="meta">');
     LSb.AppendLine(Format('    <p><strong>Data:</strong> %s</p>', [DateTimeToStr(Now)]));
     LSb.AppendLine(Format('    <p><strong>Provedor:</strong> %s</p>', [AProviderName]));
@@ -186,7 +186,7 @@ begin
       end
       else
       begin
-        LRoleName := 'Assistente (RadIA)';
+        LRoleName := 'Assistente (Rad IA)';
         LRoleClass := 'assistant';
       end;
 

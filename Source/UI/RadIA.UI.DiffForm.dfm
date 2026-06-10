@@ -1,7 +1,7 @@
 object FormAIDiff: TFormAIDiff
   Left = 0
   Top = 0
-  Caption = 'RadIA - Smart Diff'
+  Caption = 'Rad IA - Smart Diff'
   ClientHeight = 620
   ClientWidth = 860
   Color = clBtnFace

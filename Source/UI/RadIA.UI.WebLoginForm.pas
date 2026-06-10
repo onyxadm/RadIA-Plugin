@@ -390,7 +390,7 @@ begin
     if SameText(LAction, 'login_complete') then
     begin
       TLogger.Log('TFormWebLogin: Login detected via bridge.js. Closing popup.', 'UI');
-      lblStatus.Caption := 'Login detected. Returning to RadIA...';
+      lblStatus.Caption := 'Login detected. Returning to Rad IA...';
       if Assigned(FOnLoginSuccess) then
         FOnLoginSuccess();
       ModalResult := mrOk;

@@ -68,7 +68,7 @@ object FormWebLogin: TFormWebLogin
       Top = 42
       Width = 640
       Height = 15
-      Caption = 'Sign in using the official provider page below. RadIA will continue when the login is detected.'
+      Caption = 'Sign in using the official provider page below. Rad IA will continue when the login is detected.'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clGray
       Font.Height = -12

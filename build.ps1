@@ -12,7 +12,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host "         Iniciando Build do RadIA            " -ForegroundColor Cyan
+Write-Host "         Iniciando Build do Rad IA           " -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
 # 1. Detectar instalacoes do Delphi no Registro do Windows
@@ -119,7 +119,7 @@ if ($compilerVersion -lt 34.0) {
     Write-Host ""
     Write-Host "=========================================================================" -ForegroundColor Red
     Write-Host "ERRO: A versao do compilador Delphi detectada ($compilerVersion) nao e suportada." -ForegroundColor Red
-    Write-Host "O RadIA exige obrigatoriamente o Delphi 10.4 Sydney ou superior (DCC32 >= 34.0)" -ForegroundColor Red
+    Write-Host "O Rad IA exige obrigatoriamente o Delphi 10.4 Sydney ou superior (DCC32 >= 34.0)" -ForegroundColor Red
     Write-Host "devido ao uso de recursos nativos da API de WebView2 (TEdgeBrowser)." -ForegroundColor Red
     Write-Host "=========================================================================" -ForegroundColor Red
     Write-Host ""
@@ -153,7 +153,7 @@ if ($Uninstall) {
         Write-Host "=========================================================================" -ForegroundColor Red
         Write-Host "ERRO: A IDE do Delphi (bds.exe) esta aberta no momento." -ForegroundColor Red
         Write-Host "Por favor, salve seu trabalho e feche todas as instancias da IDE" -ForegroundColor Red
-        Write-Host "antes de executar a desinstalacao do plugin RadIA para evitar arquivos travados." -ForegroundColor Red
+        Write-Host "antes de executar a desinstalacao do plugin Rad IA para evitar arquivos travados." -ForegroundColor Red
         Write-Host "=========================================================================" -ForegroundColor Red
         Write-Host ""
         throw "A IDE do Delphi esta aberta."
@@ -339,7 +339,7 @@ if ($Install) {
         Write-Host "=========================================================================" -ForegroundColor Red
         Write-Host "ERRO: A IDE do Delphi (bds.exe) esta aberta no momento." -ForegroundColor Red
         Write-Host "Por favor, salve seu trabalho e feche todas as instancias da IDE" -ForegroundColor Red
-        Write-Host "antes de executar a instalacao do plugin RadIA para evitar arquivos travados" -ForegroundColor Red
+        Write-Host "antes de executar a instalacao do plugin Rad IA para evitar arquivos travados" -ForegroundColor Red
         Write-Host "ou problemas de carregamento na memoria." -ForegroundColor Red
         Write-Host "=========================================================================" -ForegroundColor Red
         Write-Host ""
@@ -458,11 +458,11 @@ if ($Install) {
         New-Item -Path $regPath -Force | Out-Null
     }
     
-    New-ItemProperty -Path $regPath -Name $targetBpl -Value "RadIA - AI Assistant for Delphi IDE" -PropertyType String -Force | Out-Null
+    New-ItemProperty -Path $regPath -Name $targetBpl -Value "Rad IA - AI Assistant for Delphi IDE" -PropertyType String -Force | Out-Null
 
     Write-Host "=============================================" -ForegroundColor Green
     Write-Host " Plugin instalado com sucesso no Delphi!     " -ForegroundColor Green
-    Write-Host " O RadIA estara disponivel no proximo startup" -ForegroundColor Green
+    Write-Host " O Rad IA estara disponivel no proximo startup" -ForegroundColor Green
     Write-Host " da IDE.                                     " -ForegroundColor Green
     Write-Host "=============================================" -ForegroundColor Green
 }

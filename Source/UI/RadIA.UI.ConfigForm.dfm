@@ -2,7 +2,7 @@ object FormAIConfig: TFormAIConfig
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  Caption = 'RadIA Configuration'
+  Caption = 'Rad IA Configuration'
   ClientHeight = 520
   ClientWidth = 840
   Color = clBtnFace
