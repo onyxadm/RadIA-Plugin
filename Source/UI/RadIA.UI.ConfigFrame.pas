@@ -1129,7 +1129,7 @@ begin
   TFormWebLogin.ShowLogin(Self, 'https://gemini.google.com',
     procedure
     begin
-      ShowMessage('Login no Gemini realizado com sucesso!');
+      ShowMessage('Gemini web login completed successfully.');
     end);
 end;
 
@@ -1138,7 +1138,7 @@ begin
   TFormWebLogin.ShowLogin(Self, 'https://chatgpt.com',
     procedure
     begin
-      ShowMessage('Login no OpenAI realizado com sucesso!');
+      ShowMessage('OpenAI web login completed successfully.');
     end);
 end;
 

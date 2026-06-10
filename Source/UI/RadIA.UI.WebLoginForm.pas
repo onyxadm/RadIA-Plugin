@@ -12,17 +12,36 @@ type
   TFormWebLogin = class(TForm)
     pnlHeader: TPanel;
     btnDone: TSpeedButton;
+    lblTitle: TLabel;
     lblInfo: TLabel;
     pnlBrowserContainer: TPanel;
+    EdgeBrowser: TEdgeBrowser;
+    pnlBrowserFallback: TPanel;
+    lblFallbackTitle: TLabel;
+    lblFallbackInfo: TLabel;
+    btnUseSessionFallback: TSpeedButton;
+    btnRetryBrowser: TSpeedButton;
+    pnlFooter: TPanel;
+    lblStatus: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btnDoneClick(Sender: TObject);
+    procedure btnRetryBrowserClick(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     FEdgeBrowser: TEdgeBrowser;
+    FNavigationTimer: TTimer;
     FUrl: string;
     FOnLoginSuccess: TProc;
     procedure CreateEdgeBrowser;
+    procedure NavigateToProvider;
+    procedure CompleteWithCurrentSession;
+    procedure ShowBrowserFallback(const ATitle, AInfo: string);
+    procedure UpdateTheme;
+    procedure NavigationTimerElapsed(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
     {$IF CompilerVersion >= 35.0}
     procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
     {$ELSE}
@@ -36,7 +55,7 @@ type
 implementation
 
 uses
-  System.JSON;
+  System.JSON, ToolsAPI, Vcl.Themes, RadIA.UI.Resources, RadIA.Core.Types;
 
 {$R *.dfm}
 
@@ -47,6 +66,10 @@ type
     function Put_UserAgent(userAgent: PWideChar): HResult; stdcall;
   end;
 
+const
+  CWebView2BrowserArguments =
+    '--disable-features=OverlayScrollbar,OverlayScrollbars,FluentOverlayScrollbar,WindowsScrollingPersonality';
+
 { TFormWebLogin }
 
 class procedure TFormWebLogin.ShowLogin(const AParent: TComponent; const AUrl: string; const AOnSuccess: TProc);
@@ -54,40 +77,188 @@ var
   LForm: TFormWebLogin;
 begin
   LForm := TFormWebLogin.Create(AParent);
-  LForm.FUrl := AUrl;
-  LForm.FOnLoginSuccess := AOnSuccess;
-  LForm.ShowModal;
+  try
+    LForm.FUrl := AUrl;
+    LForm.FOnLoginSuccess := AOnSuccess;
+    LForm.Show;
+    LForm.BringToFront;
+    while LForm.Visible and (LForm.ModalResult = mrNone) do
+    begin
+      Application.ProcessMessages;
+      Sleep(10);
+    end;
+  finally
+    LForm.Free;
+  end;
 end;
 
 procedure TFormWebLogin.FormCreate(Sender: TObject);
 begin
-  CreateEdgeBrowser;
+  UpdateTheme;
 end;
 
 procedure TFormWebLogin.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  Action := caFree;
+  Action := caHide;
+end;
+
+procedure TFormWebLogin.FormDestroy(Sender: TObject);
+begin
+  if Assigned(FEdgeBrowser) then
+  begin
+    RemoveComponent(FEdgeBrowser);
+    FEdgeBrowser.Parent := nil;
+    if not GIsShuttingDown then
+      FreeAndNil(FEdgeBrowser)
+    else
+      FEdgeBrowser := nil;
+  end;
+  FreeAndNil(FNavigationTimer);
+end;
+
+procedure TFormWebLogin.FormShow(Sender: TObject);
+begin
+  CreateEdgeBrowser;
 end;
 
 procedure TFormWebLogin.btnDoneClick(Sender: TObject);
 begin
-  Close;
+  CompleteWithCurrentSession;
+end;
+
+procedure TFormWebLogin.btnRetryBrowserClick(Sender: TObject);
+begin
+  pnlBrowserFallback.Visible := False;
+  NavigateToProvider;
+end;
+
+procedure TFormWebLogin.CompleteWithCurrentSession;
+begin
+  lblStatus.Caption := 'Using the current browser session...';
+  if Assigned(FOnLoginSuccess) then
+    FOnLoginSuccess();
+  ModalResult := mrOk;
 end;
 
 procedure TFormWebLogin.CreateEdgeBrowser;
 begin
-  FEdgeBrowser := TEdgeBrowser.Create(Self);
-  FEdgeBrowser.Parent := pnlBrowserContainer;
-  FEdgeBrowser.Align := alClient;
+  if Assigned(FEdgeBrowser) then
+    Exit;
+
+  FEdgeBrowser := EdgeBrowser;
+  FEdgeBrowser.AdditionalBrowserArguments := CWebView2BrowserArguments;
   FEdgeBrowser.OnCreateWebViewCompleted := EdgeBrowserCreateWebViewCompleted;
+  FEdgeBrowser.OnNavigationCompleted := EdgeBrowserNavigationCompleted;
   {$IF CompilerVersion >= 35.0}
   FEdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
   {$ELSE}
   FEdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceivedLegacy;
   {$ENDIF}
   
-  // Compartilha o mesmo diretório de dados para manter a mesma sessão logada!
+  // Share the same data folder used by the background browser session.
   FEdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2Web');
+  NavigateToProvider;
+end;
+
+procedure TFormWebLogin.NavigateToProvider;
+begin
+  if FUrl.Trim.IsEmpty then
+  begin
+    lblStatus.Caption := 'Provider login URL is empty.';
+    Exit;
+  end;
+
+  if not Assigned(FEdgeBrowser) then
+    Exit;
+
+  lblStatus.Caption := 'Opening provider sign in page...';
+  FEdgeBrowser.Navigate(FUrl);
+  lblStatus.Caption := 'Provider sign in page requested. Complete the login in the browser area.';
+
+  if not Assigned(FNavigationTimer) then
+  begin
+    FNavigationTimer := TTimer.Create(Self);
+    FNavigationTimer.Interval := 5000;
+    FNavigationTimer.OnTimer := NavigationTimerElapsed;
+  end;
+  FNavigationTimer.Enabled := True;
+end;
+
+procedure TFormWebLogin.UpdateTheme;
+var
+  LThemingServices: IOTAIDEThemingServices;
+  LThemeName: string;
+  LColors: TRadIAThemeColors;
+begin
+  LThemeName := 'light';
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+    begin
+      LThemingServices.ApplyTheme(Self);
+      LThemeName := LThemingServices.ActiveTheme;
+    end;
+  end;
+
+  LColors := TRadIAThemeColors.GetColorsForTheme(LThemeName);
+
+  StyleElements := StyleElements - [seClient, seBorder];
+  Color := LColors.BgBase;
+
+  pnlHeader.StyleElements := pnlHeader.StyleElements - [seClient, seBorder];
+  pnlHeader.Color := LColors.BgBase;
+  pnlHeader.ParentBackground := False;
+
+  pnlFooter.StyleElements := pnlFooter.StyleElements - [seClient, seBorder];
+  pnlFooter.Color := LColors.BgBase;
+  pnlFooter.ParentBackground := False;
+
+  pnlBrowserContainer.StyleElements := pnlBrowserContainer.StyleElements - [seClient, seBorder];
+  pnlBrowserContainer.Color := LColors.BorderColor;
+  pnlBrowserContainer.ParentBackground := False;
+
+  pnlBrowserFallback.StyleElements := pnlBrowserFallback.StyleElements - [seClient, seBorder];
+  pnlBrowserFallback.Color := LColors.BgElevated;
+  pnlBrowserFallback.ParentBackground := False;
+
+  lblTitle.StyleElements := lblTitle.StyleElements - [seClient, seBorder];
+  lblTitle.Font.Color := LColors.TextColor;
+  lblInfo.StyleElements := lblInfo.StyleElements - [seClient, seBorder];
+  lblInfo.Font.Color := LColors.TextColor;
+  lblStatus.StyleElements := lblStatus.StyleElements - [seClient, seBorder];
+  lblStatus.Font.Color := LColors.TextColor;
+  lblFallbackTitle.StyleElements := lblFallbackTitle.StyleElements - [seClient, seBorder];
+  lblFallbackTitle.Font.Color := LColors.TextColor;
+  lblFallbackInfo.StyleElements := lblFallbackInfo.StyleElements - [seClient, seBorder];
+  lblFallbackInfo.Font.Color := LColors.TextColor;
+
+  btnDone.Font.Color := LColors.AccentColor;
+  btnUseSessionFallback.Font.Color := LColors.AccentColor;
+  btnRetryBrowser.Font.Color := LColors.TextColor;
+  TUIHelper.ApplyDarkTitleBar(Self, LColors.IsDark);
+end;
+
+procedure TFormWebLogin.NavigationTimerElapsed(Sender: TObject);
+begin
+  if Assigned(FNavigationTimer) then
+    FNavigationTimer.Enabled := False;
+
+  if Assigned(FEdgeBrowser) and (FEdgeBrowser.BrowserControlState = TCustomEdgeBrowser.TBrowserControlState.Creating) then
+  begin
+    ShowBrowserFallback(
+      'Sign-in page is taking longer than expected',
+      'Use your existing session or retry the embedded browser.');
+    lblStatus.Caption := 'Embedded browser is still starting.';
+    TLogger.Log('TFormWebLogin: WebView2 is still creating after the navigation timeout.', 'UI');
+  end;
+end;
+
+procedure TFormWebLogin.ShowBrowserFallback(const ATitle, AInfo: string);
+begin
+  lblFallbackTitle.Caption := ATitle;
+  lblFallbackInfo.Caption := AInfo;
+  pnlBrowserFallback.Visible := True;
+  pnlBrowserFallback.BringToFront;
 end;
 
 procedure TFormWebLogin.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
@@ -99,6 +270,10 @@ var
 begin
   if Succeeded(AResult) then
   begin
+    if Assigned(FNavigationTimer) then
+      FNavigationTimer.Enabled := False;
+    pnlBrowserFallback.Visible := False;
+
     if Assigned(FEdgeBrowser.DefaultInterface) then
     begin
       if Succeeded(FEdgeBrowser.DefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
@@ -112,12 +287,10 @@ begin
         end;
       end;
 
-      // Injeta o bridge.js para detectar o login e mandar a mensagem
       LScriptFile := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
       LScriptFile := TPath.Combine(LScriptFile, 'bridge.js');
       if not TFile.Exists(LScriptFile) then
       begin
-        // Fallback para pasta padrão BDS Common se não achar no Home
         LScriptFile := TPath.Combine('C:\Users\Public\Documents\Embarcadero\Studio\37.0\Bpl\Web', 'bridge.js');
       end;
 
@@ -132,8 +305,35 @@ begin
         end;
       end;
     end;
-    
-    FEdgeBrowser.Navigate(FUrl);
+    lblStatus.Caption := 'Provider sign in page loaded. Complete the login in the browser area.';
+  end;
+  if Failed(AResult) then
+  begin
+    if Assigned(FNavigationTimer) then
+      FNavigationTimer.Enabled := False;
+
+    lblStatus.Caption := Format('Unable to initialize WebView2. HRESULT: %.8x', [Cardinal(AResult)]);
+    TLogger.Log(Format('TFormWebLogin: WebView2 initialization failed. HRESULT: %.8x', [Cardinal(AResult)]), 'UI');
+  end;
+end;
+
+procedure TFormWebLogin.EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean;
+  WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
+begin
+  if Assigned(FNavigationTimer) then
+    FNavigationTimer.Enabled := False;
+
+  if IsSuccess then
+  begin
+    pnlBrowserFallback.Visible := False;
+    lblStatus.Caption := 'Provider sign in page loaded. Complete the login in the browser area.'
+  end
+  else
+  begin
+    ShowBrowserFallback(
+      'The sign-in page could not be loaded',
+      'Use your existing session or retry the embedded browser.');
+    lblStatus.Caption := Format('Provider sign in page failed to load. WebView2 status: %d', [Ord(WebErrorStatus)]);
   end;
 end;
 
@@ -190,6 +390,7 @@ begin
     if SameText(LAction, 'login_complete') then
     begin
       TLogger.Log('TFormWebLogin: Login detected via bridge.js. Closing popup.', 'UI');
+      lblStatus.Caption := 'Login detected. Returning to RadIA...';
       if Assigned(FOnLoginSuccess) then
         FOnLoginSuccess();
       ModalResult := mrOk;
