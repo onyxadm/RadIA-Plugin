@@ -58,8 +58,6 @@ uses
 
 var
   GKeyboardBindingIndex: Integer = -1;
-  GKeyboardBinding: IOTAKeyboardBinding = nil;
-  GKeyboardBindingPending: Boolean = False;
 
 function InlineCompletionShortcutFromText(const AText: string): TShortcut;
 var
@@ -94,36 +92,12 @@ end;
 procedure RegisterInlineCompletionKeyboardBinding;
 var
   LKeyboardServices: IOTAKeyboardServices;
-  LBinding: IOTAKeyboardBinding;
 begin
-  if (GKeyboardBindingIndex >= 0) or GKeyboardBindingPending or GIsShuttingDown then
+  if GKeyboardBindingIndex >= 0 then
     Exit;
 
-  GKeyboardBindingPending := True;
-  TThread.Queue(nil,
-    procedure
-    begin
-      GKeyboardBindingPending := False;
-      if (GKeyboardBindingIndex >= 0) or GIsShuttingDown then
-        Exit;
-
-      if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
-      begin
-        LBinding := TRadIAInlineCompletionKeyboardBinding.New;
-        GKeyboardBinding := LBinding;
-        GKeyboardBindingIndex := LKeyboardServices.AddKeyboardBinding(LBinding);
-        TLogger.Log(
-          'Inline completion keyboard binding registered. Index=' +
-          IntToStr(GKeyboardBindingIndex),
-          'InlineCompletion'
-        );
-
-        if GKeyboardBindingIndex < 0 then
-          GKeyboardBinding := nil;
-      end
-      else
-        TLogger.Log('Inline completion keyboard services not available', 'InlineCompletion');
-    end);
+  if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
+    GKeyboardBindingIndex := LKeyboardServices.AddKeyboardBinding(TRadIAInlineCompletionKeyboardBinding.New);
 end;
 
 procedure UnregisterInlineCompletionKeyboardBinding;
@@ -136,42 +110,12 @@ begin
   if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
     LKeyboardServices.RemoveKeyboardBinding(GKeyboardBindingIndex);
   GKeyboardBindingIndex := -1;
-  GKeyboardBinding := nil;
 end;
 
 procedure RefreshInlineCompletionKeyboardBinding;
 begin
   UnregisterInlineCompletionKeyboardBinding;
   RegisterInlineCompletionKeyboardBinding;
-end;
-
-function ReadEditBufferText(const AEditBuffer: IOTAEditBuffer; out AText: string): Boolean;
-var
-  LEditReader: IOTAEditReader;
-  LBytes: TBytes;
-  LBytesRead: Integer;
-begin
-  Result := False;
-  AText := '';
-
-  if not Assigned(AEditBuffer) then
-    Exit;
-
-  LEditReader := AEditBuffer.CreateReader;
-  if not Assigned(LEditReader) then
-    Exit;
-
-  SetLength(LBytes, LEditReader.GetText(0, nil, 0));
-  if Length(LBytes) = 0 then
-  begin
-    Result := True;
-    Exit;
-  end;
-
-  LBytesRead := LEditReader.GetText(0, PAnsiChar(@LBytes[0]), Length(LBytes));
-  SetLength(LBytes, LBytesRead);
-  AText := TEncoding.UTF8.GetString(LBytes);
-  Result := True;
 end;
 
 constructor TRadIAInlineCompletionEditViewNotifier.Create(const AFileName: string; const AView: IOTAEditView);
@@ -302,10 +246,7 @@ begin
   if LShortcut = 0 then
     LShortcut := Shortcut(VK_RETURN, [ssAlt]);
 
-  TLogger.Log(
-    'Binding inline completion shortcut: ' + LShortcutText + ' -> ' + ShortCutToText(LShortcut),
-    'InlineCompletion'
-  );
+  TLogger.Log('Binding inline completion shortcut: ' + LShortcutText, 'InlineCompletion');
   BindingServices.AddKeyBinding([LShortcut], RequestCompletion, nil);
   BindingServices.AddKeyBinding([Shortcut(VK_TAB, [])], AcceptCompletion, nil);
   BindingServices.AddKeyBinding([Shortcut(VK_ESCAPE, [])], CancelCompletion, nil);
@@ -318,8 +259,6 @@ var
   LSourceText: string;
   LView: IOTAEditView;
   LFileName: string;
-  LRow: Integer;
-  LColumn: Integer;
   LContext: TInlineCompletionContext;
   LPrompt: string;
   LRequestId: Integer;
@@ -330,53 +269,32 @@ begin
   TLogger.Log('Inline completion shortcut invoked', 'InlineCompletion');
   LConfig := TRadIAConfig.GetInstance;
   if not LConfig.GetAutocompleteEnabled then
-  begin
-    TLogger.Log('Inline completion ignored: disabled in config', 'InlineCompletion');
     Exit;
-  end;
+
+  if not TRadIAOTAHelper.GetActiveEditorText(LSourceText, False) then
+    Exit;
+
+  LView := TRadIAOTAHelper.GetCurrentEditView;
+  if not Assigned(LView) then
+    Exit;
 
   LEditBuffer := Context.EditBuffer;
-  if not Assigned(LEditBuffer) then
+  if Assigned(LEditBuffer) then
+    LFileName := LEditBuffer.FileName
+  else
   begin
     LEditBuffer := TRadIAOTAHelper.GetCurrentEditBuffer;
-    if not Assigned(LEditBuffer) then
-    begin
-      TLogger.Log('Inline completion ignored: no edit buffer in context', 'InlineCompletion');
-      Exit;
-    end;
-  end;
-
-  if not ReadEditBufferText(LEditBuffer, LSourceText) then
-  begin
-    TLogger.Log('Inline completion ignored: failed to read edit buffer text', 'InlineCompletion');
-    Exit;
-  end;
-
-  LFileName := LEditBuffer.FileName;
-  LRow := LEditBuffer.EditPosition.Row;
-  LColumn := LEditBuffer.EditPosition.Column;
-
-  if (LRow <= 0) or (LColumn <= 0) then
-  begin
-    LView := TRadIAOTAHelper.GetCurrentEditView;
-    if Assigned(LView) then
-    begin
-      LRow := LView.CursorPos.Line;
-      LColumn := LView.CursorPos.Col;
-    end;
-  end;
-
-  if (LRow <= 0) or (LColumn <= 0) then
-  begin
-    TLogger.Log('Inline completion ignored: invalid editor cursor position', 'InlineCompletion');
-    Exit;
+    if Assigned(LEditBuffer) then
+      LFileName := LEditBuffer.FileName
+    else
+      LFileName := '';
   end;
 
   LContext := TInlineCompletionContextBuilder.BuildContext(
     LSourceText,
     LFileName,
-    LRow,
-    LColumn,
+    LView.CursorPos.Line,
+    LView.CursorPos.Col,
     LConfig.GetAutocompleteContextMode,
     LConfig.GetAutocompleteContextBeforeLines,
     LConfig.GetAutocompleteContextAfterLines);
@@ -401,8 +319,8 @@ begin
         TInlineCompletionSuggestionState.Instance.SetSuggestion(
           LFileName,
           ASuggestion,
-          LRow,
-          LColumn);
+          LView.CursorPos.Line,
+          LView.CursorPos.Col);
         RepaintCurrentView;
       end);
   finally
