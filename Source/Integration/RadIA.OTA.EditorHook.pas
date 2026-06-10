@@ -13,6 +13,7 @@ type
     FInstalled: Boolean;
     FIDENotifierIndex: Integer;
     FEditorNotifiers: TInterfaceList;
+    FSourceEditors: TInterfaceList;
     {$IFNDEF TESTS}
     FTimer: TTimer;
     FHookPending: Boolean;
@@ -111,7 +112,9 @@ type
     FHook: TRadIAEditorHook;
     FSourceEditor: IOTASourceEditor;
     FEditViewNotifiers: TInterfaceList;
+    FEditViews: TInterfaceList;
     FIndex: Integer;
+    procedure QueueAddEditViewNotifier(const AView: IOTAEditView);
     procedure AddEditViewNotifier(const AView: IOTAEditView);
     procedure RemoveNotifier;
   public
@@ -184,31 +187,60 @@ begin
   FHook := AHook;
   FSourceEditor := ASourceEditor;
   FEditViewNotifiers := TInterfaceList.Create;
+  FEditViews := TInterfaceList.Create;
   FIndex := -1;
   if Assigned(FSourceEditor) then
   begin
     FIndex := FSourceEditor.AddNotifier(Self);
     for I := 0 to FSourceEditor.EditViewCount - 1 do
-      AddEditViewNotifier(FSourceEditor.EditViews[I]);
+      QueueAddEditViewNotifier(FSourceEditor.EditViews[I]);
   end;
 end;
 
 destructor TRadIASourceEditorNotifier.Destroy;
 begin
   RemoveNotifier;
+  FEditViews.Free;
   FEditViewNotifiers.Free;
   inherited Destroy;
+end;
+
+procedure TRadIASourceEditorNotifier.QueueAddEditViewNotifier(const AView: IOTAEditView);
+var
+  LGuard: IOTAEditorNotifier;
+  LView: IOTAEditView;
+begin
+  if not Assigned(AView) then
+    Exit;
+
+  LGuard := Self as IOTAEditorNotifier;
+  LView := AView;
+  TThread.Queue(nil,
+    procedure
+    begin
+      if not Assigned(LGuard) or not Assigned(FSourceEditor) then
+        Exit;
+
+      AddEditViewNotifier(LView);
+    end);
 end;
 
 procedure TRadIASourceEditorNotifier.AddEditViewNotifier(const AView: IOTAEditView);
 var
   LNotifier: INTAEditViewNotifier;
+  LViewInterface: IInterface;
 begin
   if not Assigned(AView) or not Assigned(FSourceEditor) then
     Exit;
 
+  if Supports(AView, IInterface, LViewInterface) and
+     (FEditViews.IndexOf(LViewInterface) >= 0) then
+    Exit;
+
   LNotifier := TRadIAInlineCompletionEditViewNotifier.Create(FSourceEditor.FileName, AView);
   FEditViewNotifiers.Add(LNotifier);
+  if Assigned(LViewInterface) then
+    FEditViews.Add(LViewInterface);
 end;
 
 procedure TRadIASourceEditorNotifier.Destroyed;
@@ -220,6 +252,8 @@ procedure TRadIASourceEditorNotifier.RemoveNotifier;
 begin
   if Assigned(FEditViewNotifiers) then
     FEditViewNotifiers.Clear;
+  if Assigned(FEditViews) then
+    FEditViews.Clear;
 
   if Assigned(FSourceEditor) and (FIndex >= 0) then
   begin
@@ -231,6 +265,8 @@ end;
 
 procedure TRadIASourceEditorNotifier.ViewActivated(const View: IOTAEditView);
 begin
+  QueueAddEditViewNotifier(View);
+
   if Assigned(FHook) then
     FHook.QueueHookActiveEditor;
 end;
@@ -238,7 +274,7 @@ end;
 procedure TRadIASourceEditorNotifier.ViewNotification(const View: IOTAEditView; Operation: TOperation);
 begin
   if Operation = opInsert then
-    AddEditViewNotifier(View);
+    QueueAddEditViewNotifier(View);
 
   if (Operation = opInsert) and Assigned(FHook) then
     FHook.QueueHookActiveEditor;
@@ -252,6 +288,7 @@ begin
   FOldActiveFormChange := nil;
   FIDENotifierIndex := -1;
   FEditorNotifiers := TInterfaceList.Create;
+  FSourceEditors := TInterfaceList.Create;
   {$IFNDEF TESTS}
   FTimer := nil;
   FHookPending := False;
@@ -263,6 +300,7 @@ end;
 destructor TRadIAEditorHook.Destroy;
 begin
   Uninstall;
+  FSourceEditors.Free;
   FEditorNotifiers.Free;
   inherited Destroy;
 end;
@@ -487,6 +525,7 @@ begin
   {$ENDIF}
 
   FEditorNotifiers.Clear;
+  FSourceEditors.Clear;
 
   if (FIDENotifierIndex >= 0) and Supports(BorlandIDEServices, IOTAServices, LOTAServices) then
   begin
@@ -503,6 +542,7 @@ end;
 procedure TRadIAEditorHook.TryAddSourceEditorNotifier(const ASourceEditor: IOTASourceEditor);
 var
   LNotifier: IOTAEditorNotifier;
+  LSourceInterface: IInterface;
 begin
   {$IFDEF TESTS}
   Exit;
@@ -512,8 +552,14 @@ begin
     Exit;
 
   try
+    if Supports(ASourceEditor, IInterface, LSourceInterface) and
+       (FSourceEditors.IndexOf(LSourceInterface) >= 0) then
+      Exit;
+
     LNotifier := TRadIASourceEditorNotifier.Create(Self, ASourceEditor);
     FEditorNotifiers.Add(LNotifier);
+    if Assigned(LSourceInterface) then
+      FSourceEditors.Add(LSourceInterface);
   except
     on E: Exception do
       TLogger.Log('TryAddSourceEditorNotifier: Error adding source editor notifier: ' + E.Message, 'EditorHook');
