@@ -93,6 +93,13 @@ begin
     'Review Pascal code applying Clean Code and SOLID',
     'Review the following Delphi Pascal code block applying Clean Code, readability, and optimization principles:'#13#10#13#10'{code}',
     False,
+    '/review'
+  );
+  AddDefault(
+    'Explain Code',
+    'Explain the selected Delphi Pascal code',
+    'Explain the following Delphi Pascal code block in detail:'#13#10#13#10'{code}',
+    False,
     '/explain'
   );
   AddDefault(
@@ -287,6 +294,13 @@ begin
   for I := FUserTemplates.Count - 1 downto 0 do
   begin
     LUser := FUserTemplates[I];
+
+    if SameText(LUser.Name, 'Review Clean Code Delphi') and SameText(LUser.SlashCommand, '/explain') then
+    begin
+      LUser.SlashCommand := '/review';
+      FUserTemplates[I] := LUser;
+      LChanged := True;
+    end;
     
     // Force upgrade of legacy templates missing 'uses' or 'Generics' rules
     if SameText(LUser.Name, 'Create Project Delphi') or SameText(LUser.Name, 'Create Project Delphi Architecture') then

@@ -79,6 +79,12 @@ uses
 procedure TTestRadIAProvidersEx.Setup;
 begin
   FConfig := TRadIAConfig.Create;
+  FConfig.SetActiveModel('DeepSeek', MODEL_DEEPSEEK_CHAT);
+  FConfig.SetActiveModel('Groq', MODEL_GROQ_LLAMA33);
+  FConfig.SetActiveModel('OpenRouter', MODEL_OPENROUTER_GEMINI25_PRO);
+  FConfig.SetActiveModel('LMStudio', 'lms-default');
+  FConfig.SetActiveModel('Qwen', MODEL_QWEN_25_CODER_32B);
+  FConfig.SetActiveModel('Mistral', MODEL_MISTRAL_CODESTRAL);
   FDeepSeekProv := TRadIADeepSeekProvider.Create(FConfig);
   FGroqProv := TRadIAGroqProvider.Create(FConfig);
   FOpenRouterProv := TRadIAOpenRouterProvider.Create(FConfig);

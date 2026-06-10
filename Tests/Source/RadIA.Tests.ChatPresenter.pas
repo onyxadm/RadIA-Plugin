@@ -440,6 +440,8 @@ begin
   LProcessed := FPresenter.TestPreProcessPrompt(LPrompt);
 
   Assert.IsFalse(LProcessed.StartsWith('/explain', True));
+  Assert.IsTrue(LProcessed.StartsWith('Explain the following Delphi Pascal code block in detail:', True), LProcessed);
+  Assert.IsFalse(LProcessed.StartsWith('Review the following Delphi Pascal code block', True), LProcessed);
   Assert.IsTrue(LProcessed.Contains('TForm1 = class(TForm)'));
 end;
 

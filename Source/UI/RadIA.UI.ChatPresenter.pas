@@ -1549,6 +1549,10 @@ begin
     if not LFound then
       LFound := FTemplateManager.FindTemplate('Review Leaks and SOLID', LTemplate);
   end
+  else if SameText(LCommand, '/explain') then
+  begin
+    LFound := FTemplateManager.FindTemplate('Explain Code', LTemplate);
+  end
   else if SameText(LCommand, '/refactor') then
   begin
     LFound := False;

@@ -57,10 +57,15 @@ end;
 procedure TTestRadIATemplates.TestDefaultTemplates_ArePresent;
 var
   LList: TArray<TPromptTemplate>;
+  LTemplate: TPromptTemplate;
 begin
   LList := FManager.GetTemplates;
   Assert.IsTrue(Length(LList) >= 6, 'Should contain at least the 6 default templates');
   Assert.IsTrue(FManager.ResolveTemplate('Review Clean Code Delphi', '').Contains('Delphi Pascal'));
+  Assert.IsTrue(FManager.FindTemplate('Review Clean Code Delphi', LTemplate));
+  Assert.AreEqual('/review', LTemplate.SlashCommand);
+  Assert.IsTrue(FManager.FindTemplate('Explain Code', LTemplate));
+  Assert.AreEqual('/explain', LTemplate.SlashCommand);
 end;
 
 procedure TTestRadIATemplates.TestTemplateManager_AddAndRetrieve;
@@ -148,7 +153,7 @@ const
   SYS_NAME = 'Review Clean Code Delphi';
   CUSTOM_PROMPT = 'Review this custom style: {code}';
 begin
-  FManager.AddTemplate(SYS_NAME, 'Custom Desc', CUSTOM_PROMPT, False, '/explain');
+  FManager.AddTemplate(SYS_NAME, 'Custom Desc', CUSTOM_PROMPT, False, '/review');
   FManager.Save;
   
   Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
@@ -204,6 +209,7 @@ begin
   Assert.IsTrue(FManager.FindTemplate('Review Clean Code Delphi', LTemplate));
   Assert.IsTrue(LTemplate.IsSystem);
   Assert.IsFalse(LTemplate.IsCustomized, 'Redundant overlay should have been removed and reverted to raw system template');
+  Assert.AreEqual('/review', LTemplate.SlashCommand);
   
   if TFile.Exists(LTempFile) then
   begin
