@@ -78,6 +78,8 @@ type
 
     procedure UpdateWebViewNavigation;
     procedure UpdateSendButtonVisual(const AInProgress: Boolean);
+    function GetCurrentIDEThemeName: string;
+    function GetWebThemeName(const AThemeName: string): string;
     function ColorToHex(AColor: TColor): string;
     procedure CreateEdgeBrowser;
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
@@ -101,6 +103,7 @@ type
     procedure UpdateTokensStats(const AStats: string);
     procedure PostMessageToWeb(const AJson: string);
     procedure PostMessageToBackgroundWeb(const AJson: string);
+    procedure ApplyCurrentTheme;
     
     procedure CreateBackgroundBrowser;
     function IsBackgroundBrowserInitialized: Boolean;
@@ -139,6 +142,10 @@ type
     function Get_UserAgent(out userAgent: PWideChar): HResult; stdcall;
     function Put_UserAgent(userAgent: PWideChar): HResult; stdcall;
   end;
+
+const
+  CWebView2BrowserArguments =
+    '--disable-features=OverlayScrollbar,OverlayScrollbars,FluentOverlayScrollbar,WindowsScrollingPersonality';
 
 type
   TSessionObject = class
@@ -289,6 +296,7 @@ begin
     EdgeBrowser.Parent := pnlBrowser;
     EdgeBrowser.Align := alClient;
     EdgeBrowser.AlignWithMargins := True;
+    EdgeBrowser.AdditionalBrowserArguments := CWebView2BrowserArguments;
     EdgeBrowser.OnCreateWebViewCompleted := EdgeBrowserCreateWebViewCompleted;
     {$IF CompilerVersion >= 35.0}
     EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
@@ -410,7 +418,8 @@ begin
     cbModel.Visible := True;
     btnTemplates.Visible := True;
 
-    LTargetUrl := 'file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/');
+    LTargetUrl := 'file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/') +
+      '?theme=' + GetWebThemeName(GetCurrentIDEThemeName);
     TLogger.Log('UpdateWebViewNavigation: Navigating to local chat: ' + LTargetUrl, 'UI');
     EdgeBrowser.Navigate(LTargetUrl);
   end;
@@ -585,7 +594,7 @@ begin
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'set_theme');
-    LJson.AddPair('theme', AThemeName.ToLower);
+    LJson.AddPair('theme', GetWebThemeName(AThemeName));
     
     LJson.AddPair('bgBase', ColorToHex(LColors.BgBase));
     LJson.AddPair('bgPanel', ColorToHex(LColors.BgBase));
@@ -607,6 +616,31 @@ begin
   finally
     LJson.Free;
   end;
+end;
+
+procedure TFrameAIChat.ApplyCurrentTheme;
+begin
+  SetTheme(GetCurrentIDEThemeName);
+end;
+
+function TFrameAIChat.GetCurrentIDEThemeName: string;
+var
+  LThemingServices: IOTAIDEThemingServices;
+begin
+  Result := 'light';
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled then
+      Result := LThemingServices.ActiveTheme;
+  end;
+end;
+
+function TFrameAIChat.GetWebThemeName(const AThemeName: string): string;
+begin
+  if IsThemeDark(AThemeName) then
+    Result := 'dark'
+  else
+    Result := 'light';
 end;
 
 function TFrameAIChat.ColorToHex(AColor: TColor): string;
@@ -954,6 +988,7 @@ begin
     FEdgeBrowserWeb := TEdgeBrowser.Create(nil);
     FEdgeBrowserWeb.Parent := FpnlBrowserWeb;
     FEdgeBrowserWeb.Align := alClient;
+    FEdgeBrowserWeb.AdditionalBrowserArguments := CWebView2BrowserArguments;
     FEdgeBrowserWeb.OnCreateWebViewCompleted := EdgeBrowserWebCreateWebViewCompleted;
     FEdgeBrowserWeb.OnSourceChanged := EdgeBrowserWebSourceChanged;
     {$IF CompilerVersion >= 35.0}

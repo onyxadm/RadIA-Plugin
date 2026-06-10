@@ -65,22 +65,198 @@
 #chat-container {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 16px;
+  padding: 20px 28px 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 26px;
   scroll-behavior: smooth;
+  scrollbar-width: none;
 }
 
 #chat-container::-webkit-scrollbar {
-  width: 6px;
+  width: 0;
+  height: 0;
 }
-#chat-container::-webkit-scrollbar-track {
-  background: transparent;
+
+#chat-scrollbar {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  bottom: var(--chat-footer-height, 96px);
+  width: 14px;
+  border-radius: 7px;
+  background: var(--scrollbar-track);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 20;
 }
-#chat-container::-webkit-scrollbar-thumb {
+
+#chat-wrapper:hover #chat-scrollbar,
+#chat-scrollbar.dragging {
+  opacity: 1;
+}
+
+#chat-scrollbar.hidden {
+  display: none;
+}
+
+#chat-scrollbar-thumb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  min-height: 40px;
+  border-radius: 7px;
   background-color: var(--scrollbar);
-  border-radius: 4px;
+  cursor: default;
+}
+
+#chat-scrollbar-thumb:hover,
+#chat-scrollbar.dragging #chat-scrollbar-thumb {
+  background-color: var(--scrollbar-hover);
+}
+
+.welcome-screen {
+  width: min(560px, 100%);
+  margin: auto;
+  padding: 22px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  color: var(--fg-primary);
+  animation: fadeSlideIn 0.22s ease-out;
+}
+
+.welcome-orbit {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  display: grid;
+  place-items: center;
+}
+
+.welcome-orbit-ring {
+  position: absolute;
+  width: 124px;
+  height: 76px;
+  border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 50%;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent-hover) 40%, transparent));
+  opacity: 0.9;
+  animation: orbitSpin 9s linear infinite;
+}
+
+.welcome-orbit-ring.ring-one {
+  transform: rotate(28deg);
+}
+
+.welcome-orbit-ring.ring-two {
+  border-color: color-mix(in srgb, var(--accent-hover) 62%, #7c5cff);
+  animation-duration: 12s;
+  animation-direction: reverse;
+  transform: rotate(-42deg);
+}
+
+.welcome-core {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: radial-gradient(circle at 35% 30%, var(--accent-hover), var(--accent));
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 45%, transparent);
+  z-index: 1;
+}
+
+.welcome-core svg {
+  width: 28px;
+  height: 28px;
+}
+
+.welcome-screen h1 {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 600;
+  text-align: center;
+}
+
+.welcome-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.welcome-action-btn,
+.welcome-history-btn {
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  color: var(--fg-primary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.12s ease;
+  outline: none;
+}
+
+.welcome-action-btn {
+  min-height: 108px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.welcome-action-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--accent-hover);
+}
+
+.welcome-action-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.welcome-history-btn {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.welcome-history-btn svg {
+  width: 20px;
+  height: 20px;
+  color: var(--fg-secondary);
+}
+
+.welcome-action-btn:hover,
+.welcome-history-btn:hover {
+  border-color: var(--accent-hover);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, var(--accent) 12%);
+  transform: translateY(-1px);
+}
+
+@keyframes orbitSpin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+@media (max-width: 520px) {
+  .welcome-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .message-wrapper {
@@ -674,6 +850,7 @@ body.light-theme .session-action-btn:hover {
   flex: 1;
   height: 100%;
   overflow: hidden;
+  position: relative;
 }
 
 .custom-dropdown-wrapper {

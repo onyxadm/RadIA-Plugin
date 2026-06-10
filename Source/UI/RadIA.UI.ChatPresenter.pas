@@ -14,6 +14,7 @@ type
     procedure UpdateTokensStats(const AStats: string);
     procedure PostMessageToWeb(const AJson: string);
     procedure PostMessageToBackgroundWeb(const AJson: string);
+    procedure ApplyCurrentTheme;
     
     procedure CreateBackgroundBrowser;
     function IsBackgroundBrowserInitialized: Boolean;
@@ -85,6 +86,7 @@ type
     procedure HandleInsertCodeMessage(const ACode: string);
     procedure HandleReadyMessage;
     procedure HandleNewChatMessage;
+    procedure HandleLoadHistoryMessage;
     procedure HandleToggleHistoryMessage;
     procedure HandleOpenSettingsMessage;
     procedure HandleChangeProviderMessage(const AProvider: string);
@@ -1009,9 +1011,8 @@ var
   LActiveProvider: string;
 begin
   FWebViewReady := True;
-  LoadChatHistory;
+  FView.ApplyCurrentTheme;
   SendInitialConfigToWeb;
-  SendSessionsUpdateToWeb;
   
   if FRequestInProgress then
   begin
@@ -1064,6 +1065,17 @@ begin
     procedure
     begin
       CreateNewSession;
+    end);
+end;
+
+procedure TChatPresenter.HandleLoadHistoryMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      PostToWebView('clear_chat', '', '');
+      LoadChatHistory;
+      SendSessionsUpdateToWeb;
     end);
 end;
 
@@ -1255,6 +1267,8 @@ begin
     HandleReadyMessage
   else if (AAction = 'new_chat') or (AAction = 'new_session') then
     HandleNewChatMessage
+  else if AAction = 'load_history' then
+    HandleLoadHistoryMessage
   else if AAction = 'toggle_history' then
     HandleToggleHistoryMessage
   else if AAction = 'open_settings' then
@@ -1861,7 +1875,7 @@ var
 begin
   LJson := TJSONObject.Create;
   try
-    LJson.AddPair('action', 'sessions_update');
+    LJson.AddPair('action', 'update_sessions');
     LArr := TJSONArray.Create;
     for LSession in FSessionManager.Sessions do
     begin
@@ -1872,6 +1886,7 @@ begin
       LArr.AddElement(LObj);
     end;
     LJson.AddPair('sessions', LArr);
+    LJson.AddPair('activeSessionId', FSessionManager.ActiveSessionId);
     FView.PostMessageToWeb(LJson.ToJSON);
   finally
     LJson.Free;

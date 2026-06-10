@@ -54,6 +54,7 @@ type
     procedure UpdateTokensStats(const AStats: string);
     procedure PostMessageToWeb(const AJson: string);
     procedure PostMessageToBackgroundWeb(const AJson: string);
+    procedure ApplyCurrentTheme;
     procedure CreateBackgroundBrowser;
     function IsBackgroundBrowserInitialized: Boolean;
     procedure NavigateBackgroundBrowser(const AUrl: string);
@@ -187,6 +188,10 @@ end;
 procedure TMockChatView.PostMessageToBackgroundWeb(const AJson: string);
 begin
   LastPostedBackgroundJson := AJson;
+end;
+
+procedure TMockChatView.ApplyCurrentTheme;
+begin
 end;
 
 procedure TMockChatView.CreateBackgroundBrowser;

@@ -118,6 +118,8 @@ let filteredSlashCommands = [];
 
 const chatWrapper          = document.getElementById('chat-wrapper');
 const generatorsWrapper    = document.getElementById('generators-wrapper');
+const chatScrollbar        = document.getElementById('chat-scrollbar');
+const chatScrollbarThumb   = document.getElementById('chat-scrollbar-thumb');
 const btnGenerators        = document.getElementById('btn-generators');
 const btnGenerateModel     = document.getElementById('btn-generate-model');
 const btnCopyGenerator     = document.getElementById('btn-copy-generator');
@@ -129,6 +131,180 @@ const generatorPreviewCard = document.getElementById('generator-preview-card');
 const generatorOutputCode  = document.getElementById('generator-output-code');
 
 let generatorAccumulatedCode = '';
+let isChatScrollbarDragging = false;
+let chatScrollbarDragStartY = 0;
+let chatScrollbarDragStartScrollTop = 0;
+let welcomeScreen = null;
+let historyLoadRequested = false;
+
+const QUICK_ACTIONS = [
+  {
+    label: 'Explain Code',
+    command: '/explain ',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l-3 3 3 3"></path><path d="M16 9l3 3-3 3"></path><path d="M14 5l-4 14"></path></svg>`
+  },
+  {
+    label: 'Find Bugs',
+    command: '/bugs ',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6.5a4 4 0 0 1 8 0"></path><path d="M8 7h8v6a4 4 0 0 1-8 0V7z"></path><path d="M4 13h4"></path><path d="M16 13h4"></path><path d="M6 19l2.5-2.5"></path><path d="M18 19l-2.5-2.5"></path><path d="M12 7v10"></path></svg>`
+  },
+  {
+    label: 'Refactor Code',
+    command: '/refactor ',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10"></path><path d="M14 4l3 3-3 3"></path><path d="M17 17H7"></path><path d="M10 14l-3 3 3 3"></path></svg>`
+  },
+  {
+    label: 'Review Code',
+    command: '/review ',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path><path d="M19 13v5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h8"></path></svg>`
+  }
+];
+
+function updateChatScrollbar() {
+  if (!chatContainer || !chatWrapper || !chatScrollbar || !chatScrollbarThumb) return;
+
+  const footerHeight = chatWrapper.offsetHeight - chatContainer.offsetHeight;
+  chatWrapper.style.setProperty('--chat-footer-height', `${Math.max(0, footerHeight)}px`);
+
+  const scrollHeight = chatContainer.scrollHeight;
+  const clientHeight = chatContainer.clientHeight;
+  const maxScrollTop = scrollHeight - clientHeight;
+
+  if (maxScrollTop <= 1) {
+    chatScrollbar.classList.add('hidden');
+    return;
+  }
+
+  chatScrollbar.classList.remove('hidden');
+
+  const trackHeight = chatScrollbar.clientHeight;
+  const thumbHeight = Math.max(40, Math.round((clientHeight / scrollHeight) * trackHeight));
+  const maxThumbTop = Math.max(0, trackHeight - thumbHeight);
+  const thumbTop = Math.round((chatContainer.scrollTop / maxScrollTop) * maxThumbTop);
+
+  chatScrollbarThumb.style.height = `${thumbHeight}px`;
+  chatScrollbarThumb.style.transform = `translateY(${thumbTop}px)`;
+}
+
+function bindChatScrollbar() {
+  if (!chatContainer || !chatScrollbar || !chatScrollbarThumb) return;
+
+  chatContainer.addEventListener('scroll', updateChatScrollbar);
+  window.addEventListener('resize', updateChatScrollbar);
+
+  chatScrollbarThumb.addEventListener('mousedown', (event) => {
+    isChatScrollbarDragging = true;
+    chatScrollbarDragStartY = event.clientY;
+    chatScrollbarDragStartScrollTop = chatContainer.scrollTop;
+    chatScrollbar.classList.add('dragging');
+    event.preventDefault();
+  });
+
+  chatScrollbar.addEventListener('mousedown', (event) => {
+    if (event.target === chatScrollbarThumb) return;
+
+    const rect = chatScrollbar.getBoundingClientRect();
+    const thumbHeight = chatScrollbarThumb.offsetHeight;
+    const targetTop = event.clientY - rect.top - (thumbHeight / 2);
+    const maxThumbTop = Math.max(1, chatScrollbar.clientHeight - thumbHeight);
+    const maxScrollTop = chatContainer.scrollHeight - chatContainer.clientHeight;
+
+    chatContainer.scrollTop = (targetTop / maxThumbTop) * maxScrollTop;
+    event.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (event) => {
+    if (!isChatScrollbarDragging) return;
+
+    const thumbHeight = chatScrollbarThumb.offsetHeight;
+    const maxThumbTop = Math.max(1, chatScrollbar.clientHeight - thumbHeight);
+    const maxScrollTop = chatContainer.scrollHeight - chatContainer.clientHeight;
+    const scrollDelta = ((event.clientY - chatScrollbarDragStartY) / maxThumbTop) * maxScrollTop;
+
+    chatContainer.scrollTop = chatScrollbarDragStartScrollTop + scrollDelta;
+    event.preventDefault();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isChatScrollbarDragging) return;
+
+    isChatScrollbarDragging = false;
+    chatScrollbar.classList.remove('dragging');
+  });
+
+  if (window.ResizeObserver) {
+    const resizeObserver = new window.ResizeObserver(updateChatScrollbar);
+    resizeObserver.observe(chatContainer);
+    resizeObserver.observe(chatWrapper);
+  }
+
+  const mutationObserver = new MutationObserver(() => window.requestAnimationFrame(updateChatScrollbar));
+  mutationObserver.observe(chatContainer, { childList: true, subtree: true, characterData: true });
+  window.requestAnimationFrame(updateChatScrollbar);
+}
+
+function setPromptText(text) {
+  promptTextarea.value = text;
+  promptTextarea.focus();
+  promptTextarea.style.height = 'auto';
+  promptTextarea.style.height = promptTextarea.scrollHeight + 'px';
+  promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+}
+
+function hideWelcomeScreen() {
+  if (welcomeScreen) {
+    welcomeScreen.remove();
+    welcomeScreen = null;
+  }
+}
+
+function requestHistoryLoad() {
+  historyLoadRequested = true;
+  postMessageToDelphi({ action: 'load_history' });
+}
+
+function showWelcomeScreen() {
+  if (!chatContainer || chatContainer.querySelector('.message-wrapper, .typing-wrapper')) return;
+  if (welcomeScreen) return;
+
+  welcomeScreen = document.createElement('section');
+  welcomeScreen.className = 'welcome-screen';
+  welcomeScreen.innerHTML = `
+    <div class="welcome-orbit" aria-hidden="true">
+      <span class="welcome-orbit-ring ring-one"></span>
+      <span class="welcome-orbit-ring ring-two"></span>
+      <span class="welcome-core">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 3l2.3 6.1L21 12l-6.7 2.9L12 21l-2.3-6.1L3 12l6.7-2.9L12 3z" fill="currentColor"></path>
+        </svg>
+      </span>
+    </div>
+    <h1>How can RadIA help today?</h1>
+    <div class="welcome-actions"></div>
+    <button type="button" class="welcome-history-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+        <path d="M3 4v5h5"></path>
+        <path d="M12 7v5l3 2"></path>
+      </svg>
+      <span>Load chat history</span>
+    </button>
+  `;
+
+  const actionsContainer = welcomeScreen.querySelector('.welcome-actions');
+  QUICK_ACTIONS.forEach((action) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'welcome-action-btn';
+    button.innerHTML = `<span class="welcome-action-icon">${action.icon}</span><span>${action.label}</span>`;
+    button.addEventListener('click', () => setPromptText(action.command));
+    actionsContainer.appendChild(button);
+  });
+
+  welcomeScreen.querySelector('.welcome-history-btn').addEventListener('click', requestHistoryLoad);
+  chatContainer.appendChild(welcomeScreen);
+  updateChatScrollbar();
+}
 
 const SENDER_INFO = {
   user: { 
@@ -256,6 +432,7 @@ function handleSend() {
   _promptHistoryIndex = -1;
   _promptDraft = '';
 
+  hideWelcomeScreen();
   postMessageToDelphi({ action: 'send_prompt', text: text });
   promptTextarea.value = '';
   promptTextarea.style.height = 'auto';
@@ -293,6 +470,9 @@ btnClearChat.addEventListener('click', () => {
 });
 
 btnHistory.addEventListener('click', () => {
+  if (sessionsSidebar.classList.contains('collapsed') && !historyLoadRequested) {
+    requestHistoryLoad();
+  }
   sessionsSidebar.classList.toggle('collapsed');
 });
 
@@ -441,10 +621,7 @@ function renderSlashCommands() {
 }
 
 function insertSlashCommand(name) {
-  promptTextarea.value = name + ' ';
-  promptTextarea.focus();
-  promptTextarea.style.height = 'auto';
-  promptTextarea.style.height = promptTextarea.scrollHeight + 'px';
+  setPromptText(name + ' ');
   hideSlashPopup();
 }
 
@@ -454,6 +631,7 @@ function shouldRenderMessageAsMarkdown(role, text) {
 
 function addMessage(role, text, provider, model) {
   hideTypingIndicator();
+  hideWelcomeScreen();
   if (text === undefined || text === null) {
     text = '';
   }
@@ -507,20 +685,26 @@ function addMessage(role, text, provider, model) {
 
 function clearChat() {
   chatContainer.innerHTML = '';
+  welcomeScreen = null;
   currentAssistantWrapper = null;
   currentAssistantContent = null;
   currentAssistantText = '';
+  showWelcomeScreen();
 }
 
 function setTheme(themeInfo) {
   if (!themeInfo) return;
 
   if (typeof themeInfo === 'string') {
-    document.body.className = themeInfo + '-theme';
+    const lowerTheme = themeInfo.toLowerCase();
+    const themeName = lowerTheme.includes('dark') ? 'dark' : 'light';
+    document.body.className = themeName + '-theme';
+    updateChatScrollbar();
     return;
   }
 
-  document.body.className = themeInfo.theme + '-theme';
+  const themeName = themeInfo.theme === 'dark' ? 'dark' : 'light';
+  document.body.className = themeName + '-theme';
 
   const root = document.documentElement;
   if (themeInfo.bgBase) root.style.setProperty('--bg-base', themeInfo.bgBase);
@@ -534,6 +718,7 @@ function setTheme(themeInfo) {
   if (themeInfo.codeBg) root.style.setProperty('--code-bg', themeInfo.codeBg);
   if (themeInfo.codeHeader) root.style.setProperty('--code-header', themeInfo.codeHeader);
   if (themeInfo.greenApply) root.style.setProperty('--green-apply', themeInfo.greenApply);
+  updateChatScrollbar();
 }
 
 function copyCode(btn, id) {
@@ -563,6 +748,7 @@ let typingIndicatorEl = null;
 function showTypingIndicator() {
   if (typingIndicatorEl) return;
 
+  hideWelcomeScreen();
   const info = SENDER_INFO.assistant;
   const wrapper = document.createElement('div');
   wrapper.classList.add('typing-wrapper');
@@ -599,6 +785,7 @@ let currentAssistantText    = '';
 
 function appendMessage(text, isDone, provider, model) {
   hideTypingIndicator();
+  hideWelcomeScreen();
 
   if (text === undefined || text === null) {
     text = '';
@@ -1048,6 +1235,7 @@ function appendGeneratorCode(text, isDone) {
 
 function updateMessage(text, isDone, provider, model) {
   hideTypingIndicator();
+  hideWelcomeScreen();
   if (text === undefined || text === null) text = '';
   
   if (!currentAssistantWrapper) {
@@ -1116,3 +1304,6 @@ if (window.chrome && window.chrome.webview) {
   });
   window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));
 }
+
+bindChatScrollbar();
+showWelcomeScreen();

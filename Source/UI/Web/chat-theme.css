@@ -25,6 +25,8 @@ body.dark-theme {
   --code-fg:        #e2e8f0;
   --code-header:    #121212;
   --scrollbar:      rgba(255, 255, 255, 0.08);
+  --scrollbar-hover: rgba(255, 255, 255, 0.18);
+  --scrollbar-track: rgba(255, 255, 255, 0.03);
   --green-apply:    #10b981;
 }
 
@@ -45,6 +47,8 @@ body.light-theme {
   --code-fg:        #0f172a;
   --code-header:    #e2e8f0;
   --scrollbar:      rgba(0, 0, 0, 0.08);
+  --scrollbar-hover: rgba(0, 0, 0, 0.18);
+  --scrollbar-track: rgba(0, 0, 0, 0.04);
   --green-apply:    #059669;
 }
 
