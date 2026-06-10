@@ -101,6 +101,8 @@ type
     FOpenAIOriginalMeta: TProviderMetadata;
     FHasOriginalGemini: Boolean;
     FHasOriginalOpenAI: Boolean;
+
+    procedure DrainQueuedCalls;
   public
     [Setup]
     procedure Setup;
@@ -121,6 +123,16 @@ type
     procedure TestHandleTemplateSelectedLoadsInInput;
     [Test]
     procedure TestChangeProviderUpdatesModels;
+    [Test]
+    procedure TestWebMessageOpenSettings;
+    [Test]
+    procedure TestWebMessageToggleHistory;
+    [Test]
+    procedure TestWebMessageInsertCode;
+    [Test]
+    procedure TestWebMessageChangeProvider;
+    [Test]
+    procedure TestWebMessageChangeModel;
   end;
 
 implementation
@@ -316,6 +328,16 @@ end;
 
 { TTestChatPresenter }
 
+procedure TTestChatPresenter.DrainQueuedCalls;
+var
+  I: Integer;
+begin
+  for I := 1 to 10 do
+  begin
+    CheckSynchronize(1);
+  end;
+end;
+
 procedure TTestChatPresenter.Setup;
 var
   LMemoryStorage: ISettingsStorage;
@@ -459,6 +481,59 @@ begin
   
   Assert.AreEqual('OpenAI', FConfig.GetActiveProvider);
   Assert.AreEqual('Loading...', FMockView.ActiveModelName);
+end;
+
+procedure TTestChatPresenter.TestWebMessageOpenSettings;
+begin
+  FPresenter.Initialize('C:\mock\web');
+
+  FPresenter.ProcessWebMessage('{"action":"open_settings"}');
+  DrainQueuedCalls;
+
+  Assert.IsTrue(FMockView.OpenSettingsDialogCalled);
+end;
+
+procedure TTestChatPresenter.TestWebMessageToggleHistory;
+begin
+  FPresenter.Initialize('C:\mock\web');
+
+  FPresenter.ProcessWebMessage('{"action":"toggle_history"}');
+  DrainQueuedCalls;
+
+  Assert.IsTrue(FMockView.ToggleSessionsPanelCalled);
+end;
+
+procedure TTestChatPresenter.TestWebMessageInsertCode;
+begin
+  FPresenter.Initialize('C:\mock\web');
+
+  FPresenter.ProcessWebMessage('{"action":"insert_code","code":"procedure Demo; begin end;"}');
+  DrainQueuedCalls;
+
+  Assert.IsTrue(FMockView.EditorTextReplaced);
+  Assert.AreEqual('procedure Demo; begin end;', FMockView.ReplacedEditorTextValue);
+end;
+
+procedure TTestChatPresenter.TestWebMessageChangeProvider;
+begin
+  FPresenter.Initialize('C:\mock\web');
+
+  FPresenter.ProcessWebMessage('{"action":"change_provider","provider":"OpenAI"}');
+  DrainQueuedCalls;
+
+  Assert.AreEqual('OpenAI', FConfig.GetActiveProvider);
+  Assert.AreEqual('Loading...', FMockView.ActiveModelName);
+end;
+
+procedure TTestChatPresenter.TestWebMessageChangeModel;
+begin
+  FPresenter.Initialize('C:\mock\web');
+  FConfig.SetActiveProvider('OpenAI');
+
+  FPresenter.ProcessWebMessage('{"action":"change_model","model":"gpt-4o"}');
+  DrainQueuedCalls;
+
+  Assert.AreEqual('gpt-4o', FConfig.GetActiveModel('OpenAI'));
 end;
 
 initialization
