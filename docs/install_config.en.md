@@ -14,6 +14,8 @@ The plugin can be installed in two ways:
 
 This option compiles the plugin, copies the binaries to the official public Delphi directories, and registers the plugin in the Windows Registry. If you need to compile and run the unit test suite (**DUnitX**), simply add the `-Test` switch to the command.
 
+During installation, the script also updates the HTML/CSS/JS assets used by WebView2 under `%APPDATA%\RadIA\Web` and clears the local `%APPDATA%\RadIA\WebView2` cache while the IDE is closed. This prevents different Delphi versions from loading stale JavaScript files after an update.
+
 1. Open the Windows PowerShell console.
 2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
 3. Run the command in the project root directory according to your IDE's architecture:
@@ -116,7 +118,7 @@ Enter the obtained keys in the plugin settings (**Settings** at the top of the c
 
 The `.\build.ps1` script supports the following switches:
 
-* `-Install`: Builds the plugin, copies binaries to public Delphi paths, and registers the package.
+* `-Install`: Builds the plugin, copies binaries to public Delphi paths, synchronizes local WebView2 assets, and registers the package.
 * `-Uninstall`: Clean uninstalls the plugin, deleting files and registry keys.
 * `-Release`: Enables compiler optimizations and outputs a smaller BPL binary.
 * `-IDE64`: Compiles and installs specifically for the 64-bit Delphi IDE in Delphi 13 Florence.

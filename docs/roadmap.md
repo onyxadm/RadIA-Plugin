@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.17 — Menu do Editor e Chat WebView2 Estáveis (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Experiência mais previsível ao usar ações do editor: código selecionado chega ao chat formatado, `/explain` não cai mais em review e Delphi 12/13 carregam os recursos web atualizados.
+  *   **Destaques**: blocos Pascal renderizados em mensagens do usuário, template nativo **Explain Code**, migração de slash command legado, cache busting de `chat.js` e instalador sincronizando `%APPDATA%\RadIA\Web`.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.17)](backlog.md#v0017--estabilização-do-menu-do-editor-e-chat-webview2-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.16 — MVP, Storage Abstraction e Robustez do Editor (Concluído)</b></summary>
 
   *   **Valor Entregue**: Base interna mais testável e estável, com telas desacopladas em MVP e menu contextual do editor mais confiável no Delphi 12/13.

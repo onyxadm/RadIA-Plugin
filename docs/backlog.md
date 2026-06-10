@@ -50,6 +50,26 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
+  <summary><b>📦 v0.0.17 — Estabilização do Menu do Editor e Chat WebView2 (Clique para expandir)</b></summary>
+
+  #### 1. Formatação de Código e Slash Commands do Editor - Itens #43, #44
+  *   **Descrição**: Correção dos fluxos acionados pelo menu contextual do editor para preservar blocos Pascal formatados no chat e garantir que cada comando resolva o template correto desde a primeira execução.
+  *   **Detalhes**:
+      *   Montagem dos prompts do editor com comando, instrução e bloco `pascal` em linhas separadas para manter a renderização Markdown.
+      *   Renderização de Markdown também em mensagens do usuário quando houver blocos fenced, preservando destaque Pascal e ações de cópia/aplicação.
+      *   Criação do template nativo **Explain Code** para o comando `/explain` e migração de overlays legados de review para `/review`.
+      *   Alinhamento do processamento global de prompts com `PreProcessPrompt`, evitando diferenças entre comandos disparados pelo menu e comandos digitados no chat.
+
+  #### 2. Instalação e Cache de Recursos Web - Item #45
+  *   **Descrição**: Reforço do processo de instalação multi-IDE para evitar que Delphi 12/13 carreguem JavaScript antigo do WebView2 após atualizações.
+  *   **Detalhes**:
+      *   `chat.html` passou a carregar `chat.js` com cache busting por timestamp.
+      *   `build.ps1 -Install` agora espelha `Source\UI\Web` na pasta pública da IDE e em `%APPDATA%\RadIA\Web`.
+      *   Limpeza automática do cache `%APPDATA%\RadIA\WebView2` durante a instalação quando a IDE está fechada.
+      *   Validação sequencial no Delphi 12 (`23.0`) e Delphi 13 (`37.0`) com **143 testes DUnitX aprovados** em ambos.
+</details>
+
+<details>
   <summary><b>📦 v0.0.16 — Refatoração Arquitetural MVP, Storage Abstraction e Robustez do Editor (Clique para expandir)</b></summary>
 
   #### 1. Implementação do Padrão MVP e Abstração de Armazenamento - Itens #40, #41

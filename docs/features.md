@@ -19,6 +19,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Exportação de Conversa** | Chat UX | Botão para salvar histórico nos formatos Markdown (.md) ou HTML autônomo com Prism.js. | ✅ Concluído |
 | **Templates de Prompt** | Chat UX | Biblioteca de templates rápidos de prompt com substituição de código e o comando `/template`. | ✅ Concluído |
 | **Slash Commands Dinâmicos** | Chat UX | Mapeamento dinâmico de templates para comandos de barra (ex: `/createprojectarch`), sincronizados e autocompletados no WebView2. | ✅ Concluído |
+| **Renderização de Código do Editor no Chat** | Chat UX | Prompts enviados pelo menu do editor preservam blocos fenced Markdown com realce Pascal também em mensagens do usuário. | ✅ Concluído |
 | **Backup de Templates** | Chat UX | Exportação e importação transacional em JSON de templates com validação estrutural de esquema e opção de mesclagem na UI. | ✅ Concluído |
 | **Google Gemini** | Provedor | Suporte nativo aos modelos Gemini 1.5 Flash e Pro via chaves próprias (BYOK). | ✅ Concluído |
 | **OpenAI ChatGPT** | Provedor | Suporte nativo aos modelos GPT-4o, GPT-4o-mini e outros. | ✅ Concluído |
@@ -40,7 +41,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Contexto de Projeto** | Inteligência | Carregamento automático de instruções de system e arquivos de contexto via `.radia`. | ✅ Concluído |
 | **Rastreamento de Tokens e Custo**| Transparência | Contador dinâmico de consumo e custo acumulado estimado em USD (locale invariant). | ✅ Concluído |
 | **Limite de Cota Local** | Transparência | Definição de limite de tokens mensal com bloqueio de chamadas e botão de reset. | ✅ Concluído |
-| **Ações no Editor** | Integração | Submenu RadIA no topo do menu de botão direito do editor para explicar código, otimizar/refatorar, gerar testes, localizar bugs, documentar métodos e revisar a unit ativa. | ✅ Concluído |
+| **Ações no Editor** | Integração | Submenu RadIA no topo do menu de botão direito do editor para explicar código, otimizar/refatorar, gerar testes, localizar bugs, documentar métodos e revisar a unit ativa, com `/explain` separado de `/review`. | ✅ Concluído |
 | **Smart Diff (Comparador)** | Integração | Visualização lado a lado de código sugerido vs. original com aplicação instantânea. | ✅ Concluído |
 | **Smart Build Debugger** | Integração | Clique com o botão direito nos erros de compilação da IDE para correções instantâneas. | ✅ Concluído |
 | **Documentação XML Automática** | Geração | Geração automática de comentários `/// <summary>` sobre os métodos da unit. | ✅ Concluído |
@@ -50,7 +51,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Assistente de Stack Trace** | Integração | Analisador de logs de erro/stack trace integrado ao contexto da unit aberta. | ✅ Concluído |
 | **Análise Estática de Código** | Integração | Varredura de código em busca de memory leaks (ausência de try..finally) e anti-padrões SOLID/Clean Code. | ✅ Concluído |
 | **Armazenamento Seguro** | Segurança | Chaves de API salvas localmente criptografadas usando a API do Windows DPAPI. | ✅ Concluído |
-| **Build e Instalação Multi-IDE** | Infraestrutura | Script PowerShell com suporte a múltiplos ambientes Delphi no registro e seleção interativa. | ✅ Concluído |
+| **Build e Instalação Multi-IDE** | Infraestrutura | Script PowerShell com suporte a múltiplos ambientes Delphi no registro, seleção interativa, sincronização de recursos WebView2 e limpeza de cache local. | ✅ Concluído |
 | **Arquitetura MVP** | Infraestrutura | Desacoplamento completo entre UI VCL (Views) e lógica (Presenters) do Chat e Configurações. | ✅ Concluído |
 | **Abstração de Armazenamento** | Infraestrutura | Abstração de persistência via `ISettingsStorage` facilitando testes em memória. | ✅ Concluído |
 | **Testes de Apresentação** | Infraestrutura | Suíte de testes automatizados com DUnitX validando lógica de Presenters com mocks de Views. | ✅ Concluído |

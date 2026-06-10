@@ -43,6 +43,7 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
     *   *Otimizar/Refatorar:* Melhorar a performance e aplicar princípios SOLID/Clean Code.
     *   *Gerar Testes Unitários:* Gerar estruturas prontas de testes usando DUnitX.
     *   *Localizar Bugs:* Buscar memory leaks, exceptions soltas e falhas de lógica.
+    *   Os comandos enviados pelo menu preservam blocos Pascal formatados no chat e mantêm `/explain` separado dos fluxos de review.
 *   **Comparador Visual Inteligente (Smart Diff):** Visualização de refatorações lado a lado (Original vs. Sugerido) com realce vermelho/verde e botão **[Aplicar Alteração]** de um clique direto no editor.
 *   **Depurador de Compilação (Smart Build):** Integração com a aba *Messages* do Delphi. Clique com o botão direito nos erros de compilação da IDE para obter explicações e correções instantâneas.
 *   **Documentação XML Automática:** Geração de comentários XML estruturados (`/// <summary>`) acima do cabeçalho de métodos para alimentar o Help Insight.
@@ -73,6 +74,8 @@ A interface utiliza uma arquitetura híbrida:
 ### 5. Instalação e Configuração
 
 O RadIA pode ser instalado de maneira **automatizada via PowerShell** (recomendado, com suporte a autodetecção de múltiplos ambientes Delphi e seleção interativa) ou **manualmente através da IDE**. Para instruções detalhadas de compilação, registro e configuração de chaves de API para todos os provedores ou uso local com o Ollama, consulte o nosso:
+
+O instalador automatizado também sincroniza os recursos locais do WebView2 em `%APPDATA%\RadIA\Web` e limpa o cache local quando a IDE está fechada, evitando que Delphi 12/13 carreguem JavaScript antigo após atualizações.
 
 👉 [**Guia de Instalação e Configuração Completo (docs/install_config.md)**](docs/install_config.md)
 

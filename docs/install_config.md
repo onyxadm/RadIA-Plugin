@@ -14,6 +14,8 @@ O plugin pode ser instalado de duas formas:
 
 Esta opção compila o plugin, copia os binários para os diretórios públicos oficiais do Delphi e registra o plugin no Registro do Windows automaticamente. Se for necessário rodar a suíte de testes unitários (**DUnitX**), basta adicionar o parâmetro `-Test` ao comando.
 
+Durante a instalação, o script também atualiza os recursos HTML/CSS/JS usados pelo WebView2 em `%APPDATA%\RadIA\Web` e limpa o cache local `%APPDATA%\RadIA\WebView2` quando a IDE está fechada. Isso evita que versões diferentes do Delphi carreguem arquivos JavaScript antigos após uma atualização.
+
 1. Abra o console do Windows PowerShell.
 2. Certifique-se de que a pasta `bin` da instalação do Delphi contendo o `dcc32` está presente no PATH do sistema.
 3. Execute o comando na raiz do projeto de acordo com a arquitetura da sua IDE:
@@ -116,7 +118,7 @@ Insira as chaves obtidas nas configurações do plugin (**Settings** no topo do 
 
 O script `.\build.ps1` aceita os seguintes parâmetros:
 
-* `-Install`: Compila, copia os arquivos binários para a pasta pública do Delphi e cria o registro do pacote no Windows.
+* `-Install`: Compila, copia os arquivos binários para a pasta pública do Delphi, sincroniza os recursos WebView2 locais e cria o registro do pacote no Windows.
 * `-Uninstall`: Desinstala o plugin de forma limpa apagando arquivos e chaves de registro.
 * `-Release`: Ativa as otimizações do compilador Delphi e gera uma BPL menor.
 * `-IDE64`: Compila e instala o plugin especificamente para a IDE de 64 bits do Delphi 13 Florence.

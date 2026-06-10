@@ -43,6 +43,7 @@ This project adopts clear language rules and design standards for both human dev
     *   *Optimize/Refactor:* Improve performance and apply clean code practices.
     *   *Generate Unit Tests:* Automatically output a DUnitX test structure.
     *   *Analyze for Bugs:* Scan selected block for memory leaks or logic errors.
+    *   Menu-triggered commands preserve formatted Pascal blocks in chat and keep `/explain` separated from review flows.
 *   **Interactive Smart Diff View:** View refactored code recommendations side-by-side (Original vs. Suggested) highlighting changes in red/green with a one-click **[Apply Changes]** button directly into the editor.
 *   **Smart Build Debugger:** Context integration with the Delphi *Messages View*. Right-click on compilation errors to get instant AI fixes and solutions.
 *   **Auto XML Documentation:** Automatically write Delphi-compliant XML help tags (`/// <summary>`) above methods.
@@ -75,6 +76,8 @@ The user interface uses a hybrid architecture:
 ### 5. Installation and Configuration
 
 RadIA can be installed in two ways: **Automated via PowerShell** (recommended, supporting autodetect of multiple installed Delphi environments and interactive selection menu) or **manually through the IDE**. For detailed compilation, registry registration, and API key acquisition instructions for all providers or local Ollama usage, please refer to our:
+
+The automated installer also synchronizes local WebView2 assets into `%APPDATA%\RadIA\Web` and clears the local cache while the IDE is closed, preventing Delphi 12/13 from loading stale JavaScript after updates.
 
 👉 [**Complete Installation and Configuration Guide (docs/install_config.en.md)**](docs/install_config.en.md)
 

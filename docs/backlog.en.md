@@ -50,6 +50,26 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
+  <summary><b>📦 v0.0.17 — Editor Menu and WebView2 Chat Stabilization (Click to expand)</b></summary>
+
+  #### 1. Editor Code Formatting and Slash Commands - Items #43, #44
+  *   **Description**: Fixed editor context-menu flows so selected Pascal code is preserved as formatted chat blocks and each slash command resolves the correct template on the first execution.
+  *   **Details**:
+      *   Editor prompts now separate command, instruction, and fenced `pascal` code into clean Markdown lines.
+      *   User messages containing fenced code blocks are rendered as Markdown, preserving Pascal highlighting and code actions.
+      *   Added the native **Explain Code** template for `/explain` and migrated legacy review overlays to `/review`.
+      *   Aligned global prompt handling with `PreProcessPrompt`, avoiding differences between menu-triggered commands and commands typed in chat.
+
+  #### 2. Web Asset Installation and Cache Handling - Item #45
+  *   **Description**: Hardened the multi-IDE installation flow to prevent Delphi 12/13 from loading stale WebView2 JavaScript after updates.
+  *   **Details**:
+      *   `chat.html` now loads `chat.js` with timestamp-based cache busting.
+      *   `build.ps1 -Install` mirrors `Source\UI\Web` to the IDE public folder and `%APPDATA%\RadIA\Web`.
+      *   The installer clears `%APPDATA%\RadIA\WebView2` while the IDE is closed.
+      *   Sequential validation on Delphi 12 (`23.0`) and Delphi 13 (`37.0`) with **143 passing DUnitX tests** on both.
+</details>
+
+<details>
   <summary><b>📦 v0.0.16 — MVP Architecture Refactoring, Storage Abstraction, and Editor Robustness (Click to expand)</b></summary>
 
   #### 1. MVP Presentation Pattern & Configuration Storage Abstraction - Items #40, #41

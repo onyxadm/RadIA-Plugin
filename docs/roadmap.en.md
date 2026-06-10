@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **RadI
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.17 — Stable Editor Menu and WebView2 Chat (Completed)</b></summary>
+
+  *   **Value Delivered**: More predictable editor actions: selected code reaches the chat formatted, `/explain` no longer falls into review, and Delphi 12/13 load updated web assets consistently.
+  *   **Highlights**: Pascal blocks rendered in user messages, native **Explain Code** template, legacy slash-command migration, `chat.js` cache busting, and installer synchronization of `%APPDATA%\RadIA\Web`.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.17)](backlog.en.md#v0017--editor-menu-and-webview2-chat-stabilization-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.16 — MVP, Storage Abstraction, and Editor Robustness (Completed)</b></summary>
 
   *   **Value Delivered**: A more testable and stable internal foundation, with MVP-decoupled screens and a more reliable Delphi 12/13 editor context menu.
