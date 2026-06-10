@@ -15,10 +15,15 @@ type
     FEditorNotifiers: TInterfaceList;
     {$IFNDEF TESTS}
     FTimer: TTimer;
+    FHookPending: Boolean;
+    FHookRequestedAt: UInt64;
     {$ENDIF}
     
     procedure ActiveFormChange(Sender: TObject);
     procedure QueueHookActiveEditor;
+    {$IFNDEF TESTS}
+    procedure HookActiveEditorNow;
+    {$ENDIF}
     procedure InstallEditorNotifiers;
     procedure RemoveEditorNotifiers;
     procedure TryAddSourceEditorNotifier(const ASourceEditor: IOTASourceEditor);
@@ -44,6 +49,7 @@ type
 
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
     {$IFNDEF TESTS}
+    procedure RequestDelayedHook;
     procedure OnTimerEvent(Sender: TObject);
     {$ENDIF}
   public
@@ -62,12 +68,16 @@ implementation
 
 uses
   System.Generics.Collections,
+  Winapi.Windows,
   RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
   RadIA.Core.Mediator,
   {$IFNDEF TESTS}
   RadIA.OTA.DockableForm,
   {$ENDIF}
   RadIA.Core.Logger;
+
+const
+  CEditorHookDelayMs = 1200;
 
 {$IFDEF TESTS}
 procedure ShowRadIAChat;
@@ -215,6 +225,8 @@ begin
   FEditorNotifiers := TInterfaceList.Create;
   {$IFNDEF TESTS}
   FTimer := nil;
+  FHookPending := False;
+  FHookRequestedAt := 0;
   {$ENDIF}
   FInstalled := False;
 end;
@@ -242,25 +254,13 @@ begin
 
 {$IFNDEF TESTS}
   FTimer := TTimer.Create(Self);
-  FTimer.Interval := 1000;
+  FTimer.Interval := 250;
   FTimer.OnTimer := OnTimerEvent;
   FTimer.Enabled := True;
 {$ENDIF}
 
   FInstalled := True;
-  
-  if Assigned(Screen) then
-  begin
-    if Assigned(Screen.ActiveForm) then
-    begin
-      try
-        HookPopupMenu(Screen.ActiveForm);
-      except
-        on E: Exception do
-          TLogger.Log('Install: Error hooking active form: ' + E.Message, 'EditorHook');
-      end;
-    end;
-  end;
+  QueueHookActiveEditor;
 end;
 
 procedure TRadIAEditorHook.Uninstall;
@@ -287,7 +287,8 @@ begin
     try
       Screen.OnActiveFormChange := FOldActiveFormChange;
     except
-      // ignora silenciosamente se Screen estiver instavel no shutdown
+      on E: Exception do
+        TLogger.Log('Uninstall: Error restoring Screen.OnActiveFormChange: ' + E.Message, 'EditorHook');
     end;
   end;
   
@@ -310,7 +311,7 @@ begin
   if Assigned(FInterceptedMenus) then
   begin
     try
-      // Apenas restaura os menus se a IDE nao estiver em shutdown, pois no shutdown os menus ja podem ter sido destruidos.
+      // Restore menus only outside shutdown because IDE-owned menus may already be destroyed.
       if not GIsShuttingDown then
       begin
         for LMenu in FInterceptedMenus.Keys do
@@ -336,33 +337,6 @@ procedure TRadIAEditorHook.ActiveFormChange(Sender: TObject);
 var
   LActiveForm: TCustomForm;
 begin
-  try
-    if Assigned(Screen) then
-    begin
-      LActiveForm := Screen.ActiveForm;
-      if Assigned(LActiveForm) and SameText(LActiveForm.ClassName, 'TEditWindow') then
-      begin
-        // Defer menu hooking to prevent interfering with editor/elision tree construction
-        TThread.ForceQueue(nil,
-          TThreadProcedure(
-          procedure
-          begin
-            try
-              if Assigned(Screen) and (Screen.ActiveForm = LActiveForm) then
-                HookPopupMenu(LActiveForm);
-            except
-              on E: Exception do
-                TLogger.Log('ActiveFormChange Defer: Error hooking active form: ' + E.Message, 'EditorHook');
-            end;
-          end));
-      end;
-    end;
-  except
-    on E: Exception do
-      TLogger.Log('ActiveFormChange: General error: ' + E.Message, 'EditorHook');
-  end;
-
-  // Garantir que o manipulador original da IDE seja sempre executado
   if Assigned(FOldActiveFormChange) then
   begin
     try
@@ -372,47 +346,50 @@ begin
         TLogger.Log('ActiveFormChange: Error executing original OnActiveFormChange: ' + E.Message, 'EditorHook');
     end;
   end;
+
+  try
+    if Assigned(Screen) then
+    begin
+      LActiveForm := Screen.ActiveForm;
+      if Assigned(LActiveForm) and SameText(LActiveForm.ClassName, 'TEditWindow') then
+        QueueHookActiveEditor;
+    end;
+  except
+    on E: Exception do
+      TLogger.Log('ActiveFormChange: General error: ' + E.Message, 'EditorHook');
+  end;
 end;
 
 procedure TRadIAEditorHook.QueueHookActiveEditor;
 begin
+  {$IFDEF TESTS}
+  Exit;
+  {$ELSE}
   TThread.Queue(nil,
     TThreadProcedure(
-    procedure
-    var
-      I: Integer;
-    begin
-      if (not FInstalled) or GIsShuttingDown then
-        Exit;
-
-      if Assigned(Screen) and Assigned(Screen.ActiveForm) then
-      begin
-        try
-          HookPopupMenu(Screen.ActiveForm);
-        except
-          on E: Exception do
-            TLogger.Log('QueueHookActiveEditor: Error hooking active form: ' + E.Message, 'EditorHook');
-        end;
-      end;
-
-      if Assigned(Screen) then
-      begin
-        for I := 0 to Screen.FormCount - 1 do
-        begin
-          if SameText(Screen.Forms[I].ClassName, 'TEditWindow') and
-             Screen.Forms[I].HandleAllocated and Screen.Forms[I].Visible then
-          begin
-            try
-              HookPopupMenu(Screen.Forms[I]);
-            except
-              on E: Exception do
-                TLogger.Log('QueueHookActiveEditor: Error hooking edit window: ' + E.Message, 'EditorHook');
-            end;
-          end;
-        end;
-      end;
+    procedure begin
+      RequestDelayedHook;
     end));
+  {$ENDIF}
 end;
+
+{$IFNDEF TESTS}
+procedure TRadIAEditorHook.HookActiveEditorNow;
+begin
+  if (not FInstalled) or GIsShuttingDown then
+    Exit;
+
+  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
+  begin
+    try
+      HookPopupMenu(Screen.ActiveForm);
+    except
+      on E: Exception do
+        TLogger.Log('HookActiveEditorNow: Error hooking active form: ' + E.Message, 'EditorHook');
+    end;
+  end;
+end;
+{$ENDIF}
 
 procedure TRadIAEditorHook.InstallEditorNotifiers;
 var
@@ -554,7 +531,7 @@ begin
   if not Assigned(AForm) then
     Exit;
 
-  // Filtrar apenas para TEditWindow para evitar efeitos colaterais em forms em construção
+  // Only hook editor windows to avoid side effects while other IDE forms are being created.
   if not SameText(AForm.ClassName, 'TEditWindow') then
     Exit;
 
@@ -657,7 +634,7 @@ begin
   LEventCurrent := APopupMenu.OnPopup;
   LMethodCurrent := TMethod(LEventCurrent);
 
-  // Re-hook se o manipulador atual não for o nosso (comparando Code e Data para garantir que aponta para nossa instância viva)
+  // Re-hook when another extension or the IDE replaces our popup handler.
   if (LMethodCurrent.Code <> LMethodHook.Code) or (LMethodCurrent.Data <> LMethodHook.Data) then
   begin
     if FInterceptedMenus.ContainsKey(APopupMenu) then
@@ -696,7 +673,7 @@ var
   LPopupMenu: TPopupMenu;
   LOldOnPopup: TNotifyEvent;
 begin
-  // Disjuntor para quebrar loops infinitos de recursão mútua com outros hooks de terceiros
+  // Circuit breaker to avoid mutual recursion with other third-party popup hooks.
   if GExecutingPopup then
     Exit;
 
@@ -766,12 +743,12 @@ begin
   if not Assigned(APopupMenu) then
     Exit;
 
-  // Se o menu do RadIA já estiver presente na hierarquia de itens, não fazemos nada.
+  // Nothing to do if the RadIA menu is already present.
   if Assigned(FindMenuItemByName(APopupMenu.Items, 'mnuRadIARoot')) then
     Exit;
 
-  // Destruir apenas se o item principal não estiver visível, mas por algum motivo o componente
-  // de mesmo nome ainda existir no Owner (órfão), evitando erros de "Duplicate name" na IDE.
+  // Remove orphaned owner components to avoid duplicate component names in the IDE.
+
   LComp := APopupMenu.FindComponent('mnuRadIARoot');
   if Assigned(LComp) then
   begin
@@ -996,20 +973,25 @@ begin
 end;
 
 {$IFNDEF TESTS}
-procedure TRadIAEditorHook.OnTimerEvent(Sender: TObject);
+procedure TRadIAEditorHook.RequestDelayedHook;
 begin
-  if not FInstalled then
+  if (not FInstalled) or GIsShuttingDown then
     Exit;
 
-  if Assigned(Screen) and Assigned(Screen.ActiveForm) then
-  begin
-    try
-      HookPopupMenu(Screen.ActiveForm);
-    except
-      on E: Exception do
-        TLogger.Log('OnTimerEvent: Error checking/hooking active form: ' + E.Message, 'EditorHook');
-    end;
-  end;
+  FHookPending := True;
+  FHookRequestedAt := GetTickCount64;
+end;
+
+procedure TRadIAEditorHook.OnTimerEvent(Sender: TObject);
+begin
+  if (not FInstalled) or GIsShuttingDown or (not FHookPending) then
+    Exit;
+
+  if GetTickCount64 - FHookRequestedAt < CEditorHookDelayMs then
+    Exit;
+
+  FHookPending := False;
+  HookActiveEditorNow;
 end;
 {$ENDIF}
 
