@@ -9,6 +9,7 @@ uses
 type
   TWebViewBridgeSendPromptEvent = procedure(const APrompt: string) of object;
   TWebViewBridgeCancelEvent = procedure of object;
+  TWebViewBridgeEnsureEvent = procedure;
 
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAWebViewBridgeProvider = class(TRadIAProviderBase)
@@ -16,6 +17,7 @@ type
     class var FActiveCallback: TStreamChunkCallback;
     class var FOnSendPrompt: TWebViewBridgeSendPromptEvent;
     class var FOnCancel: TWebViewBridgeCancelEvent;
+    class var FOnEnsureBridge: TWebViewBridgeEnsureEvent;
   public
     constructor Create(const AConfig: IAIConfig); override;
     
@@ -30,7 +32,9 @@ type
 
     class property OnSendPrompt: TWebViewBridgeSendPromptEvent read FOnSendPrompt write FOnSendPrompt;
     class property OnCancel: TWebViewBridgeCancelEvent read FOnCancel write FOnCancel;
+    class property OnEnsureBridge: TWebViewBridgeEnsureEvent read FOnEnsureBridge write FOnEnsureBridge;
     
+    class procedure EnsureBridge;
     class procedure ReceiveChunk(const AChunk: string; const AIsDone: Boolean; const AError: string);
   end;
 
@@ -133,6 +137,12 @@ begin
         end);
     end;
   end;
+end;
+
+class procedure TRadIAWebViewBridgeProvider.EnsureBridge;
+begin
+  if Assigned(FOnEnsureBridge) then
+    FOnEnsureBridge;
 end;
 
 class procedure TRadIAWebViewBridgeProvider.ReceiveChunk(const AChunk: string;

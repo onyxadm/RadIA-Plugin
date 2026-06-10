@@ -177,8 +177,6 @@ type
     [Test]
     procedure TestSaveConfigValidatesIntegersRobustly;
     [Test]
-    procedure TestSaveConfigRejectsWebLoginForInlineCompletion;
-    [Test]
     procedure TestTemplateCreationAndSelection;
     [Test]
     procedure TestResetQuotaUsage;
@@ -498,22 +496,6 @@ begin
   FPresenter.SaveConfig;
   
   Assert.IsFalse(FMockView.LastMessageDialogText.IsEmpty);
-  Assert.IsFalse(FMockView.CloseViewCalled);
-end;
-
-procedure TTestConfigPresenter.TestSaveConfigRejectsWebLoginForInlineCompletion;
-begin
-  FPresenter.LoadConfig;
-
-  FMockView.AutocompleteEnabled := True;
-  FMockView.AutocompleteProvider := 'Gemini';
-  FMockView.AutocompleteModel := 'gemini-2.5-flash';
-  FMockView.SetAuthTypeIndex('Gemini', 1);
-
-  FPresenter.SaveConfig;
-
-  Assert.AreEqual('Inline completion requires an API or local provider',
-    FMockView.LastMessageDialogText);
   Assert.IsFalse(FMockView.CloseViewCalled);
 end;
 

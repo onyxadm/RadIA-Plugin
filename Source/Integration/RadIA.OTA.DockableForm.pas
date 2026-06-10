@@ -23,6 +23,7 @@ type
   end;
 
 procedure ShowRadIAChat;
+procedure EnsureRadIAWebLoginBridge;
 procedure RegisterDockableForm;
 procedure UnregisterDockableForm;
 
@@ -32,7 +33,7 @@ var
 implementation
 
 uses
-  DeskUtil, RadIA.Core.Config, RadIA.UI.Resources;
+  DeskUtil, RadIA.Core.Config, RadIA.Provider.WebViewBridge, RadIA.UI.Resources;
 
 procedure ShowRadIAChat;
 begin
@@ -42,6 +43,12 @@ begin
   end;
   
   ShowDockableForm(FormRadIADockable);
+end;
+
+procedure EnsureRadIAWebLoginBridge;
+begin
+  if not Assigned(FormRadIADockable) then
+    FormRadIADockable := TFormRadIADockable.Create(nil);
 end;
 
 procedure RegisterDockableForm;
@@ -220,9 +227,11 @@ begin
 end;
 
 initialization
+  TRadIAWebViewBridgeProvider.OnEnsureBridge := EnsureRadIAWebLoginBridge;
   RegisterDockableForm;
 
 finalization
+  TRadIAWebViewBridgeProvider.OnEnsureBridge := nil;
   UnregisterDockableForm;
 
 end.

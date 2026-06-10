@@ -483,12 +483,6 @@ function TFrameAIConfig.IsAutocompleteProviderConfigured(const AProviderId: stri
 var
   LMeta: TProviderMetadata;
 begin
-  if GetAuthTypeIndex(AProviderId) = 1 then
-    Exit(False);
-
-  if SameText(TRadIAConfig.GetInstance.GetProviderAuthType(AProviderId), 'web_login') then
-    Exit(False);
-
   if SameText(AProviderId, 'Ollama') then
     Exit(not GetCustomUrl('Ollama').Trim.IsEmpty);
 
@@ -502,6 +496,9 @@ begin
               (not GetAwsRegion.Trim.IsEmpty);
     Exit;
   end;
+
+  if GetAuthTypeIndex(AProviderId) = 1 then
+    Exit(True);
 
   if TProviderRegistry.GetProvider(AProviderId, LMeta) then
   begin
@@ -561,7 +558,7 @@ begin
 
   if SameText(TRadIAConfig.GetInstance.GetProviderAuthType(AProviderId), 'web_login') then
   begin
-    PopulateAutocompleteModelItems([], '');
+    PopulateAutocompleteModelItems(['Web-Browser'], 'Web-Browser');
     Exit;
   end;
 
