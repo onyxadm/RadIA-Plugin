@@ -401,10 +401,51 @@ if ($Install) {
     Copy-Item -Path ".\Output\$delphiVer\bpl\$platform\RadIA.bpl" -Destination $targetBpl -Force
     Copy-Item -Path ".\Output\$delphiVer\dcp\$platform\RadIA.dcp" -Destination $targetDcp -Force
 
+    $sourceWeb = Join-Path (Get-Location) "Source\UI\Web"
     $targetWeb = "$publicBplDir\Web"
+    $userRadIADir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) "RadIA"
+    $userWeb = Join-Path $userRadIADir "Web"
+    $userWebView2 = Join-Path $userRadIADir "WebView2"
+
     Write-Host "Copiando pasta de recursos Web locais..." -ForegroundColor Yellow
-    New-Item -ItemType Directory -Force -Path $targetWeb | Out-Null
-    Copy-Item -Path ".\Source\UI\Web\*" -Destination $targetWeb -Force -Recurse
+    if (-not (Test-Path $sourceWeb)) {
+        throw "Pasta de recursos Web nao encontrada: $sourceWeb"
+    }
+
+    $resolvedPublicWebRoot = [System.IO.Path]::GetFullPath($targetWeb)
+    $resolvedPublicBplRoot = [System.IO.Path]::GetFullPath($publicBplDir)
+    if ($resolvedPublicWebRoot.StartsWith($resolvedPublicBplRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        if (Test-Path $resolvedPublicWebRoot) {
+            Remove-Item -LiteralPath $resolvedPublicWebRoot -Recurse -Force
+        }
+    } else {
+        throw "Caminho Web publico inesperado: $resolvedPublicWebRoot"
+    }
+    New-Item -ItemType Directory -Force -Path $resolvedPublicWebRoot | Out-Null
+    Copy-Item -Path "$sourceWeb\*" -Destination $resolvedPublicWebRoot -Force -Recurse
+
+    Write-Host "Atualizando cache local de recursos Web do usuario..." -ForegroundColor Yellow
+    $resolvedUserWebRoot = [System.IO.Path]::GetFullPath($userWeb)
+    $resolvedUserRadIARoot = [System.IO.Path]::GetFullPath($userRadIADir)
+    if ($resolvedUserWebRoot.StartsWith($resolvedUserRadIARoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        if (Test-Path $resolvedUserWebRoot) {
+            Remove-Item -LiteralPath $resolvedUserWebRoot -Recurse -Force
+        }
+    } else {
+        throw "Caminho Web local inesperado: $resolvedUserWebRoot"
+    }
+    New-Item -ItemType Directory -Force -Path $resolvedUserWebRoot | Out-Null
+    Copy-Item -Path "$sourceWeb\*" -Destination $resolvedUserWebRoot -Force -Recurse
+
+    $resolvedUserWebView2Root = [System.IO.Path]::GetFullPath($userWebView2)
+    if ($resolvedUserWebView2Root.StartsWith($resolvedUserRadIARoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        if (Test-Path $resolvedUserWebView2Root) {
+            Write-Host "Limpando cache WebView2 local..." -ForegroundColor Yellow
+            Remove-Item -LiteralPath $resolvedUserWebView2Root -Recurse -Force
+        }
+    } else {
+        throw "Caminho de cache WebView2 inesperado: $resolvedUserWebView2Root"
+    }
 
     Write-Host "Registrando pacote no Registro do Windows..." -ForegroundColor Yellow
     $regPath = "HKCU:\Software\Embarcadero\BDS\$delphiVer\Known Packages"
