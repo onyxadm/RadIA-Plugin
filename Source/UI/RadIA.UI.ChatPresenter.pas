@@ -80,6 +80,28 @@ type
     procedure PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean; const AProvider: string = ''; const AModel: string = ''); overload;
     
     procedure HandleOnbtnWebLoginConnectClick;
+    procedure QueueOnUI(const AProcedure: TProc);
+    procedure DispatchWebMessage(const AAction: string; const AJson: TJSONObject);
+    procedure HandleInsertCodeMessage(const ACode: string);
+    procedure HandleReadyMessage;
+    procedure HandleNewChatMessage;
+    procedure HandleToggleHistoryMessage;
+    procedure HandleOpenSettingsMessage;
+    procedure HandleChangeProviderMessage(const AProvider: string);
+    procedure HandleChangeModelMessage(const AModel: string);
+    procedure HandleSelectSessionMessage(const ASessionId: string);
+    procedure HandleRenameSessionMessage(const ASessionId, AName: string);
+    procedure HandleDeleteSessionMessage(const ASessionId: string);
+    procedure HandleWebLoginConnectMessage;
+    procedure HandleLoginCompleteMessage;
+    procedure HandleErrorMessage(const AText: string);
+    procedure HandleUpdateStreamMessage(const AText: string; const AIsDone: Boolean);
+    procedure HandleSendPromptMessage(const AText: string);
+    procedure HandleGenerateDTOMessage(const AInput, AInputType, AOutputType: string);
+    procedure HandleCreateProjectMessage(const AFilesJson: string);
+    procedure HandleCancelRequestMessage;
+    procedure HandleClearChatMessage;
+    procedure HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
   public
     constructor Create(const AView: IChatView; const AConfig: IAIConfig = nil; const AService: TRadIAService = nil);
     destructor Destroy; override;
@@ -996,16 +1018,289 @@ begin
   end;
 end;
 
+procedure TChatPresenter.QueueOnUI(const AProcedure: TProc);
+begin
+  if not Assigned(AProcedure) then
+    Exit;
+
+  TThread.Queue(nil,
+    TThreadProcedure(
+    procedure
+    begin
+      AProcedure;
+    end));
+end;
+
+procedure TChatPresenter.HandleInsertCodeMessage(const ACode: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      FView.ReplaceActiveEditorText(ACode);
+    end);
+end;
+
+procedure TChatPresenter.HandleReadyMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      OnWebViewReady;
+    end);
+end;
+
+procedure TChatPresenter.HandleNewChatMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      CreateNewSession;
+    end);
+end;
+
+procedure TChatPresenter.HandleToggleHistoryMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      ToggleSessions;
+    end);
+end;
+
+procedure TChatPresenter.HandleOpenSettingsMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      OpenSettings;
+    end);
+end;
+
+procedure TChatPresenter.HandleChangeProviderMessage(const AProvider: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      ChangeProvider(AProvider);
+    end);
+end;
+
+procedure TChatPresenter.HandleChangeModelMessage(const AModel: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      ChangeModel(AModel);
+    end);
+end;
+
+procedure TChatPresenter.HandleSelectSessionMessage(const ASessionId: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      SelectSession(ASessionId);
+    end);
+end;
+
+procedure TChatPresenter.HandleRenameSessionMessage(const ASessionId, AName: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      RenameSession(ASessionId, AName);
+    end);
+end;
+
+procedure TChatPresenter.HandleDeleteSessionMessage(const ASessionId: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      DeleteSession(ASessionId);
+    end);
+end;
+
+procedure TChatPresenter.HandleWebLoginConnectMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      HandleOnbtnWebLoginConnectClick;
+    end);
+end;
+
+procedure TChatPresenter.HandleLoginCompleteMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      FBackgroundBrowserReady := True;
+      HandleBackgroundLoginComplete;
+    end);
+end;
+
+procedure TChatPresenter.HandleErrorMessage(const AText: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      TRadIAWebViewBridgeProvider.ReceiveChunk('', True, AText);
+    end);
+end;
+
+procedure TChatPresenter.HandleUpdateStreamMessage(const AText: string; const AIsDone: Boolean);
+begin
+  QueueOnUI(
+    procedure
+    var
+      LActiveProvider: string;
+      LActiveModel: string;
+    begin
+      LActiveProvider := FConfig.GetActiveProvider;
+      LActiveModel := FConfig.GetActiveModel(LActiveProvider);
+
+      PostToWebView('update_message', 'assistant', AText, AIsDone, LActiveProvider, LActiveModel);
+
+      if AIsDone then
+        TRadIAWebViewBridgeProvider.ReceiveChunk(AText, True, '');
+    end);
+end;
+
+procedure TChatPresenter.HandleSendPromptMessage(const AText: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      SendPromptText(AText);
+    end);
+end;
+
+procedure TChatPresenter.HandleGenerateDTOMessage(const AInput, AInputType, AOutputType: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      GenerateDTO(AInput, AInputType, AOutputType);
+    end);
+end;
+
+procedure TChatPresenter.HandleCreateProjectMessage(const AFilesJson: string);
+begin
+  QueueOnUI(
+    procedure
+    var
+      LErrorMsg: string;
+    begin
+      if not AFilesJson.IsEmpty then
+      begin
+        if not TRadIAProjectGenerator.GenerateFromJSON(AFilesJson, LErrorMsg) then
+        begin
+          if not LErrorMsg.IsEmpty then
+            FView.ShowMessageDialog(LErrorMsg);
+        end;
+      end
+      else
+      begin
+        FView.ShowMessageDialog('No files data received.');
+      end;
+    end);
+end;
+
+procedure TChatPresenter.HandleCancelRequestMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      CancelRequest;
+    end);
+end;
+
+procedure TChatPresenter.HandleClearChatMessage;
+begin
+  QueueOnUI(
+    procedure
+    begin
+      ClearChat;
+    end);
+end;
+
+procedure TChatPresenter.HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
+begin
+  QueueOnUI(
+    procedure
+    begin
+      TRadIAWebViewBridgeProvider.ReceiveChunk(AText, AIsDone, AError);
+    end);
+end;
+
+procedure TChatPresenter.DispatchWebMessage(const AAction: string; const AJson: TJSONObject);
+var
+  LFiles: TJSONArray;
+begin
+  if AAction = 'insert_code' then
+    HandleInsertCodeMessage(AJson.GetValue<string>('code', ''))
+  else if AAction = 'log' then
+    TLogger.Log('JS Console: ' + AJson.GetValue<string>('text', ''), 'WebView')
+  else if AAction = 'ready' then
+    HandleReadyMessage
+  else if (AAction = 'new_chat') or (AAction = 'new_session') then
+    HandleNewChatMessage
+  else if AAction = 'toggle_history' then
+    HandleToggleHistoryMessage
+  else if AAction = 'open_settings' then
+    HandleOpenSettingsMessage
+  else if AAction = 'change_provider' then
+    HandleChangeProviderMessage(AJson.GetValue<string>('provider', ''))
+  else if AAction = 'change_model' then
+    HandleChangeModelMessage(AJson.GetValue<string>('model', ''))
+  else if AAction = 'select_session' then
+    HandleSelectSessionMessage(AJson.GetValue<string>('id', ''))
+  else if AAction = 'rename_session' then
+    HandleRenameSessionMessage(AJson.GetValue<string>('id', ''), AJson.GetValue<string>('name', ''))
+  else if AAction = 'delete_session' then
+    HandleDeleteSessionMessage(AJson.GetValue<string>('id', ''))
+  else if AAction = 'web_login_connect' then
+    HandleWebLoginConnectMessage
+  else if SameText(AAction, 'login_complete') then
+    HandleLoginCompleteMessage
+  else if AAction = 'error' then
+    HandleErrorMessage(AJson.GetValue<string>('text', ''))
+  else if AAction = 'update_stream' then
+    HandleUpdateStreamMessage(
+      AJson.GetValue<string>('text', ''),
+      AJson.GetValue<Boolean>('isDone', False))
+  else if AAction = 'send_prompt' then
+    HandleSendPromptMessage(AJson.GetValue<string>('text', ''))
+  else if AAction = 'generate_dto' then
+    HandleGenerateDTOMessage(
+      AJson.GetValue<string>('input', ''),
+      AJson.GetValue<string>('inputType', ''),
+      AJson.GetValue<string>('outputType', ''))
+  else if AAction = 'create_project' then
+  begin
+    LFiles := AJson.GetValue('files') as TJSONArray;
+    if Assigned(LFiles) then
+      HandleCreateProjectMessage(LFiles.ToJSON)
+    else
+      HandleCreateProjectMessage('');
+  end
+  else if AAction = 'cancel_request' then
+    HandleCancelRequestMessage
+  else if AAction = 'clear_chat' then
+    HandleClearChatMessage
+  else if AAction = 'stream_chunk' then
+    HandleStreamChunkMessage(
+      AJson.GetValue<string>('text', ''),
+      AJson.GetValue<Boolean>('isDone', False),
+      AJson.GetValue<string>('error', ''));
+end;
+
 procedure TChatPresenter.ProcessWebMessage(const AMessage: string);
 var
   LParsed: TJSONValue;
   LJson: TJSONObject;
   LAction: string;
-  LText: string;
-  LProviderStr: string;
-  LModelStr: string;
-  LJsonFiles: TJSONArray;
-  LJsonFilesStr: string;
 begin
   TLogger.Log('ProcessWebMessage raw: ' + AMessage, 'UI');
   LParsed := TJSONObject.ParseJSONValue(AMessage);
@@ -1018,248 +1313,7 @@ begin
 
     LJson := TJSONObject(LParsed);
     LAction := LJson.GetValue<string>('action', '');
-
-    if LAction = 'insert_code' then
-    begin
-      LText := LJson.GetValue<string>('code', '');
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.FView.ReplaceActiveEditorText(LText);
-        end));
-    end
-    else if LAction = 'log' then
-    begin
-      LText := LJson.GetValue<string>('text', '');
-      TLogger.Log('JS Console: ' + LText, 'WebView');
-    end
-    else if LAction = 'ready' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.OnWebViewReady;
-        end));
-    end
-    else if (LAction = 'new_chat') or (LAction = 'new_session') then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.CreateNewSession;
-        end));
-    end
-    else if LAction = 'toggle_history' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.ToggleSessions;
-        end));
-    end
-    else if LAction = 'open_settings' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.OpenSettings;
-        end));
-    end
-    else if LAction = 'change_provider' then
-    begin
-      LProviderStr := LJson.GetValue<string>('provider', '');
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.ChangeProvider(LProviderStr);
-        end));
-    end
-    else if LAction = 'change_model' then
-    begin
-      LModelStr := LJson.GetValue<string>('model', '');
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.ChangeModel(LModelStr);
-        end));
-    end
-    else if LAction = 'select_session' then
-    begin
-      LText := LJson.GetValue<string>('id', '');
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.SelectSession(LText);
-        end));
-    end
-    else if LAction = 'rename_session' then
-    begin
-      LProviderStr := LJson.GetValue<string>('id', '');
-      LModelStr := LJson.GetValue<string>('name', '');
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.RenameSession(LProviderStr, LModelStr);
-        end));
-    end
-    else if LAction = 'delete_session' then
-    begin
-      LText := LJson.GetValue<string>('id', '');
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.DeleteSession(LText);
-        end));
-    end
-    else if LAction = 'web_login_connect' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.HandleOnbtnWebLoginConnectClick;
-        end));
-    end
-    else if SameText(LAction, 'login_complete') then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.FBackgroundBrowserReady := True;
-          Self.HandleBackgroundLoginComplete;
-        end));
-    end
-    else if LAction = 'error' then
-    begin
-      LText := LJson.GetValue<string>('text', '');
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          TRadIAWebViewBridgeProvider.ReceiveChunk('', True, LText);
-        end));
-    end
-    else if LAction = 'update_stream' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        var
-          LChunk: string;
-          LIsDone: Boolean;
-          LActiveProvider: string;
-          LActiveModel: string;
-        begin
-          LChunk := LJson.GetValue<string>('text', '');
-          LIsDone := LJson.GetValue<Boolean>('isDone', False);
-          LActiveProvider := Self.FConfig.GetActiveProvider;
-          LActiveModel := Self.FConfig.GetActiveModel(LActiveProvider);
-          
-          Self.PostToWebView('update_message', 'assistant', LChunk, LIsDone, LActiveProvider, LActiveModel);
-          
-          if LIsDone then
-            TRadIAWebViewBridgeProvider.ReceiveChunk(LChunk, True, '');
-        end));
-    end
-    else if LAction = 'send_prompt' then
-    begin
-      LText := LJson.GetValue<string>('text', '');
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.SendPromptText(LText);
-        end));
-    end
-    else if LAction = 'generate_dto' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        var
-          LInput, LInputType, LOutputType: string;
-        begin
-          LInput := LJson.GetValue<string>('input', '');
-          LInputType := LJson.GetValue<string>('inputType', '');
-          LOutputType := LJson.GetValue<string>('outputType', '');
-          Self.GenerateDTO(LInput, LInputType, LOutputType);
-        end));
-    end
-    else if LAction = 'create_project' then
-    begin
-      LJsonFiles := LJson.GetValue('files') as TJSONArray;
-      LJsonFilesStr := '';
-      if Assigned(LJsonFiles) then
-        LJsonFilesStr := LJsonFiles.ToJSON;
-
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        var
-          LErrorMsg: string;
-        begin
-          if not LJsonFilesStr.IsEmpty then
-          begin
-            if not TRadIAProjectGenerator.GenerateFromJSON(LJsonFilesStr, LErrorMsg) then
-            begin
-              if not LErrorMsg.IsEmpty then
-              begin
-                Self.FView.ShowMessageDialog(LErrorMsg);
-              end;
-            end;
-          end
-          else
-          begin
-            Self.FView.ShowMessageDialog('No files data received.');
-          end;
-        end));
-    end
-    else if LAction = 'cancel_request' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.CancelRequest;
-        end));
-    end
-    else if LAction = 'clear_chat' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        begin
-          Self.ClearChat;
-        end));
-    end
-    else if LAction = 'stream_chunk' then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-        procedure
-        var
-          LChunk: string;
-          LIsDone: Boolean;
-          LError: string;
-        begin
-          LChunk := LJson.GetValue<string>('text', '');
-          LIsDone := LJson.GetValue<Boolean>('isDone', False);
-          LError := LJson.GetValue<string>('error', '');
-          
-          TRadIAWebViewBridgeProvider.ReceiveChunk(LChunk, LIsDone, LError);
-        end));
-    end;
+    DispatchWebMessage(LAction, LJson);
   finally
     LParsed.Free;
   end;
