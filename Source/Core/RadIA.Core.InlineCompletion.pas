@@ -162,6 +162,15 @@ begin
     'Before implementation, or inside private/protected/public/published, return only declarations.' + sLineBreak +
     'In declaration areas, never return implementation code containing begin.' + sLineBreak +
     'Preserve normal Delphi formatting, indentation, and line breaks.' + sLineBreak +
+    'Focus only on the immediate code around the marker.' + sLineBreak +
+    'Match naming, indentation, casing, and surrounding style.' + sLineBreak +
+    'If the marker is in the middle of a line, return only the missing continuation.' + sLineBreak +
+    'Read the suffix carefully and do not duplicate code, punctuation, or block endings.' + sLineBreak +
+    'Inside a class declaration, suggest declarations only.' + sLineBreak +
+    'Inside a method body, suggest executable statements only.' + sLineBreak +
+    'Do not add units to uses unless the marker is inside a uses clause.' + sLineBreak +
+    'Use Delphi Object Pascal syntax, not Free Pascal-only syntax.' + sLineBreak +
+    'Keep the suggestion minimal: one expression, statement, or declaration when possible.' + sLineBreak +
     'The user is writing code using Embarcadero ' + LDelphiVersionName + '.' + sLineBreak +
     'Only suggest code compatible with ' + LDelphiVersionName + '.' + sLineBreak +
     LLanguageInstruction + sLineBreak +
