@@ -19,6 +19,7 @@ uses
   RadIA.Core.ProviderRegistry in '..\Source\Core\RadIA.Core.ProviderRegistry.pas',
   RadIA.Core.Cache in '..\Source\Core\RadIA.Core.Cache.pas',
   RadIA.Core.Service in '..\Source\Core\RadIA.Core.Service.pas',
+  RadIA.Core.RequestOrchestrator in '..\Source\Core\RadIA.Core.RequestOrchestrator.pas',
   RadIA.Core.PromptHistory in '..\Source\Core\RadIA.Core.PromptHistory.pas',
   RadIA.Core.TokenUsage in '..\Source\Core\RadIA.Core.TokenUsage.pas',
   RadIA.Core.ConversationExporter in '..\Source\Core\RadIA.Core.ConversationExporter.pas',

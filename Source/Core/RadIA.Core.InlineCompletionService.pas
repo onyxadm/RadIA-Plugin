@@ -3,7 +3,8 @@ unit RadIA.Core.InlineCompletionService;
 interface
 
 uses
-  System.SysUtils, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage;
+  System.SysUtils, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage,
+  RadIA.Core.RequestOrchestrator;
 
 type
   TInlineCompletionCallback = reference to procedure(
@@ -12,15 +13,18 @@ type
   TInlineCompletionService = class
   private
     FConfig: IAIConfig;
+    FOrchestrator: IAIRequestOrchestrator;
   public
-    constructor Create(const AConfig: IAIConfig);
+    constructor Create(const AConfig: IAIConfig); overload;
+    constructor Create(const AConfig: IAIConfig;
+      const AOrchestrator: IAIRequestOrchestrator); overload;
     procedure RequestCompletion(const APrompt: string; const ACallback: TInlineCompletionCallback);
   end;
 
 implementation
 
 uses
-  RadIA.Core.Service, RadIA.Core.InlineCompletion;
+  RadIA.Core.InlineCompletion;
 
 type
   TInlineCompletionConfigAdapter = class(TInterfacedObject, IAIConfig)
@@ -108,36 +112,48 @@ type
   end;
 
 constructor TInlineCompletionService.Create(const AConfig: IAIConfig);
+var
+  LConfig: IAIConfig;
 begin
   inherited Create;
   FConfig := AConfig;
+  LConfig := TInlineCompletionConfigAdapter.Create(FConfig);
+  FOrchestrator := TRadIARequestOrchestrator.Create(LConfig);
+end;
+
+constructor TInlineCompletionService.Create(const AConfig: IAIConfig;
+  const AOrchestrator: IAIRequestOrchestrator);
+begin
+  inherited Create;
+  FConfig := AConfig;
+  FOrchestrator := AOrchestrator;
 end;
 
 procedure TInlineCompletionService.RequestCompletion(const APrompt: string;
   const ACallback: TInlineCompletionCallback);
 var
-  LService: TRadIAService;
-  LConfig: IAIConfig;
+  LRequest: TAIRequest;
 begin
-  LConfig := TInlineCompletionConfigAdapter.Create(FConfig);
-  LService := TRadIAService.Create(LConfig);
-  LService.SendPrompt(APrompt, [],
-    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+  LRequest := TAIRequest.Create(
+    APrompt,
+    ruInlineCompletion,
+    rpInlineCompletion,
+    [],
+    rmComplete);
+
+  FOrchestrator.ExecuteAsync(LRequest,
+    procedure(const AResponse: string; const AError: string; const AUsage: TTokenUsage)
     var
       LSuggestion: string;
     begin
-      try
-        if not AError.IsEmpty then
-          ACallback('', AError)
-        else
-        begin
-          LSuggestion := TInlineCompletionResponseCleaner.Clean(AResponse);
-          ACallback(LSuggestion, '');
-        end;
-      finally
-        LService.Free;
+      if not AError.IsEmpty then
+        ACallback('', AError)
+      else
+      begin
+        LSuggestion := TInlineCompletionResponseCleaner.Clean(AResponse);
+        ACallback(LSuggestion, '');
       end;
-    end, rpInlineCompletion);
+    end);
 end;
 
 constructor TInlineCompletionConfigAdapter.Create(const AInner: IAIConfig);

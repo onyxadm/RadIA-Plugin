@@ -3,9 +3,20 @@ unit RadIA.Tests.InlineCompletion;
 interface
 
 uses
-  DUnitX.TestFramework;
+  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.RequestOrchestrator;
 
 type
+  TMockInlineOrchestrator = class(TInterfacedObject, IAIRequestOrchestrator)
+  public
+    LastRequest: TAIRequest;
+    ResponseText: string;
+    ErrorText: string;
+    ExecuteAsyncCalled: Boolean;
+    procedure ExecuteAsync(const ARequest: TAIRequest; const ACallback: TAIRequestCallback);
+    procedure ExecuteStreamAsync(const ARequest: TAIRequest; const ACallback: TStreamChunkCallback);
+    procedure CancelCurrentRequest;
+  end;
+
   [TestFixture]
   TTestInlineCompletion = class
   public
@@ -24,14 +35,35 @@ type
     [Test]
     procedure TestResponseCleanerRestoresEscapedLineBreaks;
     [Test]
+    procedure TestInlineServiceUsesOrchestratorRequest;
+    [Test]
     procedure TestShortcutParserHandlesAltEnter;
   end;
 
 implementation
 
 uses
-  System.SysUtils, RadIA.Core.Types, RadIA.Core.InlineCompletion,
-  RadIA.OTA.InlineCompletion;
+  System.SysUtils, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Core.InlineCompletion,
+  RadIA.Core.InlineCompletionService, RadIA.OTA.InlineCompletion;
+
+{ TMockInlineOrchestrator }
+
+procedure TMockInlineOrchestrator.ExecuteAsync(const ARequest: TAIRequest;
+  const ACallback: TAIRequestCallback);
+begin
+  ExecuteAsyncCalled := True;
+  LastRequest := ARequest;
+  ACallback(ResponseText, ErrorText, TTokenUsage.Empty);
+end;
+
+procedure TMockInlineOrchestrator.ExecuteStreamAsync(const ARequest: TAIRequest;
+  const ACallback: TStreamChunkCallback);
+begin
+end;
+
+procedure TMockInlineOrchestrator.CancelCurrentRequest;
+begin
+end;
 
 procedure TTestInlineCompletion.TestWindowContextIncludesCursorMarkerAndNearbyLines;
 var
@@ -153,6 +185,39 @@ begin
     '  FName: string;' + sLineBreak +
     'public',
     LClean);
+end;
+
+procedure TTestInlineCompletion.TestInlineServiceUsesOrchestratorRequest;
+var
+  LMock: TMockInlineOrchestrator;
+  LService: TInlineCompletionService;
+  LSuggestion: string;
+  LError: string;
+begin
+  LMock := TMockInlineOrchestrator.Create;
+  LMock.ResponseText :=
+    '```pascal' + sLineBreak +
+    'Result := True;' + sLineBreak +
+    '```';
+  LService := TInlineCompletionService.Create(nil, LMock);
+  try
+    LService.RequestCompletion('prompt',
+      procedure(const ASuggestion: string; const AError: string)
+      begin
+        LSuggestion := ASuggestion;
+        LError := AError;
+      end);
+
+    Assert.IsTrue(LMock.ExecuteAsyncCalled);
+    Assert.AreEqual('prompt', LMock.LastRequest.Prompt);
+    Assert.AreEqual(ruInlineCompletion, LMock.LastRequest.UseCase);
+    Assert.AreEqual(rpInlineCompletion, LMock.LastRequest.Profile);
+    Assert.AreEqual(rmComplete, LMock.LastRequest.ResponseMode);
+    Assert.AreEqual('Result := True;', LSuggestion);
+    Assert.AreEqual('', LError);
+  finally
+    LService.Free;
+  end;
 end;
 
 procedure TTestInlineCompletion.TestShortcutParserHandlesAltEnter;

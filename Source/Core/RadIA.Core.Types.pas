@@ -9,6 +9,12 @@ type
   { Enum representing the AI request profiles for dynamic configuration }
   TAIRequestProfile = (rpGeneralChat, rpExplainCode, rpRefactorCode, rpFindBugs, rpGenerateTests, rpInlineCompletion);
 
+  { Use case that requested an AI operation }
+  TAIRequestUseCase = (ruChat, ruInlineCompletion, ruDiffRefactor, ruCommand);
+
+  { Expected response delivery mode for an AI operation }
+  TAIResponseMode = (rmComplete, rmStream);
+
   { Context source used by inline completion prompts }
   TInlineCompletionContextMode = (icmWindow, icmFullFile);
 
