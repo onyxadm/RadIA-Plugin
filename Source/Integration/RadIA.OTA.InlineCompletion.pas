@@ -58,6 +58,8 @@ uses
 
 var
   GKeyboardBindingIndex: Integer = -1;
+  GKeyboardBinding: IOTAKeyboardBinding = nil;
+  GKeyboardBindingPending: Boolean = False;
 
 function InlineCompletionShortcutFromText(const AText: string): TShortcut;
 var
@@ -92,12 +94,36 @@ end;
 procedure RegisterInlineCompletionKeyboardBinding;
 var
   LKeyboardServices: IOTAKeyboardServices;
+  LBinding: IOTAKeyboardBinding;
 begin
-  if GKeyboardBindingIndex >= 0 then
+  if (GKeyboardBindingIndex >= 0) or GKeyboardBindingPending or GIsShuttingDown then
     Exit;
 
-  if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
-    GKeyboardBindingIndex := LKeyboardServices.AddKeyboardBinding(TRadIAInlineCompletionKeyboardBinding.New);
+  GKeyboardBindingPending := True;
+  TThread.Queue(nil,
+    procedure
+    begin
+      GKeyboardBindingPending := False;
+      if (GKeyboardBindingIndex >= 0) or GIsShuttingDown then
+        Exit;
+
+      if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
+      begin
+        LBinding := TRadIAInlineCompletionKeyboardBinding.New;
+        GKeyboardBinding := LBinding;
+        GKeyboardBindingIndex := LKeyboardServices.AddKeyboardBinding(LBinding);
+        TLogger.Log(
+          'Inline completion keyboard binding registered. Index=' +
+          IntToStr(GKeyboardBindingIndex),
+          'InlineCompletion'
+        );
+
+        if GKeyboardBindingIndex < 0 then
+          GKeyboardBinding := nil;
+      end
+      else
+        TLogger.Log('Inline completion keyboard services not available', 'InlineCompletion');
+    end);
 end;
 
 procedure UnregisterInlineCompletionKeyboardBinding;
@@ -110,6 +136,7 @@ begin
   if Supports(BorlandIDEServices, IOTAKeyboardServices, LKeyboardServices) then
     LKeyboardServices.RemoveKeyboardBinding(GKeyboardBindingIndex);
   GKeyboardBindingIndex := -1;
+  GKeyboardBinding := nil;
 end;
 
 procedure RefreshInlineCompletionKeyboardBinding;
