@@ -63,11 +63,11 @@ Com as validações concluídas, crie o commit de preparação da release e publ
 ```powershell
 git add README.md README.en.md RadIA.rc package.json docs
 git add Source/Integration/RadIA.OTA.Register.pas
-git commit -m "Prepare v0.0.18 release"
+git commit -m "chore: Prepare v0.0.18 release"
 git push origin <branch-de-trabalho>
 ```
 
-Ajuste a mensagem e a versão conforme a release real.
+Ajuste a mensagem e a versão conforme a release real. Mensagens de commit devem seguir a [Convenção de Mensagens de Commit](commit_convention.md).
 
 ---
 

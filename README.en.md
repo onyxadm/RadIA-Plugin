@@ -24,7 +24,8 @@
 This project adopts clear language rules and design standards for both human developers and AI assistants (LLMs/Co-pilots) working on the codebase:
 
 *   **AI & Human Interactions:**
-    *   All chat interactions, commit messages, pull request descriptions, task updates, and design discussions must be conducted in **Brazilian Portuguese (pt-BR)**.
+    *   All chat interactions, pull request descriptions, task updates, and design discussions must be conducted in **Brazilian Portuguese (pt-BR)**.
+    *   Commit messages must be written in **English (en-US)** following the [Commit Message Convention](docs/commit_convention.en.md).
 *   **Source Code & Architecture:**
     *   The source code is **100% written in English (en-US)**.
     *   All identifiers (unit names, variables, classes, methods, records, enums), parameters, data structures (JSON/XML), and inline comments must be written exclusively in English, following object-oriented Pascal naming conventions.
@@ -102,6 +103,7 @@ To get the most out of Rad IA features in your daily development workflow, check
 *   👉 [**Editor Integration & Code Generation Guide (docs/user_guide_editor_generation.en.md)**](docs/user_guide_editor_generation.en.md): Context-aware editor actions, Smart Diff visual comparison, XML documentation, DTO converter, and full-project prompt generation.
 *   👉 [**Diagnostics & Code Analysis Guide (docs/user_guide_diagnostics_analysis.en.md)**](docs/user_guide_diagnostics_analysis.en.md): Smart Build Debugger compilation assistance, call stack parsing via Stack Trace Assistant, and memory leak static auditing.
 *   👉 [**Chat Panel & Session Management Guide (docs/user_guide_chat_sessions.en.md)**](docs/user_guide_chat_sessions.en.md): Input text shortcuts, prompt history navigation, persistent multi-sessions, and prompt template backups.
+*   👉 [**Commit Message Convention (docs/commit_convention.en.md)**](docs/commit_convention.en.md): English commit message standard using prefixes like `feat`, `fix`, `docs`, `refactor`, and others.
 *   👉 [**Release Finalization Process (docs/release_process.en.md)**](docs/release_process.en.md): Checklist to update versions, validate builds, merge `develop`/`main`, create tags, and clean up branches.
 
 ---
