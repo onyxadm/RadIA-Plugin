@@ -100,6 +100,7 @@ Para aprender a tirar o máximo proveito das funcionalidades do Rad IA no seu di
 *   👉 [**Guia de Integração com Editor & Geração de Código (docs/user_guide_editor_generation.md)**](docs/user_guide_editor_generation.md): Ações contextuais de editor, comparador visual Smart Diff, documentação XML e criação de DTOs e projetos do zero.
 *   👉 [**Guia de Diagnóstico de Erros & Análise de Código (docs/user_guide_diagnostics_analysis.md)**](docs/user_guide_diagnostics_analysis.md): Explicações e correções de erros com o Smart Build Debugger, decodificação de logs com o Assistente de Stack Trace e auditorias estáticas contra vazamento de memória.
 *   👉 [**Guia do Painel de Chat & Gerenciamento de Sessões (docs/user_guide_chat_sessions.md)**](docs/user_guide_chat_sessions.md): Atalhos de digitação, histórico de prompts, múltiplas sessões persistentes e backups de templates.
+*   👉 [**Processo de Finalização de Release (docs/release_process.md)**](docs/release_process.md): Checklist para atualizar versão, validar build, mergear `develop`/`main`, criar tag e limpar branches.
 
 ---
 
