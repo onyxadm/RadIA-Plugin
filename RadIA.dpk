@@ -86,6 +86,7 @@ contains
   RadIA.OTA.Options in 'Source\Integration\RadIA.OTA.Options.pas',
   RadIA.UI.ChatPresenter in 'Source\UI\RadIA.UI.ChatPresenter.pas',
   RadIA.UI.ChatFrame in 'Source\UI\RadIA.UI.ChatFrame.pas' {FrameAIChat: TFrame},
+  RadIA.UI.WebLoginBridge in 'Source\UI\RadIA.UI.WebLoginBridge.pas',
   RadIA.UI.ConfigPresenter in 'Source\UI\RadIA.UI.ConfigPresenter.pas',
   RadIA.UI.ConfigFrame in 'Source\UI\RadIA.UI.ConfigFrame.pas' {FrameAIConfig: TFrame},
   RadIA.UI.ConfigForm in 'Source\UI\RadIA.UI.ConfigForm.pas' {FormAIConfig},

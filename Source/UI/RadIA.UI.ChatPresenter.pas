@@ -191,9 +191,6 @@ begin
   FCurrentBackgroundUrl := '';
   FLoginPopupOpen := False;
 
-  TRadIAWebViewBridgeProvider.OnSendPrompt := OnWebViewBridgeSendPrompt;
-  TRadIAWebViewBridgeProvider.OnCancel := OnWebViewBridgeCancel;
-
   if Assigned(AConfig) then
     FConfig := AConfig
   else
@@ -231,9 +228,6 @@ begin
     end;
     FModelsProvider := nil;
   end;
-
-  TRadIAWebViewBridgeProvider.OnSendPrompt := nil;
-  TRadIAWebViewBridgeProvider.OnCancel := nil;
 
   if Assigned(FLifecycleGuard) then
     (FLifecycleGuard as ILifecycleGuard).Invalidate;

@@ -7,8 +7,8 @@ uses
   RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
-  TWebViewBridgeSendPromptEvent = procedure(const APrompt: string) of object;
-  TWebViewBridgeCancelEvent = procedure of object;
+  TWebViewBridgeSendPromptEvent = procedure(const AProviderName, APrompt: string);
+  TWebViewBridgeCancelEvent = procedure;
   TWebViewBridgeEnsureEvent = procedure;
 
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
@@ -99,7 +99,7 @@ begin
         procedure
         begin
           if Assigned(FOnSendPrompt) then
-            FOnSendPrompt(APrompt);
+            FOnSendPrompt(FConfig.GetActiveProvider, APrompt);
         end);
     end;
   end
