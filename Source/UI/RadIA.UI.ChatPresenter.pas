@@ -69,10 +69,12 @@ type
     procedure SaveChatHistory;
     procedure LoadPromptHistory;
     procedure SavePromptHistory;
+    function GetVisibleSessions: TArray<TSessionInfo>;
     procedure UpdateSessionsList;
     function PreProcessPrompt(const APromptText: string): string;
     function IsProviderConfigured(const AProviderId: string): Boolean;
     function GetWebLoginUrl(const AProvider: string): string;
+    function CanChangeSession: Boolean;
 
     procedure SendInitialConfigToWeb;
     procedure SendModelsUpdateToWeb(const AModels: TArray<string>; const AActiveModel: string);
@@ -302,6 +304,12 @@ begin
     Result := '';
 end;
 
+function TChatPresenter.CanChangeSession: Boolean;
+begin
+  Result := not FRequestInProgress;
+  if not Result then
+    FView.ShowMessageDialog('Wait for the current response to finish, or cancel it before switching chats.');
+end;
 
 procedure TChatPresenter.LoadConfig;
 var
@@ -464,18 +472,39 @@ end;
 
 procedure TChatPresenter.ToggleSessions;
 begin
+  if not CanChangeSession then
+    Exit;
+
   FView.ToggleSessionsPanel;
 end;
 
 procedure TChatPresenter.CreateNewSession;
+var
+  LSession: TSessionInfo;
 begin
-  FSessionManager.CreateSession('Conversa Inicial');
+  if not CanChangeSession then
+    Exit;
+
+  SaveChatHistory;
+  LSession := FSessionManager.CreateSession('Initial Chat');
+  FSessionManager.ActiveSessionId := LSession.Id;
+  FConfig.ActiveSessionId := LSession.Id;
+  FConfig.Save;
+
+  FHistory := [];
+  FAccumulatedUsage := TTokenUsage.Empty;
+  PostToWebView('clear_chat', '', '');
+  PostToWebView('update_tokens', '', '');
+
   UpdateSessionsList;
   SendSessionsUpdateToWeb;
 end;
 
 procedure TChatPresenter.RenameSession(const ASessionId, ANewName: string);
 begin
+  if not CanChangeSession then
+    Exit;
+
   if not ANewName.Trim.IsEmpty then
   begin
     FSessionManager.RenameSession(ASessionId, ANewName);
@@ -486,13 +515,8 @@ end;
 
 procedure TChatPresenter.DeleteSession(const ASessionId: string);
 begin
-  if FRequestInProgress and SameText(FSessionManager.ActiveSessionId, ASessionId) then
-  begin
-    FCancelledByUser := True;
-    FAIService.CancelCurrentRequest;
-    FRequestInProgress := False;
-    FView.SetRequestState(False);
-  end;
+  if not CanChangeSession then
+    Exit;
 
   FSessionManager.DeleteSession(ASessionId);
   
@@ -516,13 +540,8 @@ end;
 
 procedure TChatPresenter.SelectSession(const ASessionId: string);
 begin
-  if FRequestInProgress then
-  begin
-    FCancelledByUser := True;
-    FAIService.CancelCurrentRequest;
-    FRequestInProgress := False;
-    FView.SetRequestState(False);
-  end;
+  if not CanChangeSession then
+    Exit;
   
   if not FSessionManager.ActiveSessionId.IsEmpty and not SameText(FSessionManager.ActiveSessionId, ASessionId) then
     SaveChatHistory;
@@ -1322,15 +1341,28 @@ end;
 procedure TChatPresenter.ProcessWebMessage(const AMessage: string);
 var
   LParsed: TJSONValue;
+  LNestedParsed: TJSONValue;
   LJson: TJSONObject;
   LAction: string;
+  LMessage: string;
 begin
   TLogger.Log('ProcessWebMessage raw: ' + AMessage, 'UI');
-  LParsed := TJSONObject.ParseJSONValue(AMessage);
+  LMessage := AMessage.Trim;
+  LParsed := TJSONObject.ParseJSONValue(LMessage);
   if not Assigned(LParsed) then
     Exit;
 
   try
+    if LParsed is TJSONString then
+    begin
+      LNestedParsed := TJSONObject.ParseJSONValue(TJSONString(LParsed).Value);
+      if Assigned(LNestedParsed) then
+      begin
+        LParsed.Free;
+        LParsed := LNestedParsed;
+      end;
+    end;
+
     if not (LParsed is TJSONObject) then
       Exit;
 
@@ -1698,7 +1730,7 @@ var
 begin
   if FSessionManager.Sessions.Count = 0 then
   begin
-    FSessionManager.CreateSession('Conversa Inicial');
+    FSessionManager.CreateSession('Initial Chat');
   end;
   
   LSessionsArray := FSessionManager.Sessions.ToArray;
@@ -1710,7 +1742,20 @@ begin
     FConfig.Save;
   end;
   
-  FView.UpdateSessions(LSessionsArray, FSessionManager.ActiveSessionId);
+  FView.UpdateSessions(GetVisibleSessions, FSessionManager.ActiveSessionId);
+end;
+
+function TChatPresenter.GetVisibleSessions: TArray<TSessionInfo>;
+var
+  LSession: TSessionInfo;
+begin
+  Result := [];
+  for LSession in FSessionManager.Sessions do
+  begin
+    if SameText(LSession.Id, FSessionManager.ActiveSessionId) or
+       FSessionManager.SessionHasHistory(LSession.Id) then
+      Result := Result + [LSession];
+  end;
 end;
 
 procedure TChatPresenter.PostToWebView(const AAction, ARole, AText: string; const AProvider: string; const AModel: string);
@@ -1877,7 +1922,7 @@ begin
   try
     LJson.AddPair('action', 'update_sessions');
     LArr := TJSONArray.Create;
-    for LSession in FSessionManager.Sessions do
+    for LSession in GetVisibleSessions do
     begin
       LObj := TJSONObject.Create;
       LObj.AddPair('id', LSession.Id);

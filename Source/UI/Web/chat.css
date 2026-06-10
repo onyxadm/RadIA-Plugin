@@ -52,6 +52,12 @@
   color: var(--accent-hover);
 }
 
+.header-action-btn:disabled {
+  color: var(--fg-muted);
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .header-action-btn .btn-icon {
   width: 18px;
   height: 18px;
@@ -726,6 +732,11 @@ body.light-theme .apply-btn:hover {
   background-color: rgba(0, 122, 204, 0.08);
 }
 
+#btn-new-chat-sidebar:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 #sessions-list {
   flex: 1;
   overflow-y: auto;
@@ -763,6 +774,21 @@ body.light-theme .apply-btn:hover {
 .session-item:hover {
   background-color: var(--bg-elevated);
   color: var(--fg-primary);
+}
+
+#sessions-sidebar.sessions-locked .session-item {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+#sessions-sidebar.sessions-locked .session-item:hover {
+  background-color: transparent;
+  color: var(--fg-secondary);
+}
+
+#sessions-sidebar.sessions-locked .session-item.active:hover {
+  background-color: rgba(0, 122, 204, 0.12);
+  color: var(--accent-hover);
 }
 
 .session-item.active {
@@ -814,8 +840,22 @@ body.light-theme .apply-btn:hover {
   color: var(--fg-primary);
 }
 
+.session-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.session-action-btn:disabled:hover {
+  background-color: transparent;
+  color: var(--fg-secondary);
+}
+
 body.light-theme .session-action-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .session-action-btn:disabled:hover {
+  background-color: transparent;
 }
 
 .session-action-btn.delete-btn:hover {

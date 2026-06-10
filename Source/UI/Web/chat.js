@@ -78,7 +78,6 @@ marked.use({
 });
 
 const chatContainer   = document.getElementById('chat-container');
-const btnNewChat      = document.getElementById('btn-new-chat');
 const btnClearChat    = document.getElementById('btn-clear-chat');
 const btnHistory      = document.getElementById('btn-history');
 const btnSettings     = document.getElementById('btn-settings');
@@ -332,6 +331,20 @@ const _promptHistory = [];
 let _promptHistoryIndex = -1;
 let _promptDraft = '';
 
+function canChangeSession() {
+  return !requestInProgress;
+}
+
+function showSessionLockedStatus() {
+  showTransientStatus('Wait for the current response to finish, or cancel it before switching chats.');
+}
+
+function updateSessionControlsState() {
+  const disabled = requestInProgress;
+  btnHistory.disabled = disabled;
+  btnNewChatSidebar.disabled = disabled;
+  sessionsSidebar.classList.toggle('sessions-locked', disabled);
+}
 
 promptTextarea.addEventListener('input', () => {
   promptTextarea.style.height = 'auto';
@@ -458,11 +471,6 @@ btnGenerators.addEventListener('click', () => {
   }
 });
 
-btnNewChat.addEventListener('click', () => {
-  showTab('chat');
-  postMessageToDelphi({ action: 'new_chat' });
-});
-
 btnClearChat.addEventListener('click', () => {
   if (confirm('Clear the current conversation history?')) {
     postMessageToDelphi({ action: 'clear_chat' });
@@ -470,6 +478,10 @@ btnClearChat.addEventListener('click', () => {
 });
 
 btnHistory.addEventListener('click', () => {
+  if (!canChangeSession()) {
+    showSessionLockedStatus();
+    return;
+  }
   if (sessionsSidebar.classList.contains('collapsed') && !historyLoadRequested) {
     requestHistoryLoad();
   }
@@ -482,6 +494,10 @@ if (btnWebLogin) {
 }
 
 btnNewChatSidebar.addEventListener('click', () => {
+  if (!canChangeSession()) {
+    showSessionLockedStatus();
+    return;
+  }
   showTab('chat');
   postMessageToDelphi({ action: 'new_chat' });
 });
@@ -742,6 +758,17 @@ function updateTokens(text) {
   } else {
     statusBar.classList.add('hidden');
   }
+}
+
+function showTransientStatus(text) {
+  statusText.innerText = text;
+  statusBar.classList.remove('hidden');
+  window.clearTimeout(showTransientStatus._timer);
+  showTransientStatus._timer = window.setTimeout(() => {
+    if (statusText.innerText === text) {
+      statusBar.classList.add('hidden');
+    }
+  }, 3000);
 }
 
 let typingIndicatorEl = null;
@@ -1089,6 +1116,7 @@ function updateModelsList(models, activeModel) {
 function setRequestState(inProgress) {
   console.log('[DEBUG] setRequestState called with:', inProgress);
   requestInProgress = inProgress;
+  updateSessionControlsState();
   if (inProgress) {
     btnSendPrompt.classList.add('stop-btn');
     btnSendPrompt.title = 'Cancel request';
@@ -1139,6 +1167,7 @@ function updateSessions(sessions, activeSessionId) {
 
     const btnRename = document.createElement('button');
     btnRename.classList.add('session-action-btn');
+    btnRename.disabled = requestInProgress;
     btnRename.title = "Rename Conversation";
     btnRename.innerHTML = SVG_ICONS.edit;
     btnRename.addEventListener('click', (e) => {
@@ -1148,6 +1177,7 @@ function updateSessions(sessions, activeSessionId) {
 
     const btnDelete = document.createElement('button');
     btnDelete.classList.add('session-action-btn', 'delete-btn');
+    btnDelete.disabled = requestInProgress;
     btnDelete.title = "Delete Conversation";
     btnDelete.innerHTML = SVG_ICONS.trash;
     btnDelete.addEventListener('click', (e) => {
@@ -1163,17 +1193,28 @@ function updateSessions(sessions, activeSessionId) {
     item.appendChild(nameEl);
     item.appendChild(actions);
 
-    item.addEventListener('click', (e) => {
+    item.addEventListener('click', () => {
       if (item.classList.contains('renaming')) return;
+      if (!canChangeSession()) {
+        showSessionLockedStatus();
+        return;
+      }
       showTab('chat');
       postMessageToDelphi({ action: 'select_session', id: session.id });
     });
 
     sessionsList.appendChild(item);
   });
+
+  updateSessionControlsState();
 }
 
 function startRename(item, sessionId, nameEl) {
+  if (!canChangeSession()) {
+    showSessionLockedStatus();
+    return;
+  }
+
   item.classList.add('renaming');
   const currentName = nameEl.textContent;
   
@@ -1302,7 +1343,7 @@ if (window.chrome && window.chrome.webview) {
       case 'append_generator_code': appendGeneratorCode(data.text, data.isDone);                 break;
     }
   });
-  window.chrome.webview.postMessage(JSON.stringify({ action: 'ready' }));
+  postMessageToDelphi({ action: 'ready' });
 }
 
 bindChatScrollbar();

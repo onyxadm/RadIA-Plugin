@@ -38,6 +38,7 @@ type
     procedure UpdateSessionActivity(const AId: string);
     
     function GetSessionFilePath(const AId: string): string;
+    function SessionHasHistory(const AId: string): Boolean;
     function LoadSessionHistory(const AId: string): TArray<IChatMessage>;
     procedure SaveSessionHistory(const AId: string; const AHistory: TArray<IChatMessage>);
   end;
@@ -284,8 +285,7 @@ begin
   begin
     LInfo := FSessions[LIndex];
     LInfo.LastActive := Now;
-    FSessions.Delete(LIndex);
-    FSessions.Insert(0, LInfo); // Move to top
+    FSessions[LIndex] := LInfo;
     SaveIndex;
   end;
 end;
@@ -293,6 +293,28 @@ end;
 function TRadIASessionManager.GetSessionFilePath(const AId: string): string;
 begin
   Result := TPath.Combine(FSessionsDir, AId + '.json');
+end;
+
+function TRadIASessionManager.SessionHasHistory(const AId: string): Boolean;
+var
+  LFile: string;
+  LContent: string;
+begin
+  Result := False;
+  LFile := GetSessionFilePath(AId);
+  if not TFile.Exists(LFile) then
+    Exit;
+
+  try
+    LContent := TFile.ReadAllText(LFile, TEncoding.UTF8).Trim;
+    Result := (not LContent.IsEmpty) and (not SameText(LContent, '[]'));
+  except
+    on E: Exception do
+    begin
+      LogSession('SessionHasHistory error: ' + E.Message);
+      Result := True;
+    end;
+  end;
 end;
 
 function TRadIASessionManager.LoadSessionHistory(const AId: string): TArray<IChatMessage>;

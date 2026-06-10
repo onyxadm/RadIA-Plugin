@@ -4,7 +4,7 @@
 
 function postMessageToDelphi(payload) {
   if (window.chrome && window.chrome.webview) {
-    window.chrome.webview.postMessage(JSON.stringify(payload));
+    window.chrome.webview.postMessage(payload);
   }
 }
 
