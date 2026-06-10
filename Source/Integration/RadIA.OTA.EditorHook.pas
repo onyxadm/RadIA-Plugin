@@ -891,7 +891,11 @@ begin
   TLogger.Log(Format('SendCommandToChat: Command=%s, SelectionLength=%d', [ACommand, Length(LSelectedText)]), 'EditorHook');
   ShowRadIAChat;
 
-  LPrompt := Format('%s %s'#13#10'```pascal'#13#10'%s'#13#10'```', [ACommand, APromptPrefix, LSelectedText]);
+  LPrompt := ACommand + sLineBreak +
+    APromptPrefix + sLineBreak + sLineBreak +
+    '```pascal' + sLineBreak +
+    LSelectedText.TrimRight + sLineBreak +
+    '```';
   TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
 end;
 

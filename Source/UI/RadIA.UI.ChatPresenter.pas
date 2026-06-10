@@ -141,6 +141,10 @@ type
     procedure OnBackgroundBrowserInitialized;
     procedure OnBackgroundBrowserNavigation(const AUrl: string);
 
+    {$IFDEF TESTS}
+    function TestPreProcessPrompt(const APromptText: string): string;
+    {$ENDIF}
+
     property RequestInProgress: Boolean read FRequestInProgress;
     property SessionManager: TRadIASessionManager read FSessionManager;
     property TemplateManager: TPromptTemplateManager read FTemplateManager;
@@ -626,9 +630,12 @@ begin
 end;
 
 procedure TChatPresenter.HandleGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
+var
+  LProcessed: string;
 begin
+  LProcessed := PreProcessPrompt(APrompt);
   PostToWebView('add_message', 'user', APrompt);
-  SendPromptToAI(APrompt);
+  SendPromptToAI(LProcessed);
 end;
 
 procedure TChatPresenter.SendPrompt;
@@ -859,7 +866,7 @@ begin
                 LStats := Self.FAccumulatedUsage.FormatStats;
                 if Self.FConfig.QuotaEnabled then
                 begin
-                  LStats := LStats + Format(' · Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
+                  LStats := LStats + Format(' - Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 end;
 
                 Self.PostToWebView('update_tokens', '', LStats);
@@ -979,7 +986,7 @@ begin
                 Self.FConfig.AddToQuotaUsage(LUsage);
                 LStats := Self.FAccumulatedUsage.FormatStats;
                 if Self.FConfig.QuotaEnabled then
-                  LStats := LStats + Format(' · Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
+                  LStats := LStats + Format(' - Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 Self.PostToWebView('update_tokens', '', LStats);
               end;
 
@@ -1492,9 +1499,10 @@ var
   LFound: Boolean;
   LCommand: string;
   LArgument: string;
-  LFirstSpace: Integer;
+  LFirstSeparator: Integer;
   LTemplateName: string;
   LTemp: TPromptTemplate;
+  I: Integer;
 begin
   Result := APromptText;
   LFound := False;
@@ -1502,11 +1510,20 @@ begin
 
   LCommand := Trim(APromptText);
   LArgument := '';
-  LFirstSpace := APromptText.IndexOf(' ');
-  if LFirstSpace > 0 then
+  LFirstSeparator := -1;
+  for I := Low(APromptText) to High(APromptText) do
   begin
-    LCommand := APromptText.Substring(0, LFirstSpace).Trim;
-    LArgument := APromptText.Substring(LFirstSpace + 1).Trim;
+    if CharInSet(APromptText[I], [#9, #10, #13, ' ']) then
+    begin
+      LFirstSeparator := I - 1;
+      Break;
+    end;
+  end;
+
+  if LFirstSeparator > 0 then
+  begin
+    LCommand := APromptText.Substring(0, LFirstSeparator).Trim;
+    LArgument := APromptText.Substring(LFirstSeparator + 1).Trim;
   end;
 
   if SameText(LCommand, '/template') then
@@ -1594,6 +1611,13 @@ begin
       Result := Result.Replace('{argument}', LArgument);
   end;
 end;
+
+{$IFDEF TESTS}
+function TChatPresenter.TestPreProcessPrompt(const APromptText: string): string;
+begin
+  Result := PreProcessPrompt(APromptText);
+end;
+{$ENDIF}
 
 procedure TChatPresenter.LoadChatHistory;
 var

@@ -448,6 +448,10 @@ function insertSlashCommand(name) {
   hideSlashPopup();
 }
 
+function shouldRenderMessageAsMarkdown(role, text) {
+  return role === 'assistant' || role === 'system' || text.includes('```');
+}
+
 function addMessage(role, text, provider, model) {
   hideTypingIndicator();
   if (text === undefined || text === null) {
@@ -476,7 +480,7 @@ function addMessage(role, text, provider, model) {
   const content = document.createElement('div');
   content.classList.add('message-content');
 
-  if (role === 'assistant' || role === 'system') {
+  if (shouldRenderMessageAsMarkdown(role, text)) {
     content.innerHTML = marked.parse(text);
     processProjectFiles(content);
   } else {

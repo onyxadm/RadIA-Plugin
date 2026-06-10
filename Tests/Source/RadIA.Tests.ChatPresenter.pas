@@ -114,6 +114,8 @@ type
     [Test]
     procedure TestSendPromptUserMessageIsPosted;
     [Test]
+    procedure TestGlobalPromptWithCommandLineBreakUsesTemplate;
+    [Test]
     procedure TestClearChatResetsState;
     [Test]
     procedure TestSelectSessionLoadsHistory;
@@ -417,6 +419,28 @@ begin
     end;
   end;
   Assert.IsTrue(LFound);
+end;
+
+procedure TTestChatPresenter.TestGlobalPromptWithCommandLineBreakUsesTemplate;
+var
+  LPrompt: string;
+  LProcessed: string;
+begin
+  FPresenter.Initialize('C:\mock\web');
+  FMockView.ActiveEditorText := 'type'#13#10 +
+    '  TForm1 = class(TForm)'#13#10 +
+    '  end;';
+
+  LPrompt := '/explain'#13#10 +
+    'Explain the following Delphi Pascal code block in detail:'#13#10#13#10 +
+    '```pascal'#13#10 +
+    FMockView.ActiveEditorText + #13#10 +
+    '```';
+
+  LProcessed := FPresenter.TestPreProcessPrompt(LPrompt);
+
+  Assert.IsFalse(LProcessed.StartsWith('/explain', True));
+  Assert.IsTrue(LProcessed.Contains('TForm1 = class(TForm)'));
 end;
 
 procedure TTestChatPresenter.TestClearChatResetsState;
