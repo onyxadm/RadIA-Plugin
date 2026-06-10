@@ -159,6 +159,7 @@ begin
     'The code must connect the prefix and suffix naturally.' + sLineBreak +
     'Never repeat existing code, the unit header, interface, uses, or implementation.' + sLineBreak +
     'Never create a full unit, class, method, explanation, markdown, or comments.' + sLineBreak +
+    'Do not prefix the answer with a language name such as Delphi or Pascal.' + sLineBreak +
     'Before implementation, or inside private/protected/public/published, return only declarations.' + sLineBreak +
     'In declaration areas, never return implementation code containing begin.' + sLineBreak +
     'Preserve normal Delphi formatting, indentation, and line breaks.' + sLineBreak +
@@ -193,6 +194,8 @@ var
   LLower: string;
   LFirstToken: string;
   LTokenEnd: Integer;
+  LFencePos: Integer;
+  LEndFencePos: Integer;
 begin
   LText := AResponse.Trim;
   LText := StringReplace(LText, '\r\n', sLineBreak, [rfReplaceAll]);
@@ -200,17 +203,36 @@ begin
   LText := StringReplace(LText, '\t', #9, [rfReplaceAll]);
   LLower := LText.ToLower;
 
-  if LLower.StartsWith('```pascal') then
-    LText := LText.Substring(9).Trim
-  else if LLower.StartsWith('```delphi') then
-    LText := LText.Substring(9).Trim
-  else if LLower.StartsWith('```objectpascal') then
-    LText := LText.Substring(16).Trim
-  else if LText.StartsWith('```') then
-    LText := LText.Substring(3).Trim;
+  LFencePos := Pos('```', LText);
+  if LFencePos > 0 then
+  begin
+    LText := Copy(LText, LFencePos + 3, MaxInt).Trim;
+    LEndFencePos := Pos('```', LText);
+    if LEndFencePos > 0 then
+      LText := Copy(LText, 1, LEndFencePos - 1).Trim;
+
+    LLower := LText.ToLower;
+    if LLower.StartsWith('objectpascal') then
+      LText := Copy(LText, 13, MaxInt).Trim
+    else if LLower.StartsWith('pascal') then
+      LText := Copy(LText, 7, MaxInt).Trim
+    else if LLower.StartsWith('delphi') then
+      LText := Copy(LText, 7, MaxInt).Trim;
+  end;
 
   if LText.EndsWith('```') then
     LText := LText.Substring(0, LText.Length - 3).Trim;
+
+  LLower := LText.ToLower;
+  if LLower.StartsWith('delphi:') then
+    LText := Copy(LText, 8, MaxInt).Trim
+  else if LLower.StartsWith('delphi') and (Length(LText) <= 6) then
+    Exit('');
+
+  LLower := LText.ToLower;
+  if (LLower.Contains('unit ') and LLower.Contains('interface')) or
+     (LLower.Contains('unit') and LLower.Contains('interfaceuses')) then
+    Exit('');
 
   LFirstToken := LText.TrimLeft;
   LTokenEnd := Pos(' ', LFirstToken);

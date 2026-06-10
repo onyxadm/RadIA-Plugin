@@ -20,6 +20,8 @@ type
     [Test]
     procedure TestResponseCleanerRejectsFullUnitScaffold;
     [Test]
+    procedure TestResponseCleanerRejectsLabeledMarkdownUnitScaffold;
+    [Test]
     procedure TestResponseCleanerRestoresEscapedLineBreaks;
     [Test]
     procedure TestShortcutParserHandlesAltEnter;
@@ -122,6 +124,16 @@ var
 begin
   LClean := TInlineCompletionResponseCleaner.Clean(
     'unit Unit1;interface uses System.SysUtils;');
+
+  Assert.AreEqual('', LClean);
+end;
+
+procedure TTestInlineCompletion.TestResponseCleanerRejectsLabeledMarkdownUnitScaffold;
+var
+  LClean: string;
+begin
+  LClean := TInlineCompletionResponseCleaner.Clean(
+    'Delphi ```pascal unit Unit1;interfaceuses System.SysUtils;type TForm1 = class end;```');
 
   Assert.AreEqual('', LClean);
 end;
