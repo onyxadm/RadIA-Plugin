@@ -22,7 +22,7 @@ type
     procedure ActiveFormChange(Sender: TObject);
     procedure QueueHookActiveEditor;
     {$IFNDEF TESTS}
-    procedure HookActiveEditorNow;
+    procedure HookEditorWindowsNow;
     {$ENDIF}
     procedure InstallEditorNotifiers;
     procedure RemoveEditorNotifiers;
@@ -376,7 +376,9 @@ begin
 end;
 
 {$IFNDEF TESTS}
-procedure TRadIAEditorHook.HookActiveEditorNow;
+procedure TRadIAEditorHook.HookEditorWindowsNow;
+var
+  I: Integer;
 begin
   if (not FInstalled) or GIsShuttingDown then
     Exit;
@@ -387,7 +389,24 @@ begin
       HookPopupMenu(Screen.ActiveForm);
     except
       on E: Exception do
-        TLogger.Log('HookActiveEditorNow: Error hooking active form: ' + E.Message, 'EditorHook');
+        TLogger.Log('HookEditorWindowsNow: Error hooking active form: ' + E.Message, 'EditorHook');
+    end;
+  end;
+
+  if Assigned(Screen) then
+  begin
+    for I := 0 to Screen.FormCount - 1 do
+    begin
+      if SameText(Screen.Forms[I].ClassName, 'TEditWindow') and
+         Screen.Forms[I].HandleAllocated and Screen.Forms[I].Visible then
+      begin
+        try
+          HookPopupMenu(Screen.Forms[I]);
+        except
+          on E: Exception do
+            TLogger.Log('HookEditorWindowsNow: Error hooking editor window: ' + E.Message, 'EditorHook');
+        end;
+      end;
     end;
   end;
 end;
@@ -987,15 +1006,28 @@ begin
 end;
 
 procedure TRadIAEditorHook.OnTimerEvent(Sender: TObject);
+var
+  LActiveForm: TCustomForm;
 begin
-  if (not FInstalled) or GIsShuttingDown or (not FHookPending) then
+  if (not FInstalled) or GIsShuttingDown then
     Exit;
+
+  if not FHookPending then
+  begin
+    if Assigned(Screen) then
+    begin
+      LActiveForm := Screen.ActiveForm;
+      if Assigned(LActiveForm) and SameText(LActiveForm.ClassName, 'TEditWindow') then
+        RequestDelayedHook;
+    end;
+    Exit;
+  end;
 
   if GetTickCount64 - FHookRequestedAt < CEditorHookDelayMs then
     Exit;
 
   FHookPending := False;
-  HookActiveEditorNow;
+  HookEditorWindowsNow;
 end;
 {$ENDIF}
 
