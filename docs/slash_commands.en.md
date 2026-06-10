@@ -1,6 +1,6 @@
-# RadIA Slash Commands
+# Rad IA Slash Commands
 
-RadIA supports quick command shortcuts directly in the chat interface, enabling developers to run common tasks without typing long prompts or using the mouse.
+Rad IA supports quick command shortcuts directly in the chat interface, enabling developers to run common tasks without typing long prompts or using the mouse.
 
 ---
 
@@ -28,7 +28,7 @@ Simply type the `/` character in the chat input area. A floating popup menu will
 
 ## Customization and Command Backups
 
-RadIA allows you to edit, delete, or add new commands and prompt templates directly from the plugin options inside the IDE (`Tools -> Options -> RadIA -> Templates`).
+Rad IA allows you to edit, delete, or add new commands and prompt templates directly from the plugin options inside the IDE (`Tools -> Options -> Rad IA -> Templates`).
 
 Each template registry can define:
 - **Slash Command**: The command string that triggers the template in chat (e.g., `/explain`).

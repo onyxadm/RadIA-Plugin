@@ -1,6 +1,6 @@
 ---
 name: 🐛 Bug Report (English)
-about: Create a report to help us improve RadIA
+about: Create a report to help us improve Rad IA
 title: '[BUG] '
 labels: bug
 assignees: ''
@@ -23,7 +23,7 @@ A clear description of what you expected to happen.
 - Delphi IDE Version: (e.g., Delphi 11.3 Alexandria, Delphi 12 Athens)
 - Operating System: (e.g., Windows 11 64-bit)
 - AI Provider Used: (e.g., Gemini, OpenAI, Claude, Local Ollama)
-- RadIA Version: (e.g., v0.0.15)
+- Rad IA Version: (e.g., v0.0.15)
 
 **Additional Logs or Screenshots**
 If applicable, add screenshots or output snippets from the WebView2 console / Delphi Messages tab to help diagnose the issue.

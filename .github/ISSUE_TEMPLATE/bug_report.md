@@ -1,6 +1,6 @@
 ---
 name: 🐛 Bug Report (Relatar um Erro)
-about: Crie um relatório para nos ajudar a melhorar o RadIA
+about: Crie um relatório para nos ajudar a melhorar o Rad IA
 title: '[BUG] '
 labels: bug
 assignees: ''
@@ -23,7 +23,7 @@ Uma descrição clara do que você esperava que acontecesse.
 - Versão da IDE do Delphi: (ex: Delphi 11.3 Alexandria, Delphi 12 Athens)
 - Sistema Operacional: (ex: Windows 11 64-bit)
 - Provedor de IA Utilizado: (ex: Gemini, OpenAI, Claude, Ollama local)
-- Versão do RadIA: (ex: v0.0.15)
+- Versão do Rad IA: (ex: v0.0.15)
 
 **Logs ou Imagens adicionais**
 Se aplicável, adicione capturas de tela ou trechos de logs do console do WebView2/Messages do Delphi para ajudar no diagnóstico.

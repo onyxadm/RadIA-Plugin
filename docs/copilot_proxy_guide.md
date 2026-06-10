@@ -1,8 +1,8 @@
-# Guia de Configuração: GitHub Copilot no RadIA via Proxy Local (Fase 1)
+# Guia de Configuração: GitHub Copilot no Rad IA via Proxy Local (Fase 1)
 
-Este guia orienta como utilizar sua assinatura corporativa ou pessoal do **GitHub Copilot** (e outros assistentes de IA baseados em nuvem) dentro do **RadIA** sem a necessidade de implementar fluxos de autenticação complexos de forma nativa. 
+Este guia orienta como utilizar sua assinatura corporativa ou pessoal do **GitHub Copilot** (e outros assistentes de IA baseados em nuvem) dentro do **Rad IA** sem a necessidade de implementar fluxos de autenticação complexos de forma nativa. 
 
-Utilizando a nova funcionalidade de **Provedores Dinâmicos via JSON** (introduzida na versão `v0.0.6`), podemos integrar o RadIA a um serviço de proxy local compatível com a API da OpenAI.
+Utilizando a nova funcionalidade de **Provedores Dinâmicos via JSON** (introduzida na versão `v0.0.6`), podemos integrar o Rad IA a um serviço de proxy local compatível com a API da OpenAI.
 
 ---
 
@@ -11,7 +11,7 @@ Utilizando a nova funcionalidade de **Provedores Dinâmicos via JSON** (introduz
 O fluxo consiste em executar um serviço intermediário leve na sua própria máquina de desenvolvimento. Esse serviço cuida da autenticação (OAuth) segura com o GitHub e converte o tráfego da API interna do Copilot para o formato padrão da OpenAI:
 
 ```
-[ RadIA (Delphi IDE) ] 
+[ Rad IA (Delphi IDE) ] 
        │  (Chamada padrão OpenAI)
        ▼
 [ Proxy Local (Porta 8080) ] 
@@ -55,11 +55,11 @@ Uma vez que o proxy local esteja rodando, precisamos autenticar com sua conta do
 
 ---
 
-### Passo 3: Cadastrar o Provedor Dinâmico no RadIA
+### Passo 3: Cadastrar o Provedor Dinâmico no Rad IA
 
 Agora que você tem o proxy rodando e o seu token do Copilot em mãos:
 
-1. No Windows, navegue até a pasta de provedores dinâmicos do RadIA:
+1. No Windows, navegue até a pasta de provedores dinâmicos do Rad IA:
    * Pressione `Win + R`, digite `%APPDATA%\RadIA\providers\` e pressione `Enter`. (Se a pasta `providers` não existir, crie-a).
 2. Crie um novo arquivo chamado **`github-copilot.json`**.
 3. Abra o arquivo em um editor de texto e cole a seguinte configuração (substituindo o token pelo seu):
@@ -83,8 +83,8 @@ Agora que você tem o proxy rodando e o seu token do Copilot em mãos:
 ### Passo 4: Reiniciar a IDE do Delphi
 
 1. Se a IDE do Delphi estiver aberta, feche-a e abra novamente.
-2. O RadIA detectará o arquivo `github-copilot.json`, validará o provedor dinâmico e o adicionará na lista de seleção de provedores do painel de chat.
-3. **Pronto!** Suas conversas, explicações de código e refatorações no RadIA agora serão processadas de forma segura e rápida através da infraestrutura de IA da sua conta do GitHub Copilot.
+2. O Rad IA detectará o arquivo `github-copilot.json`, validará o provedor dinâmico e o adicionará na lista de seleção de provedores do painel de chat.
+3. **Pronto!** Suas conversas, explicações de código e refatorações no Rad IA agora serão processadas de forma segura e rápida através da infraestrutura de IA da sua conta do GitHub Copilot.
 
 ---
 

@@ -1,6 +1,6 @@
-# RadIA - Matriz de Priorização e Viabilidade de Features
+# Rad IA - Matriz de Priorização e Viabilidade de Features
 
-Este documento apresenta uma análise técnica e de negócios comparando as **13 ideias de novas features** com as **7 features que já constam no backlog/roadmap** do projeto RadIA.
+Este documento apresenta uma análise técnica e de negócios comparando as **13 ideias de novas features** com as **7 features que já constam no backlog/roadmap** do projeto Rad IA.
 
 A análise é estruturada sob a perspectiva de um **Arquiteto de Software Sênior**, avaliando a complexidade de implementação no ecossistema do Embarcadero Delphi (usando a Open Tools API e Windows) contra o impacto gerado no dia a dia do desenvolvedor.
 
@@ -70,11 +70,11 @@ Features que envolvem manipulação estrutural de código Object Pascal (reescri
 
 ### 2.2. Gerador de Mocks para Testes Unitários (Nova)
 * **Benefício:** **Alto**. Facilita a adoção de testes unitários no Delphi, permitindo isolar componentes acoplados que dependem de bancos de dados ou conexões externas.
-* **Complexidade:** **Média**. Utiliza a base já existente de geração de testes do RadIA. A IA mapeia as dependências da classe (interfaces de construtores) e gera o código mock (compatível com Delphi-Mocks ou mocks manuais com interfaces) dentro do repositório de testes.
+* **Complexidade:** **Média**. Utiliza a base já existente de geração de testes do Rad IA. A IA mapeia as dependências da classe (interfaces de construtores) e gera o código mock (compatível com Delphi-Mocks ou mocks manuais com interfaces) dentro do repositório de testes.
 
 ### 2.3. Smart Multi-Unit Trace Resolver (Nova)
 * **Benefício:** **Alto**. Permite a resolução de exceções reais complexas que trafegam entre múltiplas camadas do sistema (Controller, Service, Repository), lendo automaticamente os arquivos físicos correspondentes e provendo contexto global para a IA.
-* **Complexidade:** **Média**. A OTA do Delphi permite rastrear e ler o código-fonte de quaisquer arquivos vinculados ao projeto ativo. O RadIA parseia as linhas do stack trace, carrega em background os trechos específicos dessas units e injeta tudo de forma estruturada no contexto da IA.
+* **Complexidade:** **Média**. A OTA do Delphi permite rastrear e ler o código-fonte de quaisquer arquivos vinculados ao projeto ativo. O Rad IA parseia as linhas do stack trace, carrega em background os trechos específicos dessas units e injeta tudo de forma estruturada no contexto da IA.
 
 ### 2.4. MadExcept / EurekaLog Context Extractor (Nova)
 * **Benefício:** **Alto**. A IA ganha "visibilidade de runtime", analisando as exceções com base nos valores reais das variáveis e objetos locais coletados pelo log de erro no instante exato da falha do sistema.
@@ -82,7 +82,7 @@ Features que envolvem manipulação estrutural de código Object Pascal (reescri
 
 ### 2.5. Revisão Automática de Código no Save (Backlog - v0.1.0)
 * **Benefício:** **Alto**. Garante que boas práticas (Clean Code/SOLID) sejam analisadas continuamente sem a necessidade de acionamento manual do desenvolvedor.
-* **Complexidade:** **Média**. Necessita interceptar o evento de gravação da IDE (`IOTAModuleNotifier.AfterSave`), coletar as alterações e enviar uma requisição silenciosa em background. O desafio é não bloquear o processo de gravação e exibir as mensagens de alerta de forma não-intrusiva no painel RadIA.
+* **Complexidade:** **Média**. Necessita interceptar o evento de gravação da IDE (`IOTAModuleNotifier.AfterSave`), coletar as alterações e enviar uma requisição silenciosa em background. O desafio é não bloquear o processo de gravação e exibir as mensagens de alerta de forma não-intrusiva no painel Rad IA.
 
 ### 2.6. Assistente de Migração de Versão (Smart Migrate) (Backlog - v0.2.0)
 * **Benefício:** **Alto**. Acelera drasticamente a modernização de projetos antigos baseados em Delphi 7/XE para Delphi moderno (10.4/11/12), lidando com tipos de strings Unicode, chamadas de rede legadas e substituição de bibliotecas obsoletas.
@@ -90,7 +90,7 @@ Features que envolvem manipulação estrutural de código Object Pascal (reescri
 
 ### 2.7. Gerador de Documentação OpenAPI/Swagger (Nova)
 * **Benefício:** **Alto**. Essencial para times que usam Delphi no backend com Horse ou RAD Server, economizando dias de digitação manual de especificações.
-* **Complexidade:** **Média**. O RadIA precisa varrer as rotas registradas nas classes de controle ou nas units de inicialização da API, ler as estruturas dos DTOs referenciados e compilar o arquivo de configuração Swagger (JSON/YAML).
+* **Complexidade:** **Média**. O Rad IA precisa varrer as rotas registradas nas classes de controle ou nas units de inicialização da API, ler as estruturas dos DTOs referenciados e compilar o arquivo de configuração Swagger (JSON/YAML).
 
 ### 2.8. Análise Semântica Bidirecional (DFM vs PAS) (Nova)
 * **Benefício:** **Médio-Alto**. Remove o lixo acumulado em formulários legados (declarações invisíveis de componentes removidos e eventos órfãos).
@@ -138,11 +138,11 @@ Features que alteram profundamente a estrutura de múltiplos arquivos simultanea
 * **Complexidade:** **Alta**. Exige registrar e monitorar callbacks complexos e sensíveis da IDE usando `IOTADebuggerNotifier`. Qualquer falha ou lentidão nesse monitoramento pode travar a depuração da IDE do Delphi ou causar Access Violations na IDE (`bds.exe`).
 
 ### 3.7. Suporte Nativo macOS/Linux (Lazarus/FPC) (Backlog - v0.3.0+)
-* **Benefício:** **Baixo-Médio**. Expandiria o uso do RadIA para desenvolvedores do ecossistema Free Pascal / Lazarus.
-* **Complexidade:** **Muito Alta**. Toda a interface gráfica, integração com o editor de código e persistência do RadIA são estritamente vinculadas à VCL do Delphi (Windows), à Open Tools API (proprietária da Embarcadero) e ao motor WebView2 da Microsoft. Portar isso exigiria reescrever a camada de UI em LCL e substituir o motor web.
+* **Benefício:** **Baixo-Médio**. Expandiria o uso do Rad IA para desenvolvedores do ecossistema Free Pascal / Lazarus.
+* **Complexidade:** **Muito Alta**. Toda a interface gráfica, integração com o editor de código e persistência do Rad IA são estritamente vinculadas à VCL do Delphi (Windows), à Open Tools API (proprietária da Embarcadero) e ao motor WebView2 da Microsoft. Portar isso exigiria reescrever a camada de UI em LCL e substituir o motor web.
 
 ---
 
 > [!TIP]
 > **Recomendação de Próximos Passos:**
-> O foco estratégico do RadIA deve ser a implementação de **Quick Wins** (Smart SQL Optimizer e Delphi Compiler Scanner), pois trazem valor imediato com baixíssimo risco de regressões. Paralelamente, podemos planejar o desenvolvimento incremental dos **Projetos Principais** de esforço médio (como a Otimização da Cláusula Uses, Smart Multi-Unit Trace Resolver e a Revisão Automática no Save), consolidando a robustez do assistente antes de partirmos para refatorações complexas em DFM.
+> O foco estratégico do Rad IA deve ser a implementação de **Quick Wins** (Smart SQL Optimizer e Delphi Compiler Scanner), pois trazem valor imediato com baixíssimo risco de regressões. Paralelamente, podemos planejar o desenvolvimento incremental dos **Projetos Principais** de esforço médio (como a Otimização da Cláusula Uses, Smart Multi-Unit Trace Resolver e a Revisão Automática no Save), consolidando a robustez do assistente antes de partirmos para refatorações complexas em DFM.

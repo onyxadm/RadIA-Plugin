@@ -1,6 +1,6 @@
-# RadIA Features and Capabilities
+# Rad IA Features and Capabilities
 
-This document contains the complete checklist, categorization, and development status of all features integrated into the **RadIA** plugin.
+This document contains the complete checklist, categorization, and development status of all features integrated into the **Rad IA** plugin.
 
 ---
 
@@ -41,7 +41,7 @@ This document contains the complete checklist, categorization, and development s
 | **Project Context** | Intelligence | Automatic project context loading (system prompts/custom files) via `.radia`. | ✅ Completed |
 | **Tokens & Cost Tracking** | Control | Status bar counter for session token usage and USD estimated cost. | ✅ Completed |
 | **Local Quota Control** | Control | Define a monthly token limit with request blocking and a manual reset button. | ✅ Completed |
-| **Editor Context Actions** | Integration | RadIA submenu at the top of the editor right-click menu to explain code, optimize/refactor, generate tests, find bugs, document methods, and review the active unit, with `/explain` separated from `/review`. | ✅ Completed |
+| **Editor Context Actions** | Integration | Rad IA submenu at the top of the editor right-click menu to explain code, optimize/refactor, generate tests, find bugs, document methods, and review the active unit, with `/explain` separated from `/review`. | ✅ Completed |
 | **Interactive Smart Diff** | Integration | Side-by-side original/suggested diff view with instant editor replacement. | ✅ Completed |
 | **Smart Build Debugger** | Integration | Message tab integration to resolve compiler issues with one-click fixes. | ✅ Completed |
 | **Auto XML Documentation** | Generation | Write Delphi-compliant XML help comments above methods automatically. | ✅ Completed |

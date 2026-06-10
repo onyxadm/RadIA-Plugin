@@ -1,6 +1,6 @@
-# RadIA - Evolution Backlog
+# Rad IA - Evolution Backlog
 
-This document registers the development status, future planning, and technical implementation history of **RadIA** plugin tasks.
+This document registers the development status, future planning, and technical implementation history of **Rad IA** plugin tasks.
 
 ---
 
@@ -87,7 +87,7 @@ Check the implementation details of each completed feature grouped by target rel
       *   Registered OTA notifiers (`IOTAIDENotifier` and `IOTAEditorNotifier`) to schedule menu hooks when `.pas` files and editor views are opened or activated.
       *   Deferred context-menu hooking until after the IDE finishes building the `TEditWindow`, avoiding regressions when creating new projects and interacting with code folding/elision tree internals.
       *   Detects `TPopupMenu` instances both from form components and from the control tree (`Control.PopupMenu`), covering the real editor menu across IDE versions and layouts.
-      *   Injects the **RadIA** submenu at the top of the context menu after the IDE's original `OnPopup` handler rebuilds the default items.
+      *   Injects the **Rad IA** submenu at the top of the context menu after the IDE's original `OnPopup` handler rebuilds the default items.
 </details>
 
 <details>
@@ -190,7 +190,7 @@ Check the implementation details of each completed feature grouped by target rel
   <summary><b>📦 v0.0.6 — JSON Dynamic Providers (Click to expand)</b></summary>
 
   #### 1. Dynamic JSON Providers (Plugins without Recompilation) - Item #21b
-  *   **Description**: Support for registering custom OpenAI-compatible providers by saving configuration `.json` files inside RadIA's AppData directory, without compiling the plugin.
+  *   **Description**: Support for registering custom OpenAI-compatible providers by saving configuration `.json` files inside Rad IA's AppData directory, without compiling the plugin.
   *   **Details**:
       *   Iterates the directory at `%APPDATA%\RadIA\providers\` inside `TProviderRegistry.LoadJsonProviders`.
       *   Designed a generic client wrapper `TRadIAGenericOpenAIProvider` to serve as a universal OpenAI bridge.
@@ -345,6 +345,6 @@ Check the implementation details of each completed feature grouped by target rel
   *   **Description**: Hosts settings frames natively under the global IDE Third Party Options registry.
   *   **Details**:
       *   Developed config frame `TFrameAIConfig` and standalone popup form wrapper `TFormAIConfig`.
-      *   Registered registry bridges using `INTAAddInOptions` API under **Third Party > RadIA**.
+      *   Registered registry bridges using `INTAAddInOptions` API under **Third Party > Rad IA**.
       *   Styled options dynamically to match IDE light/dark styles.
 </details>

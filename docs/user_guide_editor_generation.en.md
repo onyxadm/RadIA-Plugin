@@ -1,32 +1,32 @@
 # User Guide: Editor Integration & Code Generation
 
-This guide details how to use **RadIA** features integrated within the Embarcadero Delphi code editor, as well as automatic DTO, documentation, and full-project generation tools.
+This guide details how to use **Rad IA** features integrated within the Embarcadero Delphi code editor, as well as automatic DTO, documentation, and full-project generation tools.
 
 ---
 
 ## 1. Context-Aware Editor Actions
 
-RadIA connects natively to the Delphi code editor using the Open Tools API (OTA). You can trigger artificial intelligence analyses for specific code snippets directly inside the editor.
+Rad IA connects natively to the Delphi code editor using the Open Tools API (OTA). You can trigger artificial intelligence analyses for specific code snippets directly inside the editor.
 
 ### How to Use:
 1. In the IDE code editor, **select** the code block you want to analyze or modify.
 2. **Right-click** the selection.
-3. At the top of the pop-up menu, open the **RadIA** category and choose one of the following actions:
+3. At the top of the pop-up menu, open the **Rad IA** category and choose one of the following actions:
    * **Explain Selected Code (`/explain`):** Pedagogically analyzes the logic, explaining the execution flow and the purpose of complex algorithms.
    * **Optimize/Refactor (`/refactor`):** Rewrites code aiming for performance, readability, and compliance with Clean Code and SOLID principles.
    * **Find Bugs (`/bugs`):** Scans the code for memory leaks (missing try..finally blocks), unhandled exceptions, and logic flaws.
    * **Generate Unit Tests (`/test`):** Automatically generates structured test classes and methods using the DUnitX framework.
 
-> The **RadIA** submenu is inserted at the top of the editor context menu after the IDE builds its native items, preserving compatibility with Delphi 12/13 and menus added by other plugins.
+> The **Rad IA** submenu is inserted at the top of the editor context menu after the IDE builds its native items, preserving compatibility with Delphi 12/13 and menus added by other plugins.
 
 ---
 
 ## 2. Smart Visual Diff (Smart Diff)
 
-When you request refactorings or code optimizations, RadIA does not modify your original file immediately. Instead, it presents the suggested changes side-by-side in a premium comparison window.
+When you request refactorings or code optimizations, Rad IA does not modify your original file immediately. Instead, it presents the suggested changes side-by-side in a premium comparison window.
 
 <p align="center">
-  <img src="images/radia_diff_ui_mockup.png" alt="RadIA Smart Diff UI" width="90%" />
+  <img src="images/radia_diff_ui_mockup.png" alt="Rad IA Smart Diff UI" width="90%" />
 </p>
 
 ### Workflow and How it Works:
@@ -38,12 +38,12 @@ When you request refactorings or code optimizations, RadIA does not modify your 
 
 ## 3. Automatic XML Documentation Generation
 
-RadIA allows you to document classes and methods using the standard Delphi XML format, directly feeding the IDE's **Help Insight** feature (which displays documentation tooltips when hovering over methods).
+Rad IA allows you to document classes and methods using the standard Delphi XML format, directly feeding the IDE's **Help Insight** feature (which displays documentation tooltips when hovering over methods).
 
 ### How to Use:
 1. Hover your cursor over a method or property declaration (either in the interface or implementation section).
-2. Right-click and choose **RadIA -> Automatic XML Documentation** (or type `/doc` in the chat sidebar).
-3. The AI will generate the XML structure and RadIA will insert it right above the targeted method.
+2. Right-click and choose **Rad IA -> Automatic XML Documentation** (or type `/doc` in the chat sidebar).
+3. The AI will generate the XML structure and Rad IA will insert it right above the targeted method.
 
 ### Output Example:
 ```pascal
@@ -60,7 +60,7 @@ function CalculatePeriodTotal(const AStartDate, AEndDate: TDateTime): Currency;
 
 ## 4. DTO and Model Converter
 
-Writing Data Transfer Objects (DTOs) or ORM mappings manually from JSON payloads or database tables takes significant time. RadIA automates this.
+Writing Data Transfer Objects (DTOs) or ORM mappings manually from JSON payloads or database tables takes significant time. Rad IA automates this.
 
 ### How to Use:
 1. Paste the JSON payload or SQL DDL script into the chat sidebar.
@@ -75,20 +75,20 @@ Writing Data Transfer Objects (DTOs) or ORM mappings manually from JSON payloads
 
 ## 5. Full-Project Generation via Prompts
 
-One of RadIA's most powerful capabilities is structuring and saving a complete Delphi project from scratch using a simple informal chat prompt.
+One of Rad IA's most powerful capabilities is structuring and saving a complete Delphi project from scratch using a simple informal chat prompt.
 
 ### How to Use:
-1. In the RadIA sidebar chat, request a new project. Example:
+1. In the Rad IA sidebar chat, request a new project. Example:
    > *"Generate a console project that consumes a weather API and saves the data in local JSON files."*
    *(You can also use the `/createproject` or `/createprojectarch` slash commands for templates adhering to Clean Architecture).*
 2. The AI will process the request and return the complete list of structured files (project `.dpr`, configuration `.dproj`, logic units `.pas`, and UI forms `.dfm`).
-3. RadIA will display a glassmorphism-styled panel showing the list of generated files.
+3. Rad IA will display a glassmorphism-styled panel showing the list of generated files.
 4. **Saving Workflow**:
    * Click **Criar Projeto e Abrir na IDE** (Create Project and Open in IDE) in the chat UI.
    * A native Windows folder selection dialog will open.
 
 > [!IMPORTANT]
 > **Safe Project Generation:**
-> For security reasons and to avoid accidentally overwriting existing code, the selected folder for project generation **must be completely empty**. RadIA will block the physical saving process if the chosen directory contains any files.
+> For security reasons and to avoid accidentally overwriting existing code, the selected folder for project generation **must be completely empty**. Rad IA will block the physical saving process if the chosen directory contains any files.
 
-5. **Loading in the IDE**: Once the files are successfully written, RadIA triggers the Open Tools API and **automatically loads the newly generated project** into the Delphi IDE, ready to compile.
+5. **Loading in the IDE**: Once the files are successfully written, Rad IA triggers the Open Tools API and **automatically loads the newly generated project** into the Delphi IDE, ready to compile.

@@ -1,12 +1,12 @@
 # User Guide: Chat Panel & Session Management
 
-This guide details the operation of **RadIA**'s chat interface, productivity shortcuts, multiple session management, and template backup/customization workflows.
+This guide details the operation of **Rad IA**'s chat interface, productivity shortcuts, multiple session management, and template backup/customization workflows.
 
 ---
 
 ## 1. Sidebar Chat Interface (WebView2)
 
-RadIA docks directly within the Delphi IDE sidebar, providing a modern chat panel powered by the **Microsoft Edge WebView2** engine.
+Rad IA docks directly within the Delphi IDE sidebar, providing a modern chat panel powered by the **Microsoft Edge WebView2** engine.
 
 *   **Smart Themes**: The interface automatically detects the active IDE theme (Light or Dark) and adapts its color scheme and styles to maintain visual harmony.
 *   **Markdown & Syntax Highlighting**: AI responses support full Markdown formatting and Object Pascal-optimized syntax highlighting (using locally bundled Marked.js and Prism.js).
@@ -15,7 +15,7 @@ RadIA docks directly within the Delphi IDE sidebar, providing a modern chat pane
 
 ## 2. Productivity Shortcuts in Chat
 
-The RadIA chat text input area features shortcuts designed to speed up prompt typing and navigation:
+The Rad IA chat text input area features shortcuts designed to speed up prompt typing and navigation:
 
 *   `Ctrl + Enter`: Sends the typed prompt to the active AI.
 *   `Enter`: Inserts a line break in the current prompt.
@@ -26,7 +26,7 @@ The RadIA chat text input area features shortcuts designed to speed up prompt ty
 
 ## 3. Multiple Sessions & Persistent History
 
-RadIA organizes your work into persistent conversation sessions. History is saved locally in secure JSON files under `%APPDATA%\RadIA\sessions\`.
+Rad IA organizes your work into persistent conversation sessions. History is saved locally in secure JSON files under `%APPDATA%\RadIA\sessions\`.
 
 ### Managing Conversations:
 1.  **Collapsible Sidebar**: Click the menu (hamburger) icon in the upper-left corner of the chat to open the sessions sidebar.
@@ -50,10 +50,10 @@ You can save the history of any chat for documentation or team sharing:
 
 ## 5. Template Library & Backups
 
-Templates allow you to create custom shortcuts (Slash Commands) containing reusable instructions. RadIA segregates native system templates from those created or modified by you.
+Templates allow you to create custom shortcuts (Slash Commands) containing reusable instructions. Rad IA segregates native system templates from those created or modified by you.
 
 ### Managing Templates:
-1.  In the Delphi IDE, navigate to **Tools -> Options -> Third Party -> RadIA -> Templates**.
+1.  In the Delphi IDE, navigate to **Tools -> Options -> Third Party -> Rad IA -> Templates**.
 2.  On this screen, you will see the list of active templates. The origin indicator will show:
     *   `Default System (Read-Only)`: Integrated plugin templates.
     *   `Default System (Customized)`: Native templates that you edited (saved as local overlays).
@@ -62,7 +62,7 @@ Templates allow you to create custom shortcuts (Slash Commands) containing reusa
 
 ### Backup (Export / Import):
 *   **Export**: Click **Export** on the templates panel to save your entire active library (including new templates and overrides) to a JSON file.
-*   **Import**: Click **Import** and select the backup JSON file. RadIA will validate the schema and offer two integration choices:
+*   **Import**: Click **Import** and select the backup JSON file. Rad IA will validate the schema and offer two integration choices:
     *   *Merge*: Adds the new overrides while preserving already configured local templates.
     *   *Overwrite*: Completely replaces the local library with the backup content.
 

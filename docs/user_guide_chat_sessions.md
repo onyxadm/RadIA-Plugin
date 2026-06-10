@@ -1,12 +1,12 @@
 # Guia de Uso: Painel de Chat & Gerenciamento de Sessões
 
-Este guia detalha o funcionamento da interface de chat do **RadIA**, os atalhos de produtividade, o gerenciamento de múltiplas sessões e os fluxos de backup e customização de templates.
+Este guia detalha o funcionamento da interface de chat do **Rad IA**, os atalhos de produtividade, o gerenciamento de múltiplas sessões e os fluxos de backup e customização de templates.
 
 ---
 
 ## 1. Interface de Chat Lateral (WebView2)
 
-O RadIA se acopla diretamente à barra lateral da IDE do Delphi, fornecendo um painel de chat moderno que roda sobre o motor **Microsoft Edge WebView2**.
+O Rad IA se acopla diretamente à barra lateral da IDE do Delphi, fornecendo um painel de chat moderno que roda sobre o motor **Microsoft Edge WebView2**.
 
 *   **Temas Inteligentes**: A interface detecta automaticamente o tema ativo da IDE (Claro ou Escuro) e adapta seus esquemas de cores e estilos para manter a harmonia visual.
 *   **Markdown & Realce de Código**: As respostas da IA suportam formatação Markdown completa e realce de sintaxe (*syntax highlighting*) otimizado para Object Pascal (usando Marked.js e Prism.js integrados localmente).
@@ -15,7 +15,7 @@ O RadIA se acopla diretamente à barra lateral da IDE do Delphi, fornecendo um p
 
 ## 2. Atalhos de Produtividade no Chat
 
-A área de entrada de texto do chat do RadIA possui atalhos projetados para acelerar a digitação e navegação de prompts:
+A área de entrada de texto do chat do Rad IA possui atalhos projetados para acelerar a digitação e navegação de prompts:
 
 *   `Ctrl + Enter`: Envia o prompt digitado para a IA ativa.
 *   `Enter`: Insere uma quebra de linha no prompt atual.
@@ -26,7 +26,7 @@ A área de entrada de texto do chat do RadIA possui atalhos projetados para acel
 
 ## 3. Múltiplas Sessões e Histórico Persistente
 
-O RadIA organiza o seu trabalho em sessões persistentes de conversa. O histórico é gravado localmente em arquivos JSON seguros sob a pasta `%APPDATA%\RadIA\sessions\`.
+O Rad IA organiza o seu trabalho em sessões persistentes de conversa. O histórico é gravado localmente em arquivos JSON seguros sob a pasta `%APPDATA%\RadIA\sessions\`.
 
 ### Gerenciamento de Conversas:
 1.  **Barra Lateral Retrátil**: Clique no ícone de menu (hambúrguer) no canto superior esquerdo do chat para abrir a sidebar de sessões.
@@ -50,10 +50,10 @@ Você pode salvar o histórico de qualquer chat para fins de documentação ou c
 
 ## 5. Biblioteca de Templates e Backups
 
-Os templates permitem criar atalhos personalizados (Slash Commands) com instruções reutilizáveis. O RadIA separa os templates nativos do sistema daqueles criados ou modificados por você.
+Os templates permitem criar atalhos personalizados (Slash Commands) com instruções reutilizáveis. O Rad IA separa os templates nativos do sistema daqueles criados ou modificados por você.
 
 ### Como Gerenciar Templates:
-1.  Na IDE do Delphi, acesse **Tools -> Options -> Third Party -> RadIA -> Templates**.
+1.  Na IDE do Delphi, acesse **Tools -> Options -> Third Party -> Rad IA -> Templates**.
 2.  Nesta tela, você verá a lista de templates ativos. O indicador de origem mostrará:
     *   `Default System (Read-Only)`: Templates integrados do plugin.
     *   `Default System (Customized)`: Templates nativos que você editou (salvos como overlays locais).
@@ -62,7 +62,7 @@ Os templates permitem criar atalhos personalizados (Slash Commands) com instruç
 
 ### Backup (Exportar / Importar):
 *   **Exportar**: Clique em **Exportar** no painel de templates para salvar toda a sua biblioteca ativa (incluindo novos templates e customizações) em um arquivo JSON.
-*   **Importar**: Clique em **Importar** e selecione o arquivo JSON de backup. O RadIA validará as propriedades e exibirá duas opções de integração:
+*   **Importar**: Clique em **Importar** e selecione o arquivo JSON de backup. O Rad IA validará as propriedades e exibirá duas opções de integração:
     *   *Merge (Mesclar)*: Adiciona as novas customizações preservando os templates locais já configurados.
     *   *Overwrite (Sobrescrever)*: Substitui inteiramente a biblioteca local pelo conteúdo do backup.
 

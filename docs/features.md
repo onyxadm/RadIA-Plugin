@@ -1,6 +1,6 @@
-# Recursos e Funcionalidades do RadIA
+# Recursos e Funcionalidades do Rad IA
 
-Este documento contém o checklist completo de recursos, categorização e status de desenvolvimento de todas as funcionalidades integradas ao plugin **RadIA**.
+Este documento contém o checklist completo de recursos, categorização e status de desenvolvimento de todas as funcionalidades integradas ao plugin **Rad IA**.
 
 ---
 
@@ -41,7 +41,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Contexto de Projeto** | Inteligência | Carregamento automático de instruções de system e arquivos de contexto via `.radia`. | ✅ Concluído |
 | **Rastreamento de Tokens e Custo**| Transparência | Contador dinâmico de consumo e custo acumulado estimado em USD (locale invariant). | ✅ Concluído |
 | **Limite de Cota Local** | Transparência | Definição de limite de tokens mensal com bloqueio de chamadas e botão de reset. | ✅ Concluído |
-| **Ações no Editor** | Integração | Submenu RadIA no topo do menu de botão direito do editor para explicar código, otimizar/refatorar, gerar testes, localizar bugs, documentar métodos e revisar a unit ativa, com `/explain` separado de `/review`. | ✅ Concluído |
+| **Ações no Editor** | Integração | Submenu Rad IA no topo do menu de botão direito do editor para explicar código, otimizar/refatorar, gerar testes, localizar bugs, documentar métodos e revisar a unit ativa, com `/explain` separado de `/review`. | ✅ Concluído |
 | **Smart Diff (Comparador)** | Integração | Visualização lado a lado de código sugerido vs. original com aplicação instantânea. | ✅ Concluído |
 | **Smart Build Debugger** | Integração | Clique com o botão direito nos erros de compilação da IDE para correções instantâneas. | ✅ Concluído |
 | **Documentação XML Automática** | Geração | Geração automática de comentários `/// <summary>` sobre os métodos da unit. | ✅ Concluído |

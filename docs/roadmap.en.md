@@ -1,9 +1,9 @@
-# RadIA - Evolution Roadmap
+# Rad IA - Evolution Roadmap
 
-This document outlines the strategic planning and long-term vision of the **RadIA** AI assistant, focusing on bringing productivity and solving real pain points for Delphi developers in their daily workflows.
+This document outlines the strategic planning and long-term vision of the **Rad IA** AI assistant, focusing on bringing productivity and solving real pain points for Delphi developers in their daily workflows.
 
 > [!NOTE]
-> RadIA follows a **community-driven open-source development model**.
+> Rad IA follows a **community-driven open-source development model**.
 > *   For a detailed view of feature priorities, effort estimates, and impacts, check the [Feature Prioritization Matrix (feature_prioritization_matrix.md)](feature_prioritization_matrix.md).
 > *   For technical details of past and pending implementations (such as class names, successful DUnitX tests, and commits), refer to the [Evolution Backlog (backlog.en.md)](backlog.en.md).
 
@@ -25,7 +25,7 @@ Below are the achievements and values delivered in each release version of the p
   <summary><b>📦 v0.0.16 — MVP, Storage Abstraction, and Editor Robustness (Completed)</b></summary>
 
   *   **Value Delivered**: A more testable and stable internal foundation, with MVP-decoupled screens and a more reliable Delphi 12/13 editor context menu.
-  *   **Highlights**: `TChatPresenter`, `TConfigPresenter`, `ISettingsStorage`, in-memory settings storage for tests, editor hooks via OTA notifiers, and the **RadIA** submenu at the top of the editor context menu.
+  *   **Highlights**: `TChatPresenter`, `TConfigPresenter`, `ISettingsStorage`, in-memory settings storage for tests, editor hooks via OTA notifiers, and the **Rad IA** submenu at the top of the editor context menu.
   *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.16)](backlog.en.md#v0016--mvp-architecture-refactoring-storage-abstraction-and-editor-robustness-click-to-expand).*
 </details>
 
@@ -72,7 +72,7 @@ Below are the achievements and values delivered in each release version of the p
 <details>
   <summary><b>📦 v0.0.10 — Native GitHub Copilot Support (Completed)</b></summary>
 
-  *   **Value Delivered**: Native, official, and simplified authentication with the world's most popular coding AI directly from the RadIA chat panel, without local proxies.
+  *   **Value Delivered**: Native, official, and simplified authentication with the world's most popular coding AI directly from the Rad IA chat panel, without local proxies.
   *   **Highlights**: Native cloud GitHub Copilot support, interactive device PIN login workflow, and one-click active token import from VS Code settings.
   *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.10)](backlog.en.md#v0010--native-github-copilot-support-click-to-expand).*
 </details>
@@ -151,7 +151,7 @@ Below are the achievements and values delivered in each release version of the p
 
 ## 🔲 Planned Evolution Milestones
 
-Future versions of RadIA will focus on introducing smart diagnostics and complex legacy codebase refactorings:
+Future versions of Rad IA will focus on introducing smart diagnostics and complex legacy codebase refactorings:
 
 ### 🔲 v0.1.0 — Automation, Auditing, and Quick Wins
 This release focuses on bringing lightweight, silent, and friction-free code auditing and editor enhancements to everyday workflows:

@@ -5,16 +5,16 @@
 </div>
 
 <p align="center">
-  <img src="docs/images/radia_readme_banner-2.png" alt="RadIA - Assistente de IA para Delphi IDE" width="100%" />
+  <img src="docs/images/radia_readme_banner-2.png" alt="Rad IA - Assistente de IA para Delphi IDE" width="100%" />
 </p>
 
 
-# RadIA - Assistente de IA para Delphi IDE
+# Rad IA - Assistente de IA para Delphi IDE
 
-**RadIA** é um plugin assistente de IA avançado projetado especificamente para a IDE do Embarcadero Delphi (usando a Open Tools API). Ele se acopla diretamente à barra lateral da IDE, fornecendo uma interface de chat interativa e integração contextual profunda com o editor de código para acelerar o desenvolvimento, refatoração e depuração.
+**Rad IA** é um plugin assistente de IA avançado projetado especificamente para a IDE do Embarcadero Delphi (usando a Open Tools API). Ele se acopla diretamente à barra lateral da IDE, fornecendo uma interface de chat interativa e integração contextual profunda com o editor de código para acelerar o desenvolvimento, refatoração e depuração.
 
 <p align="center">
-  <img src="docs/images/radia_ui_mockup.png" alt="RadIA Chat Panel Mockup" width="100%" />
+  <img src="docs/images/radia_ui_mockup.png" alt="Rad IA Chat Panel Mockup" width="100%" />
 </p>
 
 ---
@@ -60,7 +60,7 @@ Para conferir o status de desenvolvimento, atalhos de teclado, categorias e todo
 👉 [**Catálogo Completo de Recursos (docs/features.md)**](docs/features.md)
 
 ### 3. Como Funciona e Arquitetura
-O RadIA é construído inteiramente em Object Pascal (Delphi) usando a **Open Tools API (OTA)** para interagir com o editor de código, gerenciamento de mensagens e detecção de temas da IDE.
+O Rad IA é construído inteiramente em Object Pascal (Delphi) usando a **Open Tools API (OTA)** para interagir com o editor de código, gerenciamento de mensagens e detecção de temas da IDE.
 A interface utiliza uma arquitetura híbrida:
 1.  **VCL Nativa:** Gerencia o acoplamento da janela, a tela de configurações, ações de menus, gravação segura no registro e chamadas assíncronas.
 2.  **Motor WebView2 (Edge):** Exibe as mensagens e respostas da IA utilizando HTML5, CSS e JS locais (Marked.js para Markdown e Prism.js para realce de sintaxe). A interface se adapta automaticamente ao tema da IDE (Light/Dark) e roda de forma fluida sem congelar a IDE.
@@ -73,7 +73,7 @@ A interface utiliza uma arquitetura híbrida:
 *   **Web Engine:** *Microsoft Edge WebView2 Runtime* instalado no sistema Windows (pré-instalado em versões modernas do Windows). **Importante:** A DLL `WebView2Loader.dll` correspondente à arquitetura da IDE (32-bit para Delphi 10.4, 64-bit para Delphi 11 e 12) deve estar presente na pasta `bin` da instalação do Delphi (ex: `C:\Program Files (x86)\Embarcadero\Studio\<versao>\bin`) ou no PATH do sistema.
 ### 5. Instalação e Configuração
 
-O RadIA pode ser instalado de maneira **automatizada via PowerShell** (recomendado, com suporte a autodetecção de múltiplos ambientes Delphi e seleção interativa) ou **manualmente através da IDE**. Para instruções detalhadas de compilação, registro e configuração de chaves de API para todos os provedores ou uso local com o Ollama, consulte o nosso:
+O Rad IA pode ser instalado de maneira **automatizada via PowerShell** (recomendado, com suporte a autodetecção de múltiplos ambientes Delphi e seleção interativa) ou **manualmente através da IDE**. Para instruções detalhadas de compilação, registro e configuração de chaves de API para todos os provedores ou uso local com o Ollama, consulte o nosso:
 
 O instalador automatizado também sincroniza os recursos locais do WebView2 em `%APPDATA%\RadIA\Web` e limpa o cache local quando a IDE está fechada, evitando que Delphi 12/13 carreguem JavaScript antigo após atualizações.
 
@@ -81,13 +81,13 @@ O instalador automatizado também sincroniza os recursos locais do WebView2 em `
 
 ### 5.1 Adicionando um Novo Provedor de IA (Arquitetura Plug-in)
 
-O RadIA adota uma arquitetura de registro de provedores orientada a metadados (`TProviderRegistry`). Isso permite adicionar novos backends de IA de forma totalmente dinâmica e desacoplada. Para um tutorial passo a passo de como implementar sua classe de provedor e realizar o auto-registro, consulte o nosso:
+O Rad IA adota uma arquitetura de registro de provedores orientada a metadados (`TProviderRegistry`). Isso permite adicionar novos backends de IA de forma totalmente dinâmica e desacoplada. Para um tutorial passo a passo de como implementar sua classe de provedor e realizar o auto-registro, consulte o nosso:
 
 👉 [**Guia para Adição de Novos Provedores (docs/new_provider_guide.md)**](docs/new_provider_guide.md)
 
 ### 5.2 Usando GitHub Copilot Remoto (Nativo - Fase 2) ou via Proxy Local (Fase 1)
 
-O RadIA suporta a integração direta e remota com o **GitHub Copilot** na nuvem (sem necessidade de rodar proxies locais) a partir das opções do plugin, incluindo facilidades de login integrado por PIN e importação de chave do VS Code em um clique. 
+O Rad IA suporta a integração direta e remota com o **GitHub Copilot** na nuvem (sem necessidade de rodar proxies locais) a partir das opções do plugin, incluindo facilidades de login integrado por PIN e importação de chave do VS Code em um clique. 
 
 Caso prefira rodar um proxy local compatível com a API da OpenAI (Fase 1), isso também continua suportado através do registro de provedor dinâmico em arquivo JSON. Para mais detalhes, consulte:
 
@@ -95,7 +95,7 @@ Caso prefira rodar um proxy local compatível com a API da OpenAI (Fase 1), isso
 
 ### 5.3 Guias de Uso e Referência de Recursos
 
-Para aprender a tirar o máximo proveito das funcionalidades do RadIA no seu dia a dia de desenvolvimento, consulte os nossos manuais práticos e detalhados:
+Para aprender a tirar o máximo proveito das funcionalidades do Rad IA no seu dia a dia de desenvolvimento, consulte os nossos manuais práticos e detalhados:
 
 *   👉 [**Guia de Integração com Editor & Geração de Código (docs/user_guide_editor_generation.md)**](docs/user_guide_editor_generation.md): Ações contextuais de editor, comparador visual Smart Diff, documentação XML e criação de DTOs e projetos do zero.
 *   👉 [**Guia de Diagnóstico de Erros & Análise de Código (docs/user_guide_diagnostics_analysis.md)**](docs/user_guide_diagnostics_analysis.md): Explicações e correções de erros com o Smart Build Debugger, decodificação de logs com o Assistente de Stack Trace e auditorias estáticas contra vazamento de memória.

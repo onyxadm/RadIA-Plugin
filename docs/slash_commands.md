@@ -1,6 +1,6 @@
-# Comandos de Barra (Slash Commands) do RadIA
+# Comandos de Barra (Slash Commands) do Rad IA
 
-O RadIA suporta atalhos rápidos de comandos diretamente no chat, facilitando a execução de tarefas comuns sem a necessidade de digitar prompts extensos ou usar o mouse.
+O Rad IA suporta atalhos rápidos de comandos diretamente no chat, facilitando a execução de tarefas comuns sem a necessidade de digitar prompts extensos ou usar o mouse.
 
 ---
 
@@ -28,7 +28,7 @@ Basta digitar o caractere `/` na caixa de entrada do chat. Um menu flutuante sur
 
 ## Customização e Backups de Comandos
 
-O RadIA permite que você edite, exclua ou adicione novos comandos e templates de prompts diretamente nas opções do plugin na IDE (`Tools -> Options -> RadIA -> Templates`).
+O Rad IA permite que você edite, exclua ou adicione novos comandos e templates de prompts diretamente nas opções do plugin na IDE (`Tools -> Options -> Rad IA -> Templates`).
 
 Cada template cadastrado pode especificar:
 - **Slash Command**: O comando que acionará o template diretamente no chat (ex: `/explain`).

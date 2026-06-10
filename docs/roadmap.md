@@ -1,9 +1,9 @@
-# RadIA - Roadmap de Evolução
+# Rad IA - Roadmap de Evolução
 
-Este documento descreve o planejamento estratégico e a visão de futuro do assistente de IA **RadIA**, focado em trazer produtividade e resolver as dores reais do desenvolvedor Delphi no seu dia a dia.
+Este documento descreve o planejamento estratégico e a visão de futuro do assistente de IA **Rad IA**, focado em trazer produtividade e resolver as dores reais do desenvolvedor Delphi no seu dia a dia.
 
 > [!NOTE]
-> O RadIA segue um modelo de desenvolvimento **open-source orientado à comunidade**.
+> O Rad IA segue um modelo de desenvolvimento **open-source orientado à comunidade**.
 > *   Para uma visualização detalhada das prioridades, estimativas de esforço e impacto de cada recurso, consulte a [Matriz de Priorização (feature_prioritization_matrix.md)](feature_prioritization_matrix.md).
 > *   Para os detalhes técnicos das implementações passadas e pendentes (como nomes de classes, testes DUnitX aprovados e commits), consulte o [Backlog de Evolução Técnica (backlog.md)](backlog.md).
 
@@ -25,7 +25,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
   <summary><b>📦 v0.0.16 — MVP, Storage Abstraction e Robustez do Editor (Concluído)</b></summary>
 
   *   **Valor Entregue**: Base interna mais testável e estável, com telas desacopladas em MVP e menu contextual do editor mais confiável no Delphi 12/13.
-  *   **Destaques**: `TChatPresenter`, `TConfigPresenter`, `ISettingsStorage`, storage em memória para testes, hook do editor via notifiers OTA e submenu **RadIA** no topo do menu contextual.
+  *   **Destaques**: `TChatPresenter`, `TConfigPresenter`, `ISettingsStorage`, storage em memória para testes, hook do editor via notifiers OTA e submenu **Rad IA** no topo do menu contextual.
   *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.16)](backlog.md#v0016--refatoração-arquitetural-mvp-storage-abstraction-e-robustez-do-editor-clique-para-expandir).*
 </details>
 
@@ -72,7 +72,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 <details>
   <summary><b>📦 v0.0.10 — Suporte Nativo ao GitHub Copilot (Concluído)</b></summary>
 
-  *   **Valor Entregue**: Autenticação oficial e simplificada com a IA de desenvolvimento mais popular do mundo diretamente do painel do RadIA, sem a necessidade de proxies locais.
+  *   **Valor Entregue**: Autenticação oficial e simplificada com a IA de desenvolvimento mais popular do mundo diretamente do painel do Rad IA, sem a necessidade de proxies locais.
   *   **Destaques**: Suporte nativo ao GitHub Copilot na nuvem, fluxo de login interativo por PIN do dispositivo e importação do token ativo do VS Code em um clique.
   *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.10)](backlog.md#v0010--conexão-nativa-ao-github-copilot-clique-para-expandir).*
 </details>
@@ -151,7 +151,7 @@ Abaixo estão listadas as conquistas e os valores entregues em cada versão já 
 
 ## 🔲 Milestones de Planejamento Futuro
 
-As próximas versões do RadIA focarão em trazer automação inteligente em diagnóstico de erros e refatorações complexas de código legado:
+As próximas versões do Rad IA focarão em trazer automação inteligente em diagnóstico de erros e refatorações complexas de código legado:
 
 ### 🔲 v0.1.0 — Automação, Auditoria e Ganhos Rápidos
 Esta versão trará auditoria de código e correções no editor em tempo real de forma leve, silenciosa e sem atritos na produtividade:
@@ -176,4 +176,4 @@ Ideias em fase de concepção e estudo de viabilidade técnica na ToolsAPI ou qu
 *   **Assistente de Threads e PPL**: Auxiliar a reescrever rotinas pesadas síncronas para rodarem de forma assíncrona segura e sem travar a interface da aplicação.
 *   **Internacionalização Automática (i18n Wizard)**: Extrair todas as propriedades de tela e textos hardcoded Pascal para arquivos centralizados de tradução.
 *   **Autocompletar Inline (Ghost Text)**: Exibição de sugestões de código em tempo real no editor com texto cinza (Copilot/Cursor style).
-*   **Suporte Nativo macOS/Linux**: Compatibilidade e portabilidade de UI e editor do RadIA para Lazarus / Free Pascal.
+*   **Suporte Nativo macOS/Linux**: Compatibilidade e portabilidade de UI e editor do Rad IA para Lazarus / Free Pascal.

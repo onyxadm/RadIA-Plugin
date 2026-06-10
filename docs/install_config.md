@@ -1,12 +1,12 @@
-# Guia de Instalação e Configuração — RadIA
+# Guia de Instalação e Configuração — Rad IA
 
-Este documento descreve detalhadamente o processo de instalação, compilação e configuração do plugin **RadIA** para a IDE do Delphi.
+Este documento descreve detalhadamente o processo de instalação, compilação e configuração do plugin **Rad IA** para a IDE do Delphi.
 
 ---
 
 ## 1. Instalação
 
-O RadIA exige chaves de API válidas e ativas para funcionar com provedores de nuvem (Gemini, OpenAI, Claude, DeepSeek ou Groq) ou uma instância configurada do **Ollama** rodando localmente ou na rede.
+O Rad IA exige chaves de API válidas e ativas para funcionar com provedores de nuvem (Gemini, OpenAI, Claude, DeepSeek ou Groq) ou uma instância configurada do **Ollama** rodando localmente ou na rede.
 
 O plugin pode ser instalado de duas formas:
 
@@ -35,8 +35,8 @@ Durante a instalação, o script também atualiza os recursos HTML/CSS/JS usados
 2. Abra o grupo de projetos `RadIA.groupproj` no Delphi.
 3. Clique com o botão direito em `RadIA.bpl` no Project Manager e selecione **Build**.
 4. Clique novamente com o botão direito em `RadIA.bpl` e selecione **Install**.
-5. A janela de confirmação de instalação da IDE será exibida, e o painel do **RadIA** aparecerá acoplado na lateral da IDE.
-6. Acesse o menu **Tools ➔ RadIA Chat Panel** para exibir o chat, e clique no botão **Settings** no topo do painel para configurar suas chaves de API e começar.
+5. A janela de confirmação de instalação da IDE será exibida, e o painel do **Rad IA** aparecerá acoplado na lateral da IDE.
+6. Acesse o menu **Tools ➔ Rad IA Chat Panel** para exibir o chat, e clique no botão **Settings** no topo do painel para configurar suas chaves de API e começar.
 
 ---
 
@@ -61,7 +61,7 @@ O **Ollama** permite executar LLMs de código aberto (Llama 3, Mistral, Phi-3, C
 > **Nota:** O plugin descobre automaticamente os modelos disponíveis no servidor Ollama via `/api/tags`. Se a conexão falhar, exibirá modelos padrão conhecidos como fallback.
 
 > [!TIP]
-> **Resolução de Erros de CORS no Ollama:** Caso o plugin encontre erros de conexão de origem cruzada (CORS) ao realizar requisições para um servidor Ollama remoto, certifique-se de definir a variável de ambiente `OLLAMA_ORIGINS=*` no servidor de hospedagem antes de iniciar o serviço do Ollama. Isso habilitará o tráfego a partir do componente WebView2 do RadIA.
+> **Resolução de Erros de CORS no Ollama:** Caso o plugin encontre erros de conexão de origem cruzada (CORS) ao realizar requisições para um servidor Ollama remoto, certifique-se de definir a variável de ambiente `OLLAMA_ORIGINS=*` no servidor de hospedagem antes de iniciar o serviço do Ollama. Isso habilitará o tráfego a partir do componente WebView2 do Rad IA.
 
 ---
 
@@ -91,7 +91,7 @@ Insira as chaves obtidas nas configurações do plugin (**Settings** no topo do 
 
 6. **Azure OpenAI**
    * **Como obter:** Através do portal de gerenciamento da nuvem Microsoft Azure.
-   * **Instruções:** Acesse o recurso do Azure OpenAI criado, vá na seção **Keys and Endpoint**, e copie o Endpoint e uma das chaves (Key 1 ou Key 2). Nas opções do RadIA, configure a API Key, a URL do Endpoint, o Deployment Name mapeado para o modelo ativo e a versão da API (padrão: `2024-02-15-preview`).
+   * **Instruções:** Acesse o recurso do Azure OpenAI criado, vá na seção **Keys and Endpoint**, e copie o Endpoint e uma das chaves (Key 1 ou Key 2). Nas opções do Rad IA, configure a API Key, a URL do Endpoint, o Deployment Name mapeado para o modelo ativo e a versão da API (padrão: `2024-02-15-preview`).
 
 7. **Alibaba Qwen**
    * **Como obter:** Acesse o console [DashScope/ModelStudio da Alibaba Cloud](https://bailian.console.aliyun.com/).
@@ -103,12 +103,12 @@ Insira as chaves obtidas nas configurações do plugin (**Settings** no topo do 
 
 9. **AWS Bedrock**
    * **Como obter:** Através do Console da AWS (Amazon Web Services).
-   * **Instruções:** Habilite o acesso aos modelos desejados (como Claude da Anthropic ou Llama da Meta) na console do Bedrock. Crie credenciais de acesso IAM no console da AWS para obter uma **Access Key ID** e uma **Secret Access Key**. Nas opções do RadIA, configure esses dois campos, informe a **Região** da AWS onde o Bedrock está provisionado (ex: `us-east-1`) e, opcionalmente, forneça o **Session Token** se estiver utilizando credenciais temporárias do IAM.
+   * **Instruções:** Habilite o acesso aos modelos desejados (como Claude da Anthropic ou Llama da Meta) na console do Bedrock. Crie credenciais de acesso IAM no console da AWS para obter uma **Access Key ID** e uma **Secret Access Key**. Nas opções do Rad IA, configure esses dois campos, informe a **Região** da AWS onde o Bedrock está provisionado (ex: `us-east-1`) e, opcionalmente, forneça o **Session Token** se estiver utilizando credenciais temporárias do IAM.
 
    > [!IMPORTANT]
    > **Permissões IAM e Acesso a Modelos no Bedrock:** 
    > * A chave de acesso IAM utilizada deve possuir políticas de segurança anexadas que permitam a execução das ações `bedrock:InvokeModel` e `bedrock:InvokeModelWithResponseStream`.
-   > * Por padrão, a AWS Bedrock exige que você solicite acesso aos modelos individualmente no Console AWS da região desejada (menu *Model Access*). Certifique-se de que o acesso aos modelos que planeja utilizar (como Claude 3 da Anthropic) já foi solicitado e concedido antes de tentar conectá-los no RadIA.
+   > * Por padrão, a AWS Bedrock exige que você solicite acesso aos modelos individualmente no Console AWS da região desejada (menu *Model Access*). Certifique-se de que o acesso aos modelos que planeja utilizar (como Claude 3 da Anthropic) já foi solicitado e concedido antes de tentar conectá-los no Rad IA.
 
 > **Nota sobre Provedores Dinâmicos e Corporativos:** Você também pode adicionar de forma dinâmica novos provedores compatíveis com a API OpenAI (incluindo o GitHub Copilot ou proxies de terceiros) salvando arquivos JSON em `%APPDATA%\RadIA\providers\`. Para mais detalhes, consulte o [Guia para Adição de Novos Provedores (docs/new_provider_guide.md)](new_provider_guide.md) e o [Guia de Configuração do GitHub Copilot (docs/copilot_proxy_guide.md)](copilot_proxy_guide.md).
 
@@ -135,16 +135,16 @@ O script `.\build.ps1` aceita os seguintes parâmetros:
 
 ## 5. Login Híbrido (Web Login Plus/Pro vs BYOK)
 
-O RadIA permite que você opte por dois métodos de conexão para os provedores **Google Gemini** e **OpenAI ChatGPT**:
+O Rad IA permite que você opte por dois métodos de conexão para os provedores **Google Gemini** e **OpenAI ChatGPT**:
 1. **API Key (BYOK)**: Utiliza chaves de API oficiais e cobra por token consumido diretamente do seu saldo de desenvolvedor nas plataformas OpenAI Platform/Google AI Studio.
-2. **Web Login (Plus/Pro)**: Permite que você faça login diretamente nas suas contas pessoais ou corporativas de consumidor (ChatGPT Plus/Pro e Gemini Advanced) utilizando a interface oficial deles no WebView2 integrado do RadIA.
+2. **Web Login (Plus/Pro)**: Permite que você faça login diretamente nas suas contas pessoais ou corporativas de consumidor (ChatGPT Plus/Pro e Gemini Advanced) utilizando a interface oficial deles no WebView2 integrado do Rad IA.
 
 ### Como Ativar e Usar o Web Login
-1. Acesse as Configurações (**Settings** no painel de chat ou o menu **Tools ➔ Options ➔ Third Party > RadIA**).
+1. Acesse as Configurações (**Settings** no painel de chat ou o menu **Tools ➔ Options ➔ Third Party > Rad IA**).
 2. Selecione a aba do provedor (**Gemini** ou **OpenAI**).
 3. No campo **Connection Method**, selecione a opção **Web Login (Plus/Pro)**.
 4. Clique em **Save**.
-5. No painel de chat do RadIA, selecione o provedor correspondente. Um botão de login em formato de cadeado 🔐 aparecerá no cabeçalho superior direito do chat.
+5. No painel de chat do Rad IA, selecione o provedor correspondente. Um botão de login em formato de cadeado 🔐 aparecerá no cabeçalho superior direito do chat.
 6. Clique no botão de cadeado 🔐. Isso abrirá um popup de autenticação nativo (`TFormWebLogin`).
 7. Faça login na sua conta na janela que se abre. A sessão e os cookies serão salvos de forma segura no diretório `%APPDATA%\RadIA\WebView2Data`, mantendo você conectado. Após o login bem-sucedido, você pode fechar o popup.
-8. Pronto! Agora você pode conversar normalmente pela própria interface nativa do chat do RadIA (ou disparar ações no editor de código). O plugin usará uma WebView2 oculta em segundo plano para enviar os prompts e ler as respostas via streaming em tempo real, mantendo a experiência fluida e o design unificado.
+8. Pronto! Agora você pode conversar normalmente pela própria interface nativa do chat do Rad IA (ou disparar ações no editor de código). O plugin usará uma WebView2 oculta em segundo plano para enviar os prompts e ler as respostas via streaming em tempo real, mantendo a experiência fluida e o design unificado.

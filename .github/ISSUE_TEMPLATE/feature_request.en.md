@@ -1,6 +1,6 @@
 ---
 name: 💡 Feature Request (English)
-about: Suggest an idea or new improvement for RadIA
+about: Suggest an idea or new improvement for Rad IA
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''

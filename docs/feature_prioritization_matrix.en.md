@@ -1,6 +1,6 @@
-# RadIA - Feature Prioritization and Feasibility Matrix
+# Rad IA - Feature Prioritization and Feasibility Matrix
 
-This document presents a technical and business analysis comparing **13 new feature ideas** with **7 features already present in the project backlog/roadmap** of the RadIA project.
+This document presents a technical and business analysis comparing **13 new feature ideas** with **7 features already present in the project backlog/roadmap** of the Rad IA project.
 
 The analysis is structured from the perspective of a **Senior Software Architect**, evaluating the complexity of implementation in the Embarcadero Delphi ecosystem (using the Open Tools API and Windows) against the impact generated in the daily life of the developer.
 
@@ -70,11 +70,11 @@ Features that involve structural manipulation of Object Pascal code (rewriting c
 
 ### 2.2. Mock Generator for Unit Tests (New)
 * **Benefit:** **High**. Facilitates the adoption of unit testing in Delphi, allowing developers to isolate coupled components that depend on databases or external connections.
-* **Complexity:** **Medium**. Uses RadIA's existing test generation base. The AI maps class dependencies (constructor interfaces) and generates mock code (compatible with Delphi-Mocks or manual interfaces) inside the test repository.
+* **Complexity:** **Medium**. Uses Rad IA's existing test generation base. The AI maps class dependencies (constructor interfaces) and generates mock code (compatible with Delphi-Mocks or manual interfaces) inside the test repository.
 
 ### 2.3. Smart Multi-Unit Trace Resolver (New)
 * **Benefit:** **High**. Resolves complex runtime exceptions spanning multiple layers (Controller, Service, Repository) by automatically reading the physical files referenced in the log and providing global context to the AI.
-* **Complexity:** **Medium**. Delphi's OTA allows tracing and reading the source code of any file linked to the active project. RadIA parses the stack trace lines, loads the specific units in the background, and injects them structurally into the AI context.
+* **Complexity:** **Medium**. Delphi's OTA allows tracing and reading the source code of any file linked to the active project. Rad IA parses the stack trace lines, loads the specific units in the background, and injects them structurally into the AI context.
 
 ### 2.4. MadExcept / EurekaLog Context Extractor (New)
 * **Benefit:** **High**. The AI gains "runtime visibility," analyzing exceptions based on the actual values of local variables and objects collected by the error log at the exact moment of the crash.
@@ -82,7 +82,7 @@ Features that involve structural manipulation of Object Pascal code (rewriting c
 
 ### 2.5. Automatic Code Review on Save (Backlog - v0.1.0)
 * **Benefit:** **High**. Ensures that best practices (Clean Code/SOLID) are analyzed continuously without manual action from the developer.
-* **Complexity:** **Medium**. Needs to intercept the IDE save event (`IOTAModuleNotifier.AfterSave`), collect changes, and send a silent background request. The challenge is not blocking the save process and displaying alert messages unobtrusively in the RadIA panel.
+* **Complexity:** **Medium**. Needs to intercept the IDE save event (`IOTAModuleNotifier.AfterSave`), collect changes, and send a silent background request. The challenge is not blocking the save process and displaying alert messages unobtrusively in the Rad IA panel.
 
 ### 2.6. Version Migration Assistant (Smart Migrate) (Backlog - v0.2.0)
 * **Benefit:** **High**. Drastically accelerates the modernization of legacy projects (Delphi 7/XE to Delphi 10.4/11/12/13), handling Unicode strings, legacy network calls, and obsolete library replacement.
@@ -90,7 +90,7 @@ Features that involve structural manipulation of Object Pascal code (rewriting c
 
 ### 2.7. OpenAPI/Swagger Documentation Generator (New)
 * **Benefit:** **High**. Essential for backend teams using Delphi with Horse or RAD Server, saving days of manual specification writing.
-* **Complexity:** **Medium**. RadIA needs to scan registered routes in controller classes or API initialization units, read referenced DTO structures, and compile the Swagger configuration file (JSON/YAML).
+* **Complexity:** **Medium**. Rad IA needs to scan registered routes in controller classes or API initialization units, read referenced DTO structures, and compile the Swagger configuration file (JSON/YAML).
 
 ### 2.8. Bidirectional Semantic Analysis (DFM vs PAS) (New)
 * **Benefit:** **Medium-High**. Removes accumulated cruft in legacy forms (invisible declarations of deleted components and orphan events).
@@ -138,11 +138,11 @@ Features that deeply modify the structure of multiple files simultaneously (DFM 
 * **Complexity:** **High**. Requires registering and monitoring complex and sensitive IDE debugger callbacks via `IOTADebuggerNotifier`. Any failure or latency here can crash the debugger or cause Access Violations in the IDE (`bds.exe`).
 
 ### 3.7. Native macOS/Linux Support (Lazarus/FPC) (Backlog - v0.3.0+)
-* **Benefit:** **Low-Medium**. Would expand RadIA's reach to Lazarus and Free Pascal developers.
-* **Complexity:** **Very High**. The UI, editor integration, and persistence layer of RadIA are strictly tied to Delphi VCL, the proprietary Embarcadero ToolsAPI, and Microsoft's Edge WebView2 engine. Porting would require rewriting the UI in LCL and replacing the web engine.
+* **Benefit:** **Low-Medium**. Would expand Rad IA's reach to Lazarus and Free Pascal developers.
+* **Complexity:** **Very High**. The UI, editor integration, and persistence layer of Rad IA are strictly tied to Delphi VCL, the proprietary Embarcadero ToolsAPI, and Microsoft's Edge WebView2 engine. Porting would require rewriting the UI in LCL and replacing the web engine.
 
 ---
 
 > [!TIP]
 > **Recommended Next Steps:**
-> RadIA's strategic focus should be on implementing **Quick Wins** (Smart SQL Optimizer and Delphi Compiler Scanner), as they deliver immediate value with minimal risk of regressions. In parallel, we can plan the incremental development of Medium effort **Main Projects** (such as Uses Clause Optimization, Smart Multi-Unit Trace Resolver, and Auto Code Review on Save), consolidating assistant robustness before tackling complex DFM refactorings.
+> Rad IA's strategic focus should be on implementing **Quick Wins** (Smart SQL Optimizer and Delphi Compiler Scanner), as they deliver immediate value with minimal risk of regressions. In parallel, we can plan the incremental development of Medium effort **Main Projects** (such as Uses Clause Optimization, Smart Multi-Unit Trace Resolver, and Auto Code Review on Save), consolidating assistant robustness before tackling complex DFM refactorings.

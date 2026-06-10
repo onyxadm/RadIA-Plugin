@@ -1,9 +1,9 @@
-# Guide for Adding New AI Providers to RadIA
+# Guide for Adding New AI Providers to Rad IA
 
 Thanks to the new **Dynamic Provider Architecture**, adding a new AI backend (such as DeepSeek, Claude, or a custom internal service) has become extremely simple and decoupled.
 
 > [!NOTE]
-> RadIA adopts a dynamic registration architecture based entirely on strings. There are no global static AI provider enums in the plugin core. Adding a new backend is completely ad-hoc and autonomous, relying only on the auto-registration block of the provider unit itself.
+> Rad IA adopts a dynamic registration architecture based entirely on strings. There are no global static AI provider enums in the plugin core. Adding a new backend is completely ad-hoc and autonomous, relying only on the auto-registration block of the provider unit itself.
 
 ---
 

@@ -1,4 +1,4 @@
-# Regras e Diretrizes para Agentes de IA (LLMs) no RadIA
+# Regras e Diretrizes para Agentes de IA (LLMs) no Rad IA
 
 Este arquivo define as regras técnicas, restrições do compilador Delphi (Object Pascal) e padrões de codificação que todo Agente de IA (LLM/Copilot) deve seguir estritamente ao trabalhar nesta base de código.
 
@@ -81,7 +81,7 @@ Siga o padrão clássico de estilo Pascal do Delphi:
 
 ## 4. Segurança em Threads (Thread Safety na IDE)
 
-O RadIA funciona acoplado ao processo principal da IDE do Delphi (`bds.exe`).
+O Rad IA funciona acoplado ao processo principal da IDE do Delphi (`bds.exe`).
 *   Qualquer operação demorada (como requisições HTTP às APIs de IA) deve ser executada de forma **assíncrona em background threads**.
 *   **Acesso à UI:** Modificações na interface gráfica (VCL/Edge WebView2) a partir de threads secundárias devem obrigatoriamente ser envolvidas em `TThread.Synchronize` ou `TThread.Queue`.
     ```pascal
@@ -116,7 +116,7 @@ Antes de entregar qualquer tarefa ou código modificado, execute os seguintes pa
 
 ## 6. Ciclo de Vida e Gerenciamento de WebView2 (TEdgeBrowser) no Shutdown
 
-O RadIA roda acoplado ao processo da IDE (`bds.exe`). A integração com a WebView2 (`TEdgeBrowser`) exige cuidados extremos no encerramento da IDE para evitar deadlocks COM e Access Violations em `rtl290.bpl`:
+O Rad IA roda acoplado ao processo da IDE (`bds.exe`). A integração com a WebView2 (`TEdgeBrowser`) exige cuidados extremos no encerramento da IDE para evitar deadlocks COM e Access Violations em `rtl290.bpl`:
 
 ### 6.1 Instanciação com Owner nulo (`nil`)
 *   **Regra:** Qualquer componente `TEdgeBrowser` (ou descendente que faça interface COM com WebView2) criado dinamicamente deve ser instanciado passando `nil` como Owner em vez de `Self` ou do Parent Form/Frame.

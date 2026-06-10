@@ -1,9 +1,9 @@
-# Guia para Adição de Novos Provedores de IA no RadIA
+# Guia para Adição de Novos Provedores de IA no Rad IA
 
 Graças à nova **Arquitetura de Provedores Dinâmicos**, a inclusão de um novo backend de IA (como por exemplo DeepSeek, Claude, ou um serviço interno proprietário) tornou-se extremamente simplificada e desacoplada. 
 
 > [!NOTE]
-> O RadIA adota uma arquitetura de registro dinâmica baseada inteiramente em strings. Não existem enums estáticos globais de provedores de IA no núcleo do plugin. A inclusão de um novo backend ocorre de forma puramente ad-hoc e autônoma através do bloco de auto-registro da própria unit do provedor.
+> O Rad IA adota uma arquitetura de registro dinâmica baseada inteiramente em strings. Não existem enums estáticos globais de provedores de IA no núcleo do plugin. A inclusão de um novo backend ocorre de forma puramente ad-hoc e autônoma através do bloco de auto-registro da própria unit do provedor.
 
 ---
 

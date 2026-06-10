@@ -1,12 +1,12 @@
-# Installation and Configuration Guide — RadIA
+# Installation and Configuration Guide — Rad IA
 
-This document describes in detail the installation, compilation, and configuration process of the **RadIA** plugin for the Delphi IDE.
+This document describes in detail the installation, compilation, and configuration process of the **Rad IA** plugin for the Delphi IDE.
 
 ---
 
 ## 1. Installation
 
-RadIA requires active and valid API keys to function with cloud models (Gemini, OpenAI, Claude, DeepSeek, or Groq) or a configured **Ollama** instance running on your machine or local network.
+Rad IA requires active and valid API keys to function with cloud models (Gemini, OpenAI, Claude, DeepSeek, or Groq) or a configured **Ollama** instance running on your machine or local network.
 
 The plugin can be installed in two ways:
 
@@ -35,8 +35,8 @@ During installation, the script also updates the HTML/CSS/JS assets used by WebV
 2. Open the project group `RadIA.groupproj` in Delphi.
 3. Right-click on `RadIA.bpl` in the Project Manager and click **Build**.
 4. Right-click on `RadIA.bpl` again and click **Install**.
-5. A confirmation dialog will appear, and the **RadIA** panel will dock on the right side of your IDE.
-6. Go to **Tools ➔ RadIA Chat Panel** to display the chat, and click the **Settings** button at the top of the panel to configure your API keys.
+5. A confirmation dialog will appear, and the **Rad IA** panel will dock on the right side of your IDE.
+6. Go to **Tools ➔ Rad IA Chat Panel** to display the chat, and click the **Settings** button at the top of the panel to configure your API keys.
 
 ---
 
@@ -61,7 +61,7 @@ During installation, the script also updates the HTML/CSS/JS assets used by WebV
 > **Note:** The plugin automatically discovers available models from the Ollama server via `/api/tags`. If the connection fails, it falls back to a built-in list of well-known model names.
 
 > [!TIP]
-> **Resolving Ollama CORS Issues:** If the plugin encounters Cross-Origin Resource Sharing (CORS) connection errors when making requests to a remote Ollama server, make sure to define the `OLLAMA_ORIGINS=*` environment variable on the hosting server before starting the Ollama service. This will authorize traffic originating from RadIA's WebView2 component.
+> **Resolving Ollama CORS Issues:** If the plugin encounters Cross-Origin Resource Sharing (CORS) connection errors when making requests to a remote Ollama server, make sure to define the `OLLAMA_ORIGINS=*` environment variable on the hosting server before starting the Ollama service. This will authorize traffic originating from Rad IA's WebView2 component.
 
 ---
 
@@ -91,7 +91,7 @@ Enter the obtained keys in the plugin settings (**Settings** at the top of the c
 
 6. **Azure OpenAI**
    * **How to obtain:** Through the Microsoft Azure portal.
-   * **Instructions:** Access your Azure OpenAI resource, go to **Keys and Endpoint**, and copy the Endpoint and one of the keys. In the RadIA settings tab, configure the API Key, Endpoint URL, active Deployment Name, and the Azure API Version (default: `2024-02-15-preview`).
+   * **Instructions:** Access your Azure OpenAI resource, go to **Keys and Endpoint**, and copy the Endpoint and one of the keys. In the Rad IA settings tab, configure the API Key, Endpoint URL, active Deployment Name, and the Azure API Version (default: `2024-02-15-preview`).
 
 7. **Alibaba Qwen**
    * **How to obtain:** Access the [Alibaba Cloud DashScope/ModelStudio console](https://bailian.console.aliyun.com/).
@@ -103,12 +103,12 @@ Enter the obtained keys in the plugin settings (**Settings** at the top of the c
 
 9. **AWS Bedrock**
    * **How to obtain:** Through the AWS Console (Amazon Web Services).
-   * **Instructions:** Enable access to your desired models (such as Anthropic Claude or Meta Llama) inside the Bedrock console. Create IAM access credentials inside the AWS console to obtain an **Access Key ID** and a **Secret Access Key**. In the RadIA options frame, configure these fields, enter the AWS **Region** where Bedrock is provisioned (e.g., `us-east-1`), and optionally provide the **Session Token** if you are using temporary IAM credentials.
+   * **Instructions:** Enable access to your desired models (such as Anthropic Claude or Meta Llama) inside the Bedrock console. Create IAM access credentials inside the AWS console to obtain an **Access Key ID** and a **Secret Access Key**. In the Rad IA options frame, configure these fields, enter the AWS **Region** where Bedrock is provisioned (e.g., `us-east-1`), and optionally provide the **Session Token** if you are using temporary IAM credentials.
 
    > [!IMPORTANT]
    > **IAM Permissions and Model Access in Bedrock:** 
    > * The IAM access key used must have security policies attached that allow executing the actions `bedrock:InvokeModel` and `bedrock:InvokeModelWithResponseStream`.
-   > * By default, AWS Bedrock requires you to request access to models individually in the AWS Console of your desired region (*Model Access* menu). Make sure that access to the models you plan to use (such as Anthropic Claude 3) has already been requested and granted before trying to connect them in RadIA.
+   > * By default, AWS Bedrock requires you to request access to models individually in the AWS Console of your desired region (*Model Access* menu). Make sure that access to the models you plan to use (such as Anthropic Claude 3) has already been requested and granted before trying to connect them in Rad IA.
 
 > **Note on Dynamic and Enterprise Providers:** You can also dynamically add new OpenAI-compatible API providers (such as GitHub Copilot or third-party proxies) by saving JSON configuration files under `%APPDATA%\RadIA\providers\`. For more details, check our [Guide for Adding New Providers (docs/new_provider_guide.en.md)](new_provider_guide.en.md) and the [GitHub Copilot Configuration Guide (docs/copilot_proxy_guide.en.md)](copilot_proxy_guide.en.md).
 
@@ -135,16 +135,16 @@ The `.\build.ps1` script supports the following switches:
 
 ## 5. Hybrid Login (Web Login Plus/Pro vs BYOK)
 
-RadIA allows you to choose between two connection methods for both **Google Gemini** and **OpenAI ChatGPT** providers:
+Rad IA allows you to choose between two connection methods for both **Google Gemini** and **OpenAI ChatGPT** providers:
 1. **API Key (BYOK)**: Uses official API keys and charges per consumed token directly from your developer balance on OpenAI Platform/Google AI Studio.
-2. **Web Login (Plus/Pro)**: Allows you to log in directly to your personal or corporate consumer accounts (ChatGPT Plus/Pro and Gemini Advanced) using their official interface inside RadIA's integrated WebView2.
+2. **Web Login (Plus/Pro)**: Allows you to log in directly to your personal or corporate consumer accounts (ChatGPT Plus/Pro and Gemini Advanced) using their official interface inside Rad IA's integrated WebView2.
 
 ### How to Enable and Use Web Login
-1. Open settings (**Settings** at the top of the chat panel or via the menu **Tools ➔ Options ➔ Third Party > RadIA**).
+1. Open settings (**Settings** at the top of the chat panel or via the menu **Tools ➔ Options ➔ Third Party > Rad IA**).
 2. Select the provider tab (**Gemini** or **OpenAI**).
 3. Under **Connection Method**, select **Web Login (Plus/Pro)**.
 4. Click **Save**.
-5. In the RadIA chat panel, select the corresponding provider. A lock login button 🔐 will appear in the top-right corner of the chat header.
+5. In the Rad IA chat panel, select the corresponding provider. A lock login button 🔐 will appear in the top-right corner of the chat header.
 6. Click the lock button 🔐. This will open a native Delphi login popup window (`TFormWebLogin`).
 7. Log in to your account in the popup window. Your session and cookies will be securely saved under `%APPDATA%\RadIA\WebView2Data` to keep you logged in. Once authenticated, you can close the popup.
-8. That's it! You can now chat normally inside RadIA's unified local chat interface (or use right-click editor actions). The plugin will use a background, hidden WebView2 instance to send prompts and stream responses back in real time, keeping a unified premium experience.
+8. That's it! You can now chat normally inside Rad IA's unified local chat interface (or use right-click editor actions). The plugin will use a background, hidden WebView2 instance to send prompts and stream responses back in real time, keeping a unified premium experience.

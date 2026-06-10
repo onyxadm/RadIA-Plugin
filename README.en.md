@@ -5,16 +5,16 @@
 </div>
 
 <p align="center">
-  <img src="docs/images/radia_readme_banner-2.png" alt="RadIA - AI Assistant for Delphi IDE" width="100%" />
+  <img src="docs/images/radia_readme_banner-2.png" alt="Rad IA - AI Assistant for Delphi IDE" width="100%" />
 </p>
 
 
-# RadIA - AI Assistant for Delphi IDE
+# Rad IA - AI Assistant for Delphi IDE
 
-**RadIA** is an advanced AI assistant plugin designed specifically for the Embarcadero Delphi IDE (using the Open Tools API). It docks directly into the IDE sidebar, providing an interactive chat interface and deep contextual integration with the code editor to accelerate development, refactoring, and debugging.
+**Rad IA** is an advanced AI assistant plugin designed specifically for the Embarcadero Delphi IDE (using the Open Tools API). It docks directly into the IDE sidebar, providing an interactive chat interface and deep contextual integration with the code editor to accelerate development, refactoring, and debugging.
 
 <p align="center">
-  <img src="docs/images/radia_ui_mockup.png" alt="RadIA Chat Panel Mockup" width="100%" />
+  <img src="docs/images/radia_ui_mockup.png" alt="Rad IA Chat Panel Mockup" width="100%" />
 </p>
 
 ---
@@ -60,7 +60,7 @@ To check the development status, keyboard shortcuts, categories, and all integra
 👉 [**Complete Feature Checklist (docs/features.en.md)**](docs/features.en.md)
 
 ### 3. How It Works & Architecture
-RadIA is built entirely in Object Pascal (Delphi) using the **Open Tools API (OTA)** to interface with the IDE's editor services, message services, and theme services.
+Rad IA is built entirely in Object Pascal (Delphi) using the **Open Tools API (OTA)** to interface with the IDE's editor services, message services, and theme services.
 The user interface uses a hybrid architecture:
 1.  **VCL Layout:** Handles the window docking, settings dialog, toolbars, registry storage, and integration actions.
 2.  **Edge WebView2 Engine:** Displays the message history using local HTML5, CSS (incorporating glassmorphism/modern dark UI that adapts to the IDE theme), and JavaScript libraries (Prism.js and Marked.js) to render rich markdown and copyable code blocks without freezing the main IDE thread.
@@ -75,7 +75,7 @@ The user interface uses a hybrid architecture:
 
 ### 5. Installation and Configuration
 
-RadIA can be installed in two ways: **Automated via PowerShell** (recommended, supporting autodetect of multiple installed Delphi environments and interactive selection menu) or **manually through the IDE**. For detailed compilation, registry registration, and API key acquisition instructions for all providers or local Ollama usage, please refer to our:
+Rad IA can be installed in two ways: **Automated via PowerShell** (recommended, supporting autodetect of multiple installed Delphi environments and interactive selection menu) or **manually through the IDE**. For detailed compilation, registry registration, and API key acquisition instructions for all providers or local Ollama usage, please refer to our:
 
 The automated installer also synchronizes local WebView2 assets into `%APPDATA%\RadIA\Web` and clears the local cache while the IDE is closed, preventing Delphi 12/13 from loading stale JavaScript after updates.
 
@@ -83,13 +83,13 @@ The automated installer also synchronizes local WebView2 assets into `%APPDATA%\
 
 ### 5.1 Adding a New AI Provider (Plugin Architecture)
 
-RadIA employs a metadata-driven provider registry system (`TProviderRegistry`). This allows developers to add new AI backends in a fully dynamic and decoupled manner. For a step-by-step tutorial on how to implement your provider class and perform auto-registration, please check our:
+Rad IA employs a metadata-driven provider registry system (`TProviderRegistry`). This allows developers to add new AI backends in a fully dynamic and decoupled manner. For a step-by-step tutorial on how to implement your provider class and perform auto-registration, please check our:
 
 👉 [**Guide for Adding New Providers (docs/new_provider_guide.en.md)**](docs/new_provider_guide.en.md)
 
 ### 5.2 Using GitHub Copilot Remotely (Native - Phase 2) or via Local Proxy (Phase 1)
 
-RadIA supports direct and remote integration with **GitHub Copilot** on the cloud (no local proxies required) through the plugin settings, including an integrated PIN-based login (OAuth Device Flow) and one-click VS Code credential importing.
+Rad IA supports direct and remote integration with **GitHub Copilot** on the cloud (no local proxies required) through the plugin settings, including an integrated PIN-based login (OAuth Device Flow) and one-click VS Code credential importing.
 
 If you prefer to run a local proxy compatible with the OpenAI API (Phase 1), this also remains supported via dynamic JSON provider registration. For more details, check out:
 
@@ -97,7 +97,7 @@ If you prefer to run a local proxy compatible with the OpenAI API (Phase 1), thi
 
 ### 5.3 User and Feature Reference Guides
 
-To get the most out of RadIA features in your daily development workflow, check our detailed reference guides:
+To get the most out of Rad IA features in your daily development workflow, check our detailed reference guides:
 
 *   👉 [**Editor Integration & Code Generation Guide (docs/user_guide_editor_generation.en.md)**](docs/user_guide_editor_generation.en.md): Context-aware editor actions, Smart Diff visual comparison, XML documentation, DTO converter, and full-project prompt generation.
 *   👉 [**Diagnostics & Code Analysis Guide (docs/user_guide_diagnostics_analysis.en.md)**](docs/user_guide_diagnostics_analysis.en.md): Smart Build Debugger compilation assistance, call stack parsing via Stack Trace Assistant, and memory leak static auditing.

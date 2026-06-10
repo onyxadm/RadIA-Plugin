@@ -1,6 +1,6 @@
-# Backlog de Evolução do RadIA
+# Backlog de Evolução do Rad IA
 
-Este documento registra o status de desenvolvimento, planejamento futuro e o histórico técnico das tarefas concluídas do plugin **RadIA**.
+Este documento registra o status de desenvolvimento, planejamento futuro e o histórico técnico das tarefas concluídas do plugin **Rad IA**.
 
 ---
 
@@ -87,7 +87,7 @@ Consulte os detalhes de implementação de cada recurso agrupado por versão:
       *   Registro de notifiers OTA (`IOTAIDENotifier` e `IOTAEditorNotifier`) para agendar o hook quando arquivos `.pas` e views do editor são abertas ou ativadas.
       *   Hook seguro e assíncrono do menu após a IDE concluir a montagem do `TEditWindow`, evitando regressões na criação de novos projetos e no code folding/elision tree.
       *   Detecção de `TPopupMenu` tanto por componentes do form quanto pela árvore de controles (`Control.PopupMenu`), cobrindo o menu real do editor em diferentes versões/layouts da IDE.
-      *   Injeção do submenu **RadIA** no topo do menu contextual, após o `OnPopup` original da IDE reconstruir os itens padrão.
+      *   Injeção do submenu **Rad IA** no topo do menu contextual, após o `OnPopup` original da IDE reconstruir os itens padrão.
 </details>
 
 <details>
@@ -190,7 +190,7 @@ Consulte os detalhes de implementação de cada recurso agrupado por versão:
   <summary><b>📦 v0.0.6 — Provedores Dinâmicos via JSON (Clique para expandir)</b></summary>
 
   #### 1. Provedores Dinâmicos via JSON (Plug-ins sem Recompilação) - Item #21b
-  *   **Descrição**: Suporte para adicionar novos provedores compatíveis com a API OpenAI apenas colocando arquivos de configuração `.json` no AppData do RadIA, sem necessidade de recompilar o plugin.
+  *   **Descrição**: Suporte para adicionar novos provedores compatíveis com a API OpenAI apenas colocando arquivos de configuração `.json` no AppData do Rad IA, sem necessidade de recompilar o plugin.
   *   **Detalhes**:
       *   Implementado escaneamento automático de diretório no `TProviderRegistry.LoadJsonProviders` lendo de `%APPDATA%\RadIA\providers\`.
       *   Criação de classe genérica polimórfica `TRadIAGenericOpenAIProvider` servindo como client universal de OpenAI.
@@ -350,7 +350,7 @@ Consulte os detalhes de implementação de cada recurso agrupado por versão:
   *   **Detalhes**:
       *   Implementação do frame `TFrameAIConfig` contendo o PageControl e controle das opções.
       *   Implementação do formulário wrapper `TFormAIConfig` contendo uma barra lateral com `TTreeView` e botões de rodapé para manter o comportamento original de popup independente.
-      *   Integração da ponte Open Tools API via `TRadIAAddInOptions` (`INTAAddInOptions`) registrando a árvore de categorias sob **Third Party > RadIA** (com subnós para Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama).
+      *   Integração da ponte Open Tools API via `TRadIAAddInOptions` (`INTAAddInOptions`) registrando a árvore de categorias sob **Third Party > Rad IA** (com subnós para Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama).
       *   Pintura e estilização automatizada seguindo o tema nativo da IDE usando painéis wrappers individuais para herança de estilo e prevenção de contraste inadequado de cores no tema escuro.
       *   Salvamento automatizado silencioso ao pressionar "OK" nas opções da IDE, e aviso explícito de sucesso apenas no formulário popup standalone.
 </details>
