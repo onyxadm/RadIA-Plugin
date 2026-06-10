@@ -27,7 +27,9 @@ type
     procedure InstallEditorNotifiers;
     procedure RemoveEditorNotifiers;
     procedure TryAddSourceEditorNotifier(const ASourceEditor: IOTASourceEditor);
+    {$IFNDEF TESTS}
     procedure HookPopupMenu(AForm: TCustomForm);
+    {$ENDIF}
     procedure UnhookPopupMenu(AForm: TCustomForm);
     procedure HookControlPopupMenus(AControl: TControl);
     procedure UnhookControlPopupMenus(AControl: TControl);
@@ -523,6 +525,7 @@ begin
     HasCaption(APopupMenu.Items, 'Read Only');
 end;
 
+{$IFNDEF TESTS}
 procedure TRadIAEditorHook.HookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
@@ -550,6 +553,7 @@ begin
       HookMenuDirectly(TPopupMenu(AForm.Components[I]));
   end;
 end;
+{$ENDIF}
 
 procedure TRadIAEditorHook.UnhookPopupMenu(AForm: TCustomForm);
 var
