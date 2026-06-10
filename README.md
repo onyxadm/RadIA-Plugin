@@ -125,7 +125,6 @@ PluginDelphiIA/
 │   ├── compliance.md / .en.md          # Avisos legais, privacidade e compliance
 │   ├── new_provider_guide.md / .en.md  # Guia para adicionar novos provedores
 │   ├── user_guide_*.md                 # Guias detalhados de uso (chat, editor, stack trace)
-│   └── radia_design_ui.md              # Especificação original de layouts e UI
 │
 ├── RadIA.groupproj                     # Grupo de Projetos do Delphi
 ├── RadIA.dpk                           # Pacote Delphi de design-time (BPL)
