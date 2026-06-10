@@ -164,6 +164,7 @@ begin
     LogDebug('Error: IOTAWizardServices NOT supported');
   end;
   RegisterSplashAndAbout;
+  RegisterInlineCompletionKeyboardBinding;
 end;
 
 { TRadIAWizard }
@@ -192,7 +193,6 @@ begin
   
   FEditorHook := TRadIAEditorHook.Create(nil);
   TRadIAEditorHook(FEditorHook).Install;
-  RegisterInlineCompletionKeyboardBinding;
   RegisterMenus;
   RegisterOptions;
   

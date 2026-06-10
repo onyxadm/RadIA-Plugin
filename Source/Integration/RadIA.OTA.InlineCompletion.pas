@@ -266,65 +266,69 @@ var
   LEditBuffer: IOTAEditBuffer;
 begin
   BindingResult := krUnhandled;
-  TLogger.Log('Inline completion shortcut invoked', 'InlineCompletion');
-  LConfig := TRadIAConfig.GetInstance;
-  if not LConfig.GetAutocompleteEnabled then
-    Exit;
+  try
+    TLogger.Log('Inline completion shortcut invoked', 'InlineCompletion');
+    LConfig := TRadIAConfig.GetInstance;
+    if not LConfig.GetAutocompleteEnabled then
+      Exit;
 
-  if not TRadIAOTAHelper.GetActiveEditorText(LSourceText, False) then
-    Exit;
+    if not TRadIAOTAHelper.GetActiveEditorText(LSourceText, False) then
+      Exit;
 
-  LView := TRadIAOTAHelper.GetCurrentEditView;
-  if not Assigned(LView) then
-    Exit;
+    LView := TRadIAOTAHelper.GetCurrentEditView;
+    if not Assigned(LView) then
+      Exit;
 
-  LEditBuffer := Context.EditBuffer;
-  if Assigned(LEditBuffer) then
-    LFileName := LEditBuffer.FileName
-  else
-  begin
-    LEditBuffer := TRadIAOTAHelper.GetCurrentEditBuffer;
+    LEditBuffer := Context.EditBuffer;
     if Assigned(LEditBuffer) then
       LFileName := LEditBuffer.FileName
     else
-      LFileName := '';
-  end;
+    begin
+      LEditBuffer := TRadIAOTAHelper.GetCurrentEditBuffer;
+      if Assigned(LEditBuffer) then
+        LFileName := LEditBuffer.FileName
+      else
+        LFileName := '';
+    end;
 
-  LContext := TInlineCompletionContextBuilder.BuildContext(
-    LSourceText,
-    LFileName,
-    LView.CursorPos.Line,
-    LView.CursorPos.Col,
-    LConfig.GetAutocompleteContextMode,
-    LConfig.GetAutocompleteContextBeforeLines,
-    LConfig.GetAutocompleteContextAfterLines);
-  LPrompt := TInlineCompletionContextBuilder.BuildPrompt(LContext);
-  LRequestId := TInlineCompletionSuggestionState.Instance.NextRequestId;
-  BindingResult := krHandled;
+    LContext := TInlineCompletionContextBuilder.BuildContext(
+      LSourceText,
+      LFileName,
+      LView.CursorPos.Line,
+      LView.CursorPos.Col,
+      LConfig.GetAutocompleteContextMode,
+      LConfig.GetAutocompleteContextBeforeLines,
+      LConfig.GetAutocompleteContextAfterLines);
+    LPrompt := TInlineCompletionContextBuilder.BuildPrompt(LContext);
+    LRequestId := TInlineCompletionSuggestionState.Instance.NextRequestId;
 
-  LService := TInlineCompletionService.Create(LConfig);
-  try
-    LService.RequestCompletion(LPrompt,
-      procedure(const ASuggestion: string; const AError: string)
-      begin
-        if LRequestId <> TInlineCompletionSuggestionState.Instance.RequestId then
-          Exit;
-
-        if not AError.IsEmpty then
+    LService := TInlineCompletionService.Create(LConfig);
+    try
+      LService.RequestCompletion(LPrompt,
+        procedure(const ASuggestion: string; const AError: string)
         begin
-          TLogger.Log('Inline completion failed: ' + AError, 'InlineCompletion');
-          Exit;
-        end;
+          if LRequestId <> TInlineCompletionSuggestionState.Instance.RequestId then
+            Exit;
 
-        TInlineCompletionSuggestionState.Instance.SetSuggestion(
-          LFileName,
-          ASuggestion,
-          LView.CursorPos.Line,
-          LView.CursorPos.Col);
-        RepaintCurrentView;
-      end);
+          if not AError.IsEmpty then
+          begin
+            TLogger.Log('Inline completion failed: ' + AError, 'InlineCompletion');
+            Exit;
+          end;
+
+          TInlineCompletionSuggestionState.Instance.SetSuggestion(
+            LFileName,
+            ASuggestion,
+            LView.CursorPos.Line,
+            LView.CursorPos.Col);
+          RepaintCurrentView;
+        end);
+    finally
+      LService.Free;
+    end;
   finally
-    LService.Free;
+    if BindingResult = krUnhandled then
+      BindingResult := krNextProc;
   end;
 end;
 
