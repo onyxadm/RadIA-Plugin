@@ -448,7 +448,18 @@ body.light-theme .apply-btn:hover {
 
 .message-content pre {
   margin: 0;
+  padding: 0;
   overflow: hidden;
+  background-color: var(--code-bg) !important;
+  border: none;
+}
+
+.message-content pre[class*="language-"] {
+  margin: 0;
+  padding: 0;
+  background-color: var(--code-bg) !important;
+  border: none;
+  box-shadow: none;
 }
 
 .message-content pre code {
