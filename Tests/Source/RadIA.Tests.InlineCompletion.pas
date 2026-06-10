@@ -96,6 +96,9 @@ begin
   Assert.IsTrue(LPrompt.Contains(CInlineCompletionCursorMarker));
   Assert.IsTrue(LPrompt.Contains('return only declarations'));
   Assert.IsTrue(LPrompt.Contains('never return implementation code containing begin'));
+  Assert.IsTrue(LPrompt.Contains('The user is writing code using Embarcadero'));
+  Assert.IsTrue(LPrompt.Contains('Only suggest code compatible with'));
+  Assert.IsTrue(LPrompt.Contains('Please reply in'));
 end;
 
 procedure TTestInlineCompletion.TestResponseCleanerRemovesMarkdownFence;

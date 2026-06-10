@@ -56,6 +56,9 @@ type
 
 implementation
 
+uses
+  RadIA.OTA.Helper;
+
 class function TInlineCompletionContextBuilder.BuildContext(const ASourceText: string;
   const AFileName: string; const ARow, AColumn: Integer; const AMode: TInlineCompletionContextMode;
   const ABeforeLines, AAfterLines: Integer): TInlineCompletionContext;
@@ -126,6 +129,8 @@ var
   LMarkerPos: Integer;
   LPrefix: string;
   LSuffix: string;
+  LDelphiVersionName: string;
+  LLanguageInstruction: string;
 begin
   LMarkerPos := Pos(CInlineCompletionCursorMarker, AContext.Text);
   if LMarkerPos > 0 then
@@ -143,6 +148,9 @@ begin
     LSuffix := '';
   end;
 
+  LDelphiVersionName := TRadIAOTAHelper.GetDelphiVersionName;
+  LLanguageInstruction := TRadIAOTAHelper.GetPreferredLanguageInstruction;
+
   Result :=
     'You are an inline Delphi/Object Pascal completion engine.' + sLineBreak +
     'Complete code exactly where the marker ' + CInlineCompletionCursorMarker +
@@ -154,6 +162,9 @@ begin
     'Before implementation, or inside private/protected/public/published, return only declarations.' + sLineBreak +
     'In declaration areas, never return implementation code containing begin.' + sLineBreak +
     'Preserve normal Delphi formatting, indentation, and line breaks.' + sLineBreak +
+    'The user is writing code using Embarcadero ' + LDelphiVersionName + '.' + sLineBreak +
+    'Only suggest code compatible with ' + LDelphiVersionName + '.' + sLineBreak +
+    LLanguageInstruction + sLineBreak +
     'If there is no confident local completion, return an empty response.' + sLineBreak +
     'Prefer at most one short line unless the cursor clearly needs a block.' + sLineBreak +
     'File: ' + ExtractFileName(AContext.FileName) + sLineBreak + sLineBreak +
