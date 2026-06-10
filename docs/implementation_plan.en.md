@@ -64,15 +64,17 @@ graph TD
 
 | Unit | Responsibility |
 |---|---|
-| `RadIA.Core.Types.pas` | `TAIProviderType` enum (Gemini, OpenAI, Claude, Ollama), `TAIMessageRole`, model constants, string/enum conversion functions |
+| `RadIA.Core.Types.pas` | Shared types (`TAIMessageRole`, `TAIRequestProfile`), model constants, and provider-facing structures |
 | `RadIA.Core.Interfaces.pas` | `IIAProvider`, `IAIConfig`, `IChatMessage` contracts, `TCompletionCallback` and `TStreamChunkCallback` types |
-| `RadIA.Core.Config.pas` | `TRadIAConfig`: Windows Registry read/write (`HKCU\Software\Embarcadero\BDS\<versao>\RadIA`), API keys via Windows DPAPI, `MaxHistoryMessages`, `OpenAICustomBaseUrl` |
+| `RadIA.Core.Config.pas` | `TRadIAConfig`: Windows Registry read/write (`HKCU\Software\Embarcadero\BDS\<version>\RadIA`), `ISettingsStorage` injection, provider parameters, local quotas, and active models |
+| `RadIA.Core.ConfigDefaults.pas` | Centralizes default configuration values, reducing duplicated literals in `TRadIAConfig` |
+| `RadIA.Core.CredentialProtector.pas` | Encapsulates cleanup and Windows DPAPI protection for sensitive keys |
 | `RadIA.Core.Service.pas` | `TRadIAService`: central request orchestrator (`SendPrompt` and `SendPromptStream`), creates active provider, injects system prompt and `.radia` project context, applies history trimming |
 | `RadIA.Core.Cache.pas` | `TRadIACacheManager`: LRU cache in JSON (`cache.json`), 500 entries limit, 24h expiration, SHA-1 hash |
 | `RadIA.Core.PromptHistory.pas` | `TPromptHistoryManager`: recent query history (FIFO limit 50) persisted in JSON for ↑/↓ navigation in chat |
 | `RadIA.Core.TokenUsage.pas` | `TTokenUsage` record (PromptTokens, CompletionTokens) and UI status bar helper |
 | `RadIA.Core.ConversationExporter.pas` | `TConversationExporter`: formatted exporter for Markdown and self-contained HTML formats |
-| `RadIA.Core.PromptTemplates.pas` | `TPromptTemplateManager`: manages and loads prompt templates and slash commands in `%APPDATA%\RadIA\templates.json` |
+| `RadIA.Core.PromptTemplates.pas` | `TPromptTemplateManager`: manages native templates and user overlays in `%APPDATA%\RadIA\templates.json`, including separated slash commands for `/explain` and `/review` |
 | `RadIA.Core.ProjectContext.pas` | `TProjectContextLoader`: reads `.radia` files from the active project's root folder and merges system prompts |
 
 ---
@@ -100,7 +102,7 @@ All inherit from `TRadIAProviderBase` and implement `IIAProvider`.
 | `RadIA.OTA.Register.pas` | Registers the Wizard/package in the IDE, creates menu items in `Tools` and editor context menu |
 | `RadIA.OTA.Helper.pas` | `ReplaceActiveEditorText`: reads selection and replaces text in active editor. `GetActiveProjectFolder` gets project folder |
 | `RadIA.OTA.ContextParser.pas` | Extracts the interface section of active unit and class attributes under the cursor |
-| `RadIA.OTA.EditorHook.pas` | Manages hotkeys and context menu customization for the editor |
+| `RadIA.OTA.EditorHook.pas` | Manages hotkeys and the **RadIA** submenu at the top of the editor context menu, using asynchronous hooks compatible with Delphi 12/13 |
 | `RadIA.OTA.MessageViewHook.pas` | Monitors IDE Messages View and extracts compiler error data to trigger AI explanation |
 | `RadIA.OTA.DockableForm.pas` | Implements `INTADockableForm`, wraps `TFrameAIChat`, and applies theme via `IOTAThemeServices` |
 
@@ -128,6 +130,7 @@ All inherit from `TRadIAProviderBase` and implement `IIAProvider`.
   - `action: 'show_typing'` — shows typing indicator.
   - `action: 'append_message'` — appends text chunk to the last bubble.
 - Web → Delphi: `EdgeBrowserWebMessageReceived` with `{ action: 'apply_code', code }` JSON.
+- Web assets (`chat.html`, `chat.js`, CSS, and JS bridge files) are copied by the installer to the IDE public folder and `%APPDATA%\RadIA\Web`; `chat.html` uses cache busting for `chat.js` to avoid stale WebView2 JavaScript.
 
 ---
 
@@ -143,11 +146,14 @@ All inherit from `TRadIAProviderBase` and implement `IIAProvider`.
 | `TTestPromptHistory` | 13 | FIFO query history and persistence |
 | `TTestTokenUsage` | 2 | Token initialization validation and UI statistics formatting |
 | `TTestConversationExporter` | 4 | Structured markdown/HTML layout generation |
-| `TTestPromptTemplates` | 4 | Placeholder resolution and embedded templates |
+| `TTestPromptTemplates` | 10 | Embedded templates, overlays, legacy template migration, and `/explain` vs `/review` separation |
 | `TTestProjectContext` | 4 | Reading and merging the `.radia` file |
 | `TTestRadIAStreaming` | 8 | Incremental validation of SSE streaming buffers and boundaries (OpenAI, Claude, Gemini, Ollama) |
-| `TTestRadIAProvidersEx` | 4 | Payloads, response parsing, and streams for DeepSeek and Groq |
-| **Total** | **70** | **70/70 passing cleanly** |
+| `TTestRadIAProvidersEx` | 17 | Payloads, response parsing, and streams for DeepSeek, Groq, OpenRouter, LM Studio, Azure OpenAI, Qwen, Mistral, and Bedrock |
+| `TTestChatPresenter` | 14 | Chat presenter flows, global messages, slash commands, and WebView integration |
+| `TTestConfigPresenter` | 8 | Settings presenter flows and validations |
+| `TTestEditorHook` | 2 | Editor context-menu rehook and regression protection |
+| **Total** | **143** | **143/143 passing cleanly on Delphi 12 and Delphi 13** |
 
 ---
 
@@ -156,3 +162,5 @@ All inherit from `TRadIAProviderBase` and implement `IIAProvider`.
 - **ProcessStreamBuffer isolation:** Each provider extracts the tokenization and incremental stream parser algorithm in a dedicated method, facilitating unit tests via RTTI.
 - **Token Approximation in Stream:** During dynamic display of SSE chunks, token count is estimated using the default multiplier (1 token ≈ 4 characters) in completion callback.
 - **Locale Invariant for USD:** Cost formatting enforces the dot `.` decimal delimiter to guarantee currency in USD regardless of the user's Windows regional settings.
+- **No stale WebView2 cache:** The installer synchronizes local web assets and clears the WebView2 cache while the IDE is closed; the HTML also loads `chat.js` with cache busting.
+- **Explicit slash commands:** Critical commands such as `/explain` and `/review` use separate native templates to avoid resolution based on list order or legacy overlays.
