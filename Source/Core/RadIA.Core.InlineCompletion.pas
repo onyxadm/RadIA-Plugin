@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, System.SyncObjs, RadIA.Core.Types;
 
 const
-  CInlineCompletionCursorMarker = '<RADIA_CURSOR>';
+  CInlineCompletionCursorMarker = '//RadIA_Inline_Completion';
 
 type
   TInlineCompletionContext = record
@@ -145,19 +145,23 @@ begin
 
   Result :=
     'You are an inline Delphi/Object Pascal completion engine.' + sLineBreak +
-    'Return only the exact code fragment to insert at the cursor.' + sLineBreak +
-    'The fragment must connect the prefix and suffix naturally.' + sLineBreak +
-    'Do not repeat the prefix, suffix, unit header, interface, uses, or existing code.' + sLineBreak +
-    'Do not create a full unit, class, method, explanation, markdown, or comments.' + sLineBreak +
+    'Complete code exactly where the marker ' + CInlineCompletionCursorMarker +
+    ' appears.' + sLineBreak +
+    'Return only the code that should replace that marker.' + sLineBreak +
+    'The code must connect the prefix and suffix naturally.' + sLineBreak +
+    'Never repeat existing code, the unit header, interface, uses, or implementation.' + sLineBreak +
+    'Never create a full unit, class, method, explanation, markdown, or comments.' + sLineBreak +
+    'Before implementation, or inside private/protected/public/published, return only declarations.' + sLineBreak +
+    'In declaration areas, never return implementation code containing begin.' + sLineBreak +
     'Preserve normal Delphi formatting, indentation, and line breaks.' + sLineBreak +
     'If there is no confident local completion, return an empty response.' + sLineBreak +
     'Prefer at most one short line unless the cursor clearly needs a block.' + sLineBreak +
     'File: ' + ExtractFileName(AContext.FileName) + sLineBreak + sLineBreak +
-    'Prefix before cursor:' + sLineBreak +
+    'Code before marker:' + sLineBreak +
     '```pascal' + sLineBreak +
-    LPrefix + sLineBreak +
+    LPrefix + CInlineCompletionCursorMarker + sLineBreak +
     '```' + sLineBreak + sLineBreak +
-    'Suffix after cursor:' + sLineBreak +
+    'Code after marker:' + sLineBreak +
     '```pascal' + sLineBreak +
     LSuffix + sLineBreak +
     '```';

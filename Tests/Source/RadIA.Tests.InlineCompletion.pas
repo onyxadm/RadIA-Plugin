@@ -14,6 +14,8 @@ type
     [Test]
     procedure TestFullFileContextKeepsWholeSource;
     [Test]
+    procedure TestPromptUsesDelphiMarkerAndDeclarationRule;
+    [Test]
     procedure TestResponseCleanerRemovesMarkdownFence;
     [Test]
     procedure TestResponseCleanerRejectsFullUnitScaffold;
@@ -70,6 +72,30 @@ begin
 
   Assert.IsTrue(LContext.Text.Contains('a' + CInlineCompletionCursorMarker + 'bc'));
   Assert.IsTrue(LContext.Text.Contains('def'));
+end;
+
+procedure TTestInlineCompletion.TestPromptUsesDelphiMarkerAndDeclarationRule;
+var
+  LContext: TInlineCompletionContext;
+  LPrompt: string;
+begin
+  LContext := TInlineCompletionContextBuilder.BuildContext(
+    'type' + sLineBreak +
+    '  TCustomer = class' + sLineBreak +
+    '  private' + sLineBreak +
+    '  end;',
+    'Unit1.pas',
+    3,
+    10,
+    icmWindow,
+    3,
+    1);
+
+  LPrompt := TInlineCompletionContextBuilder.BuildPrompt(LContext);
+
+  Assert.IsTrue(LPrompt.Contains(CInlineCompletionCursorMarker));
+  Assert.IsTrue(LPrompt.Contains('return only declarations'));
+  Assert.IsTrue(LPrompt.Contains('never return implementation code containing begin'));
 end;
 
 procedure TTestInlineCompletion.TestResponseCleanerRemovesMarkdownFence;
