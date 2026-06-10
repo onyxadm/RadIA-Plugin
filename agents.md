@@ -8,6 +8,7 @@ Este arquivo define as regras técnicas, restrições do compilador Delphi (Obje
 
 *   **Comunicação (AI & Humans):** Toda conversa, explicações de código, descrições de pull requests e documentação de tarefas devem ser escritas em **Português do Brasil (pt-BR)**.
 *   **Mensagens de Commit:** Todos os commits devem ser escritos em **Inglês (en-US)** seguindo o padrão documentado em `docs/commit_convention.md`.
+*   **Nomes de Branch:** Todas as branches devem seguir o padrão `<tipo>/<descricao-curta>` documentado em `docs/branch_convention.md`.
 *   **Código Fonte (Codebase):** Todo o código fonte, incluindo classes, métodos, records, variáveis, enums, comentários internos, esquemas de dados, bem como **prompts e templates de IA hardcoded** (por exemplo, prompt padrão de sistema ou templates Pascal embutidos) devem ser escritos **100% em Inglês (en-US)**.
 *   **Arquitetura:** Siga rigorosamente os princípios **SOLID**, **Clean Code**, **DRY** (Don't Repeat Yourself) e **KISS** (Keep It Simple, Stupid).
 

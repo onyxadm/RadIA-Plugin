@@ -26,6 +26,7 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
 *   **Interações de IA e Humanos (AI & Human Interactions):**
     *   Toda conversa no chat, descrições de pull requests, tarefas e discussões de design devem ser conduzidas em **Português do Brasil (pt-BR)**.
     *   Mensagens de commit devem ser escritas em **Inglês (en-US)** seguindo a [Convenção de Mensagens de Commit](docs/commit_convention.md).
+    *   Branches devem seguir o formato `<tipo>/<descricao-curta>` documentado na [Convenção de Nomes de Branch](docs/branch_convention.md).
 *   **Código Fonte & Arquitetura (Source Code & Architecture):**
     *   O código fonte é **100% escrito em Inglês (en-US)**.
     *   Todos os identificadores (nomes de units, variáveis, classes, métodos, records, enums), parâmetros, estruturas de dados (JSON/XML) e comentários embutidos no código devem ser escritos exclusivamente em inglês, seguindo as convenções e padrões Pascal.
@@ -102,6 +103,7 @@ Para aprender a tirar o máximo proveito das funcionalidades do Rad IA no seu di
 *   👉 [**Guia de Diagnóstico de Erros & Análise de Código (docs/user_guide_diagnostics_analysis.md)**](docs/user_guide_diagnostics_analysis.md): Explicações e correções de erros com o Smart Build Debugger, decodificação de logs com o Assistente de Stack Trace e auditorias estáticas contra vazamento de memória.
 *   👉 [**Guia do Painel de Chat & Gerenciamento de Sessões (docs/user_guide_chat_sessions.md)**](docs/user_guide_chat_sessions.md): Atalhos de digitação, histórico de prompts, múltiplas sessões persistentes e backups de templates.
 *   👉 [**Convenção de Mensagens de Commit (docs/commit_convention.md)**](docs/commit_convention.md): Padrão de mensagens em inglês com prefixos como `feat`, `fix`, `docs`, `refactor` e outros.
+*   👉 [**Convenção de Nomes de Branch (docs/branch_convention.md)**](docs/branch_convention.md): Padrão `<tipo>/<descrição>` com prefixos como `feat/`, `fix/`, `docs/`, `test/` e `chore/`.
 *   👉 [**Processo de Finalização de Release (docs/release_process.md)**](docs/release_process.md): Checklist para atualizar versão, validar build, mergear `develop`/`main`, criar tag e limpar branches.
 
 ---

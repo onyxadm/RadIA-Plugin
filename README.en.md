@@ -26,6 +26,7 @@ This project adopts clear language rules and design standards for both human dev
 *   **AI & Human Interactions:**
     *   All chat interactions, pull request descriptions, task updates, and design discussions must be conducted in **Brazilian Portuguese (pt-BR)**.
     *   Commit messages must be written in **English (en-US)** following the [Commit Message Convention](docs/commit_convention.en.md).
+    *   Branches must follow the `<type>/<short-description>` format documented in the [Branch Naming Convention](docs/branch_convention.en.md).
 *   **Source Code & Architecture:**
     *   The source code is **100% written in English (en-US)**.
     *   All identifiers (unit names, variables, classes, methods, records, enums), parameters, data structures (JSON/XML), and inline comments must be written exclusively in English, following object-oriented Pascal naming conventions.
@@ -104,6 +105,7 @@ To get the most out of Rad IA features in your daily development workflow, check
 *   👉 [**Diagnostics & Code Analysis Guide (docs/user_guide_diagnostics_analysis.en.md)**](docs/user_guide_diagnostics_analysis.en.md): Smart Build Debugger compilation assistance, call stack parsing via Stack Trace Assistant, and memory leak static auditing.
 *   👉 [**Chat Panel & Session Management Guide (docs/user_guide_chat_sessions.en.md)**](docs/user_guide_chat_sessions.en.md): Input text shortcuts, prompt history navigation, persistent multi-sessions, and prompt template backups.
 *   👉 [**Commit Message Convention (docs/commit_convention.en.md)**](docs/commit_convention.en.md): English commit message standard using prefixes like `feat`, `fix`, `docs`, `refactor`, and others.
+*   👉 [**Branch Naming Convention (docs/branch_convention.en.md)**](docs/branch_convention.en.md): `<type>/<description>` standard with prefixes like `feat/`, `fix/`, `docs/`, `test/`, and `chore/`.
 *   👉 [**Release Finalization Process (docs/release_process.en.md)**](docs/release_process.en.md): Checklist to update versions, validate builds, merge `develop`/`main`, create tags, and clean up branches.
 
 ---

@@ -19,6 +19,8 @@ git tag --sort=-v:refname
 
 Use a última tag publicada para definir a próxima versão. Exemplo: se a última tag for `v0.0.17`, a próxima release será `v0.0.18`.
 
+Branches de trabalho devem seguir a [Convenção de Nomes de Branch](branch_convention.md).
+
 ---
 
 ## 2. Atualizar Versão e Documentação
