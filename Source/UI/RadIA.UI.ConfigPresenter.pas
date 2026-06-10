@@ -60,6 +60,22 @@ type
     function GetQuotaLimit: string;
     procedure SetQuotaLimit(const AValue: string);
     procedure SetQuotaUsedText(const AText: string);
+    function GetAutocompleteEnabled: Boolean;
+    procedure SetAutocompleteEnabled(const AValue: Boolean);
+    function GetAutocompleteProvider: string;
+    procedure SetAutocompleteProvider(const AValue: string);
+    function GetAutocompleteModel: string;
+    procedure SetAutocompleteModel(const AValue: string);
+    function GetAutocompleteShortcut: string;
+    procedure SetAutocompleteShortcut(const AValue: string);
+    function GetAutocompleteContextModeIndex: Integer;
+    procedure SetAutocompleteContextModeIndex(const AValue: Integer);
+    function GetAutocompleteBeforeLines: string;
+    procedure SetAutocompleteBeforeLines(const AValue: string);
+    function GetAutocompleteAfterLines: string;
+    procedure SetAutocompleteAfterLines(const AValue: string);
+    function GetAutocompleteMaxTokens: string;
+    procedure SetAutocompleteMaxTokens(const AValue: string);
 
     // Dialogs and lifecycle
     procedure ShowMessageDialog(const AMessage: string);
@@ -122,7 +138,7 @@ type
 implementation
 
 uses
-  System.JSON, System.IOUtils, RadIA.Core.Config;
+  System.JSON, System.IOUtils, RadIA.Core.Config, RadIA.OTA.InlineCompletion;
 
 { TConfigPresenter }
 
@@ -234,6 +250,17 @@ begin
   FView.SetQuotaEnabled(FConfig.QuotaEnabled);
   FView.SetQuotaLimit(FConfig.QuotaLimit.ToString);
   FView.SetQuotaUsedText(Format('Monthly Used Tokens: %s', [FormatFloat('#,##0', FConfig.QuotaUsed, LFormatSettings)]));
+  FView.SetAutocompleteEnabled(FConfig.AutocompleteEnabled);
+  FView.SetAutocompleteProvider(FConfig.AutocompleteProvider);
+  FView.SetAutocompleteModel(FConfig.AutocompleteModel);
+  FView.SetAutocompleteShortcut(FConfig.AutocompleteShortcut);
+  if FConfig.AutocompleteContextMode = icmFullFile then
+    FView.SetAutocompleteContextModeIndex(1)
+  else
+    FView.SetAutocompleteContextModeIndex(0);
+  FView.SetAutocompleteBeforeLines(IntToStr(FConfig.AutocompleteContextBeforeLines));
+  FView.SetAutocompleteAfterLines(IntToStr(FConfig.AutocompleteContextAfterLines));
+  FView.SetAutocompleteMaxTokens(IntToStr(FConfig.AutocompleteMaxTokens));
 
   PopulateTemplatesList;
 end;
@@ -250,6 +277,7 @@ var
   LMax: Integer;
   LTime: Integer;
   LLimit: Int64;
+  LInlineNumber: Integer;
 begin
   LFormatSettings := TFormatSettings.Invariant;
   LOllamaUrl := Trim(FView.GetCustomUrl('Ollama'));
@@ -290,6 +318,39 @@ begin
     if not TryStrToInt64(FView.GetQuotaLimit, LLimit) or (LLimit <= 0) then
     begin
       FView.ShowMessageDialog('Monthly Token Limit must be a valid positive integer');
+      Exit;
+    end;
+  end;
+
+  if not TryStrToInt(FView.GetAutocompleteBeforeLines, LInlineNumber) or (LInlineNumber < 0) then
+  begin
+    FView.ShowMessageDialog('Inline completion before-lines must be zero or a positive integer');
+    Exit;
+  end;
+
+  if not TryStrToInt(FView.GetAutocompleteAfterLines, LInlineNumber) or (LInlineNumber < 0) then
+  begin
+    FView.ShowMessageDialog('Inline completion after-lines must be zero or a positive integer');
+    Exit;
+  end;
+
+  if not TryStrToInt(FView.GetAutocompleteMaxTokens, LInlineNumber) or (LInlineNumber <= 0) then
+  begin
+    FView.ShowMessageDialog('Inline completion max tokens must be a positive integer');
+    Exit;
+  end;
+
+  if FView.GetAutocompleteEnabled then
+  begin
+    if Trim(FView.GetAutocompleteProvider).IsEmpty then
+    begin
+      FView.ShowMessageDialog('Select a configured provider for inline completion');
+      Exit;
+    end;
+
+    if Trim(FView.GetAutocompleteModel).IsEmpty then
+    begin
+      FView.ShowMessageDialog('Select a model for inline completion');
       Exit;
     end;
   end;
@@ -350,9 +411,23 @@ begin
 
   FConfig.QuotaEnabled := FView.GetQuotaEnabled;
   FConfig.QuotaLimit := StrToInt64Def(FView.GetQuotaLimit, 1000000);
+  FConfig.AutocompleteEnabled := FView.GetAutocompleteEnabled;
+  FConfig.AutocompleteProvider := Trim(FView.GetAutocompleteProvider);
+  FConfig.AutocompleteModel := Trim(FView.GetAutocompleteModel);
+  FConfig.AutocompleteShortcut := Trim(FView.GetAutocompleteShortcut);
+  if FView.GetAutocompleteContextModeIndex = 1 then
+    FConfig.AutocompleteContextMode := icmFullFile
+  else
+    FConfig.AutocompleteContextMode := icmWindow;
+  FConfig.AutocompleteContextBeforeLines := StrToIntDef(FView.GetAutocompleteBeforeLines, 60);
+  FConfig.AutocompleteContextAfterLines := StrToIntDef(FView.GetAutocompleteAfterLines, 20);
+  FConfig.AutocompleteMaxTokens := StrToIntDef(FView.GetAutocompleteMaxTokens, 512);
 
   FConfig.Save;
   FTemplateManager.Save;
+  {$IFNDEF TESTS}
+  RefreshInlineCompletionKeyboardBinding;
+  {$ENDIF}
 
   FView.CloseView(1); // mrOk
 end;

@@ -30,6 +30,12 @@ type
     FAutocompleteProvider: string;
     FAutocompleteModel: string;
     FAutocompleteDelay: Integer;
+    FAutocompleteShortcut: string;
+    FAutocompleteContextMode: TInlineCompletionContextMode;
+    FAutocompleteContextBeforeLines: Integer;
+    FAutocompleteContextAfterLines: Integer;
+    FAutocompleteSuggestionColor: Integer;
+    FAutocompleteMaxTokens: Integer;
     FAzureApiVersion: string;
     FAwsAccessKeyId: string;
     FAwsSecretAccessKey: string;
@@ -111,6 +117,18 @@ type
     procedure SetAutocompleteModel(const AModel: string);
     function GetAutocompleteDelay: Integer;
     procedure SetAutocompleteDelay(const AValue: Integer);
+    function GetAutocompleteShortcut: string;
+    procedure SetAutocompleteShortcut(const AValue: string);
+    function GetAutocompleteContextMode: TInlineCompletionContextMode;
+    procedure SetAutocompleteContextMode(const AValue: TInlineCompletionContextMode);
+    function GetAutocompleteContextBeforeLines: Integer;
+    procedure SetAutocompleteContextBeforeLines(const AValue: Integer);
+    function GetAutocompleteContextAfterLines: Integer;
+    procedure SetAutocompleteContextAfterLines(const AValue: Integer);
+    function GetAutocompleteSuggestionColor: Integer;
+    procedure SetAutocompleteSuggestionColor(const AValue: Integer);
+    function GetAutocompleteMaxTokens: Integer;
+    procedure SetAutocompleteMaxTokens(const AValue: Integer);
 
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
@@ -192,6 +210,12 @@ begin
   FAutocompleteProvider := TConfigDefaults.AutocompleteProvider;
   FAutocompleteModel := TConfigDefaults.AutocompleteModel;
   FAutocompleteDelay := TConfigDefaults.AutocompleteDelay;
+  FAutocompleteShortcut := TConfigDefaults.AutocompleteShortcut;
+  FAutocompleteContextMode := icmWindow;
+  FAutocompleteContextBeforeLines := TConfigDefaults.AutocompleteContextBeforeLines;
+  FAutocompleteContextAfterLines := TConfigDefaults.AutocompleteContextAfterLines;
+  FAutocompleteSuggestionColor := TConfigDefaults.AutocompleteSuggestionColor;
+  FAutocompleteMaxTokens := TConfigDefaults.AutocompleteMaxTokens;
   FInjectDelphiVersion := True;
   
   Load;
@@ -349,6 +373,15 @@ begin
     FAutocompleteProvider := FStorage.ReadString('AutocompleteProvider', TConfigDefaults.AutocompleteProvider);
     FAutocompleteModel := ReadRegString('AutocompleteModel', TConfigDefaults.AutocompleteModel);
     FAutocompleteDelay := ReadRegInt('AutocompleteDelay', TConfigDefaults.AutocompleteDelay);
+    FAutocompleteShortcut := ReadRegString('AutocompleteShortcut', TConfigDefaults.AutocompleteShortcut);
+    if SameText(ReadRegString('AutocompleteContextMode', 'Window'), 'FullFile') then
+      FAutocompleteContextMode := icmFullFile
+    else
+      FAutocompleteContextMode := icmWindow;
+    FAutocompleteContextBeforeLines := ReadRegInt('AutocompleteContextBeforeLines', TConfigDefaults.AutocompleteContextBeforeLines);
+    FAutocompleteContextAfterLines := ReadRegInt('AutocompleteContextAfterLines', TConfigDefaults.AutocompleteContextAfterLines);
+    FAutocompleteSuggestionColor := ReadRegInt('AutocompleteSuggestionColor', TConfigDefaults.AutocompleteSuggestionColor);
+    FAutocompleteMaxTokens := ReadRegInt('AutocompleteMaxTokens', TConfigDefaults.AutocompleteMaxTokens);
     FInjectDelphiVersion := ReadRegInt('InjectDelphiVersion', 1) <> 0;
     FAzureApiVersion   := ReadRegString('AzureApiVersion', TConfigDefaults.AzureApiVersion);
     FAwsRegion         := ReadRegString('AwsRegion', TConfigDefaults.AwsRegion);
@@ -504,6 +537,15 @@ begin
     FStorage.WriteString('AutocompleteProvider', FAutocompleteProvider);
     FStorage.WriteString('AutocompleteModel', FAutocompleteModel);
     FStorage.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
+    FStorage.WriteString('AutocompleteShortcut', FAutocompleteShortcut);
+    if FAutocompleteContextMode = icmFullFile then
+      FStorage.WriteString('AutocompleteContextMode', 'FullFile')
+    else
+      FStorage.WriteString('AutocompleteContextMode', 'Window');
+    FStorage.WriteInteger('AutocompleteContextBeforeLines', FAutocompleteContextBeforeLines);
+    FStorage.WriteInteger('AutocompleteContextAfterLines', FAutocompleteContextAfterLines);
+    FStorage.WriteInteger('AutocompleteSuggestionColor', FAutocompleteSuggestionColor);
+    FStorage.WriteInteger('AutocompleteMaxTokens', FAutocompleteMaxTokens);
     FStorage.WriteInteger('InjectDelphiVersion', IfThen(FInjectDelphiVersion, 1, 0));
     FStorage.WriteString('AzureApiVersion', FAzureApiVersion);
     FStorage.WriteString('AwsRegion', FAwsRegion);
@@ -815,7 +857,81 @@ end;
 
 procedure TRadIAConfig.SetAutocompleteDelay(const AValue: Integer);
 begin
-  FAutocompleteDelay := AValue;
+  if AValue >= 0 then
+    FAutocompleteDelay := AValue
+  else
+    FAutocompleteDelay := TConfigDefaults.AutocompleteDelay;
+end;
+
+function TRadIAConfig.GetAutocompleteShortcut: string;
+begin
+  Result := FAutocompleteShortcut;
+end;
+
+procedure TRadIAConfig.SetAutocompleteShortcut(const AValue: string);
+begin
+  FAutocompleteShortcut := AValue.Trim;
+  if FAutocompleteShortcut.IsEmpty then
+    FAutocompleteShortcut := TConfigDefaults.AutocompleteShortcut;
+end;
+
+function TRadIAConfig.GetAutocompleteContextMode: TInlineCompletionContextMode;
+begin
+  Result := FAutocompleteContextMode;
+end;
+
+procedure TRadIAConfig.SetAutocompleteContextMode(const AValue: TInlineCompletionContextMode);
+begin
+  FAutocompleteContextMode := AValue;
+end;
+
+function TRadIAConfig.GetAutocompleteContextBeforeLines: Integer;
+begin
+  Result := FAutocompleteContextBeforeLines;
+end;
+
+procedure TRadIAConfig.SetAutocompleteContextBeforeLines(const AValue: Integer);
+begin
+  if AValue >= 0 then
+    FAutocompleteContextBeforeLines := AValue
+  else
+    FAutocompleteContextBeforeLines := TConfigDefaults.AutocompleteContextBeforeLines;
+end;
+
+function TRadIAConfig.GetAutocompleteContextAfterLines: Integer;
+begin
+  Result := FAutocompleteContextAfterLines;
+end;
+
+procedure TRadIAConfig.SetAutocompleteContextAfterLines(const AValue: Integer);
+begin
+  if AValue >= 0 then
+    FAutocompleteContextAfterLines := AValue
+  else
+    FAutocompleteContextAfterLines := TConfigDefaults.AutocompleteContextAfterLines;
+end;
+
+function TRadIAConfig.GetAutocompleteSuggestionColor: Integer;
+begin
+  Result := FAutocompleteSuggestionColor;
+end;
+
+procedure TRadIAConfig.SetAutocompleteSuggestionColor(const AValue: Integer);
+begin
+  FAutocompleteSuggestionColor := AValue;
+end;
+
+function TRadIAConfig.GetAutocompleteMaxTokens: Integer;
+begin
+  Result := FAutocompleteMaxTokens;
+end;
+
+procedure TRadIAConfig.SetAutocompleteMaxTokens(const AValue: Integer);
+begin
+  if AValue > 0 then
+    FAutocompleteMaxTokens := AValue
+  else
+    FAutocompleteMaxTokens := TConfigDefaults.AutocompleteMaxTokens;
 end;
 
 function TRadIAConfig.GetSmartConfigEnabled: Boolean;

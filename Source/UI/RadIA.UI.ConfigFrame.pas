@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.ComCtrls, System.Generics.Collections, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, ToolsAPI,
-  RadIA.Core.PromptTemplates, RadIA.UI.ConfigPresenter;
+  RadIA.Core.PromptTemplates, RadIA.Core.ProviderRegistry, RadIA.UI.ConfigPresenter;
 
 type
   TFrameAIConfig = class(TFrame, IConfigView)
@@ -159,6 +159,23 @@ type
     
     tsGeneral: TTabSheet;
     pnlGeneral: TPanel;
+    tsInlineCompletion: TTabSheet;
+    pnlInlineCompletion: TPanel;
+    chkAutocompleteEnabled: TCheckBox;
+    lblAutocompleteProvider: TLabel;
+    cbbAutocompleteProvider: TComboBox;
+    lblAutocompleteModel: TLabel;
+    cbbAutocompleteModel: TComboBox;
+    lblAutocompleteShortcut: TLabel;
+    cbbAutocompleteShortcut: TComboBox;
+    lblAutocompleteContextMode: TLabel;
+    cbbAutocompleteContextMode: TComboBox;
+    lblAutocompleteBeforeLines: TLabel;
+    edtAutocompleteBeforeLines: TEdit;
+    lblAutocompleteAfterLines: TLabel;
+    edtAutocompleteAfterLines: TEdit;
+    lblAutocompleteMaxTokens: TLabel;
+    edtAutocompleteMaxTokens: TEdit;
     chkInjectDelphiVersion: TCheckBox;
     chkLogEnabled: TCheckBox;
     lblLogPath: TLabel;
@@ -166,6 +183,8 @@ type
     btnBrowseLogPath: TButton;
     lblLogMaxSize: TLabel;
     edtLogMaxSize: TEdit;
+    FAutocompleteModelsProvider: IIAProvider;
+    FAutocompleteModelRequestId: Integer;
     
     grpQuota: TGroupBox;
     chkQuotaEnabled: TCheckBox;
@@ -181,8 +200,15 @@ type
     function CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer; const ANumbersOnly: Boolean = False): TEdit;
     function CreateLabel(AParent: TWinControl; const ACaption: string; const ALeft, ATop: Integer): TLabel;
     procedure CreateGeneralTab;
+    procedure CreateInlineCompletionTab;
     procedure CreateTemplateOriginLabel;
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
+    function IsAutocompleteProviderConfigured(const AProviderId: string): Boolean;
+    procedure PopulateAutocompleteProviderOptions;
+    procedure PopulateAutocompleteModelOptions(const AProviderId: string; const ASelectedModel: string = '');
+    procedure PopulateAutocompleteModelItems(const AModels: TArray<string>; const ASelectedModel: string);
+    procedure PopulateAutocompleteShortcutOptions;
+    procedure cbbAutocompleteProviderChange(Sender: TObject);
     procedure OpenUrl(const AUrl: string);
   public
     constructor Create(AOwner: TComponent); override;
@@ -241,6 +267,22 @@ type
     function GetQuotaLimit: string;
     procedure SetQuotaLimit(const AValue: string);
     procedure SetQuotaUsedText(const AText: string);
+    function GetAutocompleteEnabled: Boolean;
+    procedure SetAutocompleteEnabled(const AValue: Boolean);
+    function GetAutocompleteProvider: string;
+    procedure SetAutocompleteProvider(const AValue: string);
+    function GetAutocompleteModel: string;
+    procedure SetAutocompleteModel(const AValue: string);
+    function GetAutocompleteShortcut: string;
+    procedure SetAutocompleteShortcut(const AValue: string);
+    function GetAutocompleteContextModeIndex: Integer;
+    procedure SetAutocompleteContextModeIndex(const AValue: Integer);
+    function GetAutocompleteBeforeLines: string;
+    procedure SetAutocompleteBeforeLines(const AValue: string);
+    function GetAutocompleteAfterLines: string;
+    procedure SetAutocompleteAfterLines(const AValue: string);
+    function GetAutocompleteMaxTokens: string;
+    procedure SetAutocompleteMaxTokens(const AValue: string);
 
     procedure ShowMessageDialog(const AMessage: string);
     function SaveDialogExecute(out AFileName: string): Boolean;
@@ -265,7 +307,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger, Vcl.Themes,
-  RadIA.Core.ProviderRegistry, Winapi.ShellAPI, RadIA.UI.GithubAuthForm, RadIA.UI.WebLoginForm;
+  Winapi.ShellAPI, RadIA.UI.GithubAuthForm, RadIA.UI.WebLoginForm;
 
 {$R *.dfm}
 
@@ -376,6 +418,244 @@ begin
   btnResetQuota.OnClick := btnResetQuotaClick;
 end;
 
+procedure TFrameAIConfig.CreateInlineCompletionTab;
+begin
+  tsInlineCompletion := TTabSheet.Create(Self);
+  tsInlineCompletion.PageControl := pgcSettings;
+  tsInlineCompletion.Caption := 'Inline Completion';
+  tsInlineCompletion.TabVisible := False;
+
+  pnlInlineCompletion := TPanel.Create(Self);
+  pnlInlineCompletion.Parent := tsInlineCompletion;
+  pnlInlineCompletion.Align := alClient;
+  pnlInlineCompletion.BevelOuter := bvNone;
+  pnlInlineCompletion.ShowCaption := False;
+
+  chkAutocompleteEnabled := CreateCheckBox(pnlInlineCompletion, 'Enable inline completion', 16, 16, 240);
+  lblAutocompleteProvider := CreateLabel(pnlInlineCompletion, 'Provider:', 16, 54);
+  cbbAutocompleteProvider := TComboBox.Create(Self);
+  cbbAutocompleteProvider.Parent := pnlInlineCompletion;
+  cbbAutocompleteProvider.Left := 16;
+  cbbAutocompleteProvider.Top := 72;
+  cbbAutocompleteProvider.Width := 180;
+  cbbAutocompleteProvider.Style := csDropDownList;
+  cbbAutocompleteProvider.OnChange := cbbAutocompleteProviderChange;
+
+  lblAutocompleteModel := CreateLabel(pnlInlineCompletion, 'Model:', 220, 54);
+  cbbAutocompleteModel := TComboBox.Create(Self);
+  cbbAutocompleteModel.Parent := pnlInlineCompletion;
+  cbbAutocompleteModel.Left := 220;
+  cbbAutocompleteModel.Top := 72;
+  cbbAutocompleteModel.Width := 220;
+  cbbAutocompleteModel.Style := csDropDownList;
+
+  lblAutocompleteShortcut := CreateLabel(pnlInlineCompletion, 'Shortcut:', 16, 112);
+  cbbAutocompleteShortcut := TComboBox.Create(Self);
+  cbbAutocompleteShortcut.Parent := pnlInlineCompletion;
+  cbbAutocompleteShortcut.Left := 16;
+  cbbAutocompleteShortcut.Top := 130;
+  cbbAutocompleteShortcut.Width := 120;
+  cbbAutocompleteShortcut.Style := csDropDownList;
+
+  lblAutocompleteContextMode := CreateLabel(pnlInlineCompletion, 'Context Mode:', 160, 112);
+
+  cbbAutocompleteContextMode := TComboBox.Create(Self);
+  cbbAutocompleteContextMode.Parent := pnlInlineCompletion;
+  cbbAutocompleteContextMode.Left := 160;
+  cbbAutocompleteContextMode.Top := 130;
+  cbbAutocompleteContextMode.Width := 140;
+  cbbAutocompleteContextMode.Style := csDropDownList;
+  cbbAutocompleteContextMode.Items.Add('Window');
+  cbbAutocompleteContextMode.Items.Add('Full File');
+
+  lblAutocompleteBeforeLines := CreateLabel(pnlInlineCompletion, 'Before Lines:', 16, 170);
+  edtAutocompleteBeforeLines := CreateEdit(pnlInlineCompletion, 16, 188, 100, True);
+  lblAutocompleteAfterLines := CreateLabel(pnlInlineCompletion, 'After Lines:', 140, 170);
+  edtAutocompleteAfterLines := CreateEdit(pnlInlineCompletion, 140, 188, 100, True);
+  lblAutocompleteMaxTokens := CreateLabel(pnlInlineCompletion, 'Max Output Tokens:', 264, 170);
+  edtAutocompleteMaxTokens := CreateEdit(pnlInlineCompletion, 264, 188, 120, True);
+
+  PopulateAutocompleteProviderOptions;
+  PopulateAutocompleteShortcutOptions;
+end;
+
+function TFrameAIConfig.IsAutocompleteProviderConfigured(const AProviderId: string): Boolean;
+var
+  LMeta: TProviderMetadata;
+begin
+  if SameText(AProviderId, 'Ollama') then
+    Exit(not GetCustomUrl('Ollama').Trim.IsEmpty);
+
+  if SameText(AProviderId, 'LMStudio') then
+    Exit(not GetCustomUrl('LMStudio').Trim.IsEmpty);
+
+  if SameText(AProviderId, 'Bedrock') then
+  begin
+    Result := (not GetAwsAccessKeyId.Trim.IsEmpty) and
+              (not GetAwsSecretAccessKey.Trim.IsEmpty) and
+              (not GetAwsRegion.Trim.IsEmpty);
+    Exit;
+  end;
+
+  if GetAuthTypeIndex(AProviderId) = 1 then
+    Exit(True);
+
+  if TProviderRegistry.GetProvider(AProviderId, LMeta) then
+  begin
+    if LMeta.IsDynamic then
+      Exit(True);
+
+    if not LMeta.HasApiKey then
+      Exit(not GetCustomUrl(AProviderId).Trim.IsEmpty);
+  end;
+
+  Result := not GetApiKey(AProviderId).Trim.IsEmpty;
+end;
+
+procedure TFrameAIConfig.PopulateAutocompleteProviderOptions;
+var
+  LProviders: TArray<TProviderMetadata>;
+  LProvider: TProviderMetadata;
+  LSelectedProvider: string;
+begin
+  LSelectedProvider := cbbAutocompleteProvider.Text;
+  cbbAutocompleteProvider.Items.BeginUpdate;
+  try
+    cbbAutocompleteProvider.Items.Clear;
+    LProviders := TProviderRegistry.GetProviders;
+    for LProvider in LProviders do
+    begin
+      if IsAutocompleteProviderConfigured(LProvider.Id) then
+        cbbAutocompleteProvider.Items.Add(LProvider.Id);
+    end;
+
+    if (not LSelectedProvider.IsEmpty) and
+       (cbbAutocompleteProvider.Items.IndexOf(LSelectedProvider) >= 0) then
+      cbbAutocompleteProvider.ItemIndex := cbbAutocompleteProvider.Items.IndexOf(LSelectedProvider)
+    else if cbbAutocompleteProvider.Items.Count > 0 then
+      cbbAutocompleteProvider.ItemIndex := 0
+    else
+      cbbAutocompleteProvider.ItemIndex := -1;
+  finally
+    cbbAutocompleteProvider.Items.EndUpdate;
+  end;
+end;
+
+procedure TFrameAIConfig.PopulateAutocompleteModelOptions(const AProviderId: string;
+  const ASelectedModel: string);
+var
+  LModelsProvider: IIAProvider;
+  LProvider: TProviderMetadata;
+  LSelected: string;
+  LRequestId: Integer;
+begin
+  LSelected := ASelectedModel;
+  if LSelected.IsEmpty then
+    LSelected := TRadIAConfig.GetInstance.GetActiveModel(AProviderId);
+
+  Inc(FAutocompleteModelRequestId);
+  LRequestId := FAutocompleteModelRequestId;
+
+  if SameText(TRadIAConfig.GetInstance.GetProviderAuthType(AProviderId), 'web_login') then
+  begin
+    PopulateAutocompleteModelItems(['Web-Browser'], 'Web-Browser');
+    Exit;
+  end;
+
+  if not LSelected.IsEmpty then
+    PopulateAutocompleteModelItems([LSelected], LSelected)
+  else
+    PopulateAutocompleteModelItems([], '');
+
+  try
+    if AProviderId.Trim.IsEmpty or not TProviderRegistry.GetProvider(AProviderId, LProvider) then
+      Exit;
+
+    LModelsProvider := TProviderRegistry.CreateProvider(AProviderId, TRadIAConfig.GetInstance);
+    FAutocompleteModelsProvider := LModelsProvider;
+    LModelsProvider.FetchAvailableModelsAsync(
+      procedure(AModels: TArray<string>; AError: string)
+      begin
+        TThread.Queue(nil,
+          procedure
+          begin
+            if (csDestroying in ComponentState) or (LRequestId <> FAutocompleteModelRequestId) then
+              Exit;
+
+            if FAutocompleteModelsProvider = LModelsProvider then
+              FAutocompleteModelsProvider := nil;
+
+            if AError.Trim.IsEmpty and (Length(AModels) > 0) then
+              PopulateAutocompleteModelItems(AModels, LSelected)
+            else if cbbAutocompleteModel.Items.Count = 0 then
+              PopulateAutocompleteModelItems(LProvider.DefaultModels, LSelected);
+          end
+        );
+      end
+    );
+  except
+    on E: Exception do
+    begin
+      if cbbAutocompleteModel.Items.Count = 0 then
+        PopulateAutocompleteModelItems(LProvider.DefaultModels, LSelected);
+    end;
+  end;
+end;
+
+procedure TFrameAIConfig.PopulateAutocompleteModelItems(const AModels: TArray<string>;
+  const ASelectedModel: string);
+var
+  LModel: string;
+  LSelected: string;
+begin
+  LSelected := ASelectedModel;
+
+  cbbAutocompleteModel.Items.BeginUpdate;
+  try
+    cbbAutocompleteModel.Items.Clear;
+    for LModel in AModels do
+    begin
+      if (not LModel.Trim.IsEmpty) and (cbbAutocompleteModel.Items.IndexOf(LModel) < 0) then
+        cbbAutocompleteModel.Items.Add(LModel);
+    end;
+
+    if (not LSelected.Trim.IsEmpty) and (cbbAutocompleteModel.Items.IndexOf(LSelected) < 0) then
+      cbbAutocompleteModel.Items.Add(LSelected);
+
+    if not LSelected.Trim.IsEmpty then
+      cbbAutocompleteModel.ItemIndex := cbbAutocompleteModel.Items.IndexOf(LSelected)
+    else if cbbAutocompleteModel.Items.Count > 0 then
+      cbbAutocompleteModel.ItemIndex := 0
+    else
+      cbbAutocompleteModel.ItemIndex := -1;
+  finally
+    cbbAutocompleteModel.Items.EndUpdate;
+  end;
+end;
+
+procedure TFrameAIConfig.PopulateAutocompleteShortcutOptions;
+begin
+  cbbAutocompleteShortcut.Items.BeginUpdate;
+  try
+    cbbAutocompleteShortcut.Items.Clear;
+    cbbAutocompleteShortcut.Items.Add('Alt+Enter');
+    cbbAutocompleteShortcut.Items.Add('Ctrl+Space');
+    cbbAutocompleteShortcut.Items.Add('Ctrl+Alt+Space');
+    cbbAutocompleteShortcut.Items.Add('Ctrl+Shift+Space');
+    cbbAutocompleteShortcut.Items.Add('Ctrl+Alt+Enter');
+  finally
+    cbbAutocompleteShortcut.Items.EndUpdate;
+  end;
+end;
+
+procedure TFrameAIConfig.cbbAutocompleteProviderChange(Sender: TObject);
+begin
+  PopulateAutocompleteModelOptions(
+    cbbAutocompleteProvider.Text,
+    TRadIAConfig.GetInstance.GetActiveModel(cbbAutocompleteProvider.Text)
+  );
+end;
+
 constructor TFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
@@ -406,6 +686,7 @@ begin
   CreateProviderAdvancedControls(tsBedrock, 'Bedrock');
  
   CreateGeneralTab;
+  CreateInlineCompletionTab;
 
   LActiveTheme := 'light';
   LUseIDETheme := False;
@@ -427,6 +708,16 @@ end;
 
 destructor TFrameAIConfig.Destroy;
 begin
+  Inc(FAutocompleteModelRequestId);
+  if Assigned(FAutocompleteModelsProvider) then
+  begin
+    try
+      FAutocompleteModelsProvider.CancelCurrentRequest;
+    except
+    end;
+    FAutocompleteModelsProvider := nil;
+  end;
+
   FPresenter.Free;
   FEdtTemperatures.Free;
   FEdtMaxTokens.Free;
@@ -940,6 +1231,8 @@ procedure TFrameAIConfig.SelectCategoryByName(const ACategoryName: string);
 begin
   if SameText(ACategoryName, 'General / Logs') then
     pgcSettings.ActivePage := tsGeneral
+  else if SameText(ACategoryName, 'Inline Completion') then
+    pgcSettings.ActivePage := tsInlineCompletion
   else if SameText(ACategoryName, 'System Prompt') then
     pgcSettings.ActivePage := tsSystemPrompt
   else if SameText(ACategoryName, 'Templates') then
@@ -1295,6 +1588,42 @@ procedure TFrameAIConfig.SetQuotaEnabled(const AValue: Boolean); begin chkQuotaE
 function TFrameAIConfig.GetQuotaLimit: string; begin Result := edtQuotaLimit.Text; end;
 procedure TFrameAIConfig.SetQuotaLimit(const AValue: string); begin edtQuotaLimit.Text := AValue; end;
 procedure TFrameAIConfig.SetQuotaUsedText(const AText: string); begin lblQuotaUsed.Caption := AText; end;
+function TFrameAIConfig.GetAutocompleteEnabled: Boolean; begin Result := chkAutocompleteEnabled.Checked; end;
+procedure TFrameAIConfig.SetAutocompleteEnabled(const AValue: Boolean); begin chkAutocompleteEnabled.Checked := AValue; end;
+function TFrameAIConfig.GetAutocompleteProvider: string; begin Result := cbbAutocompleteProvider.Text; end;
+procedure TFrameAIConfig.SetAutocompleteProvider(const AValue: string);
+begin
+  PopulateAutocompleteProviderOptions;
+
+  if cbbAutocompleteProvider.Items.IndexOf(AValue) >= 0 then
+    cbbAutocompleteProvider.ItemIndex := cbbAutocompleteProvider.Items.IndexOf(AValue)
+  else if cbbAutocompleteProvider.Items.Count > 0 then
+    cbbAutocompleteProvider.ItemIndex := 0
+  else
+    cbbAutocompleteProvider.ItemIndex := -1;
+
+  PopulateAutocompleteModelOptions(cbbAutocompleteProvider.Text, '');
+end;
+function TFrameAIConfig.GetAutocompleteModel: string; begin Result := cbbAutocompleteModel.Text; end;
+procedure TFrameAIConfig.SetAutocompleteModel(const AValue: string);
+begin
+  PopulateAutocompleteModelOptions(cbbAutocompleteProvider.Text, AValue);
+end;
+function TFrameAIConfig.GetAutocompleteShortcut: string; begin Result := cbbAutocompleteShortcut.Text; end;
+procedure TFrameAIConfig.SetAutocompleteShortcut(const AValue: string);
+begin
+  if cbbAutocompleteShortcut.Items.IndexOf(AValue) < 0 then
+    cbbAutocompleteShortcut.Items.Add(AValue);
+  cbbAutocompleteShortcut.ItemIndex := cbbAutocompleteShortcut.Items.IndexOf(AValue);
+end;
+function TFrameAIConfig.GetAutocompleteContextModeIndex: Integer; begin Result := cbbAutocompleteContextMode.ItemIndex; end;
+procedure TFrameAIConfig.SetAutocompleteContextModeIndex(const AValue: Integer); begin cbbAutocompleteContextMode.ItemIndex := AValue; end;
+function TFrameAIConfig.GetAutocompleteBeforeLines: string; begin Result := edtAutocompleteBeforeLines.Text; end;
+procedure TFrameAIConfig.SetAutocompleteBeforeLines(const AValue: string); begin edtAutocompleteBeforeLines.Text := AValue; end;
+function TFrameAIConfig.GetAutocompleteAfterLines: string; begin Result := edtAutocompleteAfterLines.Text; end;
+procedure TFrameAIConfig.SetAutocompleteAfterLines(const AValue: string); begin edtAutocompleteAfterLines.Text := AValue; end;
+function TFrameAIConfig.GetAutocompleteMaxTokens: string; begin Result := edtAutocompleteMaxTokens.Text; end;
+procedure TFrameAIConfig.SetAutocompleteMaxTokens(const AValue: string); begin edtAutocompleteMaxTokens.Text := AValue; end;
 
 procedure TFrameAIConfig.ShowMessageDialog(const AMessage: string);
 begin

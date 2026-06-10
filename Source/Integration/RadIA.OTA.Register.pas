@@ -43,7 +43,7 @@ implementation
 uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
-  RadIA.Core.Logger, RadIA.OTA.Options;
+  RadIA.Core.Logger, RadIA.OTA.Options, RadIA.OTA.InlineCompletion;
 
 const
   GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;
@@ -192,6 +192,7 @@ begin
   
   FEditorHook := TRadIAEditorHook.Create(nil);
   TRadIAEditorHook(FEditorHook).Install;
+  RegisterInlineCompletionKeyboardBinding;
   RegisterMenus;
   RegisterOptions;
   
@@ -219,6 +220,7 @@ begin
   end;
   UnregisterOptions;
   UnregisterMenus;
+  UnregisterInlineCompletionKeyboardBinding;
   TRadIAEditorHook(FEditorHook).Uninstall;
   FEditorHook.Free;
   FOptionsPages.Free;
@@ -251,6 +253,7 @@ begin
   if Supports(BorlandIDEServices, INTAEnvironmentOptionsServices, LOptionsServices) then
   begin
     AddPage('General', ptNone);
+    AddPage('Inline Completion', ptInlineCompletion);
     AddPage('System Prompt', ptSystem);
     AddPage('Templates', ptTemplates);
     AddPage('Gemini', ptGemini);

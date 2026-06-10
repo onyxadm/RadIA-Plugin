@@ -23,12 +23,15 @@ uses
   RadIA.Core.TokenUsage in '..\Source\Core\RadIA.Core.TokenUsage.pas',
   RadIA.Core.ConversationExporter in '..\Source\Core\RadIA.Core.ConversationExporter.pas',
   RadIA.Core.PromptTemplates in '..\Source\Core\RadIA.Core.PromptTemplates.pas',
+  RadIA.Core.InlineCompletion in '..\Source\Core\RadIA.Core.InlineCompletion.pas',
+  RadIA.Core.InlineCompletionService in '..\Source\Core\RadIA.Core.InlineCompletionService.pas',
   RadIA.Core.ProjectContext in '..\Source\Core\RadIA.Core.ProjectContext.pas',
   RadIA.Core.Sessions in '..\Source\Core\RadIA.Core.Sessions.pas',
   RadIA.Core.DTO.Generator in '..\Source\Core\RadIA.Core.DTO.Generator.pas',
   RadIA.Core.ProjectGenerator in '..\Source\Core\RadIA.Core.ProjectGenerator.pas',
   RadIA.OTA.Helper in '..\Source\Integration\RadIA.OTA.Helper.pas',
   RadIA.OTA.EditorHook in '..\Source\Integration\RadIA.OTA.EditorHook.pas',
+  RadIA.OTA.InlineCompletion in '..\Source\Integration\RadIA.OTA.InlineCompletion.pas',
   RadIA.OTA.ContextParser in '..\Source\Integration\RadIA.OTA.ContextParser.pas',
   RadIA.OTA.MessageViewHook in '..\Source\Integration\RadIA.OTA.MessageViewHook.pas',
   RadIA.Core.Mediator in '..\Source\Core\RadIA.Core.Mediator.pas',
@@ -73,7 +76,8 @@ uses
   RadIA.Tests.JSONProviders in 'Source\RadIA.Tests.JSONProviders.pas',
   RadIA.Tests.Analysis in 'Source\RadIA.Tests.Analysis.pas',
   RadIA.Tests.ChatPresenter in 'Source\RadIA.Tests.ChatPresenter.pas',
-  RadIA.Tests.ConfigPresenter in 'Source\RadIA.Tests.ConfigPresenter.pas';
+  RadIA.Tests.ConfigPresenter in 'Source\RadIA.Tests.ConfigPresenter.pas',
+  RadIA.Tests.InlineCompletion in 'Source\RadIA.Tests.InlineCompletion.pas';
 
 var
   Runner: ITestRunner;

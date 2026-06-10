@@ -8,7 +8,7 @@ uses
 
 type
   { Provider page configuration tag }
-  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio, ptSystem, ptTemplates);
+  TRadIAPageTag = (ptNone, ptInlineCompletion, ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio, ptSystem, ptTemplates);
 
   { INTAAddInOptions implementation for RadIA Options }
   TRadIAAddInOptions = class(TInterfacedObject, INTAAddInOptions)
@@ -55,6 +55,7 @@ function TRadIAAddInOptions.GetCaption: string;
 begin
   case FTag of
     ptNone: Result := 'RadIA.General';
+    ptInlineCompletion: Result := 'RadIA.Inline Completion';
     ptSystem: Result := 'RadIA.System Prompt';
     ptTemplates: Result := 'RadIA.Templates';
     ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio: 
@@ -79,6 +80,7 @@ begin
     // Selecionar a aba adequada
     case FTag of
       ptNone: FFrame.SelectCategoryByName('General / Logs');
+      ptInlineCompletion: FFrame.SelectCategoryByName('Inline Completion');
       ptSystem: FFrame.SelectCategoryByName('System Prompt');
       ptTemplates: FFrame.SelectCategoryByName('Templates');
       ptGemini: FFrame.SelectCategoryByName('Gemini');

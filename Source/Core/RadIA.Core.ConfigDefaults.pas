@@ -21,8 +21,13 @@ type
   public
     class function ActiveProvider: string; static;
     class function AutocompleteDelay: Integer; static;
+    class function AutocompleteMaxTokens: Integer; static;
     class function AutocompleteModel: string; static;
+    class function AutocompleteShortcut: string; static;
     class function AutocompleteProvider: string; static;
+    class function AutocompleteContextBeforeLines: Integer; static;
+    class function AutocompleteContextAfterLines: Integer; static;
+    class function AutocompleteSuggestionColor: Integer; static;
     class function AzureApiVersion: string; static;
     class function AwsRegion: string; static;
     class function LogMaxSizeKB: Integer; static;
@@ -48,14 +53,39 @@ begin
   Result := 300;
 end;
 
+class function TConfigDefaults.AutocompleteMaxTokens: Integer;
+begin
+  Result := 512;
+end;
+
 class function TConfigDefaults.AutocompleteModel: string;
 begin
   Result := 'gemini-1.5-flash';
 end;
 
+class function TConfigDefaults.AutocompleteShortcut: string;
+begin
+  Result := 'Alt+Enter';
+end;
+
 class function TConfigDefaults.AutocompleteProvider: string;
 begin
   Result := 'Gemini';
+end;
+
+class function TConfigDefaults.AutocompleteContextBeforeLines: Integer;
+begin
+  Result := 60;
+end;
+
+class function TConfigDefaults.AutocompleteContextAfterLines: Integer;
+begin
+  Result := 20;
+end;
+
+class function TConfigDefaults.AutocompleteSuggestionColor: Integer;
+begin
+  Result := $777777;
 end;
 
 class function TConfigDefaults.AzureApiVersion: string;

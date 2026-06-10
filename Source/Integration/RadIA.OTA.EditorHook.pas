@@ -76,7 +76,7 @@ uses
   {$IFNDEF TESTS}
   RadIA.OTA.DockableForm,
   {$ENDIF}
-  RadIA.Core.Logger;
+  RadIA.Core.Logger, RadIA.OTA.InlineCompletion;
 
 const
   CEditorHookDelayMs = 1200;
@@ -110,7 +110,9 @@ type
   private
     FHook: TRadIAEditorHook;
     FSourceEditor: IOTASourceEditor;
+    FEditViewNotifiers: TInterfaceList;
     FIndex: Integer;
+    procedure AddEditViewNotifier(const AView: IOTAEditView);
     procedure RemoveNotifier;
   public
     constructor Create(AHook: TRadIAEditorHook; const ASourceEditor: IOTASourceEditor);
@@ -175,19 +177,38 @@ end;
 { TRadIASourceEditorNotifier }
 
 constructor TRadIASourceEditorNotifier.Create(AHook: TRadIAEditorHook; const ASourceEditor: IOTASourceEditor);
+var
+  I: Integer;
 begin
   inherited Create;
   FHook := AHook;
   FSourceEditor := ASourceEditor;
+  FEditViewNotifiers := TInterfaceList.Create;
   FIndex := -1;
   if Assigned(FSourceEditor) then
+  begin
     FIndex := FSourceEditor.AddNotifier(Self);
+    for I := 0 to FSourceEditor.EditViewCount - 1 do
+      AddEditViewNotifier(FSourceEditor.EditViews[I]);
+  end;
 end;
 
 destructor TRadIASourceEditorNotifier.Destroy;
 begin
   RemoveNotifier;
+  FEditViewNotifiers.Free;
   inherited Destroy;
+end;
+
+procedure TRadIASourceEditorNotifier.AddEditViewNotifier(const AView: IOTAEditView);
+var
+  LNotifier: INTAEditViewNotifier;
+begin
+  if not Assigned(AView) or not Assigned(FSourceEditor) then
+    Exit;
+
+  LNotifier := TRadIAInlineCompletionEditViewNotifier.Create(FSourceEditor.FileName, AView);
+  FEditViewNotifiers.Add(LNotifier);
 end;
 
 procedure TRadIASourceEditorNotifier.Destroyed;
@@ -197,6 +218,9 @@ end;
 
 procedure TRadIASourceEditorNotifier.RemoveNotifier;
 begin
+  if Assigned(FEditViewNotifiers) then
+    FEditViewNotifiers.Clear;
+
   if Assigned(FSourceEditor) and (FIndex >= 0) then
   begin
     FSourceEditor.RemoveNotifier(FIndex);
@@ -213,6 +237,9 @@ end;
 
 procedure TRadIASourceEditorNotifier.ViewNotification(const View: IOTAEditView; Operation: TOperation);
 begin
+  if Operation = opInsert then
+    AddEditViewNotifier(View);
+
   if (Operation = opInsert) and Assigned(FHook) then
     FHook.QueueHookActiveEditor;
 end;

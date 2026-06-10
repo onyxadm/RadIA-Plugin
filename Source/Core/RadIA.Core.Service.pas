@@ -555,6 +555,11 @@ begin
         ATemperature := 0.3;
         AMaxTokens := 8192;
       end;
+      rpInlineCompletion:
+      begin
+        ATemperature := 0.1;
+        AMaxTokens := FConfig.GetAutocompleteMaxTokens;
+      end;
     else
       ATemperature := 0.7;
       AMaxTokens := 8192;

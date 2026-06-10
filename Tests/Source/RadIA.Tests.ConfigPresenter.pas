@@ -35,6 +35,14 @@ type
     QuotaEnabled: Boolean;
     QuotaLimit: string;
     QuotaUsedText: string;
+    AutocompleteEnabled: Boolean;
+    AutocompleteProvider: string;
+    AutocompleteModel: string;
+    AutocompleteShortcut: string;
+    AutocompleteContextModeIndex: Integer;
+    AutocompleteBeforeLines: string;
+    AutocompleteAfterLines: string;
+    AutocompleteMaxTokens: string;
 
     LastMessageDialogText: string;
     SaveDialogResult: Boolean;
@@ -114,6 +122,22 @@ type
     function GetQuotaLimit: string;
     procedure SetQuotaLimit(const AValue: string);
     procedure SetQuotaUsedText(const AText: string);
+    function GetAutocompleteEnabled: Boolean;
+    procedure SetAutocompleteEnabled(const AValue: Boolean);
+    function GetAutocompleteProvider: string;
+    procedure SetAutocompleteProvider(const AValue: string);
+    function GetAutocompleteModel: string;
+    procedure SetAutocompleteModel(const AValue: string);
+    function GetAutocompleteShortcut: string;
+    procedure SetAutocompleteShortcut(const AValue: string);
+    function GetAutocompleteContextModeIndex: Integer;
+    procedure SetAutocompleteContextModeIndex(const AValue: Integer);
+    function GetAutocompleteBeforeLines: string;
+    procedure SetAutocompleteBeforeLines(const AValue: string);
+    function GetAutocompleteAfterLines: string;
+    procedure SetAutocompleteAfterLines(const AValue: string);
+    function GetAutocompleteMaxTokens: string;
+    procedure SetAutocompleteMaxTokens(const AValue: string);
 
     procedure ShowMessageDialog(const AMessage: string);
     function SaveDialogExecute(out AFileName: string): Boolean;
@@ -181,6 +205,14 @@ begin
   CloseViewCalled := False;
   FocusTemplateNameCalled := False;
   InjectDelphiVersion := True;
+  AutocompleteEnabled := True;
+  AutocompleteProvider := 'Gemini';
+  AutocompleteModel := 'gemini-1.5-flash';
+  AutocompleteShortcut := 'Alt+Enter';
+  AutocompleteContextModeIndex := 0;
+  AutocompleteBeforeLines := '60';
+  AutocompleteAfterLines := '20';
+  AutocompleteMaxTokens := '512';
 end;
 
 destructor TMockConfigView.Destroy;
@@ -286,6 +318,22 @@ procedure TMockConfigView.SetQuotaEnabled(const AValue: Boolean); begin QuotaEna
 function TMockConfigView.GetQuotaLimit: string; begin Result := QuotaLimit; end;
 procedure TMockConfigView.SetQuotaLimit(const AValue: string); begin QuotaLimit := AValue; end;
 procedure TMockConfigView.SetQuotaUsedText(const AText: string); begin QuotaUsedText := AText; end;
+function TMockConfigView.GetAutocompleteEnabled: Boolean; begin Result := AutocompleteEnabled; end;
+procedure TMockConfigView.SetAutocompleteEnabled(const AValue: Boolean); begin AutocompleteEnabled := AValue; end;
+function TMockConfigView.GetAutocompleteProvider: string; begin Result := AutocompleteProvider; end;
+procedure TMockConfigView.SetAutocompleteProvider(const AValue: string); begin AutocompleteProvider := AValue; end;
+function TMockConfigView.GetAutocompleteModel: string; begin Result := AutocompleteModel; end;
+procedure TMockConfigView.SetAutocompleteModel(const AValue: string); begin AutocompleteModel := AValue; end;
+function TMockConfigView.GetAutocompleteShortcut: string; begin Result := AutocompleteShortcut; end;
+procedure TMockConfigView.SetAutocompleteShortcut(const AValue: string); begin AutocompleteShortcut := AValue; end;
+function TMockConfigView.GetAutocompleteContextModeIndex: Integer; begin Result := AutocompleteContextModeIndex; end;
+procedure TMockConfigView.SetAutocompleteContextModeIndex(const AValue: Integer); begin AutocompleteContextModeIndex := AValue; end;
+function TMockConfigView.GetAutocompleteBeforeLines: string; begin Result := AutocompleteBeforeLines; end;
+procedure TMockConfigView.SetAutocompleteBeforeLines(const AValue: string); begin AutocompleteBeforeLines := AValue; end;
+function TMockConfigView.GetAutocompleteAfterLines: string; begin Result := AutocompleteAfterLines; end;
+procedure TMockConfigView.SetAutocompleteAfterLines(const AValue: string); begin AutocompleteAfterLines := AValue; end;
+function TMockConfigView.GetAutocompleteMaxTokens: string; begin Result := AutocompleteMaxTokens; end;
+procedure TMockConfigView.SetAutocompleteMaxTokens(const AValue: string); begin AutocompleteMaxTokens := AValue; end;
 
 procedure TMockConfigView.ShowMessageDialog(const AMessage: string);
 begin

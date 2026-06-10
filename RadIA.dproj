@@ -118,6 +118,8 @@
         <DCCReference Include="Source\Core\RadIA.Core.TokenUsage.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.ConversationExporter.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.PromptTemplates.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.InlineCompletion.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.InlineCompletionService.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.ProjectContext.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Mediator.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Base.pas"/>
@@ -130,6 +132,7 @@
         <DCCReference Include="Source\Integration\RadIA.OTA.Register.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Helper.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.EditorHook.pas"/>
+        <DCCReference Include="Source\Integration\RadIA.OTA.InlineCompletion.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.MessageViewHook.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.ContextParser.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.DockableForm.pas"/>

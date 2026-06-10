@@ -65,6 +65,7 @@ begin
   tvCategories.OnChange := tvCategoriesChange;
   
   LNodeGeneral := tvCategories.Items.Add(nil, 'General / Logs');
+  tvCategories.Items.Add(nil, 'Inline Completion');
   tvCategories.Items.Add(nil, 'System Prompt');
   tvCategories.Items.Add(nil, 'Templates');
   LNodeProviders := tvCategories.Items.Add(nil, 'AI Providers');

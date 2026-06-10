@@ -7,7 +7,10 @@ type
   TAIMessageRole = (mrUser, mrAssistant, mrSystem);
   
   { Enum representing the AI request profiles for dynamic configuration }
-  TAIRequestProfile = (rpGeneralChat, rpExplainCode, rpRefactorCode, rpFindBugs, rpGenerateTests);
+  TAIRequestProfile = (rpGeneralChat, rpExplainCode, rpRefactorCode, rpFindBugs, rpGenerateTests, rpInlineCompletion);
+
+  { Context source used by inline completion prompts }
+  TInlineCompletionContextMode = (icmWindow, icmFullFile);
 
 const
   { Standard models for Google Gemini }

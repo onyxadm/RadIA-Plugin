@@ -111,6 +111,18 @@ type
     procedure SetAutocompleteModel(const AModel: string);
     function GetAutocompleteDelay: Integer;
     procedure SetAutocompleteDelay(const AValue: Integer);
+    function GetAutocompleteShortcut: string;
+    procedure SetAutocompleteShortcut(const AValue: string);
+    function GetAutocompleteContextMode: TInlineCompletionContextMode;
+    procedure SetAutocompleteContextMode(const AValue: TInlineCompletionContextMode);
+    function GetAutocompleteContextBeforeLines: Integer;
+    procedure SetAutocompleteContextBeforeLines(const AValue: Integer);
+    function GetAutocompleteContextAfterLines: Integer;
+    procedure SetAutocompleteContextAfterLines(const AValue: Integer);
+    function GetAutocompleteSuggestionColor: Integer;
+    procedure SetAutocompleteSuggestionColor(const AValue: Integer);
+    function GetAutocompleteMaxTokens: Integer;
+    procedure SetAutocompleteMaxTokens(const AValue: Integer);
     function GetProviderAuthType(const AProviderName: string): string;
     procedure SetProviderAuthType(const AProviderName: string; const AValue: string);
   end;
@@ -542,6 +554,60 @@ begin
 end;
 
 procedure TMockConfig.SetAutocompleteDelay(const AValue: Integer);
+begin
+end;
+
+function TMockConfig.GetAutocompleteShortcut: string;
+begin
+  Result := 'Alt+Enter';
+end;
+
+procedure TMockConfig.SetAutocompleteShortcut(const AValue: string);
+begin
+end;
+
+function TMockConfig.GetAutocompleteContextMode: TInlineCompletionContextMode;
+begin
+  Result := icmWindow;
+end;
+
+procedure TMockConfig.SetAutocompleteContextMode(const AValue: TInlineCompletionContextMode);
+begin
+end;
+
+function TMockConfig.GetAutocompleteContextBeforeLines: Integer;
+begin
+  Result := 60;
+end;
+
+procedure TMockConfig.SetAutocompleteContextBeforeLines(const AValue: Integer);
+begin
+end;
+
+function TMockConfig.GetAutocompleteContextAfterLines: Integer;
+begin
+  Result := 20;
+end;
+
+procedure TMockConfig.SetAutocompleteContextAfterLines(const AValue: Integer);
+begin
+end;
+
+function TMockConfig.GetAutocompleteSuggestionColor: Integer;
+begin
+  Result := $777777;
+end;
+
+procedure TMockConfig.SetAutocompleteSuggestionColor(const AValue: Integer);
+begin
+end;
+
+function TMockConfig.GetAutocompleteMaxTokens: Integer;
+begin
+  Result := 512;
+end;
+
+procedure TMockConfig.SetAutocompleteMaxTokens(const AValue: Integer);
 begin
 end;
 

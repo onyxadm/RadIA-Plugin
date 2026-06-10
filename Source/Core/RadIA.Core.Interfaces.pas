@@ -107,6 +107,18 @@ type
     procedure SetAutocompleteModel(const AModel: string);
     function GetAutocompleteDelay: Integer;
     procedure SetAutocompleteDelay(const AValue: Integer);
+    function GetAutocompleteShortcut: string;
+    procedure SetAutocompleteShortcut(const AValue: string);
+    function GetAutocompleteContextMode: TInlineCompletionContextMode;
+    procedure SetAutocompleteContextMode(const AValue: TInlineCompletionContextMode);
+    function GetAutocompleteContextBeforeLines: Integer;
+    procedure SetAutocompleteContextBeforeLines(const AValue: Integer);
+    function GetAutocompleteContextAfterLines: Integer;
+    procedure SetAutocompleteContextAfterLines(const AValue: Integer);
+    function GetAutocompleteSuggestionColor: Integer;
+    procedure SetAutocompleteSuggestionColor(const AValue: Integer);
+    function GetAutocompleteMaxTokens: Integer;
+    procedure SetAutocompleteMaxTokens(const AValue: Integer);
 
     function GetSmartConfigEnabled: Boolean;
     procedure SetSmartConfigEnabled(const AValue: Boolean);
@@ -154,6 +166,12 @@ type
     property AutocompleteProvider: string read GetAutocompleteProvider write SetAutocompleteProvider;
     property AutocompleteModel: string read GetAutocompleteModel write SetAutocompleteModel;
     property AutocompleteDelay: Integer read GetAutocompleteDelay write SetAutocompleteDelay;
+    property AutocompleteShortcut: string read GetAutocompleteShortcut write SetAutocompleteShortcut;
+    property AutocompleteContextMode: TInlineCompletionContextMode read GetAutocompleteContextMode write SetAutocompleteContextMode;
+    property AutocompleteContextBeforeLines: Integer read GetAutocompleteContextBeforeLines write SetAutocompleteContextBeforeLines;
+    property AutocompleteContextAfterLines: Integer read GetAutocompleteContextAfterLines write SetAutocompleteContextAfterLines;
+    property AutocompleteSuggestionColor: Integer read GetAutocompleteSuggestionColor write SetAutocompleteSuggestionColor;
+    property AutocompleteMaxTokens: Integer read GetAutocompleteMaxTokens write SetAutocompleteMaxTokens;
     property SmartConfigEnabled: Boolean read GetSmartConfigEnabled write SetSmartConfigEnabled;
     property LogEnabled: Boolean read GetLogEnabled write SetLogEnabled;
     property LogPath: string read GetLogPath write SetLogPath;
