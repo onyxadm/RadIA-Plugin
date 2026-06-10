@@ -104,6 +104,9 @@ begin
   Assert.IsTrue(LPrompt.Contains('The user is writing code using Embarcadero'));
   Assert.IsTrue(LPrompt.Contains('Only suggest code compatible with'));
   Assert.IsTrue(LPrompt.Contains('Please reply in'));
+  Assert.IsTrue(LPrompt.Contains('Delphi code containing the marker'));
+  Assert.IsTrue(LPrompt.Contains('Example inside a method body'));
+  Assert.IsFalse(LPrompt.Contains('Code before marker:'));
 end;
 
 procedure TTestInlineCompletion.TestResponseCleanerRemovesMarkdownFence;

@@ -126,28 +126,9 @@ end;
 class function TInlineCompletionContextBuilder.BuildPrompt(
   const AContext: TInlineCompletionContext): string;
 var
-  LMarkerPos: Integer;
-  LPrefix: string;
-  LSuffix: string;
   LDelphiVersionName: string;
   LLanguageInstruction: string;
 begin
-  LMarkerPos := Pos(CInlineCompletionCursorMarker, AContext.Text);
-  if LMarkerPos > 0 then
-  begin
-    LPrefix := Copy(AContext.Text, 1, LMarkerPos - 1);
-    LSuffix := Copy(
-      AContext.Text,
-      LMarkerPos + Length(CInlineCompletionCursorMarker),
-      MaxInt
-    );
-  end
-  else
-  begin
-    LPrefix := AContext.Text;
-    LSuffix := '';
-  end;
-
   LDelphiVersionName := TRadIAOTAHelper.GetDelphiVersionName;
   LLanguageInstruction := TRadIAOTAHelper.GetPreferredLanguageInstruction;
 
@@ -172,19 +153,18 @@ begin
     'Do not add units to uses unless the marker is inside a uses clause.' + sLineBreak +
     'Use Delphi Object Pascal syntax, not Free Pascal-only syntax.' + sLineBreak +
     'Keep the suggestion minimal: one expression, statement, or declaration when possible.' + sLineBreak +
+    'Example inside a method body: return "Result := A + B;" only.' + sLineBreak +
+    'Example inside class private: return "FName: string;" only.' + sLineBreak +
+    'Example after a function signature: return "begin" only if the suffix needs it.' + sLineBreak +
     'The user is writing code using Embarcadero ' + LDelphiVersionName + '.' + sLineBreak +
     'Only suggest code compatible with ' + LDelphiVersionName + '.' + sLineBreak +
     LLanguageInstruction + sLineBreak +
     'If there is no confident local completion, return an empty response.' + sLineBreak +
     'Prefer at most one short line unless the cursor clearly needs a block.' + sLineBreak +
     'File: ' + ExtractFileName(AContext.FileName) + sLineBreak + sLineBreak +
-    'Code before marker:' + sLineBreak +
+    'Delphi code containing the marker:' + sLineBreak +
     '```pascal' + sLineBreak +
-    LPrefix + CInlineCompletionCursorMarker + sLineBreak +
-    '```' + sLineBreak + sLineBreak +
-    'Code after marker:' + sLineBreak +
-    '```pascal' + sLineBreak +
-    LSuffix + sLineBreak +
+    AContext.Text + sLineBreak +
     '```';
 end;
 
