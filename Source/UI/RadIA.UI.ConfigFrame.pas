@@ -177,6 +177,11 @@ type
     procedure btnBrowseLogPathClick(Sender: TObject);
     procedure btnResetQuotaClick(Sender: TObject);
     
+    function CreateCheckBox(AParent: TWinControl; const ACaption: string; const ALeft, ATop, AWidth: Integer): TCheckBox;
+    function CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer; const ANumbersOnly: Boolean = False): TEdit;
+    function CreateLabel(AParent: TWinControl; const ACaption: string; const ALeft, ATop: Integer): TLabel;
+    procedure CreateGeneralTab;
+    procedure CreateTemplateOriginLabel;
     procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
     procedure OpenUrl(const AUrl: string);
   public
@@ -268,6 +273,109 @@ type
   TTabSheetColorHack = class(TTabSheet);
   TWinControlHack = class(TWinControl);
 
+function TFrameAIConfig.CreateCheckBox(AParent: TWinControl; const ACaption: string;
+  const ALeft, ATop, AWidth: Integer): TCheckBox;
+begin
+  Result := TCheckBox.Create(Self);
+  Result.Parent := AParent;
+  Result.Left := ALeft;
+  Result.Top := ATop;
+  Result.Width := AWidth;
+  Result.Height := 23;
+  Result.Caption := ACaption;
+end;
+
+function TFrameAIConfig.CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer;
+  const ANumbersOnly: Boolean): TEdit;
+begin
+  Result := TEdit.Create(Self);
+  Result.Parent := AParent;
+  Result.Left := ALeft;
+  Result.Top := ATop;
+  Result.Width := AWidth;
+  Result.NumbersOnly := ANumbersOnly;
+end;
+
+function TFrameAIConfig.CreateLabel(AParent: TWinControl; const ACaption: string;
+  const ALeft, ATop: Integer): TLabel;
+begin
+  Result := TLabel.Create(Self);
+  Result.Parent := AParent;
+  Result.Left := ALeft;
+  Result.Top := ATop;
+  Result.Caption := ACaption;
+end;
+
+procedure TFrameAIConfig.CreateTemplateOriginLabel;
+begin
+  lblTemplateOrigin := TLabel.Create(Self);
+  lblTemplateOrigin.Parent := pnlTemplatesClient;
+  lblTemplateOrigin.Left := 14;
+  lblTemplateOrigin.Top := btnSaveTemplate.Top + btnSaveTemplate.Height + 12;
+  lblTemplateOrigin.Font.Assign(lblTemplateName.Font);
+  lblTemplateOrigin.Font.Style := [fsItalic];
+  lblTemplateOrigin.Caption := '';
+end;
+
+procedure TFrameAIConfig.CreateGeneralTab;
+begin
+  tsGeneral := TTabSheet.Create(Self);
+  tsGeneral.PageControl := pgcSettings;
+  tsGeneral.Caption := 'General / Logs';
+  tsGeneral.TabVisible := False;
+
+  pnlGeneral := TPanel.Create(Self);
+  pnlGeneral.Parent := tsGeneral;
+  pnlGeneral.Align := alClient;
+  pnlGeneral.BevelOuter := bvNone;
+  pnlGeneral.ShowCaption := False;
+
+  FChkSmartConfig := CreateCheckBox(pnlGeneral, 'Auto (Smart Parameters)', 16, 16, 300);
+  chkInjectDelphiVersion := CreateCheckBox(
+    pnlGeneral,
+    'Inject Delphi version in prompt',
+    16,
+    48,
+    300);
+  chkLogEnabled := CreateCheckBox(pnlGeneral, 'Enable logging', 16, 80, 200);
+  lblLogPath := CreateLabel(pnlGeneral, 'Log Folder Path:', 16, 112);
+  edtLogPath := CreateEdit(pnlGeneral, 16, 130, 320);
+
+  btnBrowseLogPath := TButton.Create(Self);
+  btnBrowseLogPath.Parent := pnlGeneral;
+  btnBrowseLogPath.Left := 342;
+  btnBrowseLogPath.Top := 128;
+  btnBrowseLogPath.Width := 30;
+  btnBrowseLogPath.Height := 23;
+  btnBrowseLogPath.Caption := '...';
+  btnBrowseLogPath.OnClick := btnBrowseLogPathClick;
+
+  lblLogMaxSize := CreateLabel(pnlGeneral, 'Max Log File Size (KB):', 16, 168);
+  edtLogMaxSize := CreateEdit(pnlGeneral, 16, 186, 100, True);
+
+  grpQuota := TGroupBox.Create(Self);
+  grpQuota.Parent := pnlGeneral;
+  grpQuota.Left := 16;
+  grpQuota.Top := 224;
+  grpQuota.Width := 356;
+  grpQuota.Height := 140;
+  grpQuota.Caption := ' Local Token Quota ';
+
+  chkQuotaEnabled := CreateCheckBox(grpQuota, 'Enable local token quota', 16, 24, 200);
+  lblQuotaLimit := CreateLabel(grpQuota, 'Monthly Token Limit:', 16, 54);
+  edtQuotaLimit := CreateEdit(grpQuota, 16, 72, 150, True);
+  lblQuotaUsed := CreateLabel(grpQuota, 'Monthly Used Tokens: 0', 16, 110);
+
+  btnResetQuota := TButton.Create(Self);
+  btnResetQuota.Parent := grpQuota;
+  btnResetQuota.Left := 240;
+  btnResetQuota.Top := 68;
+  btnResetQuota.Width := 100;
+  btnResetQuota.Height := 25;
+  btnResetQuota.Caption := 'Reset Usage';
+  btnResetQuota.OnClick := btnResetQuotaClick;
+end;
+
 constructor TFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
@@ -277,13 +385,7 @@ begin
   inherited Create(AOwner);
   FPresenter := TConfigPresenter.Create(Self);
 
-  lblTemplateOrigin := TLabel.Create(Self);
-  lblTemplateOrigin.Parent := pnlTemplatesClient;
-  lblTemplateOrigin.Left := 14;
-  lblTemplateOrigin.Top := btnSaveTemplate.Top + btnSaveTemplate.Height + 12;
-  lblTemplateOrigin.Font.Assign(lblTemplateName.Font);
-  lblTemplateOrigin.Font.Style := [fsItalic];
-  lblTemplateOrigin.Caption := '';
+  CreateTemplateOriginLabel;
 
   FEdtTemperatures := TDictionary<string, TEdit>.Create;
   FEdtMaxTokens := TDictionary<string, TEdit>.Create;
@@ -303,116 +405,7 @@ begin
   CreateProviderAdvancedControls(tsMistral, 'Mistral');
   CreateProviderAdvancedControls(tsBedrock, 'Bedrock');
  
-  tsGeneral := TTabSheet.Create(Self);
-  tsGeneral.PageControl := pgcSettings;
-  tsGeneral.Caption := 'General / Logs';
-  tsGeneral.TabVisible := False;
-
-  pnlGeneral := TPanel.Create(Self);
-  pnlGeneral.Parent := tsGeneral;
-  pnlGeneral.Align := alClient;
-  pnlGeneral.BevelOuter := bvNone;
-  pnlGeneral.ShowCaption := False;
-
-  FChkSmartConfig := TCheckBox.Create(Self);
-  FChkSmartConfig.Parent := pnlGeneral;
-  FChkSmartConfig.Left := 16;
-  FChkSmartConfig.Top := 16;
-  FChkSmartConfig.Width := 300;
-  FChkSmartConfig.Height := 23;
-  FChkSmartConfig.Caption := 'Auto (Smart Parameters)';
-
-  chkInjectDelphiVersion := TCheckBox.Create(Self);
-  chkInjectDelphiVersion.Parent := pnlGeneral;
-  chkInjectDelphiVersion.Left := 16;
-  chkInjectDelphiVersion.Top := 48;
-  chkInjectDelphiVersion.Width := 300;
-  chkInjectDelphiVersion.Height := 23;
-  chkInjectDelphiVersion.Caption := 'Inject Delphi version in prompt';
-
-  chkLogEnabled := TCheckBox.Create(Self);
-  chkLogEnabled.Parent := pnlGeneral;
-  chkLogEnabled.Left := 16;
-  chkLogEnabled.Top := 80;
-  chkLogEnabled.Width := 200;
-  chkLogEnabled.Caption := 'Enable logging';
-
-  lblLogPath := TLabel.Create(Self);
-  lblLogPath.Parent := pnlGeneral;
-  lblLogPath.Left := 16;
-  lblLogPath.Top := 112;
-  lblLogPath.Caption := 'Log Folder Path:';
-
-  edtLogPath := TEdit.Create(Self);
-  edtLogPath.Parent := pnlGeneral;
-  edtLogPath.Left := 16;
-  edtLogPath.Top := 130;
-  edtLogPath.Width := 320;
-
-  btnBrowseLogPath := TButton.Create(Self);
-  btnBrowseLogPath.Parent := pnlGeneral;
-  btnBrowseLogPath.Left := 342;
-  btnBrowseLogPath.Top := 128;
-  btnBrowseLogPath.Width := 30;
-  btnBrowseLogPath.Height := 23;
-  btnBrowseLogPath.Caption := '...';
-  btnBrowseLogPath.OnClick := btnBrowseLogPathClick;
-
-  lblLogMaxSize := TLabel.Create(Self);
-  lblLogMaxSize.Parent := pnlGeneral;
-  lblLogMaxSize.Left := 16;
-  lblLogMaxSize.Top := 168;
-  lblLogMaxSize.Caption := 'Max Log File Size (KB):';
-
-  edtLogMaxSize := TEdit.Create(Self);
-  edtLogMaxSize.Parent := pnlGeneral;
-  edtLogMaxSize.Left := 16;
-  edtLogMaxSize.Top := 186;
-  edtLogMaxSize.Width := 100;
-  edtLogMaxSize.NumbersOnly := True;
-
-  grpQuota := TGroupBox.Create(Self);
-  grpQuota.Parent := pnlGeneral;
-  grpQuota.Left := 16;
-  grpQuota.Top := 224;
-  grpQuota.Width := 356;
-  grpQuota.Height := 140;
-  grpQuota.Caption := ' Local Token Quota ';
-
-  chkQuotaEnabled := TCheckBox.Create(Self);
-  chkQuotaEnabled.Parent := grpQuota;
-  chkQuotaEnabled.Left := 16;
-  chkQuotaEnabled.Top := 24;
-  chkQuotaEnabled.Width := 200;
-  chkQuotaEnabled.Caption := 'Enable local token quota';
-
-  lblQuotaLimit := TLabel.Create(Self);
-  lblQuotaLimit.Parent := grpQuota;
-  lblQuotaLimit.Left := 16;
-  lblQuotaLimit.Top := 54;
-  lblQuotaLimit.Caption := 'Monthly Token Limit:';
-
-  edtQuotaLimit := TEdit.Create(Self);
-  edtQuotaLimit.Parent := grpQuota;
-  edtQuotaLimit.Left := 16;
-  edtQuotaLimit.Top := 72;
-  edtQuotaLimit.Width := 150;
-  edtQuotaLimit.NumbersOnly := True;
-
-  lblQuotaUsed := TLabel.Create(Self);
-  lblQuotaUsed.Parent := grpQuota;
-  lblQuotaUsed.Left := 16;
-  lblQuotaUsed.Top := 110;
-  lblQuotaUsed.Caption := 'Monthly Used Tokens: 0';
-
-  btnResetQuota := TButton.Create(Self);
-  btnResetQuota.Parent := grpQuota;
-  btnResetQuota.Left := 240;
-  btnResetQuota.Top := 68;
-  btnResetQuota.Width := 100;
-  btnResetQuota.Height := 25;
-  btnResetQuota.Caption := 'Reset Usage';
-  btnResetQuota.OnClick := btnResetQuotaClick;
+  CreateGeneralTab;
 
   LActiveTheme := 'light';
   LUseIDETheme := False;
