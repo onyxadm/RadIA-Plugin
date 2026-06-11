@@ -3,7 +3,8 @@ unit RadIA.OTA.EditorHook;
 interface
 
 uses
-  System.Classes, System.SysUtils, Vcl.Controls, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI;
+  System.Classes, System.SysUtils, Vcl.Controls, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI,
+  RadIA.Core.Service, RadIA.OTA.ContextParser;
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
@@ -13,6 +14,8 @@ type
     FInstalled: Boolean;
     FIDENotifierIndex: Integer;
     FEditorNotifiers: TInterfaceList;
+    FCreateExampleInProgress: Boolean;
+    FCreateExampleService: TRadIAService;
     {$IFNDEF TESTS}
     FTimer: TTimer;
     FHookPending: Boolean;
@@ -46,9 +49,12 @@ type
     procedure OnBugsExecute(Sender: TObject);
     procedure OnDocExecute(Sender: TObject);
     procedure OnReviewExecute(Sender: TObject);
+    procedure OnCreateExampleExecute(Sender: TObject);
     procedure OnFixErrorExecute(Sender: TObject);
     procedure OnShowChatExecute(Sender: TObject);
 
+    function BuildCreateExamplePrompt(const ASourceCode: string; const AContext: TMethodExampleContext): string;
+    procedure FinishCreateExampleRequest;
     function GetEditorCodeContext(out ACode: string; out AUsedSelection: Boolean): Boolean;
     procedure SendCommandToChat(const ACommand: string; const APromptPrefix: string);
     {$IFNDEF TESTS}
@@ -65,6 +71,7 @@ type
     
     procedure HookMenuDirectly(APopupMenu: TPopupMenu);
     procedure UnhookMenuDirectly(APopupMenu: TPopupMenu);
+    class function CleanCreateExampleResponse(const AResponse: string; const AIndent: string): string; static;
   end;
 
 implementation
@@ -72,8 +79,8 @@ implementation
 uses
   System.Generics.Collections,
   Winapi.Windows,
-  RadIA.OTA.Helper, RadIA.OTA.ContextParser, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
-  RadIA.Core.Mediator,
+  RadIA.OTA.Helper, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
+  RadIA.Core.Mediator, RadIA.Core.Config, RadIA.Core.Interfaces, RadIA.Core.TokenUsage,
   {$IFNDEF TESTS}
   RadIA.OTA.DockableForm,
   {$ENDIF}
@@ -226,6 +233,8 @@ begin
   FOldActiveFormChange := nil;
   FIDENotifierIndex := -1;
   FEditorNotifiers := TInterfaceList.Create;
+  FCreateExampleInProgress := False;
+  FCreateExampleService := nil;
   {$IFNDEF TESTS}
   FTimer := nil;
   FHookPending := False;
@@ -237,6 +246,7 @@ end;
 destructor TRadIAEditorHook.Destroy;
 begin
   Uninstall;
+  FreeAndNil(FCreateExampleService);
   FEditorNotifiers.Free;
   inherited Destroy;
 end;
@@ -786,6 +796,11 @@ begin
   LRootItem.Add(LSubItem);
 
   LSubItem := TMenuItem.Create(LRootItem);
+  LSubItem.Caption := 'Create Example from Comment';
+  LSubItem.OnClick := OnCreateExampleExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Generate Unit Tests (DUnitX)';
   LSubItem.OnClick := OnTestsExecute;
   LRootItem.Add(LSubItem);
@@ -915,6 +930,251 @@ begin
   TLogger.Log(Format('OnOptimizeExecute: CodeLength=%d, UsedSelection=%s',
     [Length(LCode), BoolToStr(LUsedSelection, True)]), 'EditorHook');
   TRadIAMediator.Instance.RequestDiff(LCode, not LUsedSelection);
+end;
+
+function TRadIAEditorHook.BuildCreateExamplePrompt(const ASourceCode: string;
+  const AContext: TMethodExampleContext): string;
+var
+  LBuilder: TStringBuilder;
+begin
+  LBuilder := TStringBuilder.Create;
+  try
+    LBuilder.AppendLine('You are generating Object Pascal code for Delphi.');
+    LBuilder.AppendLine('Return only the statements that must be inserted inside the existing method body.');
+    LBuilder.AppendLine('Do not return the method signature, the outer begin/end, explanations, or Markdown outside one pascal code block.');
+    LBuilder.AppendLine('Use only symbols already available in the full unit context whenever possible.');
+    LBuilder.AppendLine('Do not introduce dependencies that require changing the unit uses clause unless there is no practical alternative.');
+    LBuilder.AppendLine('Use inline local variable declarations only if they are necessary and compatible with Delphi 10.3 or newer.');
+    LBuilder.AppendLine('Preserve valid Delphi formatting and indentation using two spaces per indentation level.');
+    LBuilder.AppendLine('The code will be inserted immediately below the natural-language comment.');
+    LBuilder.AppendLine;
+    LBuilder.AppendLine('Natural-language comment:');
+    LBuilder.AppendLine(AContext.CommentText);
+    LBuilder.AppendLine;
+    LBuilder.AppendLine('Target method:');
+    LBuilder.AppendLine('```pascal');
+    LBuilder.AppendLine(AContext.MethodText);
+    LBuilder.AppendLine('```');
+    LBuilder.AppendLine;
+    LBuilder.AppendLine('Full unit context:');
+    LBuilder.AppendLine('```pascal');
+    LBuilder.AppendLine(ASourceCode);
+    LBuilder.AppendLine('```');
+    Result := LBuilder.ToString;
+  finally
+    LBuilder.Free;
+  end;
+end;
+
+class function TRadIAEditorHook.CleanCreateExampleResponse(const AResponse: string; const AIndent: string): string;
+var
+  LLines: TStringList;
+  LOutput: TStringList;
+  I: Integer;
+  LLine: string;
+  LTrimmed: string;
+  LInFence: Boolean;
+  LFoundFence: Boolean;
+  LHasFence: Boolean;
+  LMinIndent: Integer;
+  LIndentCount: Integer;
+
+  function CountLeadingWhitespace(const ALine: string): Integer;
+  var
+    LIndex: Integer;
+  begin
+    Result := 0;
+    for LIndex := Low(ALine) to High(ALine) do
+    begin
+      if not CharInSet(ALine[LIndex], [' ', #9]) then
+        Exit;
+      Inc(Result);
+    end;
+  end;
+
+  function RemoveLeadingWhitespace(const ALine: string; const ACount: Integer): string;
+  var
+    LIndex: Integer;
+    LRemoved: Integer;
+  begin
+    LIndex := Low(ALine);
+    LRemoved := 0;
+    while (LIndex <= High(ALine)) and (LRemoved < ACount) and CharInSet(ALine[LIndex], [' ', #9]) do
+    begin
+      Inc(LIndex);
+      Inc(LRemoved);
+    end;
+
+    Result := Copy(ALine, LIndex, MaxInt);
+  end;
+
+begin
+  Result := '';
+  LLines := TStringList.Create;
+  LOutput := TStringList.Create;
+  try
+    LLines.Text := AResponse;
+    LInFence := False;
+    LFoundFence := False;
+    LHasFence := False;
+
+    for I := 0 to LLines.Count - 1 do
+    begin
+      if LLines[I].Trim.StartsWith('```') then
+      begin
+        LHasFence := True;
+        Break;
+      end;
+    end;
+
+    for I := 0 to LLines.Count - 1 do
+    begin
+      LLine := LLines[I];
+      LTrimmed := LLine.Trim;
+      if LTrimmed.StartsWith('```') then
+      begin
+        if not LInFence then
+        begin
+          LInFence := True;
+          LFoundFence := True;
+          Continue;
+        end;
+
+        Break;
+      end;
+
+      if (LHasFence and LInFence) or ((not LHasFence) and (not LFoundFence)) then
+        LOutput.Add(LLine);
+    end;
+
+    while (LOutput.Count > 0) and LOutput[0].Trim.IsEmpty do
+      LOutput.Delete(0);
+
+    while (LOutput.Count > 0) and LOutput[LOutput.Count - 1].Trim.IsEmpty do
+      LOutput.Delete(LOutput.Count - 1);
+
+    LMinIndent := MaxInt;
+    for I := 0 to LOutput.Count - 1 do
+    begin
+      if LOutput[I].Trim.IsEmpty then
+        Continue;
+
+      LIndentCount := CountLeadingWhitespace(LOutput[I]);
+      if LIndentCount < LMinIndent then
+        LMinIndent := LIndentCount;
+    end;
+
+    if LMinIndent = MaxInt then
+      Exit('');
+
+    for I := 0 to LOutput.Count - 1 do
+    begin
+      if LOutput[I].Trim.IsEmpty then
+        LOutput[I] := ''
+      else
+        LOutput[I] := AIndent + RemoveLeadingWhitespace(LOutput[I], LMinIndent);
+    end;
+
+    Result := LOutput.Text.TrimRight;
+  finally
+    LOutput.Free;
+    LLines.Free;
+  end;
+end;
+
+procedure TRadIAEditorHook.FinishCreateExampleRequest;
+begin
+  FCreateExampleInProgress := False;
+  FreeAndNil(FCreateExampleService);
+end;
+
+procedure TRadIAEditorHook.OnCreateExampleExecute(Sender: TObject);
+var
+  LSourceCode: string;
+  LCursorLine: Integer;
+  LContext: TMethodExampleContext;
+  LErrorMessage: string;
+  LPrompt: string;
+  LConfig: IAIConfig;
+  LActiveProvider: string;
+begin
+  if FCreateExampleInProgress then
+  begin
+    ShowMessage('Create Example from Comment is already generating code. Please wait for the current request to finish.');
+    Exit;
+  end;
+
+  if not TRadIAOTAHelper.GetActiveEditorText(LSourceCode, False) then
+  begin
+    TLogger.Log('OnCreateExampleExecute failed: no active code', 'EditorHook');
+    ShowMessage('No active code file open in the editor.');
+    Exit;
+  end;
+
+  LCursorLine := TRadIAOTAHelper.GetCurrentCursorLine;
+  if not TRadIAContextParser.TryGetMethodExampleContext(LSourceCode, LCursorLine, LContext, LErrorMessage) then
+  begin
+    TLogger.Log('OnCreateExampleExecute failed: ' + LErrorMessage, 'EditorHook');
+    ShowMessage(LErrorMessage);
+    Exit;
+  end;
+
+  LConfig := TRadIAConfig.GetInstance;
+  LConfig.Load;
+  LActiveProvider := LConfig.GetActiveProvider;
+  if SameText(LConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
+  begin
+    TLogger.Log('OnCreateExampleExecute: Active provider uses Web Login. Opening the chat bridge.', 'EditorHook');
+    ShowRadIAChat;
+  end;
+
+  LPrompt := BuildCreateExamplePrompt(LSourceCode, LContext);
+  TLogger.Log(Format('OnCreateExampleExecute: PromptLength=%d InsertLine=%d',
+    [Length(LPrompt), LContext.InsertionLine]), 'EditorHook');
+
+  FCreateExampleInProgress := True;
+  FCreateExampleService := TRadIAService.Create(LConfig);
+  try
+    FCreateExampleService.SendPrompt(LPrompt, [],
+      procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+      var
+        LCode: string;
+      begin
+        try
+          if not AError.IsEmpty then
+          begin
+            TLogger.Log('OnCreateExampleExecute provider error: ' + AError, 'EditorHook');
+            ShowMessage('Error creating example: ' + AError);
+            Exit;
+          end;
+
+          LCode := CleanCreateExampleResponse(AResponse, LContext.BodyIndent);
+          if LCode.Trim.IsEmpty then
+          begin
+            TLogger.Log('OnCreateExampleExecute failed: empty generated code', 'EditorHook');
+            ShowMessage('The AI provider returned no code to insert.');
+            Exit;
+          end;
+
+          if not TRadIAOTAHelper.InsertTextAtLineColumn(LCode + sLineBreak, LContext.InsertionLine,
+            LContext.InsertionColumn) then
+          begin
+            TLogger.Log('OnCreateExampleExecute failed: insert operation returned false', 'EditorHook');
+            ShowMessage('Could not insert the generated example into the active editor.');
+            Exit;
+          end;
+        finally
+          FinishCreateExampleRequest;
+        end;
+      end, rpRefactorCode);
+  except
+    on E: Exception do
+    begin
+      TLogger.Log('OnCreateExampleExecute failed to start request: ' + E.Message, 'EditorHook');
+      FinishCreateExampleRequest;
+      ShowMessage('Could not start Create Example from Comment: ' + E.Message);
+    end;
+  end;
 end;
 
 procedure TRadIAEditorHook.OnTestsExecute(Sender: TObject);

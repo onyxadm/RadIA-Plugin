@@ -17,6 +17,8 @@ type
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     class function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False): Boolean;
     class function InsertTextAtCursor(const AText: string): Boolean;
+    class function InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
+    class function GetCurrentCursorLine: Integer;
     class function GetActiveUnitName: string;
     class function GetActiveProjectName: string;
     class function GetActiveProjectFolder: string;
@@ -326,6 +328,55 @@ begin
       Result := True;
     end;
   end;
+end;
+
+class function TRadIAOTAHelper.InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
+var
+  LEditBuffer: IOTAEditBuffer;
+  LView: IOTAEditView;
+  LPosition: IOTAEditPosition;
+  LOptions: IOTABufferOptions;
+  LSaveAutoIndent: Boolean;
+begin
+  Result := False;
+  if (ALine <= 0) or (AColumn <= 0) then
+    Exit;
+
+  LEditBuffer := GetCurrentEditBuffer;
+  LView := GetCurrentEditView;
+  if Assigned(LEditBuffer) and Assigned(LView) and Assigned(LView.Position) then
+  begin
+    LPosition := LView.Position;
+    LPosition.Move(ALine, AColumn);
+
+    LOptions := LEditBuffer.BufferOptions;
+    if Assigned(LOptions) then
+    begin
+      LSaveAutoIndent := LOptions.AutoIndent;
+      LOptions.AutoIndent := False;
+      try
+        LPosition.InsertText(AText);
+        Result := True;
+      finally
+        LOptions.AutoIndent := LSaveAutoIndent;
+      end;
+    end
+    else
+    begin
+      LPosition.InsertText(AText);
+      Result := True;
+    end;
+  end;
+end;
+
+class function TRadIAOTAHelper.GetCurrentCursorLine: Integer;
+var
+  LView: IOTAEditView;
+begin
+  Result := 0;
+  LView := GetCurrentEditView;
+  if Assigned(LView) and Assigned(LView.Position) then
+    Result := LView.Position.GetRow;
 end;
 
 class function TRadIAOTAHelper.GetActiveUnitName: string;

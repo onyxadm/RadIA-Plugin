@@ -30,6 +30,12 @@ type
     procedure TestRadIAMenuSurvivesOriginalPopupRebuild;
     [Test]
     procedure TestUnhooking;
+    [Test]
+    procedure TestCleanCreateExampleResponseWithPascalFence;
+    [Test]
+    procedure TestCleanCreateExampleResponseWithoutFence;
+    [Test]
+    procedure TestCleanCreateExampleResponseIgnoresTextOutsideFence;
   end;
 
 implementation
@@ -145,6 +151,43 @@ begin
   
   // The original OnPopup handler should be perfectly restored
   Assert.AreEqual(TMethod(FPopupMenu.OnPopup).Code, TMethod(LEventDummy).Code);
+end;
+
+procedure TTestEditorHook.TestCleanCreateExampleResponseWithPascalFence;
+var
+  LCleaned: string;
+begin
+  LCleaned := TRadIAEditorHook.CleanCreateExampleResponse(
+    '```pascal' + sLineBreak +
+    'Result := True;' + sLineBreak +
+    '```', '  ');
+
+  Assert.AreEqual('  Result := True;', LCleaned);
+end;
+
+procedure TTestEditorHook.TestCleanCreateExampleResponseWithoutFence;
+var
+  LCleaned: string;
+begin
+  LCleaned := TRadIAEditorHook.CleanCreateExampleResponse(
+    'Result := True;' + sLineBreak +
+    'Exit;', '    ');
+
+  Assert.AreEqual('    Result := True;' + sLineBreak + '    Exit;', LCleaned);
+end;
+
+procedure TTestEditorHook.TestCleanCreateExampleResponseIgnoresTextOutsideFence;
+var
+  LCleaned: string;
+begin
+  LCleaned := TRadIAEditorHook.CleanCreateExampleResponse(
+    'Here is the code:' + sLineBreak +
+    '```pascal' + sLineBreak +
+    '  Result := True;' + sLineBreak +
+    '```' + sLineBreak +
+    'Done.', '  ');
+
+  Assert.AreEqual('  Result := True;', LCleaned);
 end;
 
 initialization

@@ -55,6 +55,7 @@ uses
   // Test Suites
   RadIA.Tests.Config in 'Source\RadIA.Tests.Config.pas',
   RadIA.Tests.EditorHook in 'Source\RadIA.Tests.EditorHook.pas',
+  RadIA.Tests.ContextParser in 'Source\RadIA.Tests.ContextParser.pas',
   RadIA.Tests.Providers in 'Source\RadIA.Tests.Providers.pas',
   RadIA.Tests.Cache in 'Source\RadIA.Tests.Cache.pas',
   RadIA.Tests.Ollama in 'Source\RadIA.Tests.Ollama.pas',
