@@ -796,7 +796,7 @@ begin
   LRootItem.Add(LSubItem);
 
   LSubItem := TMenuItem.Create(LRootItem);
-  LSubItem.Caption := 'Create Example from Comment';
+  LSubItem.Caption := 'Create Implementation from Comment';
   LSubItem.OnClick := OnCreateExampleExecute;
   LRootItem.Add(LSubItem);
 
