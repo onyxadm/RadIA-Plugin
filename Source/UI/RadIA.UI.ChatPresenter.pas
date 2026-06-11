@@ -709,7 +709,8 @@ var
   LActiveModel: string;
   LSessionId: string;
 begin
-  if FConfig.QuotaEnabled then
+  if FConfig.QuotaEnabled and
+     (not SameText(FConfig.GetProviderAuthType(FConfig.GetActiveProvider), 'web_login')) then
   begin
     FConfig.Load;
     if FConfig.QuotaUsed >= FConfig.QuotaLimit then
@@ -885,10 +886,12 @@ begin
                 Self.FAccumulatedUsage.CompletionTokens := Self.FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
                 Self.FAccumulatedUsage.TotalTokens := Self.FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
 
-                Self.FConfig.AddToQuotaUsage(LUsage);
+                if not SameText(Self.FConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
+                  Self.FConfig.AddToQuotaUsage(LUsage);
 
                 LStats := Self.FAccumulatedUsage.FormatStats;
-                if Self.FConfig.QuotaEnabled then
+                if Self.FConfig.QuotaEnabled and
+                   (not SameText(Self.FConfig.GetProviderAuthType(LActiveProvider), 'web_login')) then
                 begin
                   LStats := LStats + Format(' - Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 end;
@@ -930,7 +933,8 @@ var
   LActiveProvider: string;
   LActiveModel: string;
 begin
-  if FConfig.QuotaEnabled then
+  if FConfig.QuotaEnabled and
+     (not SameText(FConfig.GetProviderAuthType(FConfig.GetActiveProvider), 'web_login')) then
   begin
     FConfig.Load;
     if FConfig.QuotaUsed >= FConfig.QuotaLimit then
@@ -1007,9 +1011,11 @@ begin
 
               if LUsage.TotalTokens > 0 then
               begin
-                Self.FConfig.AddToQuotaUsage(LUsage);
+                if not SameText(Self.FConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
+                  Self.FConfig.AddToQuotaUsage(LUsage);
                 LStats := Self.FAccumulatedUsage.FormatStats;
-                if Self.FConfig.QuotaEnabled then
+                if Self.FConfig.QuotaEnabled and
+                   (not SameText(Self.FConfig.GetProviderAuthType(LActiveProvider), 'web_login')) then
                   LStats := LStats + Format(' - Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 Self.PostToWebView('update_tokens', '', LStats);
               end;
