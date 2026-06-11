@@ -43,7 +43,7 @@ implementation
 uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
-  RadIA.Core.Logger, RadIA.OTA.Options;
+  RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options;
 
 const
   GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;
@@ -333,7 +333,18 @@ var
   LForm: TFormAIDiff;
   LActiveFile: string;
   LEditBuffer: IOTAEditBuffer;
+  LConfig: IAIConfig;
+  LActiveProvider: string;
 begin
+  LConfig := TRadIAConfig.GetInstance;
+  LConfig.Load;
+  LActiveProvider := LConfig.GetActiveProvider;
+  if SameText(LConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
+  begin
+    LogDebug('OnRequestDiff: Active provider uses Web Login. Opening the chat bridge.');
+    ShowRadIAChat;
+  end;
+
   LForm := TFormAIDiff.Create(nil);
   try
     LEditBuffer := TRadIAOTAHelper.GetCurrentEditBuffer;

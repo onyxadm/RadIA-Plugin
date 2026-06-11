@@ -3,7 +3,8 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config;
+  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
+  RadIA.Core.SettingsStorage;
 
 type
   [TestFixture]
@@ -34,6 +35,8 @@ uses
 
 procedure TTestRadIAJSONProviders.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAJSONProviders');
+  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   CreateMockJsonProvider;
 end;
@@ -42,6 +45,8 @@ procedure TTestRadIAJSONProviders.TearDown;
 begin
   DeleteMockJsonProvider;
   FConfig := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 procedure TTestRadIAJSONProviders.CreateMockJsonProvider;

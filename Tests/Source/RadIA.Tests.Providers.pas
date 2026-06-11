@@ -4,7 +4,8 @@ interface
 
 uses
   DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Core.TokenUsage, RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude;
+  RadIA.Core.TokenUsage, RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude,
+  RadIA.Core.SettingsStorage;
 
 type
   [TestFixture]
@@ -58,6 +59,8 @@ uses
 
 procedure TTestRadIAProviders.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAProviders');
+  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FGeminiProv := TRadIAGeminiProvider.Create(FConfig);
   FOpenAIProv := TRadIAOpenAIProvider.Create(FConfig);
@@ -70,6 +73,8 @@ begin
   FOpenAIProv.Free;
   FClaudeProv.Free;
   FConfig := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 function TTestRadIAProviders.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
@@ -272,7 +277,7 @@ var
 const
   CUSTOM_URL = 'http://localhost:1234/v1';
 begin
-  LConfig := TRadIAConfig.Create;
+  LConfig := TMockConfig.Create(20);
   try
     LConfig.OpenAICustomBaseUrl := CUSTOM_URL;
     Assert.AreEqual(CUSTOM_URL, LConfig.GetOpenAICustomBaseUrl,
@@ -291,7 +296,7 @@ const
   EXPECTED_CHAT_PATH    = '/chat/completions';
 begin
   { Verify that TrimRight(['/']) + path produces the correct URL without double slash }
-  LConfig := TRadIAConfig.Create;
+  LConfig := TMockConfig.Create(20);
   try
     LConfig.OpenAICustomBaseUrl := CUSTOM_URL_WITH_SLASH;
     LExpectedChatUrl := LConfig.GetOpenAICustomBaseUrl.TrimRight(['/']) + EXPECTED_CHAT_PATH;

@@ -43,6 +43,8 @@ type
     function SerializeHistoryToJson(const AHistory: TArray<IChatMessage>): string;
     function ComputePromptHash(const APrompt: string;
       const ATrimmedHistory: TArray<IChatMessage>; const ASystemPrompt: string): string;
+    function IsWebLoginProvider(const AProviderName: string): Boolean;
+    function IsLocalQuotaLimitReached: Boolean;
   public
     constructor Create(const AConfig: IAIConfig);
     destructor Destroy; override;
@@ -188,7 +190,7 @@ var
   LProviderName: string;
 begin
   LProviderName := FConfig.GetActiveProvider;
-  if FConfig.GetProviderAuthType(LProviderName) = 'web_login' then
+  if IsWebLoginProvider(LProviderName) then
     Result := TProviderRegistry.CreateProvider('WebViewBridge', FConfig)
   else
     Result := TProviderRegistry.CreateProvider(LProviderName, FConfig);
@@ -277,12 +279,31 @@ begin
   Result := TRadIACacheManager.GenerateHash(LProviderName, LModelName, ASystemPrompt, APrompt, LHistoryStr);
 end;
 
+function TRadIAService.IsWebLoginProvider(const AProviderName: string): Boolean;
+begin
+  if SameText(AProviderName, 'WebViewBridge') then
+    Exit(True);
+
+  Result := SameText(FConfig.GetProviderAuthType(AProviderName), 'web_login');
+end;
+
+function TRadIAService.IsLocalQuotaLimitReached: Boolean;
+var
+  LActiveProvider: string;
+begin
+  LActiveProvider := FConfig.GetActiveProvider;
+
+  Result := FConfig.QuotaEnabled and
+    (not IsWebLoginProvider(LActiveProvider)) and
+    (FConfig.QuotaUsed >= FConfig.QuotaLimit);
+end;
+
 procedure TRadIAService.SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
   const ACallback: TCompletionCallback; const AProfile: TAIRequestProfile);
 begin
-  if FConfig.QuotaEnabled and (FConfig.QuotaUsed >= FConfig.QuotaLimit) then
+  if IsLocalQuotaLimitReached then
   begin
-    ACallback('', 'Cota mensal de tokens excedida (limite local atingido).', False, TTokenUsage.Empty);
+    ACallback('', 'Local monthly token quota exceeded.', False, TTokenUsage.Empty);
     Exit;
   end;
 
@@ -384,13 +405,9 @@ end;
 procedure TRadIAService.SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
   const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile);
 begin
-  if FConfig.QuotaEnabled and (FConfig.QuotaUsed >= FConfig.QuotaLimit) then
+  if IsLocalQuotaLimitReached then
   begin
-    TThread.Queue(nil,
-      procedure
-      begin
-        ACallback('', True, 'Cota mensal de tokens excedida (limite local atingido).');
-      end);
+    ACallback('', True, 'Local monthly token quota exceeded.');
     Exit;
   end;
 

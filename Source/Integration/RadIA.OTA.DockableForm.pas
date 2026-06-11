@@ -20,9 +20,11 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure PrepareWebLoginBridge;
   end;
 
 procedure ShowRadIAChat;
+procedure EnsureRadIAChatBridge;
 procedure RegisterDockableForm;
 procedure UnregisterDockableForm;
 
@@ -42,6 +44,14 @@ begin
   end;
   
   ShowDockableForm(FormRadIADockable);
+end;
+
+procedure EnsureRadIAChatBridge;
+begin
+  if not Assigned(FormRadIADockable) then
+    FormRadIADockable := TFormRadIADockable.Create(nil);
+
+  FormRadIADockable.PrepareWebLoginBridge;
 end;
 
 procedure RegisterDockableForm;
@@ -91,6 +101,9 @@ begin
   end;
   
   ApplyIDETheme;
+
+  if Assigned(FChatFrame) then
+    FChatFrame.EnsureVisibleContent;
 end;
 
 procedure TFormRadIADockable.LoadWindowSize;
@@ -155,6 +168,16 @@ begin
   if FormRadIADockable = Self then
     FormRadIADockable := nil;
   inherited Destroy;
+end;
+
+procedure TFormRadIADockable.PrepareWebLoginBridge;
+begin
+  HandleNeeded;
+  if Assigned(FChatFrame) then
+  begin
+    FChatFrame.HandleNeeded;
+    FChatFrame.CreateBackgroundBrowser;
+  end;
 end;
 
 procedure TFormRadIADockable.SaveVisibilityState(const AVisible: Boolean);

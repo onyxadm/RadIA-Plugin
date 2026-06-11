@@ -4,7 +4,7 @@ interface
 
 uses
   DUnitX.TestFramework, System.Rtti, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Types, 
-  RadIA.Core.TokenUsage, RadIA.Core.Service, RadIA.Provider.Ollama;
+  RadIA.Core.TokenUsage, RadIA.Core.Service, RadIA.Provider.Ollama, RadIA.Core.SettingsStorage;
 
 type
   [TestFixture]
@@ -47,6 +47,8 @@ end;
 
 procedure TTestRadIAOllama.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAOllama');
+  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FProvider := TRadIAOllamaProvider.Create(FConfig);
 end;
@@ -55,6 +57,8 @@ procedure TTestRadIAOllama.TearDown;
 begin
   FProvider.Free;
   FConfig := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 procedure TTestRadIAOllama.TestRequestBodyFormatting;

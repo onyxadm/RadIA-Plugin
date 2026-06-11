@@ -22,85 +22,100 @@ object FormAIDiff: TFormAIDiff
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 0
+    ExplicitTop = 551
+    ExplicitWidth = 854
     object lblSeparator: TLabel
       Left = 0
       Top = 0
       Width = 860
-      Height = 1
+      Height = 15
       Align = alTop
-      Caption = ''
+      ExplicitWidth = 3
     end
     object btnPrevConflict: TButton
-      Left = 8
-      Top = 10
-      Width = 130
-      Height = 32
+      AlignWithMargins = True
+      Left = 3
+      Top = 18
+      Width = 140
+      Height = 31
+      Hint = 'Bloco anterior com diff'
+      Align = alLeft
       Caption = #8592' Previous'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
       Font.Name = 'Segoe UI'
       Font.Style = []
-      Hint = 'Bloco anterior com diff'
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
       OnClick = btnPrevConflictClick
+      ExplicitLeft = 149
     end
     object btnNextConflict: TButton
-      Left = 146
-      Top = 10
-      Width = 130
-      Height = 32
+      AlignWithMargins = True
+      Left = 149
+      Top = 18
+      Width = 140
+      Height = 31
+      Hint = 'Pr'#243'ximo bloco com diff'
+      Align = alLeft
       Caption = 'Next '#8594
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
       Font.Name = 'Segoe UI'
       Font.Style = []
-      Hint = 'Pr'#243'ximo bloco com diff'
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
       OnClick = btnNextConflictClick
+      ExplicitLeft = 288
+      ExplicitTop = 21
     end
     object btnApply: TButton
-      Left = 620
-      Top = 10
-      Width = 148
-      Height = 32
+      AlignWithMargins = True
+      Left = 571
+      Top = 18
+      Width = 140
+      Height = 31
+      Hint = 'Aplicar altera'#231#245'es no editor'
+      Align = alRight
       Caption = #10003' Apply Changes'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
       Font.Name = 'Segoe UI Symbol'
       Font.Style = [fsBold]
-      Hint = 'Aplicar altera'#231#245'es no editor'
       ModalResult = 1
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
+      ExplicitLeft = 591
     end
     object btnCancel: TButton
-      Left = 776
-      Top = 10
-      Width = 76
-      Height = 32
+      AlignWithMargins = True
+      Left = 717
+      Top = 18
+      Width = 140
+      Height = 31
+      Hint = 'Descartar sugest'#227'o'
+      Align = alRight
       Caption = #10007' Cancel'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
       Font.Name = 'Segoe UI Symbol'
       Font.Style = []
-      Hint = 'Descartar sugest'#227'o'
       ModalResult = 2
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
+      ExplicitLeft = 727
     end
   end
   object pnlBrowser: TPanel
@@ -111,6 +126,8 @@ object FormAIDiff: TFormAIDiff
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 1
+    ExplicitWidth = 854
+    ExplicitHeight = 551
     object EdgeBrowser: TEdgeBrowser
       Left = 0
       Top = 0
@@ -118,7 +135,13 @@ object FormAIDiff: TFormAIDiff
       Height = 568
       Align = alClient
       TabOrder = 0
+      AllowSingleSignOnUsingOSPrimaryAccount = False
+      TargetCompatibleBrowserVersion = '137.0.3296.44'
+      UserDataFolder = '%LOCALAPPDATA%\bds.exe.WebView2'
       OnCreateWebViewCompleted = EdgeBrowserCreateWebViewCompleted
+      OnNavigationCompleted = EdgeBrowserNavigationCompleted
+      ExplicitWidth = 854
+      ExplicitHeight = 551
     end
   end
 end
