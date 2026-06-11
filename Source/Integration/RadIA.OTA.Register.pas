@@ -340,8 +340,8 @@ begin
   LActiveProvider := LConfig.GetActiveProvider;
   if SameText(LConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
   begin
-    LogDebug('OnRequestDiff: Active provider uses Web Login. Opening chat to prepare the WebView bridge.');
-    ShowRadIAChat;
+    LogDebug('OnRequestDiff: Active provider uses Web Login. Preparing the WebView bridge.');
+    EnsureRadIAChatBridge;
   end;
 
   LForm := TFormAIDiff.Create(nil);
