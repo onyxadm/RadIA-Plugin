@@ -10,6 +10,7 @@ type
     ['{8A95E81A-98C3-4874-8A83-AC5EE2298FDF}']
     function OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
     procedure CloseKey;
+    procedure DeleteValue(const AName: string);
     function KeyExists(const APath: string): Boolean;
     function ValueExists(const AName: string): Boolean;
     procedure GetKeyNames(AList: TStrings);
@@ -31,6 +32,7 @@ type
     
     function OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
     procedure CloseKey;
+    procedure DeleteValue(const AName: string);
     function KeyExists(const APath: string): Boolean;
     function ValueExists(const AName: string): Boolean;
     procedure GetKeyNames(AList: TStrings);
@@ -54,6 +56,7 @@ type
     
     function OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
     procedure CloseKey;
+    procedure DeleteValue(const AName: string);
     function KeyExists(const APath: string): Boolean;
     function ValueExists(const AName: string): Boolean;
     procedure GetKeyNames(AList: TStrings);
@@ -101,6 +104,12 @@ end;
 procedure TRegistrySettingsStorage.CloseKey;
 begin
   TRegistry(FReg).CloseKey;
+end;
+
+procedure TRegistrySettingsStorage.DeleteValue(const AName: string);
+begin
+  if TRegistry(FReg).ValueExists(AName) then
+    TRegistry(FReg).DeleteValue(AName);
 end;
 
 function TRegistrySettingsStorage.KeyExists(const APath: string): Boolean;
@@ -219,6 +228,17 @@ procedure TMemorySettingsStorage.CloseKey;
 begin
   // In-memory doesn't lock handles, so just clear the current path
   FCurrentPath := '';
+end;
+
+procedure TMemorySettingsStorage.DeleteValue(const AName: string);
+var
+  LPathData: TDictionary<string, string>;
+begin
+  if FCurrentPath.IsEmpty then
+    Exit;
+
+  LPathData := GetOrCreatePathData(FCurrentPath);
+  LPathData.Remove(AName.ToLower);
 end;
 
 function TMemorySettingsStorage.KeyExists(const APath: string): Boolean;
