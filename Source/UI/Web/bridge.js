@@ -152,6 +152,14 @@
   }
 
   // --- Markdown and format reconstruction ---
+  function trimOuterBlankLines(text) {
+    return (text || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/^\n+/, '')
+      .replace(/\n+$/, '');
+  }
+
   function getMarkdownFromElement(el) {
     if (!el) return '';
     try {
@@ -186,11 +194,11 @@
           }
         }
         
-        // Read raw code text while preserving line breaks
-        const codeText = codeEl.textContent || '';
+        // Read displayed code text while preserving line breaks and indentation
+        const codeText = trimOuterBlankLines(codeEl.innerText || codeEl.textContent || '');
         
         // Create the classic Markdown representation for the block
-        const markdownText = `\n\`\`\`${lang}\n${codeText.trim()}\n\`\`\`\n`;
+        const markdownText = `\n\`\`\`${lang}\n${codeText}\n\`\`\`\n`;
         
         const textNode = document.createTextNode(markdownText);
         pre.parentNode.replaceChild(textNode, pre);
@@ -217,7 +225,7 @@
       // Collapse excessive consecutive line breaks to keep formatting clean
       markdown = markdown.replace(/\n{3,}/g, '\n\n');
       
-      return markdown.trim();
+      return trimOuterBlankLines(markdown);
     } catch (err) {
       log('Erro ao formatar Markdown do elemento:', err);
       return el.textContent || el.innerText || '';
@@ -372,8 +380,7 @@
           e.preventDefault();
           e.stopPropagation();
           
-          let codeText = code.innerText;
-          codeText = codeText.trim();
+          const codeText = trimOuterBlankLines(code.innerText || code.textContent || '');
           
           log('Requesting code application in Delphi:', codeText.length, 'bytes');
           sendToDelphi({
