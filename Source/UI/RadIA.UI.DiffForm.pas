@@ -37,6 +37,7 @@ type
     FPageReady: Boolean;
     FRequestStarted: Boolean;
     FPendingRender: Boolean;
+    FCanApply: Boolean;
     FLifecycleGuard: IInterface;
     
     procedure FormShow(Sender: TObject);
@@ -88,6 +89,7 @@ begin
   FPageReady := False;
   FRequestStarted := False;
   FPendingRender := False;
+  FCanApply := False;
   FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.GetInstance;
   FAIService := TRadIAService.Create(FConfig);
@@ -213,7 +215,7 @@ begin
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
     FPendingRender := False;
-    btnApply.Enabled := not FSuggestedCode.Trim.IsEmpty;
+    btnApply.Enabled := FCanApply and (not FSuggestedCode.Trim.IsEmpty);
   finally
     LJson.Free;
   end;
@@ -251,6 +253,7 @@ begin
 
       if not AError.IsEmpty then
       begin
+        FCanApply := False;
         FSuggestedCode := '// Error requesting refactoring: ' + AError + #13#10 + FOriginalCode;
       end
       else
@@ -266,6 +269,7 @@ begin
         if LCleanedResponse.EndsWith('```') then
           LCleanedResponse := LCleanedResponse.Substring(0, LCleanedResponse.Length - 3);
           
+        FCanApply := not LCleanedResponse.Trim.IsEmpty;
         FSuggestedCode := LCleanedResponse.Trim;
       end;
       
