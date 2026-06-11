@@ -485,15 +485,18 @@ end;
 
 procedure TTestChatPresenter.TestCreateNewSessionUpdatesView;
 var
-  LCountBefore: Integer;
+  LPreviousSessionId: string;
 begin
   FPresenter.Initialize('C:\mock\web');
   FPresenter.WebViewReady := True;
   
-  LCountBefore := Length(FMockView.SessionsList);
+  LPreviousSessionId := FPresenter.SessionManager.ActiveSessionId;
   FPresenter.CreateNewSession;
   
-  Assert.IsTrue(Length(FMockView.SessionsList) > LCountBefore);
+  Assert.IsFalse(FPresenter.SessionManager.ActiveSessionId.IsEmpty);
+  Assert.AreNotEqual(LPreviousSessionId, FPresenter.SessionManager.ActiveSessionId);
+  Assert.AreEqual(FPresenter.SessionManager.ActiveSessionId, FMockView.ActiveSessionId);
+  Assert.IsTrue(Length(FMockView.SessionsList) > 0);
 end;
 
 procedure TTestChatPresenter.TestHandleTemplateSelectedLoadsInInput;

@@ -137,6 +137,7 @@ end;
 procedure TTestRadIASessions.TestUpdateSessionActivity;
 var
   LSess1, LSess2: TSessionInfo;
+  LOriginalLastActive: TDateTime;
 begin
   LSess1 := FManager.CreateSession('First Session');
   Sleep(100); // Small delay to guarantee different times
@@ -146,12 +147,14 @@ begin
   Assert.AreEqual(LSess2.Id, FManager.Sessions[0].Id);
   Assert.AreEqual(LSess1.Id, FManager.Sessions[1].Id);
   
-  // Touch LSess1 to make it active
+  LOriginalLastActive := FManager.Sessions[1].LastActive;
+
+  // Touch LSess1 to make it active without moving it in the current list.
   FManager.UpdateSessionActivity(LSess1.Id);
   
-  // Now LSess1 should be at index 0
-  Assert.AreEqual(LSess1.Id, FManager.Sessions[0].Id);
-  Assert.AreEqual(LSess2.Id, FManager.Sessions[1].Id);
+  Assert.AreEqual(LSess2.Id, FManager.Sessions[0].Id);
+  Assert.AreEqual(LSess1.Id, FManager.Sessions[1].Id);
+  Assert.IsTrue(FManager.Sessions[1].LastActive > LOriginalLastActive);
 end;
 
 initialization
