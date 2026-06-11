@@ -44,6 +44,7 @@ type
     procedure RequestRefactoring;
     procedure RenderDiffInBrowser;
     procedure TryStartRefactoring;
+    function CleanSuggestedCode(const AResponse: string): string;
     procedure PostToWebView(const AAction, AText: string);
   public
     procedure InitializeDiff(const AUnitName, AOriginalCode: string);
@@ -230,6 +231,37 @@ begin
   RequestRefactoring;
 end;
 
+function TFormAIDiff.CleanSuggestedCode(const AResponse: string): string;
+var
+  LLines: TStringList;
+begin
+  Result := AResponse.Trim;
+
+  LLines := TStringList.Create;
+  try
+    LLines.Text := Result;
+
+    while (LLines.Count > 0) and LLines[0].Trim.IsEmpty do
+      LLines.Delete(0);
+
+    if (LLines.Count > 0) and SameText(LLines[0].Trim, 'Delphi') then
+      LLines.Delete(0);
+
+    while (LLines.Count > 0) and LLines[0].Trim.StartsWith('```') do
+      LLines.Delete(0);
+
+    while (LLines.Count > 0) and LLines[LLines.Count - 1].Trim.IsEmpty do
+      LLines.Delete(LLines.Count - 1);
+
+    while (LLines.Count > 0) and LLines[LLines.Count - 1].Trim.StartsWith('```') do
+      LLines.Delete(LLines.Count - 1);
+
+    Result := LLines.Text.Trim;
+  finally
+    LLines.Free;
+  end;
+end;
+
 procedure TFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
@@ -237,8 +269,8 @@ var
 begin
   LPrompt := 'Refactor and optimize the following Delphi Pascal code. ' +
              'Ensure it follows clean code principles, SOLID, and Delphi performance best practices. ' +
-             'Return ONLY the raw refactored Pascal code. No explanations, no introduction, and no wrapping block tags. ' +
-             'If you wrap it in markdown code blocks, use ```pascal.' +
+             'Return ONLY raw Delphi Pascal source code. Do not include explanations, markdown fences, ' +
+             'language labels, introductions, or wrapping block tags.' +
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
   LGuard := FLifecycleGuard as ILifecycleGuard;
@@ -258,16 +290,7 @@ begin
       end
       else
       begin
-        { Clean markdown block markers if IA returned them }
-        LCleanedResponse := AResponse.Trim;
-        if LCleanedResponse.StartsWith('```pascal') then
-          LCleanedResponse := LCleanedResponse.Substring(9);
-        if LCleanedResponse.StartsWith('```delphi') then
-          LCleanedResponse := LCleanedResponse.Substring(9);
-        if LCleanedResponse.StartsWith('```') then
-          LCleanedResponse := LCleanedResponse.Substring(3);
-        if LCleanedResponse.EndsWith('```') then
-          LCleanedResponse := LCleanedResponse.Substring(0, LCleanedResponse.Length - 3);
+        LCleanedResponse := CleanSuggestedCode(AResponse);
           
         FCanApply := not LCleanedResponse.Trim.IsEmpty;
         FSuggestedCode := LCleanedResponse.Trim;
