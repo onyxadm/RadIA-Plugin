@@ -258,6 +258,8 @@ end;
 function TFormAIDiff.CleanSuggestedCode(const AResponse: string): string;
 var
   LLines: TStringList;
+  I: Integer;
+  LLine: string;
 begin
   Result := AResponse.Trim;
 
@@ -265,19 +267,19 @@ begin
   try
     LLines.Text := Result;
 
+    I := LLines.Count - 1;
+    while I >= 0 do
+    begin
+      LLine := LLines[I].Trim;
+      if LLine.StartsWith('```') or SameText(LLine, 'Delphi') or SameText(LLine, 'Pascal') then
+        LLines.Delete(I);
+      Dec(I);
+    end;
+
     while (LLines.Count > 0) and LLines[0].Trim.IsEmpty do
       LLines.Delete(0);
 
-    if (LLines.Count > 0) and SameText(LLines[0].Trim, 'Delphi') then
-      LLines.Delete(0);
-
-    while (LLines.Count > 0) and LLines[0].Trim.StartsWith('```') do
-      LLines.Delete(0);
-
     while (LLines.Count > 0) and LLines[LLines.Count - 1].Trim.IsEmpty do
-      LLines.Delete(LLines.Count - 1);
-
-    while (LLines.Count > 0) and LLines[LLines.Count - 1].Trim.StartsWith('```') do
       LLines.Delete(LLines.Count - 1);
 
     Result := LLines.Text.Trim;
@@ -293,8 +295,9 @@ var
 begin
   LPrompt := 'Refactor and optimize the following Delphi Pascal code. ' +
              'Ensure it follows clean code principles, SOLID, and Delphi performance best practices. ' +
+             'Preserve valid Delphi formatting and indentation using two spaces per indentation level. ' +
              'Return ONLY raw Delphi Pascal source code. Do not include explanations, markdown fences, ' +
-             'language labels, introductions, or wrapping block tags.' +
+             'language labels, introductions, comments about the changes, or wrapping block tags.' +
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
   LGuard := FLifecycleGuard as ILifecycleGuard;
