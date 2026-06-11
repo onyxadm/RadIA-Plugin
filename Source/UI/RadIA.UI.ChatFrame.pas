@@ -309,6 +309,7 @@ end;
 procedure TFrameAIChat.EnsureMainWebView;
 begin
   CreateEdgeBrowser;
+  pnlBrowser.Caption := 'Loading Rad IA Chat...';
 
   if not FWebViewInitialized then
   begin
@@ -422,6 +423,7 @@ var
 begin
   if FBrowserInitialized then
   begin
+    pnlBrowser.Caption := '';
     cbProvider.Visible := True;
     cbModel.Visible := True;
     btnTemplates.Visible := True;
@@ -532,6 +534,14 @@ begin
       end;
     end;
     UpdateWebViewNavigation;
+  end;
+  if Failed(AResult) then
+  begin
+    FBrowserInitialized := False;
+    FWebViewInitialized := False;
+    pnlBrowser.Caption := 'Unable to load Rad IA Chat. Close and reopen the chat window.';
+    TLogger.Log('EdgeBrowserCreateWebViewCompleted failed for main chat WebView. HRESULT: ' +
+      IntToHex(AResult, 8), 'UI');
   end;
 end;
 
