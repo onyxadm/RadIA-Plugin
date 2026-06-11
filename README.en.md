@@ -43,6 +43,7 @@ This project adopts clear language rules and design standards for both human dev
 *   **Context-Aware Editor Actions:** Right-click a selection or the active unit to:
     *   *Explain Code:* Analyze and explain the logic.
     *   *Optimize/Refactor:* Improve performance and apply clean code practices.
+    *   *Create Example from Comment:* Automatically generate the body of an empty method from a natural-language comment.
     *   *Generate Unit Tests:* Automatically output a DUnitX test structure.
     *   *Analyze for Bugs:* Scan selected block for memory leaks or logic errors.
     *   When no selection exists, Rad IA sends the whole active unit as context, preserving formatted Pascal blocks in chat and keeping `/explain` separated from review flows.

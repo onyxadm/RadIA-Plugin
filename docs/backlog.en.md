@@ -50,6 +50,20 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
+  <summary><b>📦 v0.0.21 — Create Example from Comment (Click to expand)</b></summary>
+
+  #### 1. Example Generation from Comment
+  *   **Description**: New **Create Example from Comment** editor context-menu action to fill empty methods from a natural-language comment.
+  *   **Details**:
+      *   The parser detects the current method from the cursor and accepts `//`, `{ ... }`, and `(* ... *)` comments, including multiline blocks.
+      *   The action rejects unsupported contexts, methods without comments, and methods that already contain code beyond whitespace and comments.
+      *   Generated code is inserted directly below the comment, preserving the original intent and avoiding Smart Diff for this flow.
+      *   The flow respects Web Login providers by opening the chat bridge before sending the prompt when required.
+      *   The editor context hook was kept on the Delphi 12 and Delphi 13 validated behavior.
+      *   Validated with `build.ps1 -DelphiVersion "23.0" -Test`, with 155 passing tests.
+</details>
+
+<details>
   <summary><b>📦 v0.0.20 — Smart Diff with Web Login and Configuration Persistence (Click to expand)</b></summary>
 
   #### 1. Smart Diff with Web Login Providers

@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.21 — Create Example from Comment (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Menos fricção para transformar intenção em código Delphi, permitindo escrever a assinatura do método e um comentário de intenção para o Rad IA gerar o corpo automaticamente.
+  *   **Destaques**: detecção do método pelo cursor, suporte a comentários `//`, `{ ... }` e `(* ... *)`, inserção direta abaixo do comentário, validações para evitar sobrescrever lógica existente e compatibilidade com Web Login.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.21)](backlog.md#v0021--create-example-from-comment-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.20 — Smart Diff com Web Login e Persistência de Configuração (Concluído)</b></summary>
 
   *   **Valor Entregue**: Refatorações pelo Smart Diff mais confiáveis com provedores Web Login, preservando a formatação do código e evitando regressões de configuração.

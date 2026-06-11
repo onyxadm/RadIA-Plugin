@@ -44,6 +44,7 @@ This document contains the complete checklist, categorization, and development s
 | **Tokens & Cost Tracking** | Control | Status bar counter for session token usage and USD estimated cost. | ✅ Completed |
 | **Local Quota Control** | Control | Define a monthly token limit with request blocking and a manual reset button. | ✅ Completed |
 | **Editor Context Actions** | Integration | Rad IA submenu at the top of the editor right-click menu to explain code, optimize/refactor, generate tests, find bugs, document methods, and review the active unit. When there is no selection, the whole unit is used as context. | ✅ Completed |
+| **Create Example from Comment** | Integration | Generates the body of empty methods from natural-language comments inside `begin/end`, preserving the comment and inserting the example directly into the editor. | ✅ Completed |
 | **Interactive Smart Diff** | Integration | Side-by-side original/suggested diff view with instant editor replacement. | ✅ Completed |
 | **Smart Build Debugger** | Integration | Message tab integration to resolve compiler issues with one-click fixes. | ✅ Completed |
 | **Auto XML Documentation** | Generation | Write Delphi-compliant XML help comments above methods automatically. | ✅ Completed |

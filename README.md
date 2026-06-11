@@ -43,6 +43,7 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
 *   **Ações de Contexto no Editor:** Clique com o botão direito em uma seleção ou na unit ativa para:
     *   *Explicar Código:* Analisar didaticamente a lógica.
     *   *Otimizar/Refatorar:* Melhorar a performance e aplicar princípios SOLID/Clean Code.
+    *   *Create Example from Comment:* Gerar automaticamente o corpo de um método vazio a partir de um comentário em linguagem natural.
     *   *Gerar Testes Unitários:* Gerar estruturas prontas de testes usando DUnitX.
     *   *Localizar Bugs:* Buscar memory leaks, exceptions soltas e falhas de lógica.
     *   Quando não houver seleção, o Rad IA envia a unit inteira como contexto, preservando blocos Pascal formatados no chat e mantendo `/explain` separado dos fluxos de review.

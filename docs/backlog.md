@@ -50,6 +50,20 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
+  <summary><b>📦 v0.0.21 — Create Example from Comment (Clique para expandir)</b></summary>
+
+  #### 1. Geração de Exemplo a partir de Comentário
+  *   **Descrição**: Nova ação **Create Example from Comment** no menu contextual do editor para preencher métodos vazios a partir de um comentário em linguagem natural.
+  *   **Detalhes**:
+      *   O parser identifica o método atual pelo cursor, aceita comentários `//`, `{ ... }` e `(* ... *)`, inclusive multilinha.
+      *   A ação recusa métodos fora do padrão esperado, sem comentário ou com código existente além de espaços e comentários.
+      *   O código gerado é inserido diretamente abaixo do comentário, preservando a intenção original e sem abrir o Smart Diff.
+      *   O fluxo respeita provedores com Web Login, abrindo a ponte do chat antes de enviar o prompt quando necessário.
+      *   O mecanismo do hook contextual foi mantido no comportamento validado em Delphi 12 e Delphi 13.
+      *   Validação realizada com `build.ps1 -DelphiVersion "23.0" -Test`, com 155 testes aprovados.
+</details>
+
+<details>
   <summary><b>📦 v0.0.20 — Smart Diff com Web Login e Persistência de Configuração (Clique para expandir)</b></summary>
 
   #### 1. Smart Diff com Provedores Web Login

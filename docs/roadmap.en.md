@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.21 — Create Example from Comment (Completed)</b></summary>
+
+  *   **Value Delivered**: Less friction to turn intent into Delphi code, allowing users to write a method signature and an intent comment so Rad IA can generate the method body automatically.
+  *   **Highlights**: cursor-based method detection, support for `//`, `{ ... }`, and `(* ... *)` comments, direct insertion below the comment, validations to avoid overwriting existing logic, and Web Login compatibility.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.21)](backlog.en.md#v0021--create-example-from-comment-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.20 — Smart Diff with Web Login and Configuration Persistence (Completed)</b></summary>
 
   *   **Value Delivered**: More reliable Smart Diff refactorings with Web Login providers, preserving code formatting and preventing configuration regressions.
