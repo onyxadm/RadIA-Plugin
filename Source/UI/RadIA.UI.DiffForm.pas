@@ -36,12 +36,15 @@ type
     FBrowserInitialized: Boolean;
     FPageReady: Boolean;
     FRequestStarted: Boolean;
+    FRequestFinished: Boolean;
     FPendingRender: Boolean;
     FCanApply: Boolean;
+    FRequestTimeoutTimer: TTimer;
     FLifecycleGuard: IInterface;
     
     procedure FormShow(Sender: TObject);
     procedure RequestRefactoring;
+    procedure RequestTimeoutElapsed(Sender: TObject);
     procedure RenderDiffInBrowser;
     procedure TryStartRefactoring;
     function CleanSuggestedCode(const AResponse: string): string;
@@ -89,12 +92,17 @@ begin
   FBrowserInitialized := False;
   FPageReady := False;
   FRequestStarted := False;
+  FRequestFinished := False;
   FPendingRender := False;
   FCanApply := False;
   FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.GetInstance;
   FAIService := TRadIAService.Create(FConfig);
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
+  FRequestTimeoutTimer := TTimer.Create(Self);
+  FRequestTimeoutTimer.Enabled := False;
+  FRequestTimeoutTimer.Interval := 60000;
+  FRequestTimeoutTimer.OnTimer := RequestTimeoutElapsed;
   btnApply.Enabled := False;
   
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
@@ -228,7 +236,23 @@ begin
     Exit;
 
   FRequestStarted := True;
+  FRequestFinished := False;
   RequestRefactoring;
+end;
+
+procedure TFormAIDiff.RequestTimeoutElapsed(Sender: TObject);
+begin
+  FRequestTimeoutTimer.Enabled := False;
+
+  if FRequestFinished then
+    Exit;
+
+  FRequestFinished := True;
+  FCanApply := False;
+  FAIService.CancelCurrentRequest;
+  FSuggestedCode := '// Error requesting refactoring: provider response timed out.' +
+    #13#10 + FOriginalCode;
+  RenderDiffInBrowser;
 end;
 
 function TFormAIDiff.CleanSuggestedCode(const AResponse: string): string;
@@ -274,6 +298,8 @@ begin
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
   LGuard := FLifecycleGuard as ILifecycleGuard;
+
+  FRequestTimeoutTimer.Enabled := True;
              
   FAIService.SendPrompt(LPrompt, [],
     procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
@@ -282,6 +308,12 @@ begin
     begin
       if not LGuard.IsAlive then
         Exit;
+
+      if FRequestFinished then
+        Exit;
+
+      FRequestFinished := True;
+      FRequestTimeoutTimer.Enabled := False;
 
       if not AError.IsEmpty then
       begin
