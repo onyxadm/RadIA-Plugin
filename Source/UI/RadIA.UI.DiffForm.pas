@@ -43,9 +43,11 @@ type
     FLifecycleGuard: IInterface;
     
     procedure FormShow(Sender: TObject);
+    procedure LoadWindowPlacement;
     procedure RequestRefactoring;
     procedure RequestTimeoutElapsed(Sender: TObject);
     procedure RenderDiffInBrowser;
+    procedure SaveWindowPlacement;
     procedure TryStartRefactoring;
     function CleanSuggestedCode(const AResponse: string): string;
     procedure PostToWebView(const AAction, AText: string);
@@ -61,7 +63,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, ToolsAPI, RadIA.UI.Resources;
+  System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources;
 
 procedure TFormAIDiff.CreateWnd;
 var
@@ -104,6 +106,7 @@ begin
   FRequestTimeoutTimer.Interval := 60000;
   FRequestTimeoutTimer.OnTimer := RequestTimeoutElapsed;
   btnApply.Enabled := False;
+  LoadWindowPlacement;
   
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -118,8 +121,79 @@ end;
 
 procedure TFormAIDiff.FormDestroy(Sender: TObject);
 begin
+  SaveWindowPlacement;
   (FLifecycleGuard as ILifecycleGuard).Invalidate;
   FAIService.Free;
+end;
+
+procedure TFormAIDiff.LoadWindowPlacement;
+var
+  LReg: TRegistry;
+  LRegPath: string;
+  LLeft: Integer;
+  LTop: Integer;
+  LWidth: Integer;
+  LHeight: Integer;
+  LBounds: TRect;
+  LDesktop: TRect;
+begin
+  LReg := TRegistry.Create;
+  try
+    LReg.RootKey := HKEY_CURRENT_USER;
+    LRegPath := TRadIAConfig.GetRegistryPath;
+    if not LReg.OpenKeyReadOnly(LRegPath) then
+      Exit;
+
+    if not (LReg.ValueExists('DiffWindowWidth') and
+            LReg.ValueExists('DiffWindowHeight') and
+            LReg.ValueExists('DiffWindowLeft') and
+            LReg.ValueExists('DiffWindowTop')) then
+      Exit;
+
+    LWidth := LReg.ReadInteger('DiffWindowWidth');
+    LHeight := LReg.ReadInteger('DiffWindowHeight');
+    LLeft := LReg.ReadInteger('DiffWindowLeft');
+    LTop := LReg.ReadInteger('DiffWindowTop');
+
+    LWidth := Max(640, LWidth);
+    LHeight := Max(480, LHeight);
+    LBounds := Rect(LLeft, LTop, LLeft + LWidth, LTop + LHeight);
+    LDesktop := Screen.DesktopRect;
+
+    if (LBounds.Right < LDesktop.Left) or (LBounds.Left > LDesktop.Right) or
+       (LBounds.Bottom < LDesktop.Top) or (LBounds.Top > LDesktop.Bottom) then
+      Exit;
+
+    Position := poDesigned;
+    SetBounds(LLeft, LTop, LWidth, LHeight);
+  finally
+    LReg.Free;
+  end;
+end;
+
+procedure TFormAIDiff.SaveWindowPlacement;
+var
+  LReg: TRegistry;
+  LRegPath: string;
+begin
+  if WindowState <> wsNormal then
+    Exit;
+
+  LReg := TRegistry.Create;
+  try
+    LReg.RootKey := HKEY_CURRENT_USER;
+    LRegPath := TRadIAConfig.GetRegistryPath;
+    if LReg.OpenKey(LRegPath, True) then
+    begin
+      LReg.WriteInteger('DiffWindowWidth', Width);
+      LReg.WriteInteger('DiffWindowHeight', Height);
+      LReg.WriteInteger('DiffWindowLeft', Left);
+      LReg.WriteInteger('DiffWindowTop', Top);
+      LReg.CloseKey;
+    end;
+  finally
+    LReg.Free;
+  end;
 end;
 
 procedure TFormAIDiff.FormShow(Sender: TObject);
