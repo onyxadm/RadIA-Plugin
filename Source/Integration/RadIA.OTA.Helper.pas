@@ -10,6 +10,9 @@ type
   TRadIAOTAHelper = class
   private
     class function FormatTextWithIndent(const AText: string; const APosition: IOTAEditPosition): string;
+    class function ReadEditorText(const AEditReader: IOTAEditReader; out AText: string): Boolean;
+    class function ReadBufferText(const AEditBuffer: IOTAEditBuffer; out AText: string): Boolean;
+    class function ReadCurrentSourceEditorText(out AText: string): Boolean;
   public
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     class function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False): Boolean;
@@ -53,19 +56,76 @@ begin
   end;
 end;
 
-class function TRadIAOTAHelper.GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean): Boolean;
+class function TRadIAOTAHelper.ReadEditorText(const AEditReader: IOTAEditReader; out AText: string): Boolean;
 var
-  LEditBuffer: IOTAEditBuffer;
-  LEditBlock: IOTAEditBlock;
-  LEditReader: IOTAEditReader;
   LBytes: TBytes;
   LBytesRead: Integer;
 begin
   Result := False;
   AText := '';
+
+  if not Assigned(AEditReader) then
+    Exit;
+
+  SetLength(LBytes, AEditReader.GetText(0, nil, 0));
+  if Length(LBytes) > 0 then
+  begin
+    LBytesRead := AEditReader.GetText(0, PAnsiChar(@LBytes[0]), Length(LBytes));
+    SetLength(LBytes, LBytesRead);
+    AText := TEncoding.UTF8.GetString(LBytes);
+  end;
+
+  Result := True;
+end;
+
+class function TRadIAOTAHelper.ReadBufferText(const AEditBuffer: IOTAEditBuffer; out AText: string): Boolean;
+begin
+  Result := False;
+  AText := '';
+
+  if not Assigned(AEditBuffer) then
+    Exit;
+
+  Result := ReadEditorText(AEditBuffer.CreateReader, AText);
+end;
+
+class function TRadIAOTAHelper.ReadCurrentSourceEditorText(out AText: string): Boolean;
+var
+  LModuleServices: IOTAModuleServices;
+  LModule: IOTAModule;
+  LSourceEditor: IOTASourceEditor;
+  I: Integer;
+begin
+  Result := False;
+  AText := '';
+
+  if not Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
+    Exit;
+
+  LModule := LModuleServices.CurrentModule;
+  if not Assigned(LModule) then
+    Exit;
+
+  for I := 0 to LModule.GetModuleFileCount - 1 do
+  begin
+    if Supports(LModule.GetModuleFileEditor(I), IOTASourceEditor, LSourceEditor) then
+    begin
+      Result := ReadEditorText(LSourceEditor.CreateReader, AText);
+      Exit;
+    end;
+  end;
+end;
+
+class function TRadIAOTAHelper.GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean): Boolean;
+var
+  LEditBuffer: IOTAEditBuffer;
+  LEditBlock: IOTAEditBlock;
+begin
+  Result := False;
+  AText := '';
   
   LEditBuffer := GetCurrentEditBuffer;
-  if not Assigned(LEditBuffer) then
+  if ASelectedOnly and (not Assigned(LEditBuffer)) then
     Exit;
     
   if ASelectedOnly then
@@ -80,23 +140,9 @@ begin
   else
   begin
     { Read the entire buffer }
-    LEditReader := LEditBuffer.CreateReader;
-    if Assigned(LEditReader) then
-    begin
-      SetLength(LBytes, LEditReader.GetText(0, nil, 0)); // Get size first
-      if Length(LBytes) > 0 then
-      begin
-        LBytesRead := LEditReader.GetText(0, PAnsiChar(@LBytes[0]), Length(LBytes));
-        SetLength(LBytes, LBytesRead);
-        AText := TEncoding.UTF8.GetString(LBytes);
-        Result := True;
-      end
-      else
-      begin
-        AText := '';
-        Result := True;
-      end;
-    end;
+    Result := ReadBufferText(LEditBuffer, AText);
+    if (not Result) or AText.Trim.IsEmpty then
+      Result := ReadCurrentSourceEditorText(AText);
   end;
 end;
 
