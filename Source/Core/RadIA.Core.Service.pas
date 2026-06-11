@@ -44,6 +44,8 @@ type
     function ComputePromptHash(const APrompt: string;
       const ATrimmedHistory: TArray<IChatMessage>; const ASystemPrompt: string): string;
     function IsWebLoginProvider(const AProviderName: string): Boolean;
+    function ShouldUseWebLoginForRequest(const AProviderName: string): Boolean;
+    function CreateRequestProvider: IIAProvider;
     function IsLocalQuotaLimitReached: Boolean;
   public
     constructor Create(const AConfig: IAIConfig);
@@ -196,6 +198,17 @@ begin
     Result := TProviderRegistry.CreateProvider(LProviderName, FConfig);
 end;
 
+function TRadIAService.CreateRequestProvider: IIAProvider;
+var
+  LProviderName: string;
+begin
+  LProviderName := FConfig.GetActiveProvider;
+  if ShouldUseWebLoginForRequest(LProviderName) then
+    Result := TProviderRegistry.CreateProvider('WebViewBridge', FConfig)
+  else
+    Result := TProviderRegistry.CreateProvider(LProviderName, FConfig);
+end;
+
 function TRadIAService.GetEffectiveSystemPrompt: string;
 var
   LSystemPrompt: string;
@@ -287,6 +300,13 @@ begin
   Result := SameText(FConfig.GetProviderAuthType(AProviderName), 'web_login');
 end;
 
+function TRadIAService.ShouldUseWebLoginForRequest(const AProviderName: string): Boolean;
+begin
+  Result := IsWebLoginProvider(AProviderName) or
+    ((SameText(AProviderName, 'Gemini') or SameText(AProviderName, 'OpenAI')) and
+     FConfig.GetApiKey(AProviderName).Trim.IsEmpty);
+end;
+
 function TRadIAService.IsLocalQuotaLimitReached: Boolean;
 var
   LActiveProvider: string;
@@ -294,7 +314,7 @@ begin
   LActiveProvider := FConfig.GetActiveProvider;
 
   Result := FConfig.QuotaEnabled and
-    (not IsWebLoginProvider(LActiveProvider)) and
+    (not ShouldUseWebLoginForRequest(LActiveProvider)) and
     (FConfig.QuotaUsed >= FConfig.QuotaLimit);
 end;
 
@@ -323,7 +343,7 @@ begin
       try
         System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
         try
-          LProvider := CreateActiveProvider;
+          LProvider := CreateRequestProvider;
           TMonitor.Enter(Self);
           try
             FActiveProvider := LProvider;
@@ -428,7 +448,7 @@ begin
       try
         System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
         try
-          LProvider       := CreateActiveProvider;
+          LProvider       := CreateRequestProvider;
           TMonitor.Enter(Self);
           try
             FActiveProvider := LProvider;
