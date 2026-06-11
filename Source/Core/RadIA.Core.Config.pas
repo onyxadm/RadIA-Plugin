@@ -326,10 +326,6 @@ begin
     LogDebug('TRadIAConfig.Load: Opened root path ' + APath);
     FActiveProvider := FStorage.ReadString('ActiveProvider', TConfigDefaults.ActiveProvider);
     FSystemPrompt      := ReadRegString('SystemPrompt', CDefaultSystemPrompt);
-    
-    { Temporary fallback for legacy root keys until provider subkeys are saved. }
-    FOllamaBaseUrl     := ReadRegString('OllamaBaseUrl', TConfigDefaults.OllamaBaseUrl);
-    FOpenAICustomBaseUrl := ReadRegString('OpenAICustomBaseUrl', '');
 
     LMaxHist := ReadRegInt('MaxHistoryMessages', TConfigDefaults.MaxHistoryMessages);
     FMaxHistoryMessages := IfThen(LMaxHist > 0, LMaxHist, TConfigDefaults.MaxHistoryMessages);
@@ -350,38 +346,6 @@ begin
     FAutocompleteModel := ReadRegString('AutocompleteModel', TConfigDefaults.AutocompleteModel);
     FAutocompleteDelay := ReadRegInt('AutocompleteDelay', TConfigDefaults.AutocompleteDelay);
     FInjectDelphiVersion := ReadRegInt('InjectDelphiVersion', 1) <> 0;
-    FAzureApiVersion   := ReadRegString('AzureApiVersion', TConfigDefaults.AzureApiVersion);
-    FAwsRegion         := ReadRegString('AwsRegion', TConfigDefaults.AwsRegion);
-    try
-      if FStorage.ValueExists('AwsAccessKeyId') then
-        FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AwsAccessKeyId', ''));
-    except
-      on E: Exception do
-      begin
-        LogDebug('TRadIAConfig.Load: Failed to unprotect AwsAccessKeyId: ' + E.Message);
-        FAwsAccessKeyId := '';
-      end;
-    end;
-    try
-      if FStorage.ValueExists('AwsSecretAccessKey') then
-        FAwsSecretAccessKey := UnprotectString(FStorage.ReadString('AwsSecretAccessKey', ''));
-    except
-      on E: Exception do
-      begin
-        LogDebug('TRadIAConfig.Load: Failed to unprotect AwsSecretAccessKey: ' + E.Message);
-        FAwsSecretAccessKey := '';
-      end;
-    end;
-    try
-      if FStorage.ValueExists('AwsSessionToken') then
-        FAwsSessionToken := UnprotectString(FStorage.ReadString('AwsSessionToken', ''));
-    except
-      on E: Exception do
-      begin
-        LogDebug('TRadIAConfig.Load: Failed to unprotect AwsSessionToken: ' + E.Message);
-        FAwsSessionToken := '';
-      end;
-    end;
     
     FStorage.CloseKey;
 
@@ -438,11 +402,49 @@ begin
         if FStorage.ValueExists('BaseURL') then
         begin
           FBaseUrlsList.Values[LSubKey.ToLower] := FStorage.ReadString('BaseURL', '');
-          { Sync BaseURLs to legacy fields for backward compatibility }
+          { Keep public compatibility properties backed by provider subkeys. }
           if SameText(LSubKey, 'openai') then
             FOpenAICustomBaseUrl := FStorage.ReadString('BaseURL', '')
           else if SameText(LSubKey, 'ollama') then
             FOllamaBaseUrl := FStorage.ReadString('BaseURL', '');
+        end;
+
+        if SameText(LSubKey, 'AzureOpenAI') then
+          FAzureApiVersion := ReadRegString('ApiVersion', TConfigDefaults.AzureApiVersion);
+
+        if SameText(LSubKey, 'Bedrock') then
+        begin
+          FAwsRegion := ReadRegString('Region', TConfigDefaults.AwsRegion);
+          try
+            if FStorage.ValueExists('AccessKeyId') then
+              FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AccessKeyId', ''));
+          except
+            on E: Exception do
+            begin
+              LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock AccessKeyId: ' + E.Message);
+              FAwsAccessKeyId := '';
+            end;
+          end;
+          try
+            if FStorage.ValueExists('SecretAccessKey') then
+              FAwsSecretAccessKey := UnprotectString(FStorage.ReadString('SecretAccessKey', ''));
+          except
+            on E: Exception do
+            begin
+              LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SecretAccessKey: ' + E.Message);
+              FAwsSecretAccessKey := '';
+            end;
+          end;
+          try
+            if FStorage.ValueExists('SessionToken') then
+              FAwsSessionToken := UnprotectString(FStorage.ReadString('SessionToken', ''));
+          except
+            on E: Exception do
+            begin
+              LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SessionToken: ' + E.Message);
+              FAwsSessionToken := '';
+            end;
+          end;
         end;
 
         { Load advanced numeric parameters }
@@ -505,21 +507,12 @@ begin
     FStorage.WriteString('AutocompleteModel', FAutocompleteModel);
     FStorage.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
     FStorage.WriteInteger('InjectDelphiVersion', IfThen(FInjectDelphiVersion, 1, 0));
-    FStorage.WriteString('AzureApiVersion', FAzureApiVersion);
-    FStorage.WriteString('AwsRegion', FAwsRegion);
-    FStorage.WriteString('AwsAccessKeyId', ProtectString(FAwsAccessKeyId));
-    FStorage.WriteString('AwsSecretAccessKey', ProtectString(FAwsSecretAccessKey));
-    FStorage.WriteString('AwsSessionToken', ProtectString(FAwsSessionToken));
-    
-    { Sync legacy BaseURLs to root just in case }
-    FStorage.WriteString('OllamaBaseUrl', FOllamaBaseUrl);
-    FStorage.WriteString('OpenAICustomBaseUrl', FOpenAICustomBaseUrl);
     FStorage.CloseKey;
 
     TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
   end;
 
-  { Sync memory fields to legacy URLs for consistency }
+  { Keep legacy public properties backed by provider-specific values. }
   SetProviderBaseUrl('openai', FOpenAICustomBaseUrl);
   SetProviderBaseUrl('ollama', FOllamaBaseUrl);
 
@@ -536,6 +529,17 @@ begin
 
       if FBaseUrlsList.IndexOfName(LKey.ToLower) >= 0 then
         FStorage.WriteString('BaseURL', GetProviderBaseUrl(LKey));
+
+      if SameText(LKey, 'AzureOpenAI') then
+        FStorage.WriteString('ApiVersion', GetAzureApiVersion);
+
+      if SameText(LKey, 'Bedrock') then
+      begin
+        FStorage.WriteString('Region', GetAwsRegion);
+        FStorage.WriteString('AccessKeyId', ProtectString(GetAwsAccessKeyId));
+        FStorage.WriteString('SecretAccessKey', ProtectString(GetAwsSecretAccessKey));
+        FStorage.WriteString('SessionToken', ProtectString(GetAwsSessionToken));
+      end;
 
       FStorage.WriteFloat('Temperature', GetTemperature(LKey));
       FStorage.WriteInteger('MaxTokens', GetMaxTokens(LKey));

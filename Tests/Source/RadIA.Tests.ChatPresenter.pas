@@ -353,6 +353,8 @@ begin
   TRadIAConfig.SetStorage(LMemoryStorage);
   FConfig := TRadIAConfig.GetInstance;
   FConfig.Load;
+  FConfig.SetProviderAuthType('Gemini', 'api_key');
+  FConfig.SetProviderAuthType('OpenAI', 'api_key');
   
   FHasOriginalGemini := TProviderRegistry.GetProvider('Gemini', FGeminiOriginalMeta);
   FHasOriginalOpenAI := TProviderRegistry.GetProvider('OpenAI', FOpenAIOriginalMeta);

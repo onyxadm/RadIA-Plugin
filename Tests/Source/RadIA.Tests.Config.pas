@@ -3,13 +3,15 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Types;
+  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Types,
+  RadIA.Core.SettingsStorage;
 
 type
   [TestFixture]
   TTestRadIAConfig = class
   private
     FConfig: IAIConfig;
+    FStorage: ISettingsStorage;
   public
     [Setup]
     procedure Setup;
@@ -32,17 +34,22 @@ type
     procedure TestJsonNewlineHandling;
     [Test]
     procedure TestAdvancedSettingsPersistence;
+    [Test]
+    procedure TestProviderSpecificSettingsAreSavedUnderProviderKeys;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.Win.Registry, Winapi.Windows, System.JSON;
+  System.SysUtils, System.JSON;
 
 { TTestRadIAConfig }
 
 procedure TTestRadIAConfig.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAConfig');
+  FStorage := TMemorySettingsStorage.Create;
+  TRadIAConfig.SetStorage(FStorage);
   FConfig := TRadIAConfig.Create;
   FConfig.Load;
 end;
@@ -50,6 +57,9 @@ end;
 procedure TTestRadIAConfig.TearDown;
 begin
   FConfig := nil;
+  FStorage := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 procedure TTestRadIAConfig.TestActiveProviderPersistence;
@@ -65,32 +75,21 @@ procedure TTestRadIAConfig.TestApiKeyEncryptionAndDecryption;
 const
   TEST_KEY = 'test-api-key-12345-gemini';
 var
-  LReg: TRegistry;
   LStoredValue: string;
-  LSettings: TFormatSettings;
-  LRegPath: string;
 begin
   FConfig.SetApiKey('Gemini', TEST_KEY);
   FConfig.Save;
   
   FConfig.Load;
   Assert.AreEqual(TEST_KEY, FConfig.GetApiKey('Gemini'));
-  
-  LSettings := TFormatSettings.Create('en-US');
-  LRegPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA\Gemini', [CompilerVersion], LSettings);
-  LReg := TRegistry.Create;
+
+  Assert.IsTrue(FStorage.OpenKey('Software\TestRadIAConfig\Gemini', False));
   try
-    LReg.RootKey := HKEY_CURRENT_USER;
-    if LReg.OpenKeyReadOnly(LRegPath) then
-    begin
-      if LReg.ValueExists('ApiKey') then
-      begin
-        LStoredValue := LReg.ReadString('ApiKey');
-        Assert.AreNotEqual(TEST_KEY, LStoredValue, 'API Key should be encrypted in the registry!');
-      end;
-    end;
+    Assert.IsTrue(FStorage.ValueExists('ApiKey'));
+    LStoredValue := FStorage.ReadString('ApiKey', '');
+    Assert.AreNotEqual(TEST_KEY, LStoredValue, 'API Key should be encrypted in settings storage.');
   finally
-    LReg.Free;
+    FStorage.CloseKey;
   end;
 end;
 
@@ -173,6 +172,107 @@ begin
   Assert.AreEqual(1024, FConfig.GetMaxTokens('Gemini'));
   Assert.AreEqual(30, FConfig.GetTimeout('Gemini'));
   Assert.IsFalse(FConfig.SmartConfigEnabled);
+end;
+
+procedure TTestRadIAConfig.TestProviderSpecificSettingsAreSavedUnderProviderKeys;
+const
+  TEST_ROOT = 'Software\TestRadIAProviderSpecificSettings';
+  TEST_OPENAI_URL = 'https://openai.test/v1';
+  TEST_OLLAMA_URL = 'http://localhost:11434';
+  TEST_AZURE_VERSION = '2024-02-15-preview';
+  TEST_AWS_ACCESS_KEY = 'aws-access-key';
+  TEST_AWS_SECRET_KEY = 'aws-secret-key';
+  TEST_AWS_REGION = 'us-west-2';
+  TEST_AWS_SESSION_TOKEN = 'aws-session-token';
+  LEGACY_VALUE = 'legacy-value';
+var
+  LStorage: ISettingsStorage;
+  LConfig: IAIConfig;
+begin
+  LStorage := TMemorySettingsStorage.Create;
+  TRadIAConfig.SetBaseRegistryPath(TEST_ROOT);
+  TRadIAConfig.SetStorage(LStorage);
+  try
+    Assert.IsTrue(LStorage.OpenKey(TEST_ROOT, True));
+    try
+      LStorage.WriteString('OpenAICustomBaseUrl', LEGACY_VALUE);
+      LStorage.WriteString('OllamaBaseUrl', LEGACY_VALUE);
+      LStorage.WriteString('AzureApiVersion', LEGACY_VALUE);
+      LStorage.WriteString('AwsAccessKeyId', LEGACY_VALUE);
+      LStorage.WriteString('AwsSecretAccessKey', LEGACY_VALUE);
+      LStorage.WriteString('AwsRegion', LEGACY_VALUE);
+      LStorage.WriteString('AwsSessionToken', LEGACY_VALUE);
+    finally
+      LStorage.CloseKey;
+    end;
+
+    LConfig := TRadIAConfig.Create;
+    LConfig.OpenAICustomBaseUrl := TEST_OPENAI_URL;
+    LConfig.OllamaBaseUrl := TEST_OLLAMA_URL;
+    LConfig.AzureApiVersion := TEST_AZURE_VERSION;
+    LConfig.AwsAccessKeyId := TEST_AWS_ACCESS_KEY;
+    LConfig.AwsSecretAccessKey := TEST_AWS_SECRET_KEY;
+    LConfig.AwsRegion := TEST_AWS_REGION;
+    LConfig.AwsSessionToken := TEST_AWS_SESSION_TOKEN;
+    LConfig.Save;
+
+    Assert.IsTrue(LStorage.OpenKey(TEST_ROOT, False));
+    try
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('OpenAICustomBaseUrl', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('OllamaBaseUrl', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AzureApiVersion', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AwsAccessKeyId', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AwsSecretAccessKey', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AwsRegion', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AwsSessionToken', ''));
+    finally
+      LStorage.CloseKey;
+    end;
+
+    Assert.IsTrue(LStorage.OpenKey(TEST_ROOT + '\OpenAI', False));
+    try
+      Assert.AreEqual(TEST_OPENAI_URL, LStorage.ReadString('BaseURL', ''));
+    finally
+      LStorage.CloseKey;
+    end;
+
+    Assert.IsTrue(LStorage.OpenKey(TEST_ROOT + '\Ollama', False));
+    try
+      Assert.AreEqual(TEST_OLLAMA_URL, LStorage.ReadString('BaseURL', ''));
+    finally
+      LStorage.CloseKey;
+    end;
+
+    Assert.IsTrue(LStorage.OpenKey(TEST_ROOT + '\AzureOpenAI', False));
+    try
+      Assert.AreEqual(TEST_AZURE_VERSION, LStorage.ReadString('ApiVersion', ''));
+    finally
+      LStorage.CloseKey;
+    end;
+
+    Assert.IsTrue(LStorage.OpenKey(TEST_ROOT + '\Bedrock', False));
+    try
+      Assert.AreEqual(TEST_AWS_REGION, LStorage.ReadString('Region', ''));
+      Assert.IsTrue(LStorage.ValueExists('AccessKeyId'));
+      Assert.IsTrue(LStorage.ValueExists('SecretAccessKey'));
+      Assert.IsTrue(LStorage.ValueExists('SessionToken'));
+    finally
+      LStorage.CloseKey;
+    end;
+
+    LConfig.Load;
+    Assert.AreEqual(TEST_OPENAI_URL, LConfig.OpenAICustomBaseUrl);
+    Assert.AreEqual(TEST_OLLAMA_URL, LConfig.OllamaBaseUrl);
+    Assert.AreEqual(TEST_AZURE_VERSION, LConfig.AzureApiVersion);
+    Assert.AreEqual(TEST_AWS_ACCESS_KEY, LConfig.AwsAccessKeyId);
+    Assert.AreEqual(TEST_AWS_SECRET_KEY, LConfig.AwsSecretAccessKey);
+    Assert.AreEqual(TEST_AWS_REGION, LConfig.AwsRegion);
+    Assert.AreEqual(TEST_AWS_SESSION_TOKEN, LConfig.AwsSessionToken);
+  finally
+    LConfig := nil;
+    TRadIAConfig.SetStorage(nil);
+    TRadIAConfig.SetBaseRegistryPath('');
+  end;
 end;
 
 initialization

@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage;
+  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage, Winapi.WebView2, Winapi.ActiveX;
 
 type
   { Form to compare code changes side-by-side before applying them to the editor }
@@ -21,6 +21,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
     procedure btnPrevConflictClick(Sender: TObject);
     procedure btnNextConflictClick(Sender: TObject);
   protected
@@ -33,11 +34,23 @@ type
     FUnitName: string;
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
+    FPageReady: Boolean;
+    FRequestStarted: Boolean;
+    FRequestFinished: Boolean;
+    FPendingRender: Boolean;
+    FCanApply: Boolean;
+    FRequestTimeoutTimer: TTimer;
     FLifecycleGuard: IInterface;
     
     procedure FormShow(Sender: TObject);
+    procedure LoadWindowPlacement;
     procedure RequestRefactoring;
+    procedure RequestTimeoutElapsed(Sender: TObject);
     procedure RenderDiffInBrowser;
+    procedure SaveWindowPlacement;
+    procedure TryStartRefactoring;
+    function CleanSuggestedCode(const AResponse: string): string;
+    function IsWebLoginProvider(const AProviderName: string): Boolean;
     procedure PostToWebView(const AAction, AText: string);
   public
     procedure InitializeDiff(const AUnitName, AOriginalCode: string);
@@ -51,7 +64,11 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, ToolsAPI, RadIA.UI.Resources;
+  System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources;
+
+const
+  CDiffDefaultTimeoutMs = 60000;
+  CDiffWebLoginTimeoutMs = 300000;
 
 procedure TFormAIDiff.CreateWnd;
 var
@@ -80,10 +97,24 @@ var
   LThemingServices: IOTAIDEThemingServices;
 begin
   FBrowserInitialized := False;
+  FPageReady := False;
+  FRequestStarted := False;
+  FRequestFinished := False;
+  FPendingRender := False;
+  FCanApply := False;
   FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.GetInstance;
   FAIService := TRadIAService.Create(FConfig);
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
+  FRequestTimeoutTimer := TTimer.Create(Self);
+  FRequestTimeoutTimer.Enabled := False;
+  if IsWebLoginProvider(FConfig.GetActiveProvider) then
+    FRequestTimeoutTimer.Interval := CDiffWebLoginTimeoutMs
+  else
+    FRequestTimeoutTimer.Interval := CDiffDefaultTimeoutMs;
+  FRequestTimeoutTimer.OnTimer := RequestTimeoutElapsed;
+  btnApply.Enabled := False;
+  LoadWindowPlacement;
   
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -98,8 +129,79 @@ end;
 
 procedure TFormAIDiff.FormDestroy(Sender: TObject);
 begin
+  SaveWindowPlacement;
   (FLifecycleGuard as ILifecycleGuard).Invalidate;
   FAIService.Free;
+end;
+
+procedure TFormAIDiff.LoadWindowPlacement;
+var
+  LReg: TRegistry;
+  LRegPath: string;
+  LLeft: Integer;
+  LTop: Integer;
+  LWidth: Integer;
+  LHeight: Integer;
+  LBounds: TRect;
+  LDesktop: TRect;
+begin
+  LReg := TRegistry.Create;
+  try
+    LReg.RootKey := HKEY_CURRENT_USER;
+    LRegPath := TRadIAConfig.GetRegistryPath;
+    if not LReg.OpenKeyReadOnly(LRegPath) then
+      Exit;
+
+    if not (LReg.ValueExists('DiffWindowWidth') and
+            LReg.ValueExists('DiffWindowHeight') and
+            LReg.ValueExists('DiffWindowLeft') and
+            LReg.ValueExists('DiffWindowTop')) then
+      Exit;
+
+    LWidth := LReg.ReadInteger('DiffWindowWidth');
+    LHeight := LReg.ReadInteger('DiffWindowHeight');
+    LLeft := LReg.ReadInteger('DiffWindowLeft');
+    LTop := LReg.ReadInteger('DiffWindowTop');
+
+    LWidth := Max(640, LWidth);
+    LHeight := Max(480, LHeight);
+    LBounds := Rect(LLeft, LTop, LLeft + LWidth, LTop + LHeight);
+    LDesktop := Screen.DesktopRect;
+
+    if (LBounds.Right < LDesktop.Left) or (LBounds.Left > LDesktop.Right) or
+       (LBounds.Bottom < LDesktop.Top) or (LBounds.Top > LDesktop.Bottom) then
+      Exit;
+
+    Position := poDesigned;
+    SetBounds(LLeft, LTop, LWidth, LHeight);
+  finally
+    LReg.Free;
+  end;
+end;
+
+procedure TFormAIDiff.SaveWindowPlacement;
+var
+  LReg: TRegistry;
+  LRegPath: string;
+begin
+  if WindowState <> wsNormal then
+    Exit;
+
+  LReg := TRegistry.Create;
+  try
+    LReg.RootKey := HKEY_CURRENT_USER;
+    LRegPath := TRadIAConfig.GetRegistryPath;
+    if LReg.OpenKey(LRegPath, True) then
+    begin
+      LReg.WriteInteger('DiffWindowWidth', Width);
+      LReg.WriteInteger('DiffWindowHeight', Height);
+      LReg.WriteInteger('DiffWindowLeft', Left);
+      LReg.WriteInteger('DiffWindowTop', Top);
+      LReg.CloseKey;
+    end;
+  finally
+    LReg.Free;
+  end;
 end;
 
 procedure TFormAIDiff.FormShow(Sender: TObject);
@@ -116,7 +218,7 @@ begin
 
   if not FBrowserInitialized then
   begin
-    EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
+    EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2Diff');
     EdgeBrowser.Navigate('file:///' + TPath.Combine(FWebFilesDir, 'diff.html').Replace('\', '/'));
   end;
 end;
@@ -128,27 +230,40 @@ begin
 end;
 
 procedure TFormAIDiff.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+begin
+  if Succeeded(AResult) then
+    FBrowserInitialized := True;
+end;
+
+procedure TFormAIDiff.EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser;
+  IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
 var
   LThemingServices: IOTAIDEThemingServices;
   LThemeName: string;
 begin
-  if Succeeded(AResult) then
+  if not IsSuccess then
   begin
-    FBrowserInitialized := True;
-    
-    LThemeName := 'light';
-    if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
-    begin
-      if LThemingServices.IDEThemingEnabled then
-      begin
-        if SameText(LThemingServices.ActiveTheme, 'Dark') then
-          LThemeName := 'dark';
-      end;
-    end;
-    
-    PostToWebView('set_theme', LThemeName);
-    RequestRefactoring;
+    FSuggestedCode := '// Error loading diff view. WebView2 status: ' + IntToStr(Ord(WebErrorStatus)) +
+      #13#10 + FOriginalCode;
+    FPendingRender := True;
+    Exit;
   end;
+
+  FPageReady := True;
+
+  LThemeName := 'light';
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled and SameText(LThemingServices.ActiveTheme, 'Dark') then
+      LThemeName := 'dark';
+  end;
+
+  PostToWebView('set_theme', LThemeName);
+
+  if FPendingRender and (not FSuggestedCode.Trim.IsEmpty) then
+    RenderDiffInBrowser
+  else
+    TryStartRefactoring;
 end;
 
 procedure TFormAIDiff.PostToWebView(const AAction, AText: string);
@@ -175,8 +290,11 @@ procedure TFormAIDiff.RenderDiffInBrowser;
 var
   LJson: TJSONObject;
 begin
-  if not FBrowserInitialized then
+  if not FBrowserInitialized or not FPageReady then
+  begin
+    FPendingRender := True;
     Exit;
+  end;
     
   LJson := TJSONObject.Create;
   try
@@ -187,23 +305,111 @@ begin
     
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+    FPendingRender := False;
+    btnApply.Enabled := FCanApply and (not FSuggestedCode.Trim.IsEmpty);
   finally
     LJson.Free;
   end;
+end;
+
+procedure TFormAIDiff.TryStartRefactoring;
+begin
+  if FRequestStarted or not FBrowserInitialized or not FPageReady then
+    Exit;
+
+  FRequestStarted := True;
+  FRequestFinished := False;
+  RequestRefactoring;
+end;
+
+procedure TFormAIDiff.RequestTimeoutElapsed(Sender: TObject);
+begin
+  FRequestTimeoutTimer.Enabled := False;
+
+  if FRequestFinished then
+    Exit;
+
+  FRequestFinished := True;
+  FCanApply := False;
+  FAIService.CancelCurrentRequest;
+  FSuggestedCode := '// Error requesting refactoring: provider response timed out.' +
+    #13#10 + FOriginalCode;
+  RenderDiffInBrowser;
+end;
+
+function TFormAIDiff.CleanSuggestedCode(const AResponse: string): string;
+var
+  LLines: TStringList;
+  I: Integer;
+  LLine: string;
+begin
+  Result := AResponse.Trim;
+
+  LLines := TStringList.Create;
+  try
+    LLines.Text := Result;
+
+    I := LLines.Count - 1;
+    while I >= 0 do
+    begin
+      LLine := LLines[I].Trim;
+      if LLine.StartsWith('```') or SameText(LLine, 'Delphi') or SameText(LLine, 'Pascal') then
+        LLines.Delete(I);
+      Dec(I);
+    end;
+
+    while (LLines.Count > 0) and LLines[0].Trim.IsEmpty do
+      LLines.Delete(0);
+
+    while (LLines.Count > 0) and LLines[LLines.Count - 1].Trim.IsEmpty do
+      LLines.Delete(LLines.Count - 1);
+
+    Result := LLines.Text.Trim;
+  finally
+    LLines.Free;
+  end;
+end;
+
+function TFormAIDiff.IsWebLoginProvider(const AProviderName: string): Boolean;
+begin
+  if SameText(AProviderName, 'WebViewBridge') then
+    Exit(True);
+
+  Result := SameText(FConfig.GetProviderAuthType(AProviderName), 'web_login');
 end;
 
 procedure TFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
   LGuard: ILifecycleGuard;
+  LActiveProvider: string;
 begin
+  LActiveProvider := FConfig.GetActiveProvider;
+  if (not IsWebLoginProvider(LActiveProvider)) and
+     (SameText(LActiveProvider, 'Gemini') or SameText(LActiveProvider, 'OpenAI')) and
+     FConfig.GetApiKey(LActiveProvider).Trim.IsEmpty then
+  begin
+    FRequestFinished := True;
+    FCanApply := False;
+    FSuggestedCode := '// Error requesting refactoring: ' +
+      'Provider is configured for API key authentication, but no API key is saved. ' +
+      'Open Rad IA settings, select Web Login for ' + LActiveProvider +
+      ', complete login, and save settings.' + #13#10 + FOriginalCode;
+    RenderDiffInBrowser;
+    Exit;
+  end;
+
   LPrompt := 'Refactor and optimize the following Delphi Pascal code. ' +
              'Ensure it follows clean code principles, SOLID, and Delphi performance best practices. ' +
-             'Return ONLY the raw refactored Pascal code. No explanations, no introduction, and no wrapping block tags. ' +
-             'If you wrap it in markdown code blocks, use ```pascal.' +
+             'Preserve valid Delphi formatting and indentation using two spaces per indentation level. ' +
+             'Return the complete refactored source in exactly one fenced code block using pascal as ' +
+             'the language. Do not place any text before or after the fenced code block. ' +
+             'Do not split the source into multiple code blocks or explanations.' +
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
   LGuard := FLifecycleGuard as ILifecycleGuard;
+
+  FRequestTimeoutTimer.Enabled := True;
              
   FAIService.SendPrompt(LPrompt, [],
     procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
@@ -213,23 +419,22 @@ begin
       if not LGuard.IsAlive then
         Exit;
 
+      if FRequestFinished then
+        Exit;
+
+      FRequestFinished := True;
+      FRequestTimeoutTimer.Enabled := False;
+
       if not AError.IsEmpty then
       begin
+        FCanApply := False;
         FSuggestedCode := '// Error requesting refactoring: ' + AError + #13#10 + FOriginalCode;
       end
       else
       begin
-        { Clean markdown block markers if IA returned them }
-        LCleanedResponse := AResponse.Trim;
-        if LCleanedResponse.StartsWith('```pascal') then
-          LCleanedResponse := LCleanedResponse.Substring(9);
-        if LCleanedResponse.StartsWith('```delphi') then
-          LCleanedResponse := LCleanedResponse.Substring(9);
-        if LCleanedResponse.StartsWith('```') then
-          LCleanedResponse := LCleanedResponse.Substring(3);
-        if LCleanedResponse.EndsWith('```') then
-          LCleanedResponse := LCleanedResponse.Substring(0, LCleanedResponse.Length - 3);
+        LCleanedResponse := CleanSuggestedCode(AResponse);
           
+        FCanApply := not LCleanedResponse.Trim.IsEmpty;
         FSuggestedCode := LCleanedResponse.Trim;
       end;
       

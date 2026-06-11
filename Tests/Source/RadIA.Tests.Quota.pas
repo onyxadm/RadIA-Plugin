@@ -28,14 +28,16 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.DateUtils, System.SyncObjs, RadIA.Core.TokenUsage, RadIA.Core.Types;
+  System.SysUtils, System.Classes, System.DateUtils, System.SyncObjs,
+  RadIA.Core.TokenUsage, RadIA.Core.Types, RadIA.Core.SettingsStorage;
 
 { TTestRadIAQuota }
 
 procedure TTestRadIAQuota.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAQuota');
+  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
-  // Reset any pre-existing registry configuration for tests by turning quota off initially
   FConfig.QuotaEnabled := False;
   FConfig.QuotaLimit := 1000;
   FConfig.QuotaUsed := 0;
@@ -50,6 +52,8 @@ begin
   FService.Free;
   FService := nil;
   FConfig := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 procedure TTestRadIAQuota.TestQuotaIncrement;
@@ -97,6 +101,9 @@ var
   LHistory: TArray<IChatMessage>;
 begin
   FConfig.QuotaEnabled := True;
+  FConfig.SetActiveProvider('Gemini');
+  FConfig.SetProviderAuthType('Gemini', 'api_key');
+  FConfig.SetApiKey('Gemini', 'test-api-key');
   FConfig.QuotaLimit := 100;
   FConfig.QuotaUsed := 100; // Limit reached
   FConfig.Save;
@@ -115,7 +122,7 @@ begin
       end);
       
     LDoneEvent.WaitFor(5000);
-    Assert.Contains(LErrorMsg, 'Cota');
+    Assert.Contains(LErrorMsg, 'Local monthly token quota exceeded');
     
     LDoneEvent.ResetEvent;
     LErrorMsg := '';
@@ -132,7 +139,7 @@ begin
       end);
       
     LDoneEvent.WaitFor(5000);
-    Assert.Contains(LErrorMsg, 'Cota');
+    Assert.Contains(LErrorMsg, 'Local monthly token quota exceeded');
   finally
     LDoneEvent.Free;
   end;
