@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage;
+  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage, Winapi.WebView2, Winapi.ActiveX;
 
 type
   { Form to compare code changes side-by-side before applying them to the editor }
@@ -21,6 +21,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+    procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
     procedure btnPrevConflictClick(Sender: TObject);
     procedure btnNextConflictClick(Sender: TObject);
   protected
@@ -33,11 +34,15 @@ type
     FUnitName: string;
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
+    FPageReady: Boolean;
+    FRequestStarted: Boolean;
+    FPendingRender: Boolean;
     FLifecycleGuard: IInterface;
     
     procedure FormShow(Sender: TObject);
     procedure RequestRefactoring;
     procedure RenderDiffInBrowser;
+    procedure TryStartRefactoring;
     procedure PostToWebView(const AAction, AText: string);
   public
     procedure InitializeDiff(const AUnitName, AOriginalCode: string);
@@ -80,10 +85,14 @@ var
   LThemingServices: IOTAIDEThemingServices;
 begin
   FBrowserInitialized := False;
+  FPageReady := False;
+  FRequestStarted := False;
+  FPendingRender := False;
   FLifecycleGuard := TLifecycleGuard.Create;
   FConfig := TRadIAConfig.GetInstance;
   FAIService := TRadIAService.Create(FConfig);
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
+  btnApply.Enabled := False;
   
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -128,27 +137,40 @@ begin
 end;
 
 procedure TFormAIDiff.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+begin
+  if Succeeded(AResult) then
+    FBrowserInitialized := True;
+end;
+
+procedure TFormAIDiff.EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser;
+  IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
 var
   LThemingServices: IOTAIDEThemingServices;
   LThemeName: string;
 begin
-  if Succeeded(AResult) then
+  if not IsSuccess then
   begin
-    FBrowserInitialized := True;
-    
-    LThemeName := 'light';
-    if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
-    begin
-      if LThemingServices.IDEThemingEnabled then
-      begin
-        if SameText(LThemingServices.ActiveTheme, 'Dark') then
-          LThemeName := 'dark';
-      end;
-    end;
-    
-    PostToWebView('set_theme', LThemeName);
-    RequestRefactoring;
+    FSuggestedCode := '// Error loading diff view. WebView2 status: ' + IntToStr(Ord(WebErrorStatus)) +
+      #13#10 + FOriginalCode;
+    FPendingRender := True;
+    Exit;
   end;
+
+  FPageReady := True;
+
+  LThemeName := 'light';
+  if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
+  begin
+    if LThemingServices.IDEThemingEnabled and SameText(LThemingServices.ActiveTheme, 'Dark') then
+      LThemeName := 'dark';
+  end;
+
+  PostToWebView('set_theme', LThemeName);
+
+  if FPendingRender and (not FSuggestedCode.Trim.IsEmpty) then
+    RenderDiffInBrowser
+  else
+    TryStartRefactoring;
 end;
 
 procedure TFormAIDiff.PostToWebView(const AAction, AText: string);
@@ -175,8 +197,11 @@ procedure TFormAIDiff.RenderDiffInBrowser;
 var
   LJson: TJSONObject;
 begin
-  if not FBrowserInitialized then
+  if not FBrowserInitialized or not FPageReady then
+  begin
+    FPendingRender := True;
     Exit;
+  end;
     
   LJson := TJSONObject.Create;
   try
@@ -187,9 +212,20 @@ begin
     
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
+    FPendingRender := False;
+    btnApply.Enabled := not FSuggestedCode.Trim.IsEmpty;
   finally
     LJson.Free;
   end;
+end;
+
+procedure TFormAIDiff.TryStartRefactoring;
+begin
+  if FRequestStarted or not FBrowserInitialized or not FPageReady then
+    Exit;
+
+  FRequestStarted := True;
+  RequestRefactoring;
 end;
 
 procedure TFormAIDiff.RequestRefactoring;
