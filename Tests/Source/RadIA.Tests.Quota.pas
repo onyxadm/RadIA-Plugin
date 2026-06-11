@@ -28,14 +28,16 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.DateUtils, System.SyncObjs, RadIA.Core.TokenUsage, RadIA.Core.Types;
+  System.SysUtils, System.Classes, System.DateUtils, System.SyncObjs,
+  RadIA.Core.TokenUsage, RadIA.Core.Types, RadIA.Core.SettingsStorage;
 
 { TTestRadIAQuota }
 
 procedure TTestRadIAQuota.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAQuota');
+  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
-  // Reset any pre-existing registry configuration for tests by turning quota off initially
   FConfig.QuotaEnabled := False;
   FConfig.QuotaLimit := 1000;
   FConfig.QuotaUsed := 0;
@@ -50,6 +52,8 @@ begin
   FService.Free;
   FService := nil;
   FConfig := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 procedure TTestRadIAQuota.TestQuotaIncrement;

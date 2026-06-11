@@ -6,7 +6,7 @@ uses
   DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
   RadIA.Core.TokenUsage, RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter,
   RadIA.Provider.LMStudio, RadIA.Provider.AzureOpenAI, RadIA.Provider.Qwen, RadIA.Provider.Mistral,
-  RadIA.Provider.Bedrock, RadIA.Core.AwsSigner;
+  RadIA.Provider.Bedrock, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage;
 
 type
   [TestFixture]
@@ -78,6 +78,8 @@ uses
 
 procedure TTestRadIAProvidersEx.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAProvidersEx');
+  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FConfig.SetActiveModel('DeepSeek', MODEL_DEEPSEEK_CHAT);
   FConfig.SetActiveModel('Groq', MODEL_GROQ_LLAMA33);
@@ -106,6 +108,8 @@ begin
   FMistralProv.Free;
   FBedrockProv.Free;
   FConfig := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 function TTestRadIAProvidersEx.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 

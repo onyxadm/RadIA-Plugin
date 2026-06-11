@@ -3,13 +3,15 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Types;
+  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Types,
+  RadIA.Core.SettingsStorage;
 
 type
   [TestFixture]
   TTestRadIAConfig = class
   private
     FConfig: IAIConfig;
+    FStorage: ISettingsStorage;
   public
     [Setup]
     procedure Setup;
@@ -39,13 +41,15 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Win.Registry, Winapi.Windows, System.JSON,
-  RadIA.Core.SettingsStorage;
+  System.SysUtils, System.JSON;
 
 { TTestRadIAConfig }
 
 procedure TTestRadIAConfig.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAConfig');
+  FStorage := TMemorySettingsStorage.Create;
+  TRadIAConfig.SetStorage(FStorage);
   FConfig := TRadIAConfig.Create;
   FConfig.Load;
 end;
@@ -53,6 +57,9 @@ end;
 procedure TTestRadIAConfig.TearDown;
 begin
   FConfig := nil;
+  FStorage := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 procedure TTestRadIAConfig.TestActiveProviderPersistence;
@@ -68,32 +75,21 @@ procedure TTestRadIAConfig.TestApiKeyEncryptionAndDecryption;
 const
   TEST_KEY = 'test-api-key-12345-gemini';
 var
-  LReg: TRegistry;
   LStoredValue: string;
-  LSettings: TFormatSettings;
-  LRegPath: string;
 begin
   FConfig.SetApiKey('Gemini', TEST_KEY);
   FConfig.Save;
   
   FConfig.Load;
   Assert.AreEqual(TEST_KEY, FConfig.GetApiKey('Gemini'));
-  
-  LSettings := TFormatSettings.Create('en-US');
-  LRegPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA\Gemini', [CompilerVersion], LSettings);
-  LReg := TRegistry.Create;
+
+  Assert.IsTrue(FStorage.OpenKey('Software\TestRadIAConfig\Gemini', False));
   try
-    LReg.RootKey := HKEY_CURRENT_USER;
-    if LReg.OpenKeyReadOnly(LRegPath) then
-    begin
-      if LReg.ValueExists('ApiKey') then
-      begin
-        LStoredValue := LReg.ReadString('ApiKey');
-        Assert.AreNotEqual(TEST_KEY, LStoredValue, 'API Key should be encrypted in the registry!');
-      end;
-    end;
+    Assert.IsTrue(FStorage.ValueExists('ApiKey'));
+    LStoredValue := FStorage.ReadString('ApiKey', '');
+    Assert.AreNotEqual(TEST_KEY, LStoredValue, 'API Key should be encrypted in settings storage.');
   finally
-    LReg.Free;
+    FStorage.CloseKey;
   end;
 end;
 

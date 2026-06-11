@@ -10,7 +10,8 @@ uses
   RadIA.Core.Service,
   RadIA.Core.Config,
   RadIA.Core.TokenUsage,
-  RadIA.Core.ProviderRegistry;
+  RadIA.Core.ProviderRegistry,
+  RadIA.Core.SettingsStorage;
 
 type
   { Mock minimal config for trimming tests — avoids registry I/O }
@@ -756,12 +757,16 @@ end;
 
 procedure TTestRadIAConfigExtended.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAConfigExtended');
+  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
 end;
 
 procedure TTestRadIAConfigExtended.TearDown;
 begin
   FConfig := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 procedure TTestRadIAConfigExtended.TestMaxHistoryMessages_DefaultIs20;

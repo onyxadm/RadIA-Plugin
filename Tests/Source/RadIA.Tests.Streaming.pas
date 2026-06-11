@@ -6,7 +6,8 @@ uses
   DUnitX.TestFramework, System.SysUtils, System.Classes, System.JSON, System.RTTI,
   RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage,
   RadIA.Provider.Streaming, RadIA.Provider.Base, RadIA.Provider.OpenAI, RadIA.Provider.Gemini,
-  RadIA.Provider.Claude, RadIA.Provider.Ollama, RadIA.Core.Config;
+  RadIA.Provider.Claude, RadIA.Provider.Ollama, RadIA.Core.Config,
+  RadIA.Core.SettingsStorage;
 
 type
   [TestFixture]
@@ -53,6 +54,8 @@ implementation
 
 procedure TTestRadIAStreaming.Setup;
 begin
+  TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAStreaming');
+  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FOpenAI := TRadIAOpenAIProvider.Create(FConfig);
   FGemini := TRadIAGeminiProvider.Create(FConfig);
@@ -67,6 +70,8 @@ begin
   FClaude.Free;
   FOllama.Free;
   FConfig := nil;
+  TRadIAConfig.SetStorage(nil);
+  TRadIAConfig.SetBaseRegistryPath('');
 end;
 
 procedure TTestRadIAStreaming.InvokeProcessStreamBuffer(AProvider: TObject; var ABuffer: string;
