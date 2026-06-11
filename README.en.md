@@ -56,6 +56,8 @@ This project adopts clear language rules and design standards for both human dev
 *   **Secure API Key Registry Storage:** Keys are saved encrypted locally using the Windows Data Protection API (DPAPI) inside the Windows Registry.
 *   **Request Cancellation and Action Locking:** A dynamic circular stop button integrated inside the prompt input aborts active requests instantly and safely. While processing, session actions, toolbar buttons, and chat switching are locked to preserve the active context.
 
+*   **Configurable Concise Responses:** General option to prefer more direct AI answers, reducing long explanations and saving tokens without blocking detailed responses when explicitly requested.
+
 ### 2.1 Complete Feature Checklist
 
 To check the development status, keyboard shortcuts, categories, and all integrated providers in detail, please refer to our:

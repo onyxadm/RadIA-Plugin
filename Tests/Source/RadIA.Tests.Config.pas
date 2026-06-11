@@ -29,6 +29,8 @@ type
     [Test]
     procedure TestSystemPromptPersistence;
     [Test]
+    procedure TestConciseResponsesPersistence;
+    [Test]
     procedure TestOllamaBaseUrlPersistence;
     [Test]
     procedure TestJsonNewlineHandling;
@@ -124,6 +126,17 @@ begin
   
   FConfig.Load;
   Assert.AreEqual(TEST_PROMPT, FConfig.SystemPrompt);
+end;
+
+procedure TTestRadIAConfig.TestConciseResponsesPersistence;
+begin
+  Assert.IsTrue(FConfig.ConciseResponses);
+
+  FConfig.ConciseResponses := False;
+  FConfig.Save;
+
+  FConfig.Load;
+  Assert.IsFalse(FConfig.ConciseResponses);
 end;
 
 procedure TTestRadIAConfig.TestOllamaBaseUrlPersistence;

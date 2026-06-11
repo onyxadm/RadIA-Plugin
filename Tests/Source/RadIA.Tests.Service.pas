@@ -43,6 +43,7 @@ type
     FAwsRegion: string;
     FAwsSessionToken: string;
     FInjectDelphiVersion: Boolean;
+    FConciseResponses: Boolean;
   public
     constructor Create(const AMaxHistory: Integer; const ASystemPrompt: string = '');
     destructor Destroy; override;
@@ -87,6 +88,8 @@ type
     procedure SetAwsSessionToken(const AValue: string);
     function GetInjectDelphiVersion: Boolean;
     procedure SetInjectDelphiVersion(const AValue: Boolean);
+    function GetConciseResponses: Boolean;
+    procedure SetConciseResponses(const AValue: Boolean);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -209,6 +212,7 @@ begin
   FAwsRegion := 'us-east-1';
   FAwsSessionToken := '';
   FInjectDelphiVersion := True;
+  FConciseResponses := True;
 end;
 
 destructor TMockConfig.Destroy;
@@ -441,6 +445,16 @@ end;
 procedure TMockConfig.SetInjectDelphiVersion(const AValue: Boolean);
 begin
   FInjectDelphiVersion := AValue;
+end;
+
+function TMockConfig.GetConciseResponses: Boolean;
+begin
+  Result := FConciseResponses;
+end;
+
+procedure TMockConfig.SetConciseResponses(const AValue: Boolean);
+begin
+  FConciseResponses := AValue;
 end;
 
 function TMockConfig.GetApiKey(const AProviderName: string): string;
@@ -738,6 +752,8 @@ begin
   LConfig := TMockConfig.Create(5, 'Base Prompt');
   LService := TRadIAService.Create(LConfig);
   try
+    LConfig.ConciseResponses := False;
+
     { 1. Com injecao habilitada (default) }
     LConfig.InjectDelphiVersion := True;
     LPrompt := LService.GetEffectiveSystemPrompt;

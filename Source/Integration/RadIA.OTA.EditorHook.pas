@@ -907,7 +907,7 @@ end;
 
 procedure TRadIAEditorHook.OnExplainExecute(Sender: TObject);
 begin
-  SendCommandToChat('/explain', 'Explain the following Delphi Pascal code block in detail:');
+  SendCommandToChat('/explain', 'Explain this Delphi Pascal code briefly. Focus on intent and important details only:');
 end;
 
 procedure TRadIAEditorHook.OnShowChatExecute(Sender: TObject);
@@ -1179,12 +1179,12 @@ end;
 
 procedure TRadIAEditorHook.OnTestsExecute(Sender: TObject);
 begin
-  SendCommandToChat('/test', 'Write DUnitX unit tests for the following Delphi Pascal code:');
+  SendCommandToChat('/test', 'Write focused DUnitX unit tests for this Delphi Pascal code:');
 end;
 
 procedure TRadIAEditorHook.OnBugsExecute(Sender: TObject);
 begin
-  SendCommandToChat('/bugs', 'Perform static analysis on the following code to locate potential bugs, exceptions, or memory leaks:');
+  SendCommandToChat('/bugs', 'Analyze this Delphi code for actionable bugs, exceptions, memory leaks, and SOLID issues. Be concise:');
 end;
 
 procedure TRadIAEditorHook.OnDocExecute(Sender: TObject);

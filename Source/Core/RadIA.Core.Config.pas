@@ -36,6 +36,7 @@ type
     FAwsRegion: string;
     FAwsSessionToken: string;
     FInjectDelphiVersion: Boolean;
+    FConciseResponses: Boolean;
 
     { Dynamic String-based settings (avoiding TDictionary generics due to BPL RTL unloading bugs) }
     FApiKeysList: TStringList;
@@ -132,6 +133,8 @@ type
     procedure SetActiveSessionId(const AValue: string);
     function GetInjectDelphiVersion: Boolean;
     procedure SetInjectDelphiVersion(const AValue: Boolean);
+    function GetConciseResponses: Boolean;
+    procedure SetConciseResponses(const AValue: Boolean);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -193,6 +196,7 @@ begin
   FAutocompleteModel := TConfigDefaults.AutocompleteModel;
   FAutocompleteDelay := TConfigDefaults.AutocompleteDelay;
   FInjectDelphiVersion := True;
+  FConciseResponses := True;
   
   Load;
 end;
@@ -346,6 +350,7 @@ begin
     FAutocompleteModel := ReadRegString('AutocompleteModel', TConfigDefaults.AutocompleteModel);
     FAutocompleteDelay := ReadRegInt('AutocompleteDelay', TConfigDefaults.AutocompleteDelay);
     FInjectDelphiVersion := ReadRegInt('InjectDelphiVersion', 1) <> 0;
+    FConciseResponses := ReadRegInt('ConciseResponses', 1) <> 0;
     
     FStorage.CloseKey;
 
@@ -507,6 +512,7 @@ begin
     FStorage.WriteString('AutocompleteModel', FAutocompleteModel);
     FStorage.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
     FStorage.WriteInteger('InjectDelphiVersion', IfThen(FInjectDelphiVersion, 1, 0));
+    FStorage.WriteInteger('ConciseResponses', IfThen(FConciseResponses, 1, 0));
     FStorage.CloseKey;
 
     TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);
@@ -780,6 +786,16 @@ end;
 procedure TRadIAConfig.SetInjectDelphiVersion(const AValue: Boolean);
 begin
   FInjectDelphiVersion := AValue;
+end;
+
+function TRadIAConfig.GetConciseResponses: Boolean;
+begin
+  Result := FConciseResponses;
+end;
+
+procedure TRadIAConfig.SetConciseResponses(const AValue: Boolean);
+begin
+  FConciseResponses := AValue;
 end;
 
 function TRadIAConfig.GetAutocompleteEnabled: Boolean;

@@ -91,35 +91,40 @@ begin
   AddDefault(
     'Review Clean Code Delphi',
     'Review Pascal code applying Clean Code and SOLID',
-    'Review the following Delphi Pascal code block applying Clean Code, readability, and optimization principles:'#13#10#13#10'{code}',
+    'Review this Delphi Pascal code. Be concise and list only actionable issues:'#13#10#13#10 +
+    '```pascal'#13#10'{code}'#13#10'```',
     False,
     '/review'
   );
   AddDefault(
     'Explain Code',
     'Explain the selected Delphi Pascal code',
-    'Explain the following Delphi Pascal code block in detail:'#13#10#13#10'{code}',
+    'Explain this Delphi Pascal code briefly. Focus on intent and important details only:'#13#10#13#10 +
+    '```pascal'#13#10'{code}'#13#10'```',
     False,
     '/explain'
   );
   AddDefault(
     'Document Complete Unit',
     'Generate XML documentation for classes and methods',
-    'Generate documentation in XML Documentation format (compatible with Delphi) for the following unit:'#13#10#13#10'{code}',
+    'Generate Delphi XML documentation for this unit. Return only the documentation/code changes needed:'#13#10#13#10 +
+    '```pascal'#13#10'{code}'#13#10'```',
     False,
     '/doc'
   );
   AddDefault(
     'Create DUnitX Mock',
     'Generate unit tests using DUnitX for the class',
-    'Create a unit test using DUnitX to test the following Delphi class:'#13#10#13#10'{code}',
+    'Create focused DUnitX tests for this Delphi code. Return code first and keep notes brief:'#13#10#13#10 +
+    '```pascal'#13#10'{code}'#13#10'```',
     False,
     '/test'
   );
   AddDefault(
     'Analyze Performance',
     'Identify bottlenecks and memory leaks in the code',
-    'Performance analysis: identify potential bottlenecks, memory leaks, or redundancies in the following Delphi code:'#13#10#13#10'{code}',
+    'Analyze this Delphi code for performance risks, leaks, or redundant work. Be concise:'#13#10#13#10 +
+    '```pascal'#13#10'{code}'#13#10'```',
     False,
     '/performance'
   );
@@ -133,10 +138,9 @@ begin
   AddDefault(
     'Review Leaks and SOLID',
     'Run static analysis on the unit for memory leaks and SOLID principles',
-    'Perform a comprehensive static analysis on the following Delphi code unit. Focus on identifying:'#13#10 +
-    '1. Memory Leaks (missing try..finally blocks on object creations or incorrect deallocations)'#13#10 +
-    '2. SOLID and Clean Code violations'#13#10 +
-    '3. Anti-patterns or potential run-time bugs'#13#10#13#10'{code}',
+    'Perform static analysis on this Delphi code for bugs, exceptions, memory leaks, and SOLID issues.'#13#10 +
+    'Be concise: list only findings that are actionable, with location/context and suggested fix.'#13#10#13#10 +
+    '```pascal'#13#10'{code}'#13#10'```',
     False,
     '/bugs'
   );
@@ -284,6 +288,14 @@ procedure TPromptTemplateManager.CleanRedundantUserTemplates;
   begin
     Result := AText.Replace(#13#10, #10).Replace(#13, #10);
   end;
+
+  function IsLegacyReviewTemplate(const ATemplate: string): Boolean;
+  const
+    LEGACY_REVIEW_TEMPLATE =
+      'Review the following Delphi Pascal code block applying Clean Code, readability, and optimization principles:'#10#10'{code}';
+  begin
+    Result := NormalizeLineEndings(ATemplate) = LEGACY_REVIEW_TEMPLATE;
+  end;
 var
   I, J: Integer;
   LDefault: TPromptTemplate;
@@ -300,6 +312,13 @@ begin
       LUser.SlashCommand := '/review';
       FUserTemplates[I] := LUser;
       LChanged := True;
+    end;
+
+    if SameText(LUser.Name, 'Review Clean Code Delphi') and IsLegacyReviewTemplate(LUser.Template) then
+    begin
+      FUserTemplates.Delete(I);
+      LChanged := True;
+      Continue;
     end;
     
     // Force upgrade of legacy templates missing 'uses' or 'Generics' rules

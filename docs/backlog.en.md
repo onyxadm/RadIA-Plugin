@@ -50,6 +50,25 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
+  <summary><b>ðŸ“¦ v0.0.22 â€” Concise Prompts and Editor Line Break Preservation (Click to expand)</b></summary>
+
+  #### 1. Pascal Block Preservation in Editor Menus
+  *   **Description**: Fixed editor context-menu flows to preserve line breaks and indentation when sending code to commands such as `/bugs`, `/explain`, and `/test`.
+  *   **Details**:
+      *   `TChatPresenter` now reuses the fenced Markdown block received from the menu before reading the editor again.
+      *   Default templates now wrap `{code}` in `pascal` blocks, reducing the risk of inline rendering.
+      *   Analysis, explanation, and test prompts were tuned for shorter, actionable responses.
+
+  #### 2. Concise Response Setting
+  *   **Description**: Added the **Prefer concise AI responses** general setting to reduce overly explanatory answers and save tokens.
+  *   **Details**:
+      *   The preference is persisted as `ConciseResponses` and enabled by default.
+      *   `TRadIAService` injects the preference into the effective system prompt without duplicating provider-specific logic.
+      *   Validation covers configuration persistence, configuration presenter behavior, and line-break preservation during slash command preprocessing.
+      *   Validated with `build.ps1 -DelphiVersion "23.0" -Test`, with 157 passing tests.
+</details>
+
+<details>
   <summary><b>📦 v0.0.21 — Create Example from Comment (Click to expand)</b></summary>
 
   #### 1. Example Generation from Comment

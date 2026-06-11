@@ -6,6 +6,8 @@ Este documento contém o checklist completo de recursos, categorização e statu
 
 ## Tabela Completa de Recursos
 
+Nota v0.0.22: o chat agora possui a opÃ§Ã£o **Respostas Concisas ConfigurÃ¡veis**, que orienta a IA a responder de forma mais objetiva e economizar tokens, e os menus do editor preservam blocos Pascal com quebras de linha e indentaÃ§Ã£o.
+
 | Recurso | Categoria | Descrição | Status |
 | :--- | :--- | :--- | :--- |
 | **Chat Lateral Acoplável** | Chat UX | Painel integrado à IDE rodando WebView2 com suporte a Markdown e Pascal highlight. | ✅ Concluído |

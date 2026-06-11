@@ -48,6 +48,8 @@ type
     procedure SetSmartConfigEnabled(const AValue: Boolean);
     function GetInjectDelphiVersion: Boolean;
     procedure SetInjectDelphiVersion(const AValue: Boolean);
+    function GetConciseResponses: Boolean;
+    procedure SetConciseResponses(const AValue: Boolean);
     function GetLogEnabled: Boolean;
     procedure SetLogEnabled(const AValue: Boolean);
     function GetLogPath: string;
@@ -218,6 +220,7 @@ begin
 
   FView.SetSmartConfigEnabled(FConfig.SmartConfigEnabled);
   FView.SetInjectDelphiVersion(FConfig.InjectDelphiVersion);
+  FView.SetConciseResponses(FConfig.ConciseResponses);
 
   // Load Advanced Parameters for registered providers
   for LProviderId in FProvidersList do
@@ -331,6 +334,7 @@ begin
   FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
   FConfig.SmartConfigEnabled := FView.GetSmartConfigEnabled;
   FConfig.InjectDelphiVersion := FView.GetInjectDelphiVersion;
+  FConfig.ConciseResponses := FView.GetConciseResponses;
 
   for LProviderId in FProvidersList do
   begin

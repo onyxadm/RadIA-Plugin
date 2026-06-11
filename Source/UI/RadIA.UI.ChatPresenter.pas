@@ -3,7 +3,7 @@ unit RadIA.UI.ChatPresenter;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.JSON, RadIA.Core.Interfaces,
+  System.SysUtils, System.Classes, System.JSON, System.StrUtils, RadIA.Core.Interfaces,
   RadIA.Core.Types, RadIA.Core.Sessions, RadIA.Core.PromptTemplates,
   RadIA.Core.TokenUsage, RadIA.Core.PromptHistory, RadIA.Core.Service;
 
@@ -1565,6 +1565,31 @@ var
   LTemplateName: string;
   LTemp: TPromptTemplate;
   I: Integer;
+
+  function ExtractCodeArgument(const AArgument: string): string;
+  var
+    LText: string;
+    LFenceStart: Integer;
+    LCodeStart: Integer;
+    LFenceEnd: Integer;
+  begin
+    Result := AArgument.Trim;
+    LText := AArgument.Replace(#13#10, #10).Replace(#13, #10);
+    LFenceStart := Pos('```', LText);
+    if LFenceStart <= 0 then
+      Exit;
+
+    LCodeStart := PosEx(#10, LText, LFenceStart + 3);
+    if LCodeStart <= 0 then
+      Exit;
+
+    Inc(LCodeStart);
+    LFenceEnd := PosEx('```', LText, LCodeStart);
+    if LFenceEnd > 0 then
+      Result := Copy(LText, LCodeStart, LFenceEnd - LCodeStart).TrimRight
+    else
+      Result := Copy(LText, LCodeStart, MaxInt).TrimRight;
+  end;
 begin
   Result := APromptText;
   LFound := False;
@@ -1664,8 +1689,15 @@ begin
 
     if Result.Contains('{code}') then
     begin
-      if not FView.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
-        FView.GetActiveEditorText(LActiveCode, False);
+      if not LArgument.IsEmpty then
+        LActiveCode := ExtractCodeArgument(LArgument);
+
+      if LActiveCode.IsEmpty then
+      begin
+        if not FView.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
+          FView.GetActiveEditorText(LActiveCode, False);
+      end;
+
       Result := Result.Replace('{code}', LActiveCode);
     end;
 

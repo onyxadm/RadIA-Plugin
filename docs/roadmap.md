@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>ðŸ“¦ v0.0.22 â€” Prompts Concisos e PreservaÃ§Ã£o de Quebras no Editor (ConcluÃ­do)</b></summary>
+
+  *   **Valor Entregue**: Respostas mais objetivas e menor gasto de tokens, com os menus do editor preservando a formataÃ§Ã£o Pascal enviada ao chat.
+  *   **Destaques**: blocos `pascal` preservados em slash commands, templates padrÃ£o mais sucintos, nova opÃ§Ã£o **Prefer concise AI responses** persistida nas configuraÃ§Ãµes e cobertura DUnitX para o fluxo de prÃ©-processamento.
+  *   ðŸ‘‰ *Veja os detalhes de implementaÃ§Ã£o e testes no [Backlog TÃ©cnico (v0.0.22)](backlog.md#v0022--prompts-concisos-e-preservaÃ§Ã£o-de-quebras-no-editor-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.21 — Create Example from Comment (Concluído)</b></summary>
 
   *   **Valor Entregue**: Menos fricção para transformar intenção em código Delphi, permitindo escrever a assinatura do método e um comentário de intenção para o Rad IA gerar o corpo automaticamente.

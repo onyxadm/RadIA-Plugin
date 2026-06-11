@@ -117,6 +117,8 @@ type
     [Test]
     procedure TestGlobalPromptWithCommandLineBreakUsesTemplate;
     [Test]
+    procedure TestSlashCommandUsesProvidedCodeBlock;
+    [Test]
     procedure TestClearChatResetsState;
     [Test]
     procedure TestSelectSessionLoadsHistory;
@@ -439,7 +441,7 @@ begin
     '  end;';
 
   LPrompt := '/explain'#13#10 +
-    'Explain the following Delphi Pascal code block in detail:'#13#10#13#10 +
+    'Explain this Delphi Pascal code briefly. Focus on intent and important details only:'#13#10#13#10 +
     '```pascal'#13#10 +
     FMockView.ActiveEditorText + #13#10 +
     '```';
@@ -447,9 +449,35 @@ begin
   LProcessed := FPresenter.TestPreProcessPrompt(LPrompt);
 
   Assert.IsFalse(LProcessed.StartsWith('/explain', True));
-  Assert.IsTrue(LProcessed.StartsWith('Explain the following Delphi Pascal code block in detail:', True), LProcessed);
+  Assert.IsTrue(LProcessed.StartsWith('Explain this Delphi Pascal code briefly.', True), LProcessed);
   Assert.IsFalse(LProcessed.StartsWith('Review the following Delphi Pascal code block', True), LProcessed);
   Assert.IsTrue(LProcessed.Contains('TForm1 = class(TForm)'));
+end;
+
+procedure TTestChatPresenter.TestSlashCommandUsesProvidedCodeBlock;
+var
+  LPrompt: string;
+  LProcessed: string;
+  LProvidedCode: string;
+begin
+  FPresenter.Initialize('C:\mock\web');
+  FMockView.ActiveEditorText := 'Collapsed;Editor;Text;';
+  LProvidedCode :=
+    'memTable.DisableControls;'#13#10 +
+    'memAnalit.DisableControls;'#13#10 +
+    'memTable.Open;';
+
+  LPrompt := '/bugs'#13#10 +
+    'Analyze this Delphi code:'#13#10#13#10 +
+    '```pascal'#13#10 +
+    LProvidedCode + #13#10 +
+    '```';
+
+  LProcessed := FPresenter.TestPreProcessPrompt(LPrompt);
+
+  Assert.IsFalse(LProcessed.Contains('Collapsed;Editor;Text;'));
+  Assert.IsTrue(LProcessed.Contains('memTable.DisableControls;'#10'memAnalit.DisableControls;'), LProcessed);
+  Assert.IsTrue(LProcessed.Contains('```pascal'));
 end;
 
 procedure TTestChatPresenter.TestClearChatResetsState;

@@ -138,6 +138,8 @@ type
     procedure SetAwsSessionToken(const AValue: string);
     function GetInjectDelphiVersion: Boolean;
     procedure SetInjectDelphiVersion(const AValue: Boolean);
+    function GetConciseResponses: Boolean;
+    procedure SetConciseResponses(const AValue: Boolean);
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
@@ -164,6 +166,7 @@ type
     property QuotaCycleStart: TDateTime read GetQuotaCycleStart write SetQuotaCycleStart;
     property ActiveSessionId: string read GetActiveSessionId write SetActiveSessionId;
     property InjectDelphiVersion: Boolean read GetInjectDelphiVersion write SetInjectDelphiVersion;
+    property ConciseResponses: Boolean read GetConciseResponses write SetConciseResponses;
   end;
 
 implementation

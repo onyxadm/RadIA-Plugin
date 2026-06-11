@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>ðŸ“¦ v0.0.22 â€” Concise Prompts and Editor Line Break Preservation (Completed)</b></summary>
+
+  *   **Value Delivered**: More direct responses with lower token usage, while editor menu actions preserve Pascal formatting when sending code to chat.
+  *   **Highlights**: preserved `pascal` blocks in slash commands, shorter default templates, new persisted **Prefer concise AI responses** setting, and DUnitX coverage for preprocessing behavior.
+  *   ðŸ‘‰ *See implementation details and tests in the [Technical Backlog (v0.0.22)](backlog.en.md#v0022--concise-prompts-and-editor-line-break-preservation-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.21 — Create Example from Comment (Completed)</b></summary>
 
   *   **Value Delivered**: Less friction to turn intent into Delphi code, allowing users to write a method signature and an intent comment so Rad IA can generate the method body automatically.

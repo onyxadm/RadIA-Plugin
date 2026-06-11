@@ -156,6 +156,7 @@ type
     FEdtMaxTokens: TDictionary<string, TEdit>;
     FEdtTimeouts: TDictionary<string, TEdit>;
     FChkSmartConfig: TCheckBox;
+    chkConciseResponses: TCheckBox;
     
     tsGeneral: TTabSheet;
     pnlGeneral: TPanel;
@@ -229,6 +230,8 @@ type
     procedure SetSmartConfigEnabled(const AValue: Boolean);
     function GetInjectDelphiVersion: Boolean;
     procedure SetInjectDelphiVersion(const AValue: Boolean);
+    function GetConciseResponses: Boolean;
+    procedure SetConciseResponses(const AValue: Boolean);
     function GetLogEnabled: Boolean;
     procedure SetLogEnabled(const AValue: Boolean);
     function GetLogPath: string;
@@ -337,26 +340,32 @@ begin
     16,
     48,
     300);
-  chkLogEnabled := CreateCheckBox(pnlGeneral, 'Enable logging', 16, 80, 200);
-  lblLogPath := CreateLabel(pnlGeneral, 'Log Folder Path:', 16, 112);
-  edtLogPath := CreateEdit(pnlGeneral, 16, 130, 320);
+  chkConciseResponses := CreateCheckBox(
+    pnlGeneral,
+    'Prefer concise AI responses',
+    16,
+    80,
+    300);
+  chkLogEnabled := CreateCheckBox(pnlGeneral, 'Enable logging', 16, 112, 200);
+  lblLogPath := CreateLabel(pnlGeneral, 'Log Folder Path:', 16, 144);
+  edtLogPath := CreateEdit(pnlGeneral, 16, 162, 320);
 
   btnBrowseLogPath := TButton.Create(Self);
   btnBrowseLogPath.Parent := pnlGeneral;
   btnBrowseLogPath.Left := 342;
-  btnBrowseLogPath.Top := 128;
+  btnBrowseLogPath.Top := 160;
   btnBrowseLogPath.Width := 30;
   btnBrowseLogPath.Height := 23;
   btnBrowseLogPath.Caption := '...';
   btnBrowseLogPath.OnClick := btnBrowseLogPathClick;
 
-  lblLogMaxSize := CreateLabel(pnlGeneral, 'Max Log File Size (KB):', 16, 168);
-  edtLogMaxSize := CreateEdit(pnlGeneral, 16, 186, 100, True);
+  lblLogMaxSize := CreateLabel(pnlGeneral, 'Max Log File Size (KB):', 16, 200);
+  edtLogMaxSize := CreateEdit(pnlGeneral, 16, 218, 100, True);
 
   grpQuota := TGroupBox.Create(Self);
   grpQuota.Parent := pnlGeneral;
   grpQuota.Left := 16;
-  grpQuota.Top := 224;
+  grpQuota.Top := 256;
   grpQuota.Width := 356;
   grpQuota.Height := 140;
   grpQuota.Caption := ' Local Token Quota ';
@@ -796,6 +805,11 @@ begin
   begin
     chkInjectDelphiVersion.StyleElements := chkInjectDelphiVersion.StyleElements - [seClient, seBorder];
     chkInjectDelphiVersion.Font.Color := LColors.TextColor;
+  end;
+  if Assigned(chkConciseResponses) then
+  begin
+    chkConciseResponses.StyleElements := chkConciseResponses.StyleElements - [seClient, seBorder];
+    chkConciseResponses.Font.Color := LColors.TextColor;
   end;
   if Assigned(chkLogEnabled) then
   begin
@@ -1289,6 +1303,8 @@ function TFrameAIConfig.GetSmartConfigEnabled: Boolean; begin Result := FChkSmar
 procedure TFrameAIConfig.SetSmartConfigEnabled(const AValue: Boolean); begin FChkSmartConfig.Checked := AValue; end;
 function TFrameAIConfig.GetInjectDelphiVersion: Boolean; begin Result := chkInjectDelphiVersion.Checked; end;
 procedure TFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean); begin chkInjectDelphiVersion.Checked := AValue; end;
+function TFrameAIConfig.GetConciseResponses: Boolean; begin Result := chkConciseResponses.Checked; end;
+procedure TFrameAIConfig.SetConciseResponses(const AValue: Boolean); begin chkConciseResponses.Checked := AValue; end;
 function TFrameAIConfig.GetLogEnabled: Boolean; begin Result := chkLogEnabled.Checked; end;
 procedure TFrameAIConfig.SetLogEnabled(const AValue: Boolean); begin chkLogEnabled.Checked := AValue; end;
 function TFrameAIConfig.GetLogPath: string; begin Result := edtLogPath.Text; end;

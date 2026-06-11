@@ -202,8 +202,19 @@ var
   LProjectFolder: string;
   LProjectContext: string;
   LDelphiVersionPrompt: string;
+  LConcisePrompt: string;
 begin
   LSystemPrompt := FConfig.SystemPrompt;
+
+  if FConfig.ConciseResponses then
+  begin
+    LConcisePrompt := 'Default response style: be concise. Prefer short bullet lists, avoid long explanations, ' +
+                      'and include only the minimum context needed to act safely. Preserve code formatting exactly.';
+    if LSystemPrompt.IsEmpty then
+      LSystemPrompt := LConcisePrompt
+    else
+      LSystemPrompt := LSystemPrompt + sLineBreak + sLineBreak + LConcisePrompt;
+  end;
   
   if FConfig.InjectDelphiVersion then
   begin

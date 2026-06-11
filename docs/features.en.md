@@ -6,6 +6,8 @@ This document contains the complete checklist, categorization, and development s
 
 ## Complete Feature Checklist
 
+v0.0.22 note: the chat now includes **Configurable Concise Responses** to guide the AI toward shorter answers and lower token usage, and editor menu prompts preserve Pascal blocks with line breaks and indentation.
+
 | Feature | Category | Description | Status |
 | :--- | :--- | :--- | :--- |
 | **Dockable Sidebar Chat** | Chat UX | IDE-integrated panel running WebView2 with Markdown and Pascal highlighting. | ✅ Completed |
