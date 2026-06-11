@@ -40,12 +40,12 @@ This project adopts clear language rules and design standards for both human dev
 *   **Native GitHub Copilot Integration:** Official support to connect directly to GitHub Copilot servers in the cloud (both personal and corporate subscriptions) with an integrated OAuth Device Flow and one-click importing of active VS Code credentials.
 *   **Persistent Chat History:** Chat conversations are automatically saved locally in JSON format and can be loaded on demand from the welcome screen, avoiding chats being restored when the user does not need them.
 *   **Shortcuts and Prompt History:** Integrated productivity shortcuts: use `Ctrl + Enter` to send prompts, `Enter` for line breaks, and keyboard arrows `↑` (up) and `↓` (down) inside the text input area to quickly cycle through previously typed and sent prompts.
-*   **Context-Aware Editor Actions:** Right-click on any code selection to:
-    *   *Explain Selected Code:* Analyze and explain the logic.
+*   **Context-Aware Editor Actions:** Right-click a selection or the active unit to:
+    *   *Explain Code:* Analyze and explain the logic.
     *   *Optimize/Refactor:* Improve performance and apply clean code practices.
     *   *Generate Unit Tests:* Automatically output a DUnitX test structure.
     *   *Analyze for Bugs:* Scan selected block for memory leaks or logic errors.
-    *   Menu-triggered commands preserve formatted Pascal blocks in chat and keep `/explain` separated from review flows.
+    *   When no selection exists, Rad IA sends the whole active unit as context, preserving formatted Pascal blocks in chat and keeping `/explain` separated from review flows.
 *   **Interactive Smart Diff View:** View refactored code recommendations side-by-side (Original vs. Suggested) highlighting changes in red/green with a one-click **[Apply Changes]** button directly into the editor.
 *   **Smart Build Debugger:** Context integration with the Delphi *Messages View*. Right-click on compilation errors to get instant AI fixes and solutions.
 *   **Auto XML Documentation:** Automatically write Delphi-compliant XML help tags (`/// <summary>`) above methods.

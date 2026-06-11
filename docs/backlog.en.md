@@ -50,6 +50,24 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
+  <summary><b>📦 v0.0.19 — Editor Actions with Active Unit Fallback (Click to expand)</b></summary>
+
+  #### 1. Editor Menus Without Selection - Item #52
+  *   **Description**: Editor context-menu actions now work even when the user does not select any code block.
+  *   **Details**:
+      *   **Explain**, **Generate Tests**, **Locate Bugs**, **Document Method**, and **Optimize/Refactor** try the current selection first.
+      *   When there is no selection, Rad IA reads the whole active unit and sends that content as context to the chat or Smart Diff.
+      *   Refactoring correctly marks when the suggestion should replace the whole buffer, avoiding cursor-only insertion.
+
+  #### 2. Delphi 13 Stability and Editor Reading
+  *   **Description**: Stability fix for Delphi 13 new project creation and safer active buffer reading.
+  *   **Details**:
+      *   The editor context-menu hook no longer uses OTA notifiers while editor views are being created, avoiding conflicts with Delphi 13 elision rebuilding.
+      *   `IOTAEditReader` is now read in chunks, ensuring the active unit is captured correctly in Delphi 12 and Delphi 13.
+      *   Validated with `build.ps1 -DelphiVersion "37.0" -Test` and `build.ps1 -DelphiVersion "23.0" -Test`, both with 143 passing tests.
+</details>
+
+<details>
   <summary><b>📦 v0.0.18 — Chat UX, Web Login, and Rad IA Branding Polish (Click to expand)</b></summary>
 
   #### 1. Chat Welcome Experience and IDE Theme - Items #46, #47

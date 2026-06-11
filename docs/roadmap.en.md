@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.19 — Editor Actions with Active Unit Fallback (Completed)</b></summary>
+
+  *   **Value Delivered**: Less friction in daily editor actions, allowing commands to run even when the user has not manually selected code.
+  *   **Highlights**: automatic fallback to the active unit, Smart Diff replacing the whole buffer when appropriate, chunked editor reading, and a more stable Delphi 13 context-menu hook during new project creation.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.19)](backlog.en.md#v0019--editor-actions-with-active-unit-fallback-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.18 — Chat UX, Web Login, and Rad IA Branding Polish (Completed)</b></summary>
 
   *   **Delivered Value**: A clearer and more predictable daily chat experience, with smoother startup, IDE-aligned theming, protected sessions during processing, and a more helpful web login flow.

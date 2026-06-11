@@ -50,6 +50,24 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
+  <summary><b>📦 v0.0.19 — Ações do Editor com Fallback para Unit Ativa (Clique para expandir)</b></summary>
+
+  #### 1. Menus do Editor sem Seleção - Item #52
+  *   **Descrição**: As ações do menu contextual do editor agora funcionam mesmo quando o usuário não seleciona nenhum trecho de código.
+  *   **Detalhes**:
+      *   Os comandos **Explain**, **Generate Tests**, **Locate Bugs**, **Document Method** e **Optimize/Refactor** tentam usar a seleção primeiro.
+      *   Quando não há seleção, o Rad IA lê a unit ativa inteira e envia esse conteúdo como contexto ao chat ou ao comparador Smart Diff.
+      *   O fluxo de refatoração marca corretamente quando a sugestão deve substituir o buffer inteiro, evitando inserir resultado no cursor.
+
+  #### 2. Estabilidade Delphi 13 e Leitura do Editor
+  *   **Descrição**: Correção de estabilidade no Delphi 13 ao criar novos projetos e ajuste da leitura do buffer ativo.
+  *   **Detalhes**:
+      *   O hook do menu contextual deixou de usar notifiers OTA durante a criação de views do editor, evitando conflito com a reconstrução de elisions do Delphi 13.
+      *   A leitura de `IOTAEditReader` passou a ser feita em blocos, garantindo que a unit ativa seja capturada corretamente no Delphi 12 e Delphi 13.
+      *   Validação realizada com `build.ps1 -DelphiVersion "37.0" -Test` e `build.ps1 -DelphiVersion "23.0" -Test`, ambos com 143 testes aprovados.
+</details>
+
+<details>
   <summary><b>📦 v0.0.18 — Polimento do Chat, Web Login e Marca Rad IA (Clique para expandir)</b></summary>
 
   #### 1. Experiência Inicial e Tema do Chat - Itens #46, #47

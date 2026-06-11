@@ -43,7 +43,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Contexto de Projeto** | Inteligência | Carregamento automático de instruções de system e arquivos de contexto via `.radia`. | ✅ Concluído |
 | **Rastreamento de Tokens e Custo**| Transparência | Contador dinâmico de consumo e custo acumulado estimado em USD (locale invariant). | ✅ Concluído |
 | **Limite de Cota Local** | Transparência | Definição de limite de tokens mensal com bloqueio de chamadas e botão de reset. | ✅ Concluído |
-| **Ações no Editor** | Integração | Submenu Rad IA no topo do menu de botão direito do editor para explicar código, otimizar/refatorar, gerar testes, localizar bugs, documentar métodos e revisar a unit ativa, com `/explain` separado de `/review`. | ✅ Concluído |
+| **Ações no Editor** | Integração | Submenu Rad IA no topo do menu de botão direito do editor para explicar código, otimizar/refatorar, gerar testes, localizar bugs, documentar métodos e revisar a unit ativa. Quando não há seleção, a unit inteira é usada como contexto. | ✅ Concluído |
 | **Smart Diff (Comparador)** | Integração | Visualização lado a lado de código sugerido vs. original com aplicação instantânea. | ✅ Concluído |
 | **Smart Build Debugger** | Integração | Clique com o botão direito nos erros de compilação da IDE para correções instantâneas. | ✅ Concluído |
 | **Documentação XML Automática** | Geração | Geração automática de comentários `/// <summary>` sobre os métodos da unit. | ✅ Concluído |
@@ -58,4 +58,4 @@ Este documento contém o checklist completo de recursos, categorização e statu
 | **Arquitetura MVP** | Infraestrutura | Desacoplamento completo entre UI VCL (Views) e lógica (Presenters) do Chat e Configurações. | ✅ Concluído |
 | **Abstração de Armazenamento** | Infraestrutura | Abstração de persistência via `ISettingsStorage` facilitando testes em memória. | ✅ Concluído |
 | **Testes de Apresentação** | Infraestrutura | Suíte de testes automatizados com DUnitX validando lógica de Presenters com mocks de Views. | ✅ Concluído |
-| **Hook OTA do Editor** | Infraestrutura | Integração resiliente com views do editor via notifiers OTA e hook assíncrono do menu contextual, compatível com Delphi 12/13 e plugins de terceiros. | ✅ Concluído |
+| **Hook do Editor** | Infraestrutura | Integração resiliente com o menu contextual do editor via hook VCL assíncrono, compatível com Delphi 12/13 e estável durante a criação de novos projetos. | ✅ Concluído |

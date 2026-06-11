@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.19 — Ações do Editor com Fallback para Unit Ativa (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Menos fricção no uso diário das ações do editor, permitindo acionar comandos mesmo sem selecionar código manualmente.
+  *   **Destaques**: fallback automático para a unit ativa, Smart Diff substituindo o buffer inteiro quando apropriado, leitura do editor em blocos e hook contextual mais estável no Delphi 13 ao criar novos projetos.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.19)](backlog.md#v0019--ações-do-editor-com-fallback-para-unit-ativa-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.18 — Polimento de UX do Chat, Web Login e Marca Rad IA (Concluído)</b></summary>
 
   *   **Valor Entregue**: Experiência mais clara e previsível no uso diário do chat, com abertura mais suave, tema alinhado à IDE, sessões protegidas durante processamento e login web mais orientativo.

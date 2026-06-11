@@ -40,12 +40,12 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
 *   **Integração Nativa com GitHub Copilot:** Suporte oficial para conectar-se diretamente aos servidores do GitHub Copilot (pessoal ou corporativo) na nuvem, com fluxo de autenticação do dispositivo embutido (OAuth Device Flow) e importação em um clique das credenciais ativas do VS Code.
 *   **Histórico de Chat Persistente:** O histórico de conversas é salvo automaticamente localmente em formato JSON e pode ser carregado sob demanda na tela inicial, evitando restaurar chats que o usuário não quer abrir naquele momento.
 *   **Atalhos e Histórico de Prompts:** Atalhos integrados para aumentar a produtividade: `Ctrl + Enter` para enviar prompts, `Enter` para quebra de linha, e uso das setas `↑` (para cima) e `↓` (para baixo) na área de digitação para navegar rapidamente pelo histórico dos prompts que já foram digitados e enviados.
-*   **Ações de Contexto no Editor:** Clique com o botão direito em qualquer trecho de código selecionado para:
-    *   *Explicar Código Selecionado:* Analisar didaticamente a lógica.
+*   **Ações de Contexto no Editor:** Clique com o botão direito em uma seleção ou na unit ativa para:
+    *   *Explicar Código:* Analisar didaticamente a lógica.
     *   *Otimizar/Refatorar:* Melhorar a performance e aplicar princípios SOLID/Clean Code.
     *   *Gerar Testes Unitários:* Gerar estruturas prontas de testes usando DUnitX.
     *   *Localizar Bugs:* Buscar memory leaks, exceptions soltas e falhas de lógica.
-    *   Os comandos enviados pelo menu preservam blocos Pascal formatados no chat e mantêm `/explain` separado dos fluxos de review.
+    *   Quando não houver seleção, o Rad IA envia a unit inteira como contexto, preservando blocos Pascal formatados no chat e mantendo `/explain` separado dos fluxos de review.
 *   **Comparador Visual Inteligente (Smart Diff):** Visualização de refatorações lado a lado (Original vs. Sugerido) com realce vermelho/verde e botão **[Aplicar Alteração]** de um clique direto no editor.
 *   **Depurador de Compilação (Smart Build):** Integração com a aba *Messages* do Delphi. Clique com o botão direito nos erros de compilação da IDE para obter explicações e correções instantâneas.
 *   **Documentação XML Automática:** Geração de comentários XML estruturados (`/// <summary>`) acima do cabeçalho de métodos para alimentar o Help Insight.
