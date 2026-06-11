@@ -43,6 +43,7 @@ type
     function SerializeHistoryToJson(const AHistory: TArray<IChatMessage>): string;
     function ComputePromptHash(const APrompt: string;
       const ATrimmedHistory: TArray<IChatMessage>; const ASystemPrompt: string): string;
+    function IsWebLoginProvider(const AProviderName: string): Boolean;
     function IsLocalQuotaLimitReached: Boolean;
   public
     constructor Create(const AConfig: IAIConfig);
@@ -189,7 +190,7 @@ var
   LProviderName: string;
 begin
   LProviderName := FConfig.GetActiveProvider;
-  if FConfig.GetProviderAuthType(LProviderName) = 'web_login' then
+  if IsWebLoginProvider(LProviderName) then
     Result := TProviderRegistry.CreateProvider('WebViewBridge', FConfig)
   else
     Result := TProviderRegistry.CreateProvider(LProviderName, FConfig);
@@ -278,10 +279,22 @@ begin
   Result := TRadIACacheManager.GenerateHash(LProviderName, LModelName, ASystemPrompt, APrompt, LHistoryStr);
 end;
 
-function TRadIAService.IsLocalQuotaLimitReached: Boolean;
+function TRadIAService.IsWebLoginProvider(const AProviderName: string): Boolean;
 begin
+  if SameText(AProviderName, 'WebViewBridge') then
+    Exit(True);
+
+  Result := SameText(FConfig.GetProviderAuthType(AProviderName), 'web_login');
+end;
+
+function TRadIAService.IsLocalQuotaLimitReached: Boolean;
+var
+  LActiveProvider: string;
+begin
+  LActiveProvider := FConfig.GetActiveProvider;
+
   Result := FConfig.QuotaEnabled and
-    (not SameText(FConfig.GetProviderAuthType(FConfig.GetActiveProvider), 'web_login')) and
+    (not IsWebLoginProvider(LActiveProvider)) and
     (FConfig.QuotaUsed >= FConfig.QuotaLimit);
 end;
 

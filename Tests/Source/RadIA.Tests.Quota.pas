@@ -99,6 +99,7 @@ begin
   FConfig.QuotaEnabled := True;
   FConfig.SetActiveProvider('Gemini');
   FConfig.SetProviderAuthType('Gemini', 'api_key');
+  FConfig.SetApiKey('Gemini', 'test-api-key');
   FConfig.QuotaLimit := 100;
   FConfig.QuotaUsed := 100; // Limit reached
   FConfig.Save;

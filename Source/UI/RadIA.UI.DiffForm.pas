@@ -50,6 +50,7 @@ type
     procedure SaveWindowPlacement;
     procedure TryStartRefactoring;
     function CleanSuggestedCode(const AResponse: string): string;
+    function IsWebLoginProvider(const AProviderName: string): Boolean;
     procedure PostToWebView(const AAction, AText: string);
   public
     procedure InitializeDiff(const AUnitName, AOriginalCode: string);
@@ -107,7 +108,7 @@ begin
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   FRequestTimeoutTimer := TTimer.Create(Self);
   FRequestTimeoutTimer.Enabled := False;
-  if SameText(FConfig.GetProviderAuthType(FConfig.GetActiveProvider), 'web_login') then
+  if IsWebLoginProvider(FConfig.GetActiveProvider) then
     FRequestTimeoutTimer.Interval := CDiffWebLoginTimeoutMs
   else
     FRequestTimeoutTimer.Interval := CDiffDefaultTimeoutMs;
@@ -369,11 +370,26 @@ begin
   end;
 end;
 
+function TFormAIDiff.IsWebLoginProvider(const AProviderName: string): Boolean;
+begin
+  if SameText(AProviderName, 'WebViewBridge') then
+    Exit(True);
+
+  Result := SameText(FConfig.GetProviderAuthType(AProviderName), 'web_login') or
+    ((SameText(AProviderName, 'Gemini') or SameText(AProviderName, 'OpenAI')) and
+     FConfig.GetApiKey(AProviderName).Trim.IsEmpty);
+end;
+
 procedure TFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
   LGuard: ILifecycleGuard;
+  LActiveProvider: string;
 begin
+  LActiveProvider := FConfig.GetActiveProvider;
+  if IsWebLoginProvider(LActiveProvider) then
+    FConfig.SetProviderAuthType(LActiveProvider, 'web_login');
+
   LPrompt := 'Refactor and optimize the following Delphi Pascal code. ' +
              'Ensure it follows clean code principles, SOLID, and Delphi performance best practices. ' +
              'Preserve valid Delphi formatting and indentation using two spaces per indentation level. ' +

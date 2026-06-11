@@ -1129,6 +1129,9 @@ begin
   TFormWebLogin.ShowLogin(Self, 'https://gemini.google.com',
     procedure
     begin
+      grpGeminiAuthType.ItemIndex := 1;
+      grpGeminiAuthTypeClick(grpGeminiAuthType);
+      FPresenter.SaveConfig;
       ShowMessage('Gemini web login completed successfully.');
     end);
 end;
@@ -1138,6 +1141,9 @@ begin
   TFormWebLogin.ShowLogin(Self, 'https://chatgpt.com',
     procedure
     begin
+      grpOpenAIAuthType.ItemIndex := 1;
+      grpOpenAIAuthTypeClick(grpOpenAIAuthType);
+      FPresenter.SaveConfig;
       ShowMessage('OpenAI web login completed successfully.');
     end);
 end;
