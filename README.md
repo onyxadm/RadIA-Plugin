@@ -56,7 +56,7 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
 *   **Armazenamento Seguro de Chaves:** Credenciais criptografadas localmente via Windows DPAPI e salvas no Registro do Windows.
 *   **Cancelamento e Bloqueio de Ações:** Botão de parada dinâmico redondo integrado na cápsula do prompt para interromper requisições assíncronas de forma segura. Durante o processamento, ações de sessão, botões da barra superior e troca de chats ficam bloqueados para preservar o contexto ativo.
 
-*   **Respostas Concisas ConfigurÃ¡veis:** OpÃ§Ã£o geral para preferir respostas mais objetivas da IA, reduzindo explicaÃ§Ãµes longas e economizando tokens sem impedir respostas detalhadas quando solicitadas explicitamente.
+*   **Respostas Concisas Configuráveis:** Opção geral para preferir respostas mais objetivas da IA, reduzindo explicações longas e economizando tokens sem impedir respostas detalhadas quando solicitadas explicitamente.
 
 ### 2.1 Tabela Completa de Recursos (Features)
 

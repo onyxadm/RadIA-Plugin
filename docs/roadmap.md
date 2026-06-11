@@ -14,11 +14,11 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
-  <summary><b>ðŸ“¦ v0.0.22 â€” Prompts Concisos e PreservaÃ§Ã£o de Quebras no Editor (ConcluÃ­do)</b></summary>
+  <summary><b>📦 v0.0.22 — Prompts Concisos e Preservação de Quebras no Editor (Concluído)</b></summary>
 
-  *   **Valor Entregue**: Respostas mais objetivas e menor gasto de tokens, com os menus do editor preservando a formataÃ§Ã£o Pascal enviada ao chat.
-  *   **Destaques**: blocos `pascal` preservados em slash commands, templates padrÃ£o mais sucintos, nova opÃ§Ã£o **Prefer concise AI responses** persistida nas configuraÃ§Ãµes e cobertura DUnitX para o fluxo de prÃ©-processamento.
-  *   ðŸ‘‰ *Veja os detalhes de implementaÃ§Ã£o e testes no [Backlog TÃ©cnico (v0.0.22)](backlog.md#v0022--prompts-concisos-e-preservaÃ§Ã£o-de-quebras-no-editor-clique-para-expandir).*
+  *   **Valor Entregue**: Respostas mais objetivas e menor gasto de tokens, com os menus do editor preservando a formatação Pascal enviada ao chat.
+  *   **Destaques**: blocos `pascal` preservados em slash commands, templates padrão mais sucintos, nova opção **Prefer concise AI responses** persistida nas configurações e cobertura DUnitX para o fluxo de pré-processamento.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.22)](backlog.md#v0022--prompts-concisos-e-preservacao-de-quebras-no-editor-clique-para-expandir).*
 </details>
 
 <details>

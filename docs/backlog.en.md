@@ -50,7 +50,7 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
-  <summary><b>ðŸ“¦ v0.0.22 â€” Concise Prompts and Editor Line Break Preservation (Click to expand)</b></summary>
+  <summary><b>📦 v0.0.22 — Concise Prompts and Editor Line Break Preservation (Click to expand)</b></summary>
 
   #### 1. Pascal Block Preservation in Editor Menus
   *   **Description**: Fixed editor context-menu flows to preserve line breaks and indentation when sending code to commands such as `/bugs`, `/explain`, and `/test`.

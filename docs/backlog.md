@@ -50,22 +50,22 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
-  <summary><b>ðŸ“¦ v0.0.22 â€” Prompts Concisos e PreservaÃ§Ã£o de Quebras no Editor (Clique para expandir)</b></summary>
+  <summary><b>📦 v0.0.22 — Prompts Concisos e Preservação de Quebras no Editor (Clique para expandir)</b></summary>
 
-  #### 1. PreservaÃ§Ã£o de Blocos Pascal nos Menus do Editor
-  *   **DescriÃ§Ã£o**: CorreÃ§Ã£o dos fluxos de menu contextual para preservar quebras de linha e indentaÃ§Ã£o ao enviar cÃ³digo para comandos como `/bugs`, `/explain` e `/test`.
+  #### 1. Preservação de Blocos Pascal nos Menus do Editor
+  *   **Descrição**: Correção dos fluxos de menu contextual para preservar quebras de linha e indentação ao enviar código para comandos como `/bugs`, `/explain` e `/test`.
   *   **Detalhes**:
       *   O `TChatPresenter` passou a reutilizar o bloco fenced Markdown recebido do menu antes de consultar novamente o editor.
-      *   Os templates padrÃ£o agora envolvem `{code}` em blocos `pascal`, reduzindo o risco de renderizaÃ§Ã£o inline.
-      *   Os prompts de anÃ¡lise, explicaÃ§Ã£o e testes foram ajustados para respostas mais objetivas e acionÃ¡veis.
+      *   Os templates padrão agora envolvem `{code}` em blocos `pascal`, reduzindo o risco de renderização inline.
+      *   Os prompts de análise, explicação e testes foram ajustados para respostas mais objetivas e acionáveis.
 
-  #### 2. ConfiguraÃ§Ã£o de Respostas Concisas
-  *   **DescriÃ§Ã£o**: Nova opÃ§Ã£o **Prefer concise AI responses** nas configuraÃ§Ãµes gerais para reduzir respostas excessivamente explicativas e economizar tokens.
+  #### 2. Configuração de Respostas Concisas
+  *   **Descrição**: Nova opção **Prefer concise AI responses** nas configurações gerais para reduzir respostas excessivamente explicativas e economizar tokens.
   *   **Detalhes**:
-      *   A preferÃªncia Ã© persistida como `ConciseResponses` e habilitada por padrÃ£o.
-      *   O `TRadIAService` injeta a preferÃªncia no system prompt efetivo, sem duplicar regra por provedor.
-      *   A validaÃ§Ã£o cobre persistÃªncia de configuraÃ§Ã£o, presenter de configuraÃ§Ãµes e preservaÃ§Ã£o de quebras no prÃ©-processamento de slash commands.
-      *   ValidaÃ§Ã£o realizada com `build.ps1 -DelphiVersion "23.0" -Test`, com 157 testes aprovados.
+      *   A preferência é persistida como `ConciseResponses` e habilitada por padrão.
+      *   O `TRadIAService` injeta a preferência no system prompt efetivo, sem duplicar regra por provedor.
+      *   A validação cobre persistência de configuração, presenter de configurações e preservação de quebras no pré-processamento de slash commands.
+      *   Validação realizada com `build.ps1 -DelphiVersion "23.0" -Test`, com 157 testes aprovados.
 </details>
 
 <details>
