@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.20 — Smart Diff with Web Login and Configuration Persistence (Completed)</b></summary>
+
+  *   **Value Delivered**: More reliable Smart Diff refactorings with Web Login providers, preserving code formatting and preventing configuration regressions.
+  *   **Highlights**: Smart Diff no longer requires API keys for Web Login providers, responses are requested as a single `pascal` block, the bridge preserves code indentation, configuration tests are isolated from the user's real registry, and the editor hook is less intrusive during new project creation.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.20)](backlog.en.md#v0020--smart-diff-with-web-login-and-configuration-persistence-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.19 — Editor Actions with Active Unit Fallback (Completed)</b></summary>
 
   *   **Value Delivered**: Less friction in daily editor actions, allowing commands to run even when the user has not manually selected code.

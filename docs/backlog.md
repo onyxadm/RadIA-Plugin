@@ -50,6 +50,25 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
+  <summary><b>📦 v0.0.20 — Smart Diff com Web Login e Persistência de Configuração (Clique para expandir)</b></summary>
+
+  #### 1. Smart Diff com Provedores Web Login
+  *   **Descrição**: Correção do fluxo de refatoração via Smart Diff para provedores autenticados por Web Login, mantendo a janela do chat funcional e exibindo corretamente o comparador.
+  *   **Detalhes**:
+      *   O Smart Diff passou a reutilizar o caminho de Web Login sem exigir chave de API quando o provedor ativo está configurado para autenticação web.
+      *   A resposta de refatoração agora é solicitada em um único bloco `pascal`, preservando a formatação recebida da IA.
+      *   A extração do WebView preserva quebras de linha e indentação dos blocos de código antes de enviar o conteúdo para o Delphi.
+
+  #### 2. Estabilidade de Configurações e Editor
+  *   **Descrição**: Ajustes para evitar regressões de configuração e interferências no editor durante criação de projetos.
+  *   **Detalhes**:
+      *   Configurações específicas dos provedores foram gravadas e lidas em suas chaves próprias, mantendo compatibilidade com valores legados.
+      *   Testes automatizados deixaram de gravar no registro real do usuário, evitando alteração acidental da configuração do Gemini.
+      *   O hook do menu contextual evita acessar o buffer interno do editor enquanto a IDE ainda está criando views.
+      *   Validação realizada com `build.ps1 -DelphiVersion "37.0" -Test` e `build.ps1 -DelphiVersion "23.0" -Test`, ambos com 144 testes aprovados.
+</details>
+
+<details>
   <summary><b>📦 v0.0.19 — Ações do Editor com Fallback para Unit Ativa (Clique para expandir)</b></summary>
 
   #### 1. Menus do Editor sem Seleção - Item #52

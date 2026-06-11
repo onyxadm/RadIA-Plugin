@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.20 — Smart Diff com Web Login e Persistência de Configuração (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Refatorações pelo Smart Diff mais confiáveis com provedores Web Login, preservando a formatação do código e evitando regressões de configuração.
+  *   **Destaques**: Smart Diff sem exigência indevida de API key em Web Login, resposta em bloco `pascal` único, preservação de indentação no bridge, isolamento dos testes de configuração do registro real e hook do editor menos intrusivo ao criar novos projetos.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.20)](backlog.md#v0020--smart-diff-com-web-login-e-persistência-de-configuração-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.19 — Ações do Editor com Fallback para Unit Ativa (Concluído)</b></summary>
 
   *   **Valor Entregue**: Menos fricção no uso diário das ações do editor, permitindo acionar comandos mesmo sem selecionar código manualmente.

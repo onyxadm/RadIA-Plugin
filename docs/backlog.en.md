@@ -50,6 +50,25 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
+  <summary><b>📦 v0.0.20 — Smart Diff with Web Login and Configuration Persistence (Click to expand)</b></summary>
+
+  #### 1. Smart Diff with Web Login Providers
+  *   **Description**: Fixed the Smart Diff refactoring flow for providers authenticated through Web Login while keeping the chat window functional and the comparison view correctly rendered.
+  *   **Details**:
+      *   Smart Diff now reuses the Web Login path without requiring an API key when the active provider is configured for web authentication.
+      *   Refactoring responses are requested as a single `pascal` code block, preserving the formatting returned by the AI.
+      *   WebView extraction preserves line breaks and indentation from code blocks before sending content back to Delphi.
+
+  #### 2. Configuration and Editor Stability
+  *   **Description**: Adjustments to avoid configuration regressions and editor interference during project creation.
+  *   **Details**:
+      *   Provider-specific settings are read from and written to their own registry keys while keeping compatibility with legacy values.
+      *   Automated tests no longer write to the user's real registry, preventing accidental Gemini configuration changes.
+      *   The context-menu hook avoids accessing the editor's internal buffer while the IDE is still creating views.
+      *   Validated with `build.ps1 -DelphiVersion "37.0" -Test` and `build.ps1 -DelphiVersion "23.0" -Test`, both with 144 passing tests.
+</details>
+
+<details>
   <summary><b>📦 v0.0.19 — Editor Actions with Active Unit Fallback (Click to expand)</b></summary>
 
   #### 1. Editor Menus Without Selection - Item #52
