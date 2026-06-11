@@ -101,6 +101,9 @@ begin
   end;
   
   ApplyIDETheme;
+
+  if Assigned(FChatFrame) then
+    FChatFrame.EnsureVisibleContent;
 end;
 
 procedure TFormRadIADockable.LoadWindowSize;

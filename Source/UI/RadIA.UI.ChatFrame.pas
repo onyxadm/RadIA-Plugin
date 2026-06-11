@@ -82,6 +82,7 @@ type
     function GetWebThemeName(const AThemeName: string): string;
     function ColorToHex(AColor: TColor): string;
     procedure CreateEdgeBrowser;
+    procedure EnsureMainWebView;
     procedure CMShowingChanged(var Message: TMessage); message CM_SHOWINGCHANGED;
     procedure InitializeWebView;
     procedure CopyWebFiles;
@@ -97,6 +98,7 @@ type
     destructor Destroy; override;
     
     procedure SetTheme(const AThemeName: string);
+    procedure EnsureVisibleContent;
 
     { IChatView Implementation }
     procedure SetRequestState(const AInProgress: Boolean);
@@ -275,17 +277,8 @@ end;
 procedure TFrameAIChat.CMShowingChanged(var Message: TMessage);
 begin
   inherited;
-  if Showing and not FWebViewInitialized then
-  begin
-    FWebViewInitialized := True;
-    CreateEdgeBrowser;
-    TThread.ForceQueue(nil,
-      TThreadProcedure(
-      procedure
-      begin
-        InitializeWebView;
-      end));
-  end;
+  if Showing then
+    EnsureMainWebView;
 end;
 
 procedure TFrameAIChat.CreateEdgeBrowser;
@@ -309,17 +302,32 @@ end;
 procedure TFrameAIChat.CreateWnd;
 begin
   inherited CreateWnd;
-  if not FWebViewInitialized and Showing then
+  if Showing then
+    EnsureMainWebView;
+end;
+
+procedure TFrameAIChat.EnsureMainWebView;
+begin
+  CreateEdgeBrowser;
+
+  if not FWebViewInitialized then
   begin
     FWebViewInitialized := True;
-    CreateEdgeBrowser;
     TThread.ForceQueue(nil,
       TThreadProcedure(
       procedure
       begin
-        InitializeWebView;
+        if Assigned(EdgeBrowser) then
+          InitializeWebView;
       end));
-  end;
+  end
+  else if FBrowserInitialized then
+    UpdateWebViewNavigation;
+end;
+
+procedure TFrameAIChat.EnsureVisibleContent;
+begin
+  EnsureMainWebView;
 end;
 
 procedure TFrameAIChat.DestroyWnd;
