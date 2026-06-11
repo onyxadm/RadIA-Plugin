@@ -55,7 +55,6 @@ contains
   RadIA.Core.AwsSigner in 'Source\Core\RadIA.Core.AwsSigner.pas',
   RadIA.Core.Mediator in 'Source\Core\RadIA.Core.Mediator.pas',
   RadIA.Core.Sessions in 'Source\Core\RadIA.Core.Sessions.pas',
-  RadIA.Core.PascalFormatter in 'Source\Core\RadIA.Core.PascalFormatter.pas',
   RadIA.Core.DTO.Generator in 'Source\Core\RadIA.Core.DTO.Generator.pas',
   RadIA.Core.ProjectGenerator in 'Source\Core\RadIA.Core.ProjectGenerator.pas',
   RadIA.Provider.Streaming in 'Source\Providers\RadIA.Provider.Streaming.pas',
