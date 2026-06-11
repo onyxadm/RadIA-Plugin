@@ -1541,6 +1541,8 @@ begin
       begin
         FLoginPopupOpen := False;
         TLogger.Log('HandleOnbtnWebLoginConnectClick: Login completed successfully. Refreshing background browser.', 'UI');
+        FConfig.SetProviderAuthType(LActiveProvider, 'web_login');
+        FConfig.Save;
         FView.NavigateBackgroundBrowser(LUrl);
       end);
   except

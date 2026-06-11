@@ -375,21 +375,14 @@ begin
   if SameText(AProviderName, 'WebViewBridge') then
     Exit(True);
 
-  Result := SameText(FConfig.GetProviderAuthType(AProviderName), 'web_login') or
-    ((SameText(AProviderName, 'Gemini') or SameText(AProviderName, 'OpenAI')) and
-     FConfig.GetApiKey(AProviderName).Trim.IsEmpty);
+  Result := SameText(FConfig.GetProviderAuthType(AProviderName), 'web_login');
 end;
 
 procedure TFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
   LGuard: ILifecycleGuard;
-  LActiveProvider: string;
 begin
-  LActiveProvider := FConfig.GetActiveProvider;
-  if IsWebLoginProvider(LActiveProvider) then
-    FConfig.SetProviderAuthType(LActiveProvider, 'web_login');
-
   LPrompt := 'Refactor and optimize the following Delphi Pascal code. ' +
              'Ensure it follows clean code principles, SOLID, and Delphi performance best practices. ' +
              'Preserve valid Delphi formatting and indentation using two spaces per indentation level. ' +
