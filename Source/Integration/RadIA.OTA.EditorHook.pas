@@ -444,42 +444,13 @@ end;
 {$ENDIF}
 
 procedure TRadIAEditorHook.InstallEditorNotifiers;
-var
-  LOTAServices: IOTAServices;
-  LModuleServices: IOTAModuleServices;
-  LModule: IOTAModule;
-  LSourceEditor: IOTASourceEditor;
-  I: Integer;
-  J: Integer;
 begin
   {$IFDEF TESTS}
   Exit;
   {$ENDIF}
 
-  if FIDENotifierIndex < 0 then
-  begin
-    if Supports(BorlandIDEServices, IOTAServices, LOTAServices) then
-      FIDENotifierIndex := LOTAServices.AddNotifier(TRadIAIDEEditorNotifier.Create(Self));
-  end;
-
-  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
-  begin
-    for I := 0 to LModuleServices.ModuleCount - 1 do
-    begin
-      LModule := LModuleServices.Modules[I];
-      if not Assigned(LModule) then
-        Continue;
-
-      for J := 0 to LModule.GetModuleFileCount - 1 do
-      begin
-        if Supports(LModule.GetModuleFileEditor(J), IOTASourceEditor, LSourceEditor) and
-           SameText(ExtractFileExt(LSourceEditor.FileName), '.pas') then
-        begin
-          TryAddSourceEditorNotifier(LSourceEditor);
-        end;
-      end;
-    end;
-  end;
+  // OTA editor notifications may fire while Delphi is still creating source
+  // views and rebuilding elision blocks. The VCL timer hook is enough here.
 end;
 
 procedure TRadIAEditorHook.RemoveEditorNotifiers;
