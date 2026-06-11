@@ -64,7 +64,8 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources;
+  System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI,
+  RadIA.Core.PascalFormatter, RadIA.UI.Resources;
 
 const
   CDiffDefaultTimeoutMs = 60000;
@@ -364,7 +365,7 @@ begin
     while (LLines.Count > 0) and LLines[LLines.Count - 1].Trim.IsEmpty do
       LLines.Delete(LLines.Count - 1);
 
-    Result := LLines.Text.Trim;
+    Result := TRadIAPascalFormatter.NormalizeIndentation(LLines.Text);
   finally
     LLines.Free;
   end;
@@ -434,7 +435,7 @@ begin
         LCleanedResponse := CleanSuggestedCode(AResponse);
           
         FCanApply := not LCleanedResponse.Trim.IsEmpty;
-        FSuggestedCode := LCleanedResponse.Trim;
+        FSuggestedCode := LCleanedResponse;
       end;
       
       TThread.Queue(nil,
