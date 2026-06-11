@@ -337,6 +337,7 @@ var
   LActiveProvider: string;
 begin
   LConfig := TRadIAConfig.GetInstance;
+  LConfig.Load;
   LActiveProvider := LConfig.GetActiveProvider;
   if SameText(LConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
   begin

@@ -382,7 +382,23 @@ procedure TFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
   LGuard: ILifecycleGuard;
+  LActiveProvider: string;
 begin
+  LActiveProvider := FConfig.GetActiveProvider;
+  if (not IsWebLoginProvider(LActiveProvider)) and
+     (SameText(LActiveProvider, 'Gemini') or SameText(LActiveProvider, 'OpenAI')) and
+     FConfig.GetApiKey(LActiveProvider).Trim.IsEmpty then
+  begin
+    FRequestFinished := True;
+    FCanApply := False;
+    FSuggestedCode := '// Error requesting refactoring: ' +
+      'Provider is configured for API key authentication, but no API key is saved. ' +
+      'Open Rad IA settings, select Web Login for ' + LActiveProvider +
+      ', complete login, and save settings.' + #13#10 + FOriginalCode;
+    RenderDiffInBrowser;
+    Exit;
+  end;
+
   LPrompt := 'Refactor and optimize the following Delphi Pascal code. ' +
              'Ensure it follows clean code principles, SOLID, and Delphi performance best practices. ' +
              'Preserve valid Delphi formatting and indentation using two spaces per indentation level. ' +
