@@ -402,8 +402,9 @@ begin
   LPrompt := 'Refactor and optimize the following Delphi Pascal code. ' +
              'Ensure it follows clean code principles, SOLID, and Delphi performance best practices. ' +
              'Preserve valid Delphi formatting and indentation using two spaces per indentation level. ' +
-             'Return ONLY raw Delphi Pascal source code. Do not include explanations, markdown fences, ' +
-             'language labels, introductions, comments about the changes, or wrapping block tags.' +
+             'Return the complete refactored source in exactly one fenced code block using pascal as ' +
+             'the language. Do not place any text before or after the fenced code block. ' +
+             'Do not split the source into multiple code blocks or explanations.' +
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
   LGuard := FLifecycleGuard as ILifecycleGuard;
