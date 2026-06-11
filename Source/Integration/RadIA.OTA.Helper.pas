@@ -58,8 +58,12 @@ end;
 
 class function TRadIAOTAHelper.ReadEditorText(const AEditReader: IOTAEditReader; out AText: string): Boolean;
 var
-  LBytes: TBytes;
+  LBuffer: TBytes;
+  LTextBytes: TBytes;
   LBytesRead: Integer;
+  LOffset: Integer;
+const
+  CChunkSize = 8192;
 begin
   Result := False;
   AText := '';
@@ -67,12 +71,23 @@ begin
   if not Assigned(AEditReader) then
     Exit;
 
-  SetLength(LBytes, AEditReader.GetText(0, nil, 0));
-  if Length(LBytes) > 0 then
+  SetLength(LBuffer, CChunkSize);
+  LOffset := 0;
+  repeat
+    LBytesRead := AEditReader.GetText(LOffset, PAnsiChar(@LBuffer[0]), CChunkSize);
+    if LBytesRead > 0 then
+    begin
+      SetLength(LTextBytes, Length(LTextBytes) + LBytesRead);
+      Move(LBuffer[0], LTextBytes[Length(LTextBytes) - LBytesRead], LBytesRead);
+      Inc(LOffset, LBytesRead);
+    end;
+  until LBytesRead < CChunkSize;
+
+  if Length(LTextBytes) > 0 then
   begin
-    LBytesRead := AEditReader.GetText(0, PAnsiChar(@LBytes[0]), Length(LBytes));
-    SetLength(LBytes, LBytesRead);
-    AText := TEncoding.UTF8.GetString(LBytes);
+    AText := TEncoding.UTF8.GetString(LTextBytes);
+    if (Length(AText) > 0) and (AText[Length(AText)] = #0) then
+      SetLength(AText, Length(AText) - 1);
   end;
 
   Result := True;
