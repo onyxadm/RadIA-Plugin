@@ -23,6 +23,7 @@ type
     procedure QueueHookActiveEditor;
     {$IFNDEF TESTS}
     procedure HookEditorWindowsNow;
+    function IsActiveEditorReady: Boolean;
     {$ENDIF}
     procedure InstallEditorNotifiers;
     procedure RemoveEditorNotifiers;
@@ -80,7 +81,7 @@ uses
   RadIA.Core.Logger;
 
 const
-  CEditorHookDelayMs = 1200;
+  CEditorHookDelayMs = 2500;
 
 {$IFDEF TESTS}
 procedure ShowRadIAChat;
@@ -377,12 +378,41 @@ begin
 end;
 
 {$IFNDEF TESTS}
+function TRadIAEditorHook.IsActiveEditorReady: Boolean;
+var
+  LEditorServices: IOTAEditorServices;
+begin
+  Result := False;
+
+  if (not FInstalled) or GIsShuttingDown then
+    Exit;
+
+  if not Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
+    Exit;
+
+  try
+    Result := Assigned(LEditorServices.TopBuffer);
+  except
+    on E: Exception do
+    begin
+      Result := False;
+      TLogger.Log('IsActiveEditorReady: Editor services are not ready: ' + E.Message, 'EditorHook');
+    end;
+  end;
+end;
+
 procedure TRadIAEditorHook.HookEditorWindowsNow;
 var
   I: Integer;
 begin
   if (not FInstalled) or GIsShuttingDown then
     Exit;
+
+  if not IsActiveEditorReady then
+  begin
+    RequestDelayedHook;
+    Exit;
+  end;
 
   if Assigned(Screen) and Assigned(Screen.ActiveForm) then
   begin
