@@ -65,6 +65,10 @@ implementation
 uses
   System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources;
 
+const
+  CDiffDefaultTimeoutMs = 60000;
+  CDiffWebLoginTimeoutMs = 300000;
+
 procedure TFormAIDiff.CreateWnd;
 var
   LThemingServices: IOTAIDEThemingServices;
@@ -103,7 +107,10 @@ begin
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   FRequestTimeoutTimer := TTimer.Create(Self);
   FRequestTimeoutTimer.Enabled := False;
-  FRequestTimeoutTimer.Interval := 60000;
+  if SameText(FConfig.GetProviderAuthType(FConfig.GetActiveProvider), 'web_login') then
+    FRequestTimeoutTimer.Interval := CDiffWebLoginTimeoutMs
+  else
+    FRequestTimeoutTimer.Interval := CDiffDefaultTimeoutMs;
   FRequestTimeoutTimer.OnTimer := RequestTimeoutElapsed;
   btnApply.Enabled := False;
   LoadWindowPlacement;
