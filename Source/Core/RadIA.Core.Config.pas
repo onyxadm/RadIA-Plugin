@@ -507,13 +507,6 @@ begin
     FStorage.WriteString('AutocompleteModel', FAutocompleteModel);
     FStorage.WriteInteger('AutocompleteDelay', FAutocompleteDelay);
     FStorage.WriteInteger('InjectDelphiVersion', IfThen(FInjectDelphiVersion, 1, 0));
-    FStorage.DeleteValue('AzureApiVersion');
-    FStorage.DeleteValue('AwsRegion');
-    FStorage.DeleteValue('AwsAccessKeyId');
-    FStorage.DeleteValue('AwsSecretAccessKey');
-    FStorage.DeleteValue('AwsSessionToken');
-    FStorage.DeleteValue('OllamaBaseUrl');
-    FStorage.DeleteValue('OpenAICustomBaseUrl');
     FStorage.CloseKey;
 
     TLogger.Configure(FLogEnabled, FLogPath, FLogMaxSizeKB);

@@ -188,6 +188,7 @@ const
   TEST_AWS_SECRET_KEY = 'aws-secret-key';
   TEST_AWS_REGION = 'us-west-2';
   TEST_AWS_SESSION_TOKEN = 'aws-session-token';
+  LEGACY_VALUE = 'legacy-value';
 var
   LStorage: ISettingsStorage;
   LConfig: IAIConfig;
@@ -196,6 +197,19 @@ begin
   TRadIAConfig.SetBaseRegistryPath(TEST_ROOT);
   TRadIAConfig.SetStorage(LStorage);
   try
+    Assert.IsTrue(LStorage.OpenKey(TEST_ROOT, True));
+    try
+      LStorage.WriteString('OpenAICustomBaseUrl', LEGACY_VALUE);
+      LStorage.WriteString('OllamaBaseUrl', LEGACY_VALUE);
+      LStorage.WriteString('AzureApiVersion', LEGACY_VALUE);
+      LStorage.WriteString('AwsAccessKeyId', LEGACY_VALUE);
+      LStorage.WriteString('AwsSecretAccessKey', LEGACY_VALUE);
+      LStorage.WriteString('AwsRegion', LEGACY_VALUE);
+      LStorage.WriteString('AwsSessionToken', LEGACY_VALUE);
+    finally
+      LStorage.CloseKey;
+    end;
+
     LConfig := TRadIAConfig.Create;
     LConfig.OpenAICustomBaseUrl := TEST_OPENAI_URL;
     LConfig.OllamaBaseUrl := TEST_OLLAMA_URL;
@@ -208,13 +222,13 @@ begin
 
     Assert.IsTrue(LStorage.OpenKey(TEST_ROOT, False));
     try
-      Assert.IsFalse(LStorage.ValueExists('OpenAICustomBaseUrl'));
-      Assert.IsFalse(LStorage.ValueExists('OllamaBaseUrl'));
-      Assert.IsFalse(LStorage.ValueExists('AzureApiVersion'));
-      Assert.IsFalse(LStorage.ValueExists('AwsAccessKeyId'));
-      Assert.IsFalse(LStorage.ValueExists('AwsSecretAccessKey'));
-      Assert.IsFalse(LStorage.ValueExists('AwsRegion'));
-      Assert.IsFalse(LStorage.ValueExists('AwsSessionToken'));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('OpenAICustomBaseUrl', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('OllamaBaseUrl', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AzureApiVersion', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AwsAccessKeyId', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AwsSecretAccessKey', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AwsRegion', ''));
+      Assert.AreEqual(LEGACY_VALUE, LStorage.ReadString('AwsSessionToken', ''));
     finally
       LStorage.CloseKey;
     end;
