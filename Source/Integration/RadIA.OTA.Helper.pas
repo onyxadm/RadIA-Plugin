@@ -258,7 +258,7 @@ begin
       LEditWriter.DeleteTo(LBufferSize);
 
     LUtf8Text := UTF8String(ANewText);
-    LEditWriter.Insert(LUtf8Text);
+    LEditWriter.Insert(PAnsiChar(LUtf8Text));
     Result := True;
     Exit;
   end;
