@@ -900,7 +900,7 @@ begin
                 LStats := Self.FAccumulatedUsage.FormatStats;
                 if Self.FConfig.QuotaEnabled and (not Self.IsWebLoginProvider(LActiveProvider)) then
                 begin
-                  LStats := LStats + Format(' - Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
+                  LStats := LStats + Format(' · Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 end;
 
                 Self.PostToWebView('update_tokens', '', LStats);
@@ -1021,7 +1021,7 @@ begin
                   Self.FConfig.AddToQuotaUsage(LUsage);
                 LStats := Self.FAccumulatedUsage.FormatStats;
                 if Self.FConfig.QuotaEnabled and (not Self.IsWebLoginProvider(LActiveProvider)) then
-                  LStats := LStats + Format(' - Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
+                  LStats := LStats + Format(' · Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 Self.PostToWebView('update_tokens', '', LStats);
               end;
 

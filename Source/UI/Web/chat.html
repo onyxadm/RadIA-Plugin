@@ -104,38 +104,44 @@
           <span id="context-text"></span>
         </div>
 
-        <div id="prompt-wrapper">
-          <div id="prompt-capsule">
-            <textarea id="prompt-textarea" placeholder="Ask Rad IA or type / for commands..." rows="1"></textarea>
-            <button id="btn-send-prompt" title="Send message">
-              <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
-          </div>
+        <div id="status-bar" class="hidden">
+          <span id="status-text"></span>
         </div>
 
-        <div id="model-selectors">
-          <div class="selector-wrapper">
-            <select id="select-provider">
-              <option value="">Provider...</option>
-            </select>
+        <div id="composer-shell">
+          <div id="prompt-wrapper">
+            <div id="prompt-capsule">
+              <textarea id="prompt-textarea" placeholder="Ask Rad IA or type / for commands..." rows="1"></textarea>
+              <button id="btn-send-prompt" title="Send message">
+                <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div class="selector-wrapper">
-            <select id="select-model" style="display: none;">
-              <option value="">Model...</option>
-            </select>
-            <div class="custom-dropdown-wrapper" id="model-dropdown-wrapper">
-              <div class="custom-dropdown-trigger" id="model-dropdown-trigger">
-                <span id="model-dropdown-value">Model...</span>
-              </div>
-              <div class="custom-dropdown-content" id="model-dropdown-content">
-                <div class="custom-dropdown-search">
-                  <input type="text" id="model-search-input" placeholder="Search model..." autocomplete="off">
+
+          <div id="model-selectors">
+            <div class="selector-wrapper">
+              <select id="select-provider">
+                <option value="">Provider...</option>
+              </select>
+            </div>
+            <div class="selector-wrapper">
+              <select id="select-model" style="display: none;">
+                <option value="">Model...</option>
+              </select>
+              <div class="custom-dropdown-wrapper" id="model-dropdown-wrapper">
+                <div class="custom-dropdown-trigger" id="model-dropdown-trigger">
+                  <span id="model-dropdown-value">Model...</span>
                 </div>
-                <div class="custom-dropdown-options" id="model-options-list">
+                <div class="custom-dropdown-content" id="model-dropdown-content">
+                  <div class="custom-dropdown-search">
+                    <input type="text" id="model-search-input" placeholder="Search model..." autocomplete="off">
+                  </div>
+                  <div class="custom-dropdown-options" id="model-options-list">
+                  </div>
                 </div>
               </div>
             </div>
@@ -143,10 +149,6 @@
         </div>
 
         <div id="slash-commands-popup" class="hidden"></div>
-
-        <div id="status-bar" class="hidden">
-          <span id="status-text"></span>
-        </div>
       </footer>
     </div>
 

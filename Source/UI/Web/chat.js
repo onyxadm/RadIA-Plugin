@@ -841,21 +841,61 @@ function applyCode(id) {
   postMessageToDelphi({ action: 'apply_code', code: code });
 }
 
+function renderTokenStats(text) {
+  const parts = String(text || '')
+    .split('·')
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  statusText.innerHTML = '';
+
+  parts.forEach((part, index) => {
+    const match = part.match(/^(.+?)\s+([0-9.,]+%?)$/);
+    const item = document.createElement('span');
+    item.className = 'token-stat';
+
+    if (match) {
+      const label = document.createElement('span');
+      label.className = 'token-stat-label';
+      label.textContent = match[1];
+
+      const value = document.createElement('span');
+      value.className = 'token-stat-value';
+      value.textContent = match[2];
+
+      item.appendChild(label);
+      item.appendChild(value);
+    } else {
+      item.textContent = part;
+    }
+
+    if (index > 0) {
+      const separator = document.createElement('span');
+      separator.className = 'token-stat-separator';
+      separator.textContent = '·';
+      statusText.appendChild(separator);
+    }
+
+    statusText.appendChild(item);
+  });
+}
+
 function updateTokens(text) {
   if (text) {
-    statusText.innerText = text;
+    renderTokenStats(text);
     statusBar.classList.remove('hidden');
   } else {
+    statusText.innerHTML = '';
     statusBar.classList.add('hidden');
   }
 }
 
 function showTransientStatus(text) {
-  statusText.innerText = text;
+  statusText.textContent = text;
   statusBar.classList.remove('hidden');
   window.clearTimeout(showTransientStatus._timer);
   showTransientStatus._timer = window.setTimeout(() => {
-    if (statusText.innerText === text) {
+    if (statusText.textContent === text) {
       statusBar.classList.add('hidden');
     }
   }, 3000);

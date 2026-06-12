@@ -44,9 +44,10 @@ begin
   end;
 
   LSettings := TFormatSettings.Invariant;
-  Result := Format('%s %s · %s %s',
-    [#$2191, FormatFloat('#,##0', PromptTokens, LSettings),
-     #$2193, FormatFloat('#,##0', CompletionTokens, LSettings)], LSettings);
+  Result := Format('Sent %s · Received %s · Total %s',
+    [FormatFloat('#,##0', PromptTokens, LSettings),
+     FormatFloat('#,##0', CompletionTokens, LSettings),
+     FormatFloat('#,##0', TotalTokens, LSettings)], LSettings);
 end;
 
 end.
