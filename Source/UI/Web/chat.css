@@ -273,16 +273,27 @@
 
 .message-wrapper {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: flex-start;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
+  width: 100%;
   animation: fadeSlideIn 0.18s ease-out;
 }
 
-.message-wrapper:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+.message-wrapper.message-user {
+  justify-content: flex-end;
+}
+
+.message-wrapper.message-user .message-avatar {
+  order: 2;
+}
+
+.message-wrapper.message-user .message-body {
+  align-items: flex-end;
+}
+
+.message-wrapper.message-assistant,
+.message-wrapper.message-system {
+  justify-content: flex-start;
 }
 
 @keyframes fadeSlideIn {
@@ -302,26 +313,66 @@
 }
 
 .message-body {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: min(78%, 820px);
   min-width: 0;
 }
 
 .message-header {
   font-weight: 600;
-  font-size: 13px;
-  margin-bottom: 6px;
-  color: var(--fg-primary);
+  font-size: 11px;
+  margin: 0 10px 4px;
+  color: var(--fg-secondary);
   display: flex;
   align-items: center;
 }
 
 .message-content {
+  position: relative;
   color: var(--fg-primary);
   font-size: 13.5px;
   line-height: 1.6;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  padding-left: 2px;
+  padding: 10px 13px;
+  background-color: var(--bubble-assistant-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px 14px 14px 14px;
+  box-shadow: 0 4px 14px var(--bubble-shadow);
+}
+
+.message-user .message-content {
+  background-color: var(--bubble-user-bg);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 14px 6px 14px 14px;
+  color: var(--bubble-user-fg);
+}
+
+.message-system .message-content {
+  background-color: var(--bubble-system-bg);
+}
+
+.message-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+.message-user .message-content::before {
+  left: auto;
+  right: -7px;
+  border-left: none;
+  border-right: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
 .message-content p {
@@ -347,10 +398,15 @@
 .message-content code {
   font-family: Consolas, "Cascadia Code", monospace;
   font-size: 12px;
-  background-color: var(--bg-elevated);
+  background-color: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
   color: var(--fg-primary);
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+.message-user .message-content code {
+  background-color: color-mix(in srgb, var(--accent) 18%, #ffffff);
+  color: var(--bubble-user-fg);
 }
 
 .message-content table {
@@ -395,6 +451,10 @@ body.light-theme .message-content tr:nth-child(even) {
   border: 1px solid var(--border);
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.message-content .code-block-container:last-child {
+  margin-bottom: 2px;
 }
 
 .code-header {
@@ -480,20 +540,40 @@ body.light-theme .apply-btn:hover {
   border: none;
 }
 
+.message-user .message-content pre code {
+  background-color: var(--code-bg) !important;
+  color: var(--code-fg) !important;
+}
+
 .typing-wrapper {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: flex-start;
   animation: fadeSlideIn 0.15s ease-out;
 }
 
 .typing-indicator {
+  position: relative;
   display: flex;
   gap: 5px;
-  padding: 10px 14px;
-  background-color: var(--bg-panel);
-  border-radius: 18px;
+  padding: 11px 14px;
+  background-color: var(--bubble-assistant-bg);
+  border-radius: 6px 14px 14px 14px;
   border: 1px solid var(--border);
+  box-shadow: 0 4px 14px var(--bubble-shadow);
+}
+
+.typing-indicator::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
 }
 
 .typing-dot {

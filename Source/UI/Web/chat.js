@@ -687,7 +687,7 @@ function addMessage(role, text, provider, model) {
   const info = SENDER_INFO[role] || SENDER_INFO.assistant;
 
   const wrapper = document.createElement('div');
-  wrapper.classList.add('message-wrapper');
+  wrapper.classList.add('message-wrapper', `message-${role}`);
 
   const avatar = document.createElement('div');
   avatar.classList.add('message-avatar', info.avatarClass);
@@ -858,7 +858,7 @@ function appendMessage(text, isDone, provider, model) {
 
     const info = SENDER_INFO.assistant;
     currentAssistantWrapper = document.createElement('div');
-    currentAssistantWrapper.classList.add('message-wrapper');
+    currentAssistantWrapper.classList.add('message-wrapper', 'message-assistant');
 
     const avatar = document.createElement('div');
     avatar.classList.add('message-avatar', info.avatarClass);
@@ -1323,7 +1323,7 @@ function updateMessage(text, isDone, provider, model) {
   if (!currentAssistantWrapper) {
     const info = SENDER_INFO.assistant;
     currentAssistantWrapper = document.createElement('div');
-    currentAssistantWrapper.classList.add('message-wrapper');
+    currentAssistantWrapper.classList.add('message-wrapper', 'message-assistant');
 
     const avatar = document.createElement('div');
     avatar.classList.add('message-avatar', info.avatarClass);

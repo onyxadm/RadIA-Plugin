@@ -29,6 +29,11 @@ body.dark-theme {
   --scrollbar-hover: rgba(255, 255, 255, 0.18);
   --scrollbar-track: rgba(255, 255, 255, 0.03);
   --green-apply:    #10b981;
+  --bubble-user-bg: #0f5f8d;
+  --bubble-user-fg: #f8fafc;
+  --bubble-assistant-bg: #232733;
+  --bubble-system-bg: #202838;
+  --bubble-shadow: rgba(0, 0, 0, 0.22);
 }
 
 :root.light-theme,
@@ -52,6 +57,11 @@ body.light-theme {
   --scrollbar-hover: rgba(0, 0, 0, 0.18);
   --scrollbar-track: rgba(0, 0, 0, 0.04);
   --green-apply:    #059669;
+  --bubble-user-bg: #d7ecff;
+  --bubble-user-fg: #082f49;
+  --bubble-assistant-bg: #ffffff;
+  --bubble-system-bg: #eef6ff;
+  --bubble-shadow: rgba(15, 23, 42, 0.08);
 }
 
 body {
