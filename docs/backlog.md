@@ -11,7 +11,7 @@ O quadro abaixo resume o status atual das features mapeadas a curto e médio pra
 | Funcionalidade / Tarefa | Status | Dificuldade | Prioridade | Versão Alvo |
 | :--- | :---: | :---: | :---: | :---: |
 | **Smart SQL Optimizer no Editor** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.23 |
-| **Delphi Compiler & OS Warning Scanner** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.1.0 |
+| **Delphi Compiler & OS Warning Scanner** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.24 |
 | **Revisão Automática de Código no Save** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.1.0 |
 | **Histórico de Refatorações Aplicadas** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐ Média | v0.1.0 |
 | **Otimizador de Cláusula Uses (Clean Uses)** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.2.0 |
@@ -48,6 +48,22 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 ## ✅ 3. Histórico de Conclusões (Completed)
 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
+
+<details>
+  <summary><b>📦 v0.0.24 — Delphi Compiler & OS Warning Scanner e Proteção de Menus (Clique para expandir)</b></summary>
+
+  #### 1. Delphi Compiler & OS Warning Scanner
+  *   **Descrição**: Nova ação de menu **Scan Compiler & OS Warnings** e o comando `/scanwarnings` para varrer o código em busca de problemas potenciais de compilação, concorrência e vazamentos de recursos (handles GDI).
+  *   **Detalhes**:
+      *   Uso do perfil `rpScanWarnings` parametrizado com temperatura `0.2` e max tokens `8192`.
+      *   Mapeamento de prompt estruturado e testes unitários DUnitX.
+
+  #### 2. Correção de Elision (Crash no Delphi 13)
+  *   **Descrição**: Resolução de um crash de Access Violation na DLL do editor do Delphi (`boreditu.dll`) que ocorria de forma intermitente durante o startup e a criação de formulários.
+  *   **Detalhes**:
+      *   Remoção da varredura recursiva de controles do editor (`HookControlPopupMenus` / `UnhookControlPopupMenus`).
+      *   Acoplamento simplificado focado unicamente no menu de contexto `EditorLocalMenu`.
+</details>
 
 <details>
   <summary><b>📦 v0.0.23 — Smart SQL Optimizer no Editor (Clique para expandir)</b></summary>

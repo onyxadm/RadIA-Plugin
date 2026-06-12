@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.24 — Delphi Compiler & OS Warning Scanner e Proteção de Menus (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Auditoria estática inteligente de warnings de compilação e vazamento de handles visando a robustez do software, aliado à correção definitiva de travamentos de code folding (Elision) na IDE do Delphi 13.
+  *   **Destaques**: Ação contextual de scan no editor, comando de barra `/scanwarnings`, perfil dedicado `rpScanWarnings` e proteção estrutural contra reentrância de hooks no menu do editor.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.24)](backlog.md#v0024--delphi-compiler--os-warning-scanner-e-protecao-de-menus-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.23 — Smart SQL Optimizer no Editor (Concluído)</b></summary>
 
   *   **Valor Entregue**: Otimização inteligente e contextual de strings de consultas SQL diretamente no editor da IDE, sem sair do fluxo de trabalho.
@@ -204,7 +212,7 @@ As próximas versões do Rad IA focarão em trazer automação inteligente em di
 ### 🔲 v0.1.0 — Automação, Auditoria e Ganhos Rápidos
 Esta versão trará auditoria de código e correções no editor em tempo real de forma leve, silenciosa e sem atritos na produtividade:
 *   **Smart SQL Optimizer no Editor** (Concluído na v0.0.23): Varredura inteligente de strings SQL dentro do Pascal para otimizar joins, performance e validar sintaxes.
-*   **Delphi Compiler & OS Warning Scanner**: Auditoria estática focada no compilador Delphi e em armadilhas de baixo nível do Windows (concorrência, vazamento de GDI handles).
+*   **Delphi Compiler & OS Warning Scanner** (Concluído na v0.0.24): Auditoria estática focada no compilador Delphi e em armadilhas de baixo nível do Windows (concorrência, vazamento de GDI handles).
 *   **Revisão Automática no Save**: Análise estática rápida executada em background ao salvar arquivos na IDE, sinalizando bugs potenciais.
 *   **Histórico de Refatorações Aplicadas**: Logs das modificações aplicadas com possibilidade de reversão manual.
 

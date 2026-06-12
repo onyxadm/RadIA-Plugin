@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.24 — Delphi Compiler & OS Warning Scanner and Menu Protection (Completed)</b></summary>
+
+  *   **Value Delivered**: Intelligent static auditing of compiler warnings and Windows resource leaks for code robustness, combined with a permanent resolution for editor elision (code folding) crashes in the Delphi 13 IDE.
+  *   **Highlights**: Contextual scan editor action, `/scanwarnings` slash command, dedicated `rpScanWarnings` profile, and structural protection against reentrant menu hook events.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.24)](backlog.en.md#v0024--delphi-compiler--os-warning-scanner-and-menu-protection-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.23 — Smart SQL Optimizer in Editor (Completed)</b></summary>
 
   *   **Value Delivered**: Smart, contextual optimization of SQL query strings directly in the IDE editor, without breaking the developer's active workflow.
@@ -204,7 +212,7 @@ Future versions of Rad IA will focus on introducing smart diagnostics and comple
 ### 🔲 v0.1.0 — Automation, Auditing, and Quick Wins
 This release focuses on bringing lightweight, silent, and friction-free code auditing and editor enhancements to everyday workflows:
 *   **Smart SQL Optimizer in Editor** (Completed in v0.0.23): Scans SQL strings inside Pascal to optimize joins, improve queries, and validate syntax.
-*   **Delphi Compiler & OS Warning Scanner**: Static auditing targeted at compiler warnings and low-level Windows pitfalls (concurrency, GDI leaks).
+*   **Delphi Compiler & OS Warning Scanner** (Completed in v0.0.24): Static auditing targeted at compiler warnings and low-level Windows pitfalls (concurrency, GDI leaks).
 *   **Automatic Code Review on Save**: Background static review triggered on file saving, alerting developers of potential bugs in the active unit.
 *   **Applied Refactoring History**: Logs all changes applied through the Diff view with rollback support.
 

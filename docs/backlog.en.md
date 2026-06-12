@@ -11,7 +11,7 @@ The board below summarizes the current status of mapped short and medium-term fe
 | Feature / Task | Status | Difficulty | Priority | Target Version |
 | :--- | :---: | :---: | :---: | :---: |
 | **Smart SQL Optimizer in Editor** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.23 |
-| **Delphi Compiler & OS Warning Scanner** | 🔲 Planned | 🟢 Low | ⭐⭐⭐⭐ High | v0.1.0 |
+| **Delphi Compiler & OS Warning Scanner** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.24 |
 | **Automatic Code Review on Save** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Applied Refactoring History** | 🔲 Planned | 🟢 Low | ⭐⭐⭐ Medium | v0.1.0 |
 | **Uses Clause Optimizer (Clean Uses)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
@@ -48,6 +48,22 @@ For complete details on objectives, impacts, and technical specifications for ea
 ## ✅ 3. Completed History
 
 Check the implementation details of each completed feature grouped by target release version:
+
+<details>
+  <summary><b>📦 v0.0.24 — Delphi Compiler & OS Warning Scanner and Menu Protection (Click to expand)</b></summary>
+
+  #### 1. Delphi Compiler & OS Warning Scanner
+  *   **Description**: New **Scan Compiler & OS Warnings** menu action and `/scanwarnings` slash command to scan code for potential compilation warnings, VCL thread-safety issues, and Windows GDI leaks.
+  *   **Details**:
+      *   Uses the `rpScanWarnings` profile configured with temperature `0.2` and `8192` max tokens.
+      *   Structured prompt mapping and comprehensive DUnitX unit test verification.
+
+  #### 2. Editor Elision Fix (Delphi 13 Crash)
+  *   **Description**: Fixed an Access Violation in the editor kernel DLL (`boreditu.dll`) that occurred intermittently on IDE startup or new unit creation.
+  *   **Details**:
+      *   Removed recursive visual controls and components popup scanning (`HookControlPopupMenus` / `UnhookControlPopupMenus`).
+      *   Simplified hook focusing solely on intercepting the `EditorLocalMenu` popup event, bypassing IDE startup message loops conflicts.
+</details>
 
 <details>
   <summary><b>📦 v0.0.23 — Smart SQL Optimizer in Editor (Click to expand)</b></summary>
