@@ -19,7 +19,7 @@ Durante a instalação, o script também atualiza os recursos HTML/CSS/JS usados
 1. Abra o console do Windows PowerShell.
 2. Certifique-se de que a pasta `bin` da instalação do Delphi contendo o `dcc32` está presente no PATH do sistema.
 3. Execute o comando na raiz do projeto de acordo com a arquitetura da sua IDE:
-   * **Para a IDE padrão de 32 bits (Delphi 10.4, 11 e 12)**:
+   * **Para a IDE padrão de 32 bits (Delphi 11 e 12)**:
      ```powershell
      powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
      ```

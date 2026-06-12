@@ -19,7 +19,7 @@ During installation, the script also updates the HTML/CSS/JS assets used by WebV
 1. Open the Windows PowerShell console.
 2. Make sure the Delphi installation `bin` folder containing `dcc32` is present in your system PATH.
 3. Run the command in the project root directory according to your IDE's architecture:
-   * **For the default 32-bit IDE (Delphi 10.4, 11, and 12)**:
+   * **For the default 32-bit IDE (Delphi 11 and 12)**:
      ```powershell
      powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
      ```

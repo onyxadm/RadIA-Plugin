@@ -74,7 +74,7 @@ The user interface uses a hybrid architecture:
 4.  **Storage Abstraction (`ISettingsStorage`):** For better maintainability and testing isolation, the option persistence layer has been abstracted. In production, settings are stored in the Windows Registry (`TRegistrySettingsStorage`), while unit tests run against an in-memory storage (`TMemorySettingsStorage`), ensuring tests do not corrupt the developer's local registry keys.
 
 ### 4. Prerequisites
-*   **IDE:** Embarcadero Delphi 10.4 Sydney, 11 Alexandria, 12 Athens, or 13 Florence (or newer).
+*   **IDE:** Embarcadero Delphi 11 Alexandria, 12 Athens, or 13 Florence.
 *   **OS:** Windows 10 / 11 (64-bit).
 *   **Web Engine:** *Microsoft Edge WebView2 Runtime* installed on the Windows system.
 *   **API Keys:** Active developer keys or a local Ollama instance.

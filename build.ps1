@@ -26,7 +26,6 @@ if (Test-Path $regBDS) {
         if ($rootDir -and (Test-Path $rootDir)) {
             $friendlyName = ""
             switch ($ver) {
-                "21.0" { $friendlyName = "Delphi 10.4 Sydney" }
                 "22.0" { $friendlyName = "Delphi 11 Alexandria" }
                 "23.0" { $friendlyName = "Delphi 12 Athens" }
                 "37.0" { $friendlyName = "Delphi 13" }
@@ -115,11 +114,11 @@ if ($dccOut -match "version (\d+\.\d+)") {
 }
 
 # 4. Validar compatibilidade e mapear versao do compilador para a versao do Delphi (DelphiVer)
-if ($compilerVersion -lt 34.0) {
+if ($compilerVersion -lt 35.0) {
     Write-Host ""
     Write-Host "=========================================================================" -ForegroundColor Red
     Write-Host "ERRO: A versao do compilador Delphi detectada ($compilerVersion) nao e suportada." -ForegroundColor Red
-    Write-Host "O Rad IA exige obrigatoriamente o Delphi 10.4 Sydney ou superior (DCC32 >= 34.0)" -ForegroundColor Red
+    Write-Host "O Rad IA exige obrigatoriamente o Delphi 11 Alexandria ou superior (DCC32 >= 35.0)" -ForegroundColor Red
     Write-Host "devido ao uso de recursos nativos da API de WebView2 (TEdgeBrowser)." -ForegroundColor Red
     Write-Host "=========================================================================" -ForegroundColor Red
     Write-Host ""
@@ -131,7 +130,6 @@ switch ($compilerVersion) {
     37.0 { $delphiVer = "37.0" } # Delphi 13
     36.0 { $delphiVer = "23.0" } # Delphi 12 Athens
     35.0 { $delphiVer = "22.0" } # Delphi 11 Alexandria
-    34.0 { $delphiVer = "21.0" } # Delphi 10.4 Sydney
     default {
         $delphiVer = "{0:N1}" -f $compilerVersion
     }
