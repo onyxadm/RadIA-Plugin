@@ -1,12 +1,67 @@
 ﻿/* global postMessageToDelphi */
 
 
+function looksLikePascalCode(code) {
+  const text = String(code || '');
+  const pascalSignals = [
+    /\bprocedure\s+\w+/i,
+    /\bfunction\s+\w+/i,
+    /\bconstructor\s+\w+/i,
+    /\bdestructor\s+\w+/i,
+    /\bunit\s+\w+/i,
+    /\binterface\b[\s\S]*\bimplementation\b/i,
+    /\bbegin\b[\s\S]*\bend\s*[.;]/i,
+    /\btry\b[\s\S]*\bfinally\b/i,
+    /\bclass\s*(?:\(|;|$)/im,
+    /:=/
+  ];
+
+  return pascalSignals.some((signal) => signal.test(text));
+}
+
+function normalizeCodeLanguage(language, code) {
+  const normalized = String(language || 'pascal').trim().toLowerCase();
+  const pascalAliases = ['delphi', 'objectpascal', 'object-pascal', 'pas'];
+  const genericCodeLabels = [
+    '',
+    'code',
+    'codigo',
+    'código',
+    'snippet',
+    'snippet de codigo',
+    'snippet de código'
+  ];
+
+  if (pascalAliases.includes(normalized) ||
+      (genericCodeLabels.includes(normalized) && looksLikePascalCode(code))) {
+    return 'pascal';
+  }
+
+  return normalized || 'pascal';
+}
+
+function getCodeHeaderTitle(language, highlightLanguage) {
+  const normalized = String(language || 'pascal').trim();
+
+  if (highlightLanguage === 'pascal') {
+    return 'DELPHI';
+  }
+
+  return normalized.toUpperCase();
+}
+
+if (window.Prism && Prism.languages && Prism.languages.pascal) {
+  Prism.languages.delphi = Prism.languages.pascal;
+  Prism.languages.pas = Prism.languages.pascal;
+  Prism.languages['object-pascal'] = Prism.languages.pascal;
+}
+
 marked.setOptions({
   gfm: true,
   breaks: true,
   pedantic: false,
   highlight: function(code, lang) {
-    const language = lang || 'pascal';
+    const language = normalizeCodeLanguage(lang, code);
     if (Prism.languages[language]) {
       return Prism.highlight(code, Prism.languages[language], language);
     }
@@ -55,8 +110,10 @@ renderer.code = function(codeOrToken, lang) {
   const id = 'cb_' + (++_codeRegistryCounter);
   _codeRegistry[id] = code;
 
-  const isPascal = ['pascal', 'delphi', 'objectpascal'].includes(language.toLowerCase());
-  const headerTitle = isProjectFile ? `${language.toUpperCase()} - ${filepath}` : language.toUpperCase();
+  const highlightLanguage = normalizeCodeLanguage(language, code);
+  const isPascal = highlightLanguage === 'pascal';
+  const headerTitleText = getCodeHeaderTitle(language, highlightLanguage);
+  const headerTitle = isProjectFile ? `${headerTitleText} - ${filepath}` : headerTitleText;
 
   return `
     <div class="code-block-container" ${isProjectFile ? `data-filepath="${filepath}" data-project-file="true"` : ''}>
@@ -67,7 +124,7 @@ renderer.code = function(codeOrToken, lang) {
           ${isPascal ? `<button class="apply-btn" title="Apply to Editor" onclick="applyCode('${id}')">${SVG_ICONS.apply}</button>` : ''}
         </div>
       </div>
-      <pre><code class="language-${language}">${code}</code></pre>
+      <pre><code class="language-${highlightLanguage}">${code}</code></pre>
     </div>
   `;
 };
