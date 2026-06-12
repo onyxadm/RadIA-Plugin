@@ -583,6 +583,11 @@ begin
         ATemperature := 0.3;
         AMaxTokens := 8192;
       end;
+      rpOptimizeSQL:
+      begin
+        ATemperature := 0.1;
+        AMaxTokens := 8192;
+      end;
     else
       ATemperature := 0.7;
       AMaxTokens := 8192;

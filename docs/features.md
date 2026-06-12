@@ -6,10 +6,11 @@ Este documento contém o checklist completo de recursos, categorização e statu
 
 ## Tabela Completa de Recursos
 
-Nota v0.0.22: o chat agora possui a opção **Respostas Concisas Configuráveis**, que orienta a IA a responder de forma mais objetiva e economizar tokens, e os menus do editor preservam blocos Pascal com quebras de linha e indentação.
+Nota v0.0.23: o plugin agora inclui o **Smart SQL Optimizer no Editor**, que permite analisar e otimizar consultas SQL no editor de código do Delphi usando o comando de barra `/sqloptimize` e uma opção dedicada no menu contextual do editor.
 
 | Recurso | Categoria | Descrição | Status |
 | :--- | :--- | :--- | :--- |
+| **Smart SQL Optimizer** | Integração | Analisador e otimizador de strings de consultas SQL integrado diretamente ao menu contextual do editor do Delphi. | ✅ Concluído |
 | **Chat Lateral Acoplável** | Chat UX | Painel integrado à IDE rodando WebView2 com suporte a Markdown e Pascal highlight. | ✅ Concluído |
 | **Tela Inicial do Chat** | Chat UX | Tela inicial com animação central, ações rápidas e carregamento de histórico sob demanda. | ✅ Concluído |
 | **Tema Integrado à IDE** | Chat UX | Adaptação Dark/Light ao tema do Delphi, incluindo Mountain Mist como light, scrollbar e blocos de código consistentes. | ✅ Concluído |

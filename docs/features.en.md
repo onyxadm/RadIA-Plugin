@@ -6,10 +6,11 @@ This document contains the complete checklist, categorization, and development s
 
 ## Complete Feature Checklist
 
-v0.0.22 note: the chat now includes **Configurable Concise Responses** to guide the AI toward shorter answers and lower token usage, and editor menu prompts preserve Pascal blocks with line breaks and indentation.
+v0.0.23 note: the plugin now includes the **Smart SQL Optimizer in Editor**, which allows analyzing and optimizing SQL queries inside the Delphi editor using the `/sqloptimize` slash command and a dedicated context menu option.
 
 | Feature | Category | Description | Status |
 | :--- | :--- | :--- | :--- |
+| **Smart SQL Optimizer** | Integration | Scans and optimizes SQL query strings directly from the Delphi editor context menu. | ✅ Completed |
 | **Dockable Sidebar Chat** | Chat UX | IDE-integrated panel running WebView2 with Markdown and Pascal highlighting. | ✅ Completed |
 | **Chat Welcome Screen** | Chat UX | Welcome screen with a central animation, quick actions, and on-demand history loading. | ✅ Completed |
 | **IDE Theme Integration** | Chat UX | Dark/Light adaptation to the Delphi theme, including Mountain Mist as light, scrollbar polish, and consistent code blocks. | ✅ Completed |

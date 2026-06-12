@@ -43,6 +43,7 @@ This project adopts clear language rules and design standards for both human dev
 *   **Context-Aware Editor Actions:** Right-click a selection or the active unit to:
     *   *Explain Code:* Analyze and explain the logic.
     *   *Optimize/Refactor:* Improve performance and apply clean code practices.
+    *   *Optimize SQL Query:* Analyze and optimize SQL queries selected or at the cursor line.
     *   *Create Example from Comment:* Automatically generate the body of an empty method from a natural-language comment.
     *   *Generate Unit Tests:* Automatically output a DUnitX test structure.
     *   *Analyze for Bugs:* Scan selected block for memory leaks or logic errors.

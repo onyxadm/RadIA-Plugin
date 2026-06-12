@@ -43,6 +43,7 @@ Este projeto adota regras claras de idioma e padrões de design para desenvolved
 *   **Ações de Contexto no Editor:** Clique com o botão direito em uma seleção ou na unit ativa para:
     *   *Explicar Código:* Analisar didaticamente a lógica.
     *   *Otimizar/Refatorar:* Melhorar a performance e aplicar princípios SOLID/Clean Code.
+    *   *Otimizar Consulta SQL:* Analisar e otimizar queries SQL selecionadas ou na linha do cursor.
     *   *Create Example from Comment:* Gerar automaticamente o corpo de um método vazio a partir de um comentário em linguagem natural.
     *   *Gerar Testes Unitários:* Gerar estruturas prontas de testes usando DUnitX.
     *   *Localizar Bugs:* Buscar memory leaks, exceptions soltas e falhas de lógica.

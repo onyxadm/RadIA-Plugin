@@ -10,7 +10,7 @@ O quadro abaixo resume o status atual das features mapeadas a curto e médio pra
 
 | Funcionalidade / Tarefa | Status | Dificuldade | Prioridade | Versão Alvo |
 | :--- | :---: | :---: | :---: | :---: |
-| **Smart SQL Optimizer no Editor** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.1.0 |
+| **Smart SQL Optimizer no Editor** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.23 |
 | **Delphi Compiler & OS Warning Scanner** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.1.0 |
 | **Revisão Automática de Código no Save** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.1.0 |
 | **Histórico de Refatorações Aplicadas** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐ Média | v0.1.0 |
@@ -48,6 +48,18 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 ## ✅ 3. Histórico de Conclusões (Completed)
 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
+
+<details>
+  <summary><b>📦 v0.0.23 — Smart SQL Optimizer no Editor (Clique para expandir)</b></summary>
+
+  #### 1. Smart SQL Optimizer no Editor
+  *   **Descrição**: Nova ação **Optimize SQL Query** no menu contextual do editor e o comando de barra `/sqloptimize` para análise e otimização automatizada de consultas SQL.
+  *   **Detalhes**:
+      *   O item de menu captura a seleção ativa no editor ou a linha atual contendo a instrução SQL.
+      *   Dispara o comando `/sqloptimize` enviando o código envolvido em blocos `sql` Markdown para a IA.
+      *   A integração de parâmetros no orquestrador `TRadIAService` configura `rpOptimizeSQL` com temperatura reduzida (`0.1`) e max tokens (`8192`) para respostas precisas.
+      *   Validação de testes DUnitX aprovada com sucesso (157 testes).
+</details>
 
 <details>
   <summary><b>📦 v0.0.22 — Prompts Concisos e Preservação de Quebras no Editor (Clique para expandir)</b></summary>

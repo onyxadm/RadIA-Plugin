@@ -223,6 +223,15 @@ begin
     True,
     '/createprojectarch'
   );
+  AddDefault(
+    'Optimize SQL Query',
+    'Analyze and optimize the selected SQL query string',
+    'Optimize this SQL query. Suggest indexes, join optimization, syntax corrections, ' +
+    'and general improvements contextually:'#13#10#13#10 +
+    '```sql'#13#10'{code}'#13#10'```',
+    False,
+    '/sqloptimize'
+  );
 end;
 
 procedure TPromptTemplateManager.BuildActiveTemplates;

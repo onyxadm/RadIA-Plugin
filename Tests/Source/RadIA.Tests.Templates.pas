@@ -66,6 +66,9 @@ begin
   Assert.AreEqual('/review', LTemplate.SlashCommand);
   Assert.IsTrue(FManager.FindTemplate('Explain Code', LTemplate));
   Assert.AreEqual('/explain', LTemplate.SlashCommand);
+  Assert.IsTrue(FManager.FindTemplate('Optimize SQL Query', LTemplate));
+  Assert.AreEqual('/sqloptimize', LTemplate.SlashCommand);
+  Assert.IsTrue(LTemplate.Template.Contains('sql'));
 end;
 
 procedure TTestRadIATemplates.TestTemplateManager_AddAndRetrieve;

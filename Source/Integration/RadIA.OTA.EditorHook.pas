@@ -45,6 +45,7 @@ type
 
     procedure OnExplainExecute(Sender: TObject);
     procedure OnOptimizeExecute(Sender: TObject);
+    procedure OnOptimizeSQLExecute(Sender: TObject);
     procedure OnTestsExecute(Sender: TObject);
     procedure OnBugsExecute(Sender: TObject);
     procedure OnDocExecute(Sender: TObject);
@@ -796,6 +797,11 @@ begin
   LRootItem.Add(LSubItem);
 
   LSubItem := TMenuItem.Create(LRootItem);
+  LSubItem.Caption := 'Optimize SQL Query';
+  LSubItem.OnClick := OnOptimizeSQLExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Create Implementation from Comment';
   LSubItem.OnClick := OnCreateExampleExecute;
   LRootItem.Add(LSubItem);
@@ -908,6 +914,11 @@ end;
 procedure TRadIAEditorHook.OnExplainExecute(Sender: TObject);
 begin
   SendCommandToChat('/explain', 'Explain this Delphi Pascal code briefly. Focus on intent and important details only:');
+end;
+
+procedure TRadIAEditorHook.OnOptimizeSQLExecute(Sender: TObject);
+begin
+  SendCommandToChat('/sqloptimize', 'Analyze and optimize this SQL query. Suggest indexes, join optimization, syntax corrections, and general improvements:');
 end;
 
 procedure TRadIAEditorHook.OnShowChatExecute(Sender: TObject);

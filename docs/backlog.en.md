@@ -10,7 +10,7 @@ The board below summarizes the current status of mapped short and medium-term fe
 
 | Feature / Task | Status | Difficulty | Priority | Target Version |
 | :--- | :---: | :---: | :---: | :---: |
-| **Smart SQL Optimizer in Editor** | 🔲 Planned | 🟢 Low | ⭐⭐⭐⭐ High | v0.1.0 |
+| **Smart SQL Optimizer in Editor** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.23 |
 | **Delphi Compiler & OS Warning Scanner** | 🔲 Planned | 🟢 Low | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Automatic Code Review on Save** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Applied Refactoring History** | 🔲 Planned | 🟢 Low | ⭐⭐⭐ Medium | v0.1.0 |
@@ -48,6 +48,18 @@ For complete details on objectives, impacts, and technical specifications for ea
 ## ✅ 3. Completed History
 
 Check the implementation details of each completed feature grouped by target release version:
+
+<details>
+  <summary><b>📦 v0.0.23 — Smart SQL Optimizer in Editor (Click to expand)</b></summary>
+
+  #### 1. Smart SQL Optimizer in Editor
+  *   **Description**: New **Optimize SQL Query** action in the editor context menu and `/sqloptimize` slash command for automated SQL query analysis and optimization.
+  *   **Details**:
+      *   The context menu captures the active selection or the current cursor line containing the SQL statement.
+      *   Triggers the `/sqloptimize` command sending the SQL query inside a Markdown ```sql block to the AI.
+      *   Configured `rpOptimizeSQL` request profile inside `TRadIAService.ResolveParameters` with a low temperature (`0.1`) and `8192` max tokens for accurate, precise responses.
+      *   DUnitX unit test suite passed successfully (157 tests).
+</details>
 
 <details>
   <summary><b>📦 v0.0.22 — Concise Prompts and Editor Line Break Preservation (Click to expand)</b></summary>

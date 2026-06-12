@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.23 — Smart SQL Optimizer in Editor (Completed)</b></summary>
+
+  *   **Value Delivered**: Smart, contextual optimization of SQL query strings directly in the IDE editor, without breaking the developer's active workflow.
+  *   **Highlights**: New context menu item in the editor, `/sqloptimize` slash command, dedicated low-temperature (`0.1`) and high-token configuration mapped in the service layer, and comprehensive DUnitX test coverage.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.23)](backlog.en.md#v0023--smart-sql-optimizer-in-editor-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.22 — Concise Prompts and Editor Line Break Preservation (Completed)</b></summary>
 
   *   **Value Delivered**: More direct responses with lower token usage, while editor menu actions preserve Pascal formatting when sending code to chat.
@@ -195,7 +203,7 @@ Future versions of Rad IA will focus on introducing smart diagnostics and comple
 
 ### 🔲 v0.1.0 — Automation, Auditing, and Quick Wins
 This release focuses on bringing lightweight, silent, and friction-free code auditing and editor enhancements to everyday workflows:
-*   **Smart SQL Optimizer in Editor**: Scans SQL strings inside Pascal to optimize joins, improve queries, and validate syntax.
+*   **Smart SQL Optimizer in Editor** (Completed in v0.0.23): Scans SQL strings inside Pascal to optimize joins, improve queries, and validate syntax.
 *   **Delphi Compiler & OS Warning Scanner**: Static auditing targeted at compiler warnings and low-level Windows pitfalls (concurrency, GDI leaks).
 *   **Automatic Code Review on Save**: Background static review triggered on file saving, alerting developers of potential bugs in the active unit.
 *   **Applied Refactoring History**: Logs all changes applied through the Diff view with rollback support.

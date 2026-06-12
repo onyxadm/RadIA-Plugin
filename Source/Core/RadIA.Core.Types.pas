@@ -7,7 +7,7 @@ type
   TAIMessageRole = (mrUser, mrAssistant, mrSystem);
   
   { Enum representing the AI request profiles for dynamic configuration }
-  TAIRequestProfile = (rpGeneralChat, rpExplainCode, rpRefactorCode, rpFindBugs, rpGenerateTests);
+  TAIRequestProfile = (rpGeneralChat, rpExplainCode, rpRefactorCode, rpFindBugs, rpGenerateTests, rpOptimizeSQL);
 
 const
   { Standard models for Google Gemini }
