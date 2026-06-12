@@ -44,11 +44,7 @@ type
     procedure btnExportClick(Sender: TObject);
     procedure btnSettingsClick(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
-    {$IF CompilerVersion >= 35.0}
     procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
-    {$ELSE}
-    procedure EdgeBrowserWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
-    {$ENDIF}
     procedure memPromptKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure btnToggleSessionsClick(Sender: TObject);
     procedure btnNewSessionClick(Sender: TObject);
@@ -70,11 +66,7 @@ type
     procedure CreateEdgeBrowserWeb;
     procedure EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
     procedure EdgeBrowserWebSourceChanged(Sender: TCustomEdgeBrowser; IsNewDocument: Boolean);
-    {$IF CompilerVersion >= 35.0}
     procedure EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
-    {$ELSE}
-    procedure EdgeBrowserWebWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
-    {$ENDIF}
 
     procedure UpdateWebViewNavigation;
     procedure UpdateSendButtonVisual(const AInProgress: Boolean);
@@ -146,8 +138,38 @@ type
   end;
 
 const
-  CWebView2BrowserArguments =
-    '--disable-features=OverlayScrollbar,OverlayScrollbars,FluentOverlayScrollbar,WindowsScrollingPersonality';
+  CWebViewScrollbarStyleId = 'radia-scrollbar-style';
+
+function BuildWebViewScrollbarScript: string;
+begin
+  Result :=
+    '(function(){' +
+    'var css="::-webkit-scrollbar{width:14px;height:14px;}"+' +
+    '"::-webkit-scrollbar-thumb{background:rgba(120,120,120,.55);border-radius:8px;' +
+    'border:3px solid transparent;background-clip:content-box;}"+' +
+    '"::-webkit-scrollbar-track{background:rgba(120,120,120,.12);}";' +
+    'function apply(){if(document.getElementById("' + CWebViewScrollbarStyleId + '"))return;' +
+    'var style=document.createElement("style");style.id="' + CWebViewScrollbarStyleId + '";' +
+    'style.textContent=css;(document.head||document.documentElement).appendChild(style);}' +
+    'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);' +
+    'else apply();' +
+    '})();';
+end;
+
+procedure InjectWebViewScrollbarStyle(const ABrowser: TEdgeBrowser; const AContext: string);
+begin
+  if Assigned(ABrowser) and Assigned(ABrowser.DefaultInterface) then
+  begin
+    try
+      ABrowser.DefaultInterface.AddScriptToExecuteOnDocumentCreated(
+        PWideChar(BuildWebViewScrollbarScript),
+        nil);
+    except
+      on E: Exception do
+        TLogger.Log('Error injecting scrollbar style to ' + AContext + ': ' + E.Message, 'UI');
+    end;
+  end;
+end;
 
 type
   TSessionObject = class
@@ -289,13 +311,8 @@ begin
     EdgeBrowser.Parent := pnlBrowser;
     EdgeBrowser.Align := alClient;
     EdgeBrowser.AlignWithMargins := True;
-    EdgeBrowser.AdditionalBrowserArguments := CWebView2BrowserArguments;
     EdgeBrowser.OnCreateWebViewCompleted := EdgeBrowserCreateWebViewCompleted;
-    {$IF CompilerVersion >= 35.0}
     EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
-    {$ELSE}
-    EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceivedLegacy;
-    {$ENDIF}
   end;
 end;
 
@@ -532,6 +549,7 @@ begin
         LSettings.Set_AreDevToolsEnabled(1);
         LSettings.Set_AreDefaultContextMenusEnabled(1);
       end;
+      InjectWebViewScrollbarStyle(EdgeBrowser, 'main chat WebView');
     end;
     UpdateWebViewNavigation;
   end;
@@ -545,7 +563,6 @@ begin
   end;
 end;
 
-{$IF CompilerVersion >= 35.0}
 procedure TFrameAIChat.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
@@ -572,12 +589,6 @@ begin
     end;
   end;
 end;
-{$ELSE}
-procedure TFrameAIChat.EdgeBrowserWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
-begin
-  FPresenter.ProcessWebMessage(AMessage);
-end;
-{$ENDIF}
 
 procedure TFrameAIChat.btnTemplatesClick(Sender: TObject);
 var
@@ -1007,14 +1018,9 @@ begin
     FEdgeBrowserWeb := TEdgeBrowser.Create(nil);
     FEdgeBrowserWeb.Parent := FpnlBrowserWeb;
     FEdgeBrowserWeb.Align := alClient;
-    FEdgeBrowserWeb.AdditionalBrowserArguments := CWebView2BrowserArguments;
     FEdgeBrowserWeb.OnCreateWebViewCompleted := EdgeBrowserWebCreateWebViewCompleted;
     FEdgeBrowserWeb.OnSourceChanged := EdgeBrowserWebSourceChanged;
-    {$IF CompilerVersion >= 35.0}
     FEdgeBrowserWeb.OnWebMessageReceived := EdgeBrowserWebWebMessageReceived;
-    {$ELSE}
-    FEdgeBrowserWeb.OnWebMessageReceived := EdgeBrowserWebWebMessageReceivedLegacy;
-    {$ENDIF}
     
     FEdgeBrowserWeb.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2Web');
     FEdgeBrowserWeb.CreateWebView;
@@ -1044,6 +1050,8 @@ begin
         end;
       end;
 
+      InjectWebViewScrollbarStyle(FEdgeBrowserWeb, 'background Web view');
+
       LScriptFile := TPath.Combine(FWebFilesDir, 'bridge.js');
       if TFile.Exists(LScriptFile) then
       begin
@@ -1068,7 +1076,6 @@ begin
     FPresenter.OnBackgroundBrowserNavigation(Sender.LocationURL);
 end;
 
-{$IF CompilerVersion >= 35.0}
 procedure TFrameAIChat.EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
@@ -1095,11 +1102,5 @@ begin
     end;
   end;
 end;
-{$ELSE}
-procedure TFrameAIChat.EdgeBrowserWebWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
-begin
-  FPresenter.OnBackgroundBrowserMessage(AMessage);
-end;
-{$ENDIF}
 
 end.

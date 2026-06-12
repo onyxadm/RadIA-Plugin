@@ -204,7 +204,12 @@ var
   LJSON: string;
   LTemplate: TPromptTemplate;
 const
-  LEGACY_JSON = '[{"name":"Review Clean Code Delphi","description":"Review Pascal code applying Clean Code and SOLID","template":"Review the following Delphi Pascal code block applying Clean Code, readability, and optimization principles:\r\n\r\n{code}","isProjectGenerator":false,"slashCommand":"/explain"}]';
+  LEGACY_JSON =
+    '[{"name":"Review Clean Code Delphi",' +
+    '"description":"Review Pascal code applying Clean Code and SOLID",' +
+    '"template":"Review the following Delphi Pascal code block applying Clean Code, ' +
+    'readability, and optimization principles:\r\n\r\n{code}",' +
+    '"isProjectGenerator":false,"slashCommand":"/explain"}]';
 begin
   LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
   ForceDirectories(TPath.GetDirectoryName(LTempFile));

@@ -42,11 +42,7 @@ type
     procedure NavigationTimerElapsed(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
     procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
-    {$IF CompilerVersion >= 35.0}
     procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
-    {$ELSE}
-    procedure EdgeBrowserWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
-    {$ENDIF}
     procedure ProcessWebMessage(const AMessage: string);
   public
     class procedure ShowLogin(const AParent: TComponent; const AUrl: string; const AOnSuccess: TProc);
@@ -67,8 +63,38 @@ type
   end;
 
 const
-  CWebView2BrowserArguments =
-    '--disable-features=OverlayScrollbar,OverlayScrollbars,FluentOverlayScrollbar,WindowsScrollingPersonality';
+  CWebViewScrollbarStyleId = 'radia-scrollbar-style';
+
+function BuildWebViewScrollbarScript: string;
+begin
+  Result :=
+    '(function(){' +
+    'var css="::-webkit-scrollbar{width:14px;height:14px;}"+' +
+    '"::-webkit-scrollbar-thumb{background:rgba(120,120,120,.55);border-radius:8px;' +
+    'border:3px solid transparent;background-clip:content-box;}"+' +
+    '"::-webkit-scrollbar-track{background:rgba(120,120,120,.12);}";' +
+    'function apply(){if(document.getElementById("' + CWebViewScrollbarStyleId + '"))return;' +
+    'var style=document.createElement("style");style.id="' + CWebViewScrollbarStyleId + '";' +
+    'style.textContent=css;(document.head||document.documentElement).appendChild(style);}' +
+    'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);' +
+    'else apply();' +
+    '})();';
+end;
+
+procedure InjectWebViewScrollbarStyle(const ABrowser: TEdgeBrowser; const AContext: string);
+begin
+  if Assigned(ABrowser) and Assigned(ABrowser.DefaultInterface) then
+  begin
+    try
+      ABrowser.DefaultInterface.AddScriptToExecuteOnDocumentCreated(
+        PWideChar(BuildWebViewScrollbarScript),
+        nil);
+    except
+      on E: Exception do
+        TLogger.Log('Error injecting scrollbar style to ' + AContext + ': ' + E.Message, 'UI');
+    end;
+  end;
+end;
 
 { TFormWebLogin }
 
@@ -146,14 +172,9 @@ begin
     Exit;
 
   FEdgeBrowser := EdgeBrowser;
-  FEdgeBrowser.AdditionalBrowserArguments := CWebView2BrowserArguments;
   FEdgeBrowser.OnCreateWebViewCompleted := EdgeBrowserCreateWebViewCompleted;
   FEdgeBrowser.OnNavigationCompleted := EdgeBrowserNavigationCompleted;
-  {$IF CompilerVersion >= 35.0}
   FEdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
-  {$ELSE}
-  FEdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceivedLegacy;
-  {$ENDIF}
   
   // Share the same data folder used by the background browser session.
   FEdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2Web');
@@ -287,6 +308,8 @@ begin
         end;
       end;
 
+      InjectWebViewScrollbarStyle(FEdgeBrowser, 'login WebView');
+
       LScriptFile := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
       LScriptFile := TPath.Combine(LScriptFile, 'bridge.js');
       if not TFile.Exists(LScriptFile) then
@@ -337,7 +360,6 @@ begin
   end;
 end;
 
-{$IF CompilerVersion >= 35.0}
 procedure TFormWebLogin.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
@@ -364,12 +386,6 @@ begin
     end;
   end;
 end;
-{$ELSE}
-procedure TFormWebLogin.EdgeBrowserWebMessageReceivedLegacy(Sender: TCustomEdgeBrowser; const AMessage: string);
-begin
-  ProcessWebMessage(AMessage);
-end;
-{$ENDIF}
 
 procedure TFormWebLogin.ProcessWebMessage(const AMessage: string);
 var
