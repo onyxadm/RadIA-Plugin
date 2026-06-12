@@ -232,6 +232,17 @@ begin
     False,
     '/sqloptimize'
   );
+  AddDefault(
+    'Scan Compiler and OS Warnings',
+    'Scan code for potential compiler warnings, thread-safety issues, and Windows GDI resource leaks',
+    'Analyze this Delphi code for potential compiler warnings (such as uninitialized variables, unreachable code, implicit typecasts, ' +
+    'and unused units), thread-safety violations (like unsafe VCL concurrency usage or race conditions), and Windows resource leaks ' +
+    '(such as unreleased GDI handles like Pen, Brush, Font, or handles without proper try..finally protection). ' +
+    'Be concise, list findings location/context, and provide clean refactored suggestions:'#13#10#13#10 +
+    '```pascal'#13#10'{code}'#13#10'```',
+    False,
+    '/scanwarnings'
+  );
 end;
 
 procedure TPromptTemplateManager.BuildActiveTemplates;

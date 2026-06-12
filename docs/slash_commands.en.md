@@ -22,6 +22,7 @@ Simply type the `/` character in the chat input area. A floating popup menu will
 | `/stacktrace` | Analyzes exception logs (MadExcept, EurekaLog, or RTL) and points to the root cause. | Sends the active unit file from the editor as context for the error line number. |
 | `/review` | Runs a comprehensive static analysis of the active unit looking for leaks and anti-patterns. | Sends the full source code of the active editor file. |
 | `/sqloptimize` | Analyzes and optimizes the selected SQL query, suggesting indexes, syntax corrections, and performance improvements. | Sends the selected SQL query string. |
+| `/scanwarnings` | Scans the code for potential Delphi compiler warnings, thread-safety violations, and Windows GDI resource leaks. | Sends the selected code snippet or the active unit. |
 | `/createproject` | Generates a complete vanilla Delphi project on disk and loads it in the IDE based on text specs. | — |
 | `/createprojectarch` | Generates a Clean Architecture (SOLID) Delphi project on disk and loads it in the IDE. | — |
 

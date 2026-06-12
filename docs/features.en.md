@@ -11,6 +11,7 @@ v0.0.23 note: the plugin now includes the **Smart SQL Optimizer in Editor**, whi
 | Feature | Category | Description | Status |
 | :--- | :--- | :--- | :--- |
 | **Smart SQL Optimizer** | Integration | Scans and optimizes SQL query strings directly from the Delphi editor context menu. | ✅ Completed |
+| **Scan Compiler & OS Warnings** | Integration | Scans the code block for potential Delphi compiler warnings, thread-safety pitfalls, and Windows GDI leaks. | ✅ Completed |
 | **Dockable Sidebar Chat** | Chat UX | IDE-integrated panel running WebView2 with Markdown and Pascal highlighting. | ✅ Completed |
 | **Chat Welcome Screen** | Chat UX | Welcome screen with a central animation, quick actions, and on-demand history loading. | ✅ Completed |
 | **IDE Theme Integration** | Chat UX | Dark/Light adaptation to the Delphi theme, including Mountain Mist as light, scrollbar polish, and consistent code blocks. | ✅ Completed |

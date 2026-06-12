@@ -588,6 +588,11 @@ begin
         ATemperature := 0.1;
         AMaxTokens := 8192;
       end;
+      rpScanWarnings:
+      begin
+        ATemperature := 0.2;
+        AMaxTokens := 8192;
+      end;
     else
       ATemperature := 0.7;
       AMaxTokens := 8192;

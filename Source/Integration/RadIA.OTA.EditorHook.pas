@@ -34,8 +34,6 @@ type
     procedure HookPopupMenu(AForm: TCustomForm);
     {$ENDIF}
     procedure UnhookPopupMenu(AForm: TCustomForm);
-    procedure HookControlPopupMenus(AControl: TControl);
-    procedure UnhookControlPopupMenus(AControl: TControl);
     function FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
     function IsEditorPopupMenu(APopupMenu: TPopupMenu): Boolean;
     procedure EditorMenuPopup(Sender: TObject);
@@ -48,6 +46,7 @@ type
     procedure OnOptimizeSQLExecute(Sender: TObject);
     procedure OnTestsExecute(Sender: TObject);
     procedure OnBugsExecute(Sender: TObject);
+    procedure OnScanWarningsExecute(Sender: TObject);
     procedure OnDocExecute(Sender: TObject);
     procedure OnReviewExecute(Sender: TObject);
     procedure OnCreateExampleExecute(Sender: TObject);
@@ -532,7 +531,6 @@ end;
 procedure TRadIAEditorHook.HookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
-  I: Integer;
 begin
   if not Assigned(AForm) then
     Exit;
@@ -547,21 +545,12 @@ begin
   LPopupMenu := FindEditorPopupMenu(AForm);
   if Assigned(LPopupMenu) then
     HookMenuDirectly(LPopupMenu);
-
-  HookControlPopupMenus(AForm);
-
-  for I := 0 to AForm.ComponentCount - 1 do
-  begin
-    if AForm.Components[I] is TPopupMenu then
-      HookMenuDirectly(TPopupMenu(AForm.Components[I]));
-  end;
 end;
 {$ENDIF}
 
 procedure TRadIAEditorHook.UnhookPopupMenu(AForm: TCustomForm);
 var
   LPopupMenu: TPopupMenu;
-  I: Integer;
 begin
   if not Assigned(AForm) then
     Exit;
@@ -575,52 +564,6 @@ begin
   LPopupMenu := FindEditorPopupMenu(AForm);
   if Assigned(LPopupMenu) then
     UnhookMenuDirectly(LPopupMenu);
-
-  UnhookControlPopupMenus(AForm);
-
-  for I := 0 to AForm.ComponentCount - 1 do
-  begin
-    if AForm.Components[I] is TPopupMenu then
-      UnhookMenuDirectly(TPopupMenu(AForm.Components[I]));
-  end;
-end;
-
-procedure TRadIAEditorHook.HookControlPopupMenus(AControl: TControl);
-var
-  I: Integer;
-  LWinControl: TWinControl;
-begin
-  if not Assigned(AControl) then
-    Exit;
-
-  if Assigned(TControlAccess(AControl).PopupMenu) then
-    HookMenuDirectly(TControlAccess(AControl).PopupMenu);
-
-  if AControl is TWinControl then
-  begin
-    LWinControl := TWinControl(AControl);
-    for I := 0 to LWinControl.ControlCount - 1 do
-      HookControlPopupMenus(LWinControl.Controls[I]);
-  end;
-end;
-
-procedure TRadIAEditorHook.UnhookControlPopupMenus(AControl: TControl);
-var
-  I: Integer;
-  LWinControl: TWinControl;
-begin
-  if not Assigned(AControl) then
-    Exit;
-
-  if Assigned(TControlAccess(AControl).PopupMenu) then
-    UnhookMenuDirectly(TControlAccess(AControl).PopupMenu);
-
-  if AControl is TWinControl then
-  begin
-    LWinControl := TWinControl(AControl);
-    for I := 0 to LWinControl.ControlCount - 1 do
-      UnhookControlPopupMenus(LWinControl.Controls[I]);
-  end;
 end;
 
 procedure TRadIAEditorHook.HookMenuDirectly(APopupMenu: TPopupMenu);
@@ -817,6 +760,11 @@ begin
   LRootItem.Add(LSubItem);
 
   LSubItem := TMenuItem.Create(LRootItem);
+  LSubItem.Caption := 'Scan Compiler & OS Warnings';
+  LSubItem.OnClick := OnScanWarningsExecute;
+  LRootItem.Add(LSubItem);
+
+  LSubItem := TMenuItem.Create(LRootItem);
   LSubItem.Caption := 'Document Method (XML)';
   LSubItem.OnClick := OnDocExecute;
   LRootItem.Add(LSubItem);
@@ -919,6 +867,11 @@ end;
 procedure TRadIAEditorHook.OnOptimizeSQLExecute(Sender: TObject);
 begin
   SendCommandToChat('/sqloptimize', 'Analyze and optimize this SQL query. Suggest indexes, join optimization, syntax corrections, and general improvements:');
+end;
+
+procedure TRadIAEditorHook.OnScanWarningsExecute(Sender: TObject);
+begin
+  SendCommandToChat('/scanwarnings', 'Analyze this Delphi code for potential compiler warnings, thread-safety violations, and Windows resource leaks (such as unreleased GDI handles):');
 end;
 
 procedure TRadIAEditorHook.OnShowChatExecute(Sender: TObject);

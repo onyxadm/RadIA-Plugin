@@ -69,6 +69,9 @@ begin
   Assert.IsTrue(FManager.FindTemplate('Optimize SQL Query', LTemplate));
   Assert.AreEqual('/sqloptimize', LTemplate.SlashCommand);
   Assert.IsTrue(LTemplate.Template.Contains('sql'));
+  Assert.IsTrue(FManager.FindTemplate('Scan Compiler and OS Warnings', LTemplate));
+  Assert.AreEqual('/scanwarnings', LTemplate.SlashCommand);
+  Assert.IsTrue(LTemplate.Template.Contains('uninitialized variables'));
 end;
 
 procedure TTestRadIATemplates.TestTemplateManager_AddAndRetrieve;

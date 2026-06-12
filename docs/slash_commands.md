@@ -22,6 +22,7 @@ Basta digitar o caractere `/` na caixa de entrada do chat. Um menu flutuante sur
 | `/stacktrace` | Analisa logs de erro ou exceções (MadExcept, EurekaLog ou RTL) e aponta a causa raiz na unit ativa. | Envia o texto da unit aberta no editor como referência de código para a linha do erro. |
 | `/review` | Executa uma análise estática abrangente de toda a unit ativa em busca de memory leaks (falta de try..finally) e anti-padrões. | Envia o código completo do arquivo ativo no editor. |
 | `/sqloptimize` | Analisa e otimiza a consulta SQL selecionada, sugerindo índices, correções de sintaxe e melhorias de performance. | Envia a string ou trecho de consulta SQL selecionado. |
+| `/scanwarnings` | Varre o código em busca de warnings do compilador Delphi, problemas de thread-safety e vazamentos de recursos (handles GDI). | Envia o trecho de código selecionado ou a unit ativa. |
 | `/createproject` | Cria um projeto Delphi vanilla completo no disco e o carrega na IDE com base em uma especificação textual. | — |
 | `/createprojectarch` | Cria um projeto Delphi baseado em arquitetura limpa (SOLID) no disco e o carrega na IDE com base em especificação. | — |
 
