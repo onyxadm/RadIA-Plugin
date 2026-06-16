@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.25 — Web Login Simplificado e Apply Changes Seguro (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Login web mais direto e confiável para ChatGPT/Gemini, com confirmação explícita de sessão já autenticada, e aplicação de diffs mais segura no editor para evitar duplicação de código.
+  *   **Destaques**: abertura da página oficial do provedor com a pasta de dados correta, fechamento automático quando a sessão já está logada, identificação visual como **Web Login** em vez de nome de modelo incorreto e substituição OTA baseada no bloco original quando a seleção do editor se perde.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.25)](backlog.md#v0025--web-login-simplificado-e-apply-changes-seguro-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.24 — Delphi Compiler & OS Warning Scanner e Proteção de Menus (Concluído)</b></summary>
 
   *   **Valor Entregue**: Auditoria estática inteligente de warnings de compilação e vazamento de handles visando a robustez do software, aliado à correção definitiva de travamentos de code folding (Elision) na IDE do Delphi 13.

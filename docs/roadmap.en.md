@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.25 — Simplified Web Login and Safe Apply Changes (Completed)</b></summary>
+
+  *   **Value Delivered**: More direct and reliable ChatGPT/Gemini web login, with explicit confirmation for already authenticated sessions, and safer diff application in the editor to prevent duplicated code.
+  *   **Highlights**: official provider page opened with the correct data folder, automatic exit when the session is already signed in, visual identification as **Web Login** instead of a misleading model name, and OTA replacement based on the original block when the editor selection is lost.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.25)](backlog.en.md#v0025--simplified-web-login-and-safe-apply-changes-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.24 — Delphi Compiler & OS Warning Scanner and Menu Protection (Completed)</b></summary>
 
   *   **Value Delivered**: Intelligent static auditing of compiler warnings and Windows resource leaks for code robustness, combined with a permanent resolution for editor elision (code folding) crashes in the Delphi 13 IDE.

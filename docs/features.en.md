@@ -6,7 +6,7 @@ This document contains the complete checklist, categorization, and development s
 
 ## Complete Feature Checklist
 
-v0.0.23 note: the plugin now includes the **Smart SQL Optimizer in Editor**, which allows analyzing and optimizing SQL queries inside the Delphi editor using the `/sqloptimize` slash command and a dedicated context menu option.
+v0.0.25 note: the plugin now simplifies **Web Login** for ChatGPT/Gemini, confirms already authenticated sessions, and protects Smart Diff **Apply Changes** against duplicated code when the original editor selection is lost.
 
 | Feature | Category | Description | Status |
 | :--- | :--- | :--- | :--- |
@@ -29,7 +29,7 @@ v0.0.23 note: the plugin now includes the **Smart SQL Optimizer in Editor**, whi
 | **Template Backup & Restore** | Chat UX | Transactional JSON import and export with schema validations and merge/overwrite UI options. | ✅ Completed |
 | **Google Gemini** | Provider | Native BYOK integration for Gemini 1.5 Pro and Gemini 1.5 Flash models. | ✅ Completed |
 | **OpenAI ChatGPT** | Provider | Native BYOK integration for GPT-4o, GPT-4o-mini, and others. | ✅ Completed |
-| **Hybrid Login (Web Login)**| Provider | Choose between BYOK (API Keys) or Web Login (Plus/Pro) for OpenAI and Gemini, with a guided screen, current-session fallback, and clear status text. | ✅ Completed |
+| **Hybrid Login (Web Login)**| Provider | Choose between BYOK (API Keys) or Web Login (Plus/Pro) for OpenAI and Gemini, opening the official provider page with the correct data folder, confirming already authenticated sessions, and keeping clear status text. | ✅ Completed |
 | **Anthropic Claude** | Provider | Native BYOK integration for Claude 3 Haiku and Claude 3.5 Sonnet. | ✅ Completed |
 | **DeepSeek** | Provider | Native BYOK integration for DeepSeek Chat and Reasoning models. | ✅ Completed |
 | **Groq** | Provider | Native BYOK integration for Llama, Mixtral, and Gemma models via Groq's high-speed cloud. | ✅ Completed |
@@ -49,7 +49,7 @@ v0.0.23 note: the plugin now includes the **Smart SQL Optimizer in Editor**, whi
 | **Local Quota Control** | Control | Define a monthly token limit with request blocking and a manual reset button. | ✅ Completed |
 | **Editor Context Actions** | Integration | Rad IA submenu at the top of the editor right-click menu to explain code, optimize/refactor, generate tests, find bugs, document methods, and review the active unit. When there is no selection, the whole unit is used as context. | ✅ Completed |
 | **Create Example from Comment** | Integration | Generates the body of empty methods from natural-language comments inside `begin/end`, preserving the comment and inserting the example directly into the editor. | ✅ Completed |
-| **Interactive Smart Diff** | Integration | Side-by-side original/suggested diff view with instant editor replacement. | ✅ Completed |
+| **Interactive Smart Diff** | Integration | Side-by-side original/suggested diff view with safe editor application, replacing the original block and rejecting the action when the block cannot be found. | ✅ Completed |
 | **Smart Build Debugger** | Integration | Message tab integration to resolve compiler issues with one-click fixes. | ✅ Completed |
 | **Auto XML Documentation** | Generation | Write Delphi-compliant XML help comments above methods automatically. | ✅ Completed |
 | **DTO & Model Converter** | Generation | Convert JSON or SQL DDL payloads into Object Pascal data classes (DTOs) or records (DEXT ORM, Aurelius, REST.Json, or Vanilla). | ✅ Completed |

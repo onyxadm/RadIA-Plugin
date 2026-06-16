@@ -6,7 +6,7 @@ Este documento contém o checklist completo de recursos, categorização e statu
 
 ## Tabela Completa de Recursos
 
-Nota v0.0.23: o plugin agora inclui o **Smart SQL Optimizer no Editor**, que permite analisar e otimizar consultas SQL no editor de código do Delphi usando o comando de barra `/sqloptimize` e uma opção dedicada no menu contextual do editor.
+Nota v0.0.25: o plugin agora simplifica o **Web Login** para ChatGPT/Gemini, confirma sessões já autenticadas e protege o **Apply Changes** do Smart Diff contra duplicação de código quando a seleção original do editor é perdida.
 
 | Recurso | Categoria | Descrição | Status |
 | :--- | :--- | :--- | :--- |
@@ -29,7 +29,7 @@ Nota v0.0.23: o plugin agora inclui o **Smart SQL Optimizer no Editor**, que per
 | **Backup de Templates** | Chat UX | Exportação e importação transacional em JSON de templates com validação estrutural de esquema e opção de mesclagem na UI. | ✅ Concluído |
 | **Google Gemini** | Provedor | Suporte nativo aos modelos Gemini 1.5 Flash e Pro via chaves próprias (BYOK). | ✅ Concluído |
 | **OpenAI ChatGPT** | Provedor | Suporte nativo aos modelos GPT-4o, GPT-4o-mini e outros. | ✅ Concluído |
-| **Login Híbrido (Web Login)**| Provedor | Permite alternar entre BYOK (API Keys) ou Login Web (Plus/Pro) para OpenAI e Gemini, com tela orientativa, fallback para sessão atual e status claro. | ✅ Concluído |
+| **Login Híbrido (Web Login)**| Provedor | Permite alternar entre BYOK (API Keys) ou Login Web (Plus/Pro) para OpenAI e Gemini, abrindo a página oficial do provedor na pasta de dados correta, confirmando sessões já autenticadas e mantendo status claro. | ✅ Concluído |
 | **Anthropic Claude** | Provedor | Suporte nativo aos modelos Claude 3 Haiku e Claude 3.5 Sonnet. | ✅ Concluído |
 | **DeepSeek** | Provedor | Suporte nativo aos modelos DeepSeek Chat e Reasoning via chaves próprias (BYOK). | ✅ Concluído |
 | **Groq** | Provedor | Suporte nativo aos modelos Llama, Mixtral e Gemma na nuvem ultrarrápida da Groq via chaves próprias (BYOK). | ✅ Concluído |
@@ -49,7 +49,7 @@ Nota v0.0.23: o plugin agora inclui o **Smart SQL Optimizer no Editor**, que per
 | **Limite de Cota Local** | Transparência | Definição de limite de tokens mensal com bloqueio de chamadas e botão de reset. | ✅ Concluído |
 | **Ações no Editor** | Integração | Submenu Rad IA no topo do menu de botão direito do editor para explicar código, otimizar/refatorar, gerar testes, localizar bugs, documentar métodos e revisar a unit ativa. Quando não há seleção, a unit inteira é usada como contexto. | ✅ Concluído |
 | **Create Example from Comment** | Integração | Gera o corpo de métodos vazios a partir de comentários em linguagem natural dentro do `begin/end`, preservando o comentário e inserindo o exemplo direto no editor. | ✅ Concluído |
-| **Smart Diff (Comparador)** | Integração | Visualização lado a lado de código sugerido vs. original com aplicação instantânea. | ✅ Concluído |
+| **Smart Diff (Comparador)** | Integração | Visualização lado a lado de código sugerido vs. original com aplicação segura no editor, substituindo o bloco original e recusando a ação quando ele não é encontrado. | ✅ Concluído |
 | **Smart Build Debugger** | Integração | Clique com o botão direito nos erros de compilação da IDE para correções instantâneas. | ✅ Concluído |
 | **Documentação XML Automática** | Geração | Geração automática de comentários `/// <summary>` sobre os métodos da unit. | ✅ Concluído |
 | **Conversor de DTO e Modelos** | Geração | Conversor de payload JSON ou DDL SQL para classes de dados (DTOs) ou records Object Pascal (com DEXT ORM, Aurelius, REST.Json ou Vanilla). | ✅ Concluído |

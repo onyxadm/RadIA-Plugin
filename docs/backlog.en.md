@@ -12,6 +12,7 @@ The board below summarizes the current status of mapped short and medium-term fe
 | :--- | :---: | :---: | :---: | :---: |
 | **Smart SQL Optimizer in Editor** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.23 |
 | **Delphi Compiler & OS Warning Scanner** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.24 |
+| **Simplified Web Login and Safe Apply Changes** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.25 |
 | **Automatic Code Review on Save** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Applied Refactoring History** | 🔲 Planned | 🟢 Low | ⭐⭐⭐ Medium | v0.1.0 |
 | **Uses Clause Optimizer (Clean Uses)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
@@ -48,6 +49,25 @@ For complete details on objectives, impacts, and technical specifications for ea
 ## ✅ 3. Completed History
 
 Check the implementation details of each completed feature grouped by target release version:
+
+<details>
+  <summary><b>📦 v0.0.25 — Simplified Web Login and Safe Apply Changes (Click to expand)</b></summary>
+
+  #### 1. Simplified Web Login
+  *   **Description**: The Web Login flow now opens the official provider page using the correct data folder, allowing the user to sign in or visually confirm the active session without relying on a hidden WebView.
+  *   **Details**:
+      *   The form detects already authenticated ChatGPT/Gemini sessions and exits the login flow with a clear confirmation message.
+      *   The screen no longer displays misleading model names for Web Login providers, using the Rad IA brand and **Web Login** mode instead.
+      *   The **Continue** button remains available for manual confirmation when the provider page requires interaction.
+
+  #### 2. Safe Apply Changes in Smart Diff
+  *   **Description**: The **Apply Changes** button no longer inserts new code on top of old content when the editor selection is lost while the diff dialog is open.
+  *   **Details**:
+      *   Whole-buffer replacement now calculates the real active editor text size before applying the OTA edit.
+      *   When the original selection is no longer available, the plugin locates the original block in the editor and replaces only that range.
+      *   If the original block cannot be found, applying the diff is rejected with an explicit message instead of duplicating code.
+      *   Validated with `build.ps1 -DelphiVersion "23.0" -Test`, with 159 passing tests.
+</details>
 
 <details>
   <summary><b>📦 v0.0.24 — Delphi Compiler & OS Warning Scanner and Menu Protection (Click to expand)</b></summary>

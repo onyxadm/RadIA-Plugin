@@ -12,6 +12,7 @@ O quadro abaixo resume o status atual das features mapeadas a curto e médio pra
 | :--- | :---: | :---: | :---: | :---: |
 | **Smart SQL Optimizer no Editor** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.23 |
 | **Delphi Compiler & OS Warning Scanner** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.24 |
+| **Web Login Simplificado e Apply Changes Seguro** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.25 |
 | **Revisão Automática de Código no Save** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.1.0 |
 | **Histórico de Refatorações Aplicadas** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐ Média | v0.1.0 |
 | **Otimizador de Cláusula Uses (Clean Uses)** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.2.0 |
@@ -48,6 +49,25 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 ## ✅ 3. Histórico de Conclusões (Completed)
 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
+
+<details>
+  <summary><b>📦 v0.0.25 — Web Login Simplificado e Apply Changes Seguro (Clique para expandir)</b></summary>
+
+  #### 1. Web Login Simplificado
+  *   **Descrição**: O fluxo de Web Login agora abre a página oficial do provedor na pasta de dados correta, permitindo que o usuário faça login ou confirme visualmente a sessão ativa sem depender de um WebView oculto.
+  *   **Detalhes**:
+      *   O formulário identifica sessões já autenticadas de ChatGPT/Gemini e encerra o login com uma mensagem clara de confirmação.
+      *   A tela evita exibir nomes de modelo incorretos para provedores Web Login, usando a marca Rad IA e o modo **Web Login**.
+      *   O botão **Continue** permanece disponível para confirmação manual quando a página do provedor exige interação.
+
+  #### 2. Apply Changes Seguro no Smart Diff
+  *   **Descrição**: O botão **Apply Changes** deixou de inserir o novo código por cima do conteúdo antigo quando a seleção do editor era perdida ao abrir o comparador.
+  *   **Detalhes**:
+      *   A substituição de buffer inteiro agora calcula o tamanho real do texto ativo antes de aplicar a edição OTA.
+      *   Quando a seleção original não está mais disponível, o plugin localiza o bloco original no editor e substitui somente esse trecho.
+      *   Se o bloco original não for encontrado, a aplicação é recusada com uma mensagem explícita em vez de duplicar código.
+      *   Validação realizada com `build.ps1 -DelphiVersion "23.0" -Test`, com 159 testes aprovados.
+</details>
 
 <details>
   <summary><b>📦 v0.0.24 — Delphi Compiler & OS Warning Scanner e Proteção de Menus (Clique para expandir)</b></summary>
