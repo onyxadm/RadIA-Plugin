@@ -135,6 +135,10 @@ type
     [Test]
     procedure TestWebMessageInsertCode;
     [Test]
+    procedure TestWebMessageApplyCode;
+    [Test]
+    procedure TestWebLoginStreamUsesGenericModelLabel;
+    [Test]
     procedure TestWebMessageChangeProvider;
     [Test]
     procedure TestWebMessageChangeModel;
@@ -576,6 +580,33 @@ begin
 
   Assert.IsTrue(FMockView.EditorTextReplaced);
   Assert.AreEqual('procedure Demo; begin end;', FMockView.ReplacedEditorTextValue);
+end;
+
+procedure TTestChatPresenter.TestWebMessageApplyCode;
+begin
+  FPresenter.Initialize('C:\mock\web');
+
+  FPresenter.ProcessWebMessage('{"action":"apply_code","code":"procedure ApplyDemo; begin end;"}');
+  DrainQueuedCalls;
+
+  Assert.IsTrue(FMockView.EditorTextReplaced);
+  Assert.AreEqual('procedure ApplyDemo; begin end;', FMockView.ReplacedEditorTextValue);
+end;
+
+procedure TTestChatPresenter.TestWebLoginStreamUsesGenericModelLabel;
+begin
+  FPresenter.Initialize('C:\mock\web');
+  FPresenter.WebViewReady := True;
+  FConfig.SetActiveProvider('OpenAI');
+  FConfig.SetActiveModel('OpenAI', 'gpt-4o-mini');
+  FConfig.SetProviderAuthType('OpenAI', 'web_login');
+
+  FPresenter.ProcessWebMessage('{"action":"update_stream","text":"done","isDone":false}');
+  DrainQueuedCalls;
+
+  Assert.IsTrue(FMockView.LastPostedJson.Contains('"provider":"OpenAI"'));
+  Assert.IsTrue(FMockView.LastPostedJson.Contains('"model":"Web Login"'));
+  Assert.IsFalse(FMockView.LastPostedJson.Contains('gpt-4o-mini'));
 end;
 
 procedure TTestChatPresenter.TestWebMessageChangeProvider;

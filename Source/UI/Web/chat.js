@@ -376,7 +376,7 @@ const SENDER_INFO = {
     headerClass: 'user-header' 
   },
   assistant: { 
-    name: 'Codex AI', 
+    name: 'Rad IA', 
     icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, 
     avatarClass: 'ai-avatar',   
     headerClass: 'ai-header'   
@@ -838,7 +838,7 @@ function copyCode(btn, id) {
 
 function applyCode(id) {
   const code = _codeRegistry[id] || '';
-  postMessageToDelphi({ action: 'apply_code', code: code });
+  postMessageToDelphi({ action: 'insert_code', code: code });
 }
 
 function renderTokenStats(text) {

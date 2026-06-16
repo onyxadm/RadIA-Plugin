@@ -160,7 +160,7 @@ end;
 
 procedure TFormWebLogin.CompleteWithCurrentSession;
 begin
-  lblStatus.Caption := 'Using the current browser session...';
+  lblStatus.Caption := 'Using the confirmed browser session...';
   if Assigned(FOnLoginSuccess) then
     FOnLoginSuccess();
   ModalResult := mrOk;
@@ -405,11 +405,8 @@ begin
     
     if SameText(LAction, 'login_complete') then
     begin
-      TLogger.Log('TFormWebLogin: Login detected via bridge.js. Closing popup.', 'UI');
-      lblStatus.Caption := 'Login detected. Returning to Rad IA...';
-      if Assigned(FOnLoginSuccess) then
-        FOnLoginSuccess();
-      ModalResult := mrOk;
+      TLogger.Log('TFormWebLogin: Provider page is ready for session confirmation.', 'UI');
+      lblStatus.Caption := 'Provider page is ready. Sign in or verify the account, then click Continue.';
     end;
   finally
     LParsed.Free;

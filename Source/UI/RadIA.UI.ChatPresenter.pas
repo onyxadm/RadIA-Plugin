@@ -736,6 +736,8 @@ begin
 
   LActiveProvider := FConfig.GetActiveProvider;
   LActiveModel := FConfig.GetActiveModel(LActiveProvider);
+  if IsWebLoginProvider(LActiveProvider) then
+    LActiveModel := 'Web Login';
   LSessionId := FSessionManager.ActiveSessionId;
 
   TLogger.Log(Format('SendPromptToAI started. Provider=%s, Model=%s, PromptLength=%d, Session=%s',
@@ -1213,6 +1215,8 @@ begin
     begin
       LActiveProvider := FConfig.GetActiveProvider;
       LActiveModel := FConfig.GetActiveModel(LActiveProvider);
+      if IsWebLoginProvider(LActiveProvider) then
+        LActiveModel := 'Web Login';
 
       PostToWebView('update_message', 'assistant', AText, AIsDone, LActiveProvider, LActiveModel);
 
@@ -1292,7 +1296,7 @@ procedure TChatPresenter.DispatchWebMessage(const AAction: string; const AJson: 
 var
   LFiles: TJSONArray;
 begin
-  if AAction = 'insert_code' then
+  if SameText(AAction, 'insert_code') or SameText(AAction, 'apply_code') then
     HandleInsertCodeMessage(AJson.GetValue<string>('code', ''))
   else if AAction = 'log' then
     TLogger.Log('JS Console: ' + AJson.GetValue<string>('text', ''), 'WebView')
@@ -1814,12 +1818,17 @@ end;
 procedure TChatPresenter.PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean; const AProvider: string; const AModel: string);
 var
   LJson: TJSONObject;
+  LDisplayModel: string;
 begin
   if not FWebViewReady then
     Exit;
 
+  LDisplayModel := AModel;
+  if (not AProvider.IsEmpty) and IsWebLoginProvider(AProvider) then
+    LDisplayModel := 'Web Login';
+
   TLogger.Log(Format('PostToWebView: Action=%s, Role=%s, TextLen=%d, IsDone=%s, Provider=%s, Model=%s',
-    [AAction, ARole, Length(AText), BoolToStr(AIsDone, True), AProvider, AModel]), 'UI');
+    [AAction, ARole, Length(AText), BoolToStr(AIsDone, True), AProvider, LDisplayModel]), 'UI');
     
   LJson := TJSONObject.Create;
   try
@@ -1831,8 +1840,8 @@ begin
     LJson.AddPair('isDone', TJSONBool.Create(AIsDone));
     if not AProvider.IsEmpty then
       LJson.AddPair('provider', AProvider);
-    if not AModel.IsEmpty then
-      LJson.AddPair('model', AModel);
+    if not LDisplayModel.IsEmpty then
+      LJson.AddPair('model', LDisplayModel);
       
     FView.PostMessageToWeb(LJson.ToJSON);
   finally

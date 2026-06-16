@@ -39,8 +39,7 @@ object FormWebLogin: TFormWebLogin
       Margins.Right = 20
       Margins.Bottom = 20
       Align = alRight
-      Caption = 'Use Current Session'
-      Visible = False
+      Caption = 'Continue'
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -66,9 +65,9 @@ object FormWebLogin: TFormWebLogin
     object lblInfo: TLabel
       Left = 20
       Top = 42
-      Width = 640
+      Width = 675
       Height = 15
-      Caption = 'Sign in using the official provider page below. Rad IA will continue when the login is detected.'
+      Caption = 'Sign in or verify the account on the official provider page, then click Continue.'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clGray
       Font.Height = -12
@@ -133,7 +132,7 @@ object FormWebLogin: TFormWebLogin
         Alignment = taCenter
         Anchors = [akLeft, akTop, akRight]
         AutoSize = False
-        Caption = 'If you are already signed in, use the current session. Otherwise wait for the provider page or retry the embedded browser.'
+        Caption = 'If the correct account is already signed in, continue. Otherwise wait for the provider page or retry the embedded browser.'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clGrayText
         Font.Height = -13
@@ -148,7 +147,7 @@ object FormWebLogin: TFormWebLogin
         Width = 148
         Height = 36
         Cursor = crHandPoint
-        Caption = 'Use Current Session'
+        Caption = 'Continue'
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
