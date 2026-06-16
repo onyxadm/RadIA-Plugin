@@ -1066,7 +1066,7 @@ begin
   if not Assigned(AProcedure) then
     Exit;
 
-  TThread.Queue(nil,
+  TThread.ForceQueue(nil,
     TThreadProcedure(
     procedure
     begin

@@ -13,6 +13,7 @@ type
     class function ReadEditorText(const AEditReader: IOTAEditReader; out AText: string): Boolean;
     class function ReadBufferText(const AEditBuffer: IOTAEditBuffer; out AText: string): Boolean;
     class function ReadCurrentSourceEditorText(out AText: string): Boolean;
+    class procedure RefreshEditView(const AView: IOTAEditView);
   public
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     class function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False): Boolean;
@@ -130,6 +131,20 @@ begin
       Result := ReadEditorText(LSourceEditor.CreateReader, AText);
       Exit;
     end;
+  end;
+end;
+
+class procedure TRadIAOTAHelper.RefreshEditView(const AView: IOTAEditView);
+begin
+  if not Assigned(AView) then
+    Exit;
+
+  try
+    AView.MoveCursorToView;
+    AView.MoveViewToCursor;
+    AView.Paint;
+  except
+    { Editor refresh is best-effort; the text operation has already succeeded. }
   end;
 end;
 
@@ -260,6 +275,7 @@ begin
     LUtf8Text := UTF8String(ANewText);
     LEditWriter.Insert(PAnsiChar(LUtf8Text));
     Result := True;
+    RefreshEditView(LView);
     Exit;
   end;
 
@@ -291,6 +307,9 @@ begin
     LPosition.InsertText(LFormattedText);
     Result := True;
   end;
+
+  if Result then
+    RefreshEditView(LView);
 end;
 
 class function TRadIAOTAHelper.InsertTextAtCursor(const AText: string): Boolean;
@@ -327,6 +346,9 @@ begin
       LPosition.InsertText(LFormattedText);
       Result := True;
     end;
+
+    if Result then
+      RefreshEditView(LView);
   end;
 end;
 
@@ -366,6 +388,9 @@ begin
       LPosition.InsertText(AText);
       Result := True;
     end;
+
+    if Result then
+      RefreshEditView(LView);
   end;
 end;
 
