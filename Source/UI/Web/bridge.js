@@ -160,6 +160,60 @@
       .replace(/\n+$/, '');
   }
 
+  function appendLineBreak(text) {
+    if (!text || text.endsWith('\n')) return text;
+    return text + '\n';
+  }
+
+  function readTextWithLayoutBreaks(node) {
+    if (!node) return '';
+
+    if (node.nodeType === 3) {
+      return node.nodeValue || '';
+    }
+
+    if (node.nodeType !== 1) {
+      return '';
+    }
+
+    const tagName = node.tagName;
+    if (tagName === 'BR') {
+      return '\n';
+    }
+
+    let text = '';
+    node.childNodes.forEach(child => {
+      text += readTextWithLayoutBreaks(child);
+    });
+
+    const className = String(node.className || '');
+    const hasLineRole =
+      node.hasAttribute('data-line') ||
+      /\b(?:line|token-line|cm-line|view-line)\b/i.test(className);
+    const isBlock =
+      ['DIV', 'P', 'LI', 'TR'].includes(tagName) ||
+      hasLineRole ||
+      window.getComputedStyle(node).display === 'block';
+
+    return isBlock ? appendLineBreak(text) : text;
+  }
+
+  function getCodeTextFromElement(codeEl) {
+    if (!codeEl) return '';
+
+    const renderedText = trimOuterBlankLines(codeEl.innerText || '');
+    if (renderedText.includes('\n')) {
+      return renderedText;
+    }
+
+    const structuredText = trimOuterBlankLines(readTextWithLayoutBreaks(codeEl));
+    if (structuredText.includes('\n')) {
+      return structuredText;
+    }
+
+    return trimOuterBlankLines(codeEl.textContent || renderedText);
+  }
+
   function getMarkdownFromElement(el) {
     if (!el) return '';
     try {
@@ -173,7 +227,7 @@
       const preElements = clone.querySelectorAll('pre');
       preElements.forEach(pre => {
         const codeEl = pre.querySelector('code') || pre;
-        let lang = 'pascal';
+        let lang = 'code';
         
         // Tenta extrair a linguagem das classes do code ou do pre
         const classes = (codeEl.getAttribute('class') || '') + ' ' + (pre.getAttribute('class') || '');
@@ -194,8 +248,7 @@
           }
         }
         
-        // Read displayed code text while preserving line breaks and indentation
-        const codeText = trimOuterBlankLines(codeEl.innerText || codeEl.textContent || '');
+        const codeText = getCodeTextFromElement(codeEl);
         
         // Create the classic Markdown representation for the block
         const markdownText = `\n\`\`\`${lang}\n${codeText}\n\`\`\`\n`;
@@ -380,7 +433,7 @@
           e.preventDefault();
           e.stopPropagation();
           
-          const codeText = trimOuterBlankLines(code.innerText || code.textContent || '');
+          const codeText = getCodeTextFromElement(code);
           
           log('Requesting code application in Delphi:', codeText.length, 'bytes');
           sendToDelphi({

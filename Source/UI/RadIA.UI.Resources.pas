@@ -75,16 +75,16 @@ begin
 
   if Result.IsDark then
   begin
-    Result.BgBase := $00252526;
-    Result.TextColor := $00D4D4D4;
-    Result.InputBgColor := $001E1E1E;
-    Result.BorderColor := $003C3C3C;
+    Result.BgBase := $004A4136;
+    Result.TextColor := $00F0F0F0;
+    Result.InputBgColor := $00322F2D;
+    Result.BorderColor := $006A6053;
     Result.AccentColor := $00CC7A00;
-    Result.BgElevated := $002D2D2D;
-    Result.FgSecondary := '#858585';
-    Result.CodeBg := '#1E1E1E';
-    Result.CodeHeader := $002D2D2D;
-    Result.GreenApply := '#28a745';
+    Result.BgElevated := $00322F2D;
+    Result.FgSecondary := '#C7D1D8';
+    Result.CodeBg := '#2D2F32';
+    Result.CodeHeader := $00322F2D;
+    Result.GreenApply := '#3AA655';
   end
   else
   begin

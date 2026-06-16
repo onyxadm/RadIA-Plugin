@@ -10,30 +10,30 @@
 
 :root.dark-theme,
 body.dark-theme {
-  --bg-base:        #181a20;
-  --bg-panel:       #1f212a;
-  --bg-elevated:    #2a2c35;
-  --bg-input:       #1f212a;
-  --fg-primary:     #e2e8f0;
-  --fg-secondary:   #94a3b8;
-  --fg-muted:       #64748b;
-  --border:         #2d3139;
+  --bg-base:        #36414a;
+  --bg-panel:       #36414a;
+  --bg-elevated:    #2d2f32;
+  --bg-input:       #2d2f32;
+  --fg-primary:     #f0f0f0;
+  --fg-secondary:   #c7d1d8;
+  --fg-muted:       #9aa8b2;
+  --border:         #53606a;
   --accent:         #007acc;
-  --accent-hover:   #0098ff;
-  --avatar-user:    #475569;
+  --accent-hover:   #2b9fef;
+  --avatar-user:    #5c6973;
   --avatar-ai:      #007acc;
-  --code-bg:        #0f1115;
-  --code-fg:        #e2e8f0;
-  --code-header:    #121212;
-  --scrollbar:      rgba(255, 255, 255, 0.08);
-  --scrollbar-hover: rgba(255, 255, 255, 0.18);
-  --scrollbar-track: rgba(255, 255, 255, 0.03);
-  --green-apply:    #10b981;
-  --bubble-user-bg: #0f5f8d;
-  --bubble-user-fg: #f8fafc;
-  --bubble-assistant-bg: #232733;
-  --bubble-system-bg: #202838;
-  --bubble-shadow: rgba(0, 0, 0, 0.22);
+  --code-bg:        #2d2f32;
+  --code-fg:        #f0f0f0;
+  --code-header:    #2d2f32;
+  --scrollbar:      rgba(240, 240, 240, 0.2);
+  --scrollbar-hover: rgba(240, 240, 240, 0.34);
+  --scrollbar-track: rgba(240, 240, 240, 0.08);
+  --green-apply:    #3aa655;
+  --bubble-user-bg: #0e639c;
+  --bubble-user-fg: #ffffff;
+  --bubble-assistant-bg: #2d2f32;
+  --bubble-system-bg: #36414a;
+  --bubble-shadow: rgba(0, 0, 0, 0.16);
 }
 
 :root.light-theme,

@@ -87,13 +87,13 @@ renderer.code = function(codeOrToken, lang) {
 
   if (typeof codeOrToken === 'string') {
     code = codeOrToken;
-    language = lang || 'pascal';
+    language = lang || 'code';
   } else if (codeOrToken && typeof codeOrToken === 'object') {
     code = codeOrToken.text || '';
-    language = codeOrToken.lang || lang || 'pascal';
+    language = codeOrToken.lang || lang || 'code';
   } else {
     code = String(codeOrToken || '');
-    language = lang || 'pascal';
+    language = lang || 'code';
   }
 
   const FILEPATH_REGEX = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*([^\r\n]+?)(?:\s*\}|\s*\*\}|\s*-->)?(?:\r?\n|$)/i;
