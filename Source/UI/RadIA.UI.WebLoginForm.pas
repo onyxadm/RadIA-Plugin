@@ -32,14 +32,17 @@ type
   private
     FEdgeBrowser: TEdgeBrowser;
     FNavigationTimer: TTimer;
+    FAutoCloseTimer: TTimer;
     FUrl: string;
     FOnLoginSuccess: TProc;
     procedure CreateEdgeBrowser;
     procedure NavigateToProvider;
     procedure CompleteWithCurrentSession;
+    procedure ScheduleAutoClose;
     procedure ShowBrowserFallback(const ATitle, AInfo: string);
     procedure UpdateTheme;
     procedure NavigationTimerElapsed(Sender: TObject);
+    procedure AutoCloseTimerElapsed(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
     procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
     procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
@@ -140,6 +143,7 @@ begin
       FEdgeBrowser := nil;
   end;
   FreeAndNil(FNavigationTimer);
+  FreeAndNil(FAutoCloseTimer);
 end;
 
 procedure TFormWebLogin.FormShow(Sender: TObject);
@@ -164,6 +168,26 @@ begin
   if Assigned(FOnLoginSuccess) then
     FOnLoginSuccess();
   ModalResult := mrOk;
+end;
+
+procedure TFormWebLogin.ScheduleAutoClose;
+begin
+  if not Assigned(FAutoCloseTimer) then
+  begin
+    FAutoCloseTimer := TTimer.Create(Self);
+    FAutoCloseTimer.Interval := 900;
+    FAutoCloseTimer.OnTimer := AutoCloseTimerElapsed;
+  end;
+
+  FAutoCloseTimer.Enabled := True;
+end;
+
+procedure TFormWebLogin.AutoCloseTimerElapsed(Sender: TObject);
+begin
+  if Assigned(FAutoCloseTimer) then
+    FAutoCloseTimer.Enabled := False;
+
+  CompleteWithCurrentSession;
 end;
 
 procedure TFormWebLogin.CreateEdgeBrowser;
@@ -405,8 +429,9 @@ begin
     
     if SameText(LAction, 'login_complete') then
     begin
-      TLogger.Log('TFormWebLogin: Provider page is ready for session confirmation.', 'UI');
-      lblStatus.Caption := 'Provider page is ready. Sign in or verify the account, then click Continue.';
+      TLogger.Log('TFormWebLogin: Existing signed-in provider session detected.', 'UI');
+      lblStatus.Caption := 'You are already signed in. Returning to Rad IA...';
+      ScheduleAutoClose;
     end;
   finally
     LParsed.Free;

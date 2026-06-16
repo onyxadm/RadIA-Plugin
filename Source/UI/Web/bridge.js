@@ -15,6 +15,15 @@
                document.querySelector('button[data-testid="fruitjuice-send-button"]') ||
                document.querySelector('button[aria-label="Send prompt"]');
       },
+      isSignedIn: () => {
+        return !!CONFIGS.chatgpt.getInput() &&
+          !hasVisibleAuthControl() &&
+          !hasPageText([
+            'you are using our basic model',
+            'voce esta usando o nosso modelo basico',
+            'você está usando o nosso modelo básico'
+          ]);
+      },
       isGenerating: () => {
         return !!(document.querySelector('button[data-testid="stop-button"]') ||
                   document.querySelector('button[aria-label="Stop generating"]') ||
@@ -46,6 +55,9 @@
         return document.querySelector('button.send-button') ||
                document.querySelector('button[aria-label="Send"]') ||
                document.querySelector('.send-button-container button');
+      },
+      isSignedIn: () => {
+        return !!CONFIGS.gemini.getInput() && !hasVisibleAuthControl();
       },
       isGenerating: () => {
         // Check whether loading animation or the stop button is visible
@@ -79,6 +91,48 @@
   }
 
   log('Ponte inicializada para:', host);
+
+  function normalizeText(text) {
+    return String(text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function isVisibleElement(el) {
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    return rect.width > 0 &&
+      rect.height > 0 &&
+      style.visibility !== 'hidden' &&
+      style.display !== 'none';
+  }
+
+  function hasVisibleAuthControl() {
+    const authTerms = [
+      'entrar',
+      'login',
+      'log in',
+      'sign in',
+      'cadastre',
+      'sign up',
+      'registre',
+      'register'
+    ];
+    const controls = document.querySelectorAll('button, a');
+    return Array.from(controls).some(el => {
+      const text = normalizeText(el.innerText || el.textContent || el.getAttribute('aria-label'));
+      return isVisibleElement(el) && authTerms.some(term => text.includes(term));
+    });
+  }
+
+  function hasPageText(terms) {
+    const text = normalizeText(document.body ? document.body.innerText : '');
+    return terms.some(term => text.includes(normalizeText(term)));
+  }
 
   // Injeta CSS customizado para limpar a tela
   function injectCSS() {
@@ -491,9 +545,8 @@
   function checkLoginComplete() {
     if (loginSignaled) return true;
     try {
-      const inputEl = currentSite.getInput();
-      if (inputEl) {
-        log('Login completed. Notifying Delphi.');
+      if (currentSite.isSignedIn && currentSite.isSignedIn()) {
+        log('Signed-in session detected. Notifying Delphi.');
         sendToDelphi({ action: 'login_complete' });
         loginSignaled = true;
         return true;
