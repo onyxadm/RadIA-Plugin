@@ -16,7 +16,8 @@ type
     class procedure RefreshEditView(const AView: IOTAEditView);
   public
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
-    class function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False): Boolean;
+    class function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False;
+      const AOriginalText: string = ''): Boolean;
     class function InsertTextAtCursor(const AText: string): Boolean;
     class function InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
     class function GetCurrentCursorLine: Integer;
@@ -236,11 +237,11 @@ begin
   end;
 end;
 
-class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean): Boolean;
+class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean;
+  const AOriginalText: string): Boolean;
 var
   LEditBuffer: IOTAEditBuffer;
   LEditBlock: IOTAEditBlock;
-  LEditReader: IOTAEditReader;
   LEditWriter: IOTAEditWriter;
   LView: IOTAEditView;
   LPosition: IOTAEditPosition;
@@ -248,6 +249,10 @@ var
   LSaveAutoIndent: Boolean;
   LFormattedText: string;
   LBufferSize: Integer;
+  LBufferText: string;
+  LMatchPos: Integer;
+  LStartOffset: Integer;
+  LEndOffset: Integer;
   LUtf8Text: UTF8String;
 begin
   Result := False;
@@ -258,11 +263,11 @@ begin
 
   if AReplaceWholeBuffer then
   begin
-    LEditReader := LEditBuffer.CreateReader;
-    LBufferSize := 0;
-    if Assigned(LEditReader) then
-      LBufferSize := LEditReader.GetText(0, nil, 0);
-    LEditReader := nil;
+    LBufferText := '';
+    if ReadBufferText(LEditBuffer, LBufferText) then
+      LBufferSize := Length(UTF8String(LBufferText))
+    else
+      LBufferSize := 0;
 
     LEditWriter := LEditBuffer.CreateUndoableWriter;
     if not Assigned(LEditWriter) then
@@ -285,6 +290,33 @@ begin
     LPosition := LView.Position;
     LPosition.Move(LEditBlock.StartingRow, LEditBlock.StartingColumn);
     LEditBlock.Delete;
+  end;
+
+  if ((not Assigned(LEditBlock)) or (LEditBlock.Size <= 0)) and (not AOriginalText.Trim.IsEmpty) then
+  begin
+    LBufferText := '';
+    if not ReadBufferText(LEditBuffer, LBufferText) then
+      Exit;
+
+    LMatchPos := Pos(AOriginalText, LBufferText);
+    if LMatchPos <= 0 then
+      Exit;
+
+    LEditWriter := LEditBuffer.CreateUndoableWriter;
+    if not Assigned(LEditWriter) then
+      Exit;
+
+    LStartOffset := Length(UTF8String(Copy(LBufferText, 1, LMatchPos - 1)));
+    LEndOffset := LStartOffset + Length(UTF8String(AOriginalText));
+
+    LEditWriter.CopyTo(LStartOffset);
+    LEditWriter.DeleteTo(LEndOffset);
+
+    LUtf8Text := UTF8String(ANewText);
+    LEditWriter.Insert(PAnsiChar(LUtf8Text));
+    Result := True;
+    RefreshEditView(LView);
+    Exit;
   end;
 
   LPosition := LView.Position;

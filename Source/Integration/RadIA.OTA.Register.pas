@@ -41,7 +41,7 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
+  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
   RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options;
 
@@ -356,7 +356,8 @@ begin
     LForm.InitializeDiff(ExtractFileName(LActiveFile), AOriginalCode);
     if LForm.ShowModal = mrOk then
     begin
-      TRadIAOTAHelper.ReplaceActiveEditorText(LForm.SuggestedCode, AReplaceWholeBuffer);
+      if not TRadIAOTAHelper.ReplaceActiveEditorText(LForm.SuggestedCode, AReplaceWholeBuffer, AOriginalCode) then
+        ShowMessage('Could not apply the diff because the original code block was not found in the active editor.');
     end;
   finally
     LForm.Free;
