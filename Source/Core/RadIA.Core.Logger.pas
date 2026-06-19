@@ -3,22 +3,34 @@
 interface
 
 uses
-  System.SysUtils, System.Classes;
+  System.SysUtils, System.Classes, RadIA.Core.Interfaces;
 
 type
+  TConcreteLogger = class(TInterfacedObject, IRadIALogger)
+  private
+    FLogEnabled: Boolean;
+    FLogPath: string;
+    FLogMaxSizeKB: Integer;
+    FLock: TObject;
+
+    function GetDefaultLogPath: string;
+    procedure RotateLogFile(const AActiveFile: string; const ADateStr: string);
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    procedure Configure(const AEnabled: Boolean; const APath: string; const AMaxSizeKB: Integer);
+    procedure Log(const AMsg: string; const ATag: string = 'Debug');
+  end;
+
   TLogger = class
   private
-    class var FLogEnabled: Boolean;
-    class var FLogPath: string;
-    class var FLogMaxSizeKB: Integer;
-    class var FLock: TObject;
-
-    class function GetDefaultLogPath: string;
-    class procedure RotateLogFile(const AActiveFile: string; const ADateStr: string);
+    class var FActiveLogger: IRadIALogger;
   public
     class constructor Create;
     class destructor Destroy;
 
+    class procedure SetActiveLogger(const ALogger: IRadIALogger);
     class procedure Configure(const AEnabled: Boolean; const APath: string; const AMaxSizeKB: Integer);
     class procedure Log(const AMsg: string; const ATag: string = 'Debug');
   end;
@@ -28,15 +40,16 @@ implementation
 uses
   System.IOUtils, System.Win.Registry, Winapi.Windows;
 
-{ TLogger }
+{ TConcreteLogger }
 
-class constructor TLogger.Create;
+constructor TConcreteLogger.Create;
 var
   LReg: TRegistry;
   LPath: string;
   LBdsVersion: Double;
   LSettings: TFormatSettings;
 begin
+  inherited Create;
   FLock := TObject.Create;
   
   // Default values
@@ -75,17 +88,18 @@ begin
   end;
 end;
 
-class destructor TLogger.Destroy;
+destructor TConcreteLogger.Destroy;
 begin
   FLock.Free;
+  inherited Destroy;
 end;
 
-class function TLogger.GetDefaultLogPath: string;
+function TConcreteLogger.GetDefaultLogPath: string;
 begin
   Result := TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'Logs');
 end;
 
-class procedure TLogger.Configure(const AEnabled: Boolean; const APath: string; const AMaxSizeKB: Integer);
+procedure TConcreteLogger.Configure(const AEnabled: Boolean; const APath: string; const AMaxSizeKB: Integer);
 begin
   TMonitor.Enter(FLock);
   try
@@ -103,7 +117,7 @@ begin
   end;
 end;
 
-class procedure TLogger.RotateLogFile(const AActiveFile: string; const ADateStr: string);
+procedure TConcreteLogger.RotateLogFile(const AActiveFile: string; const ADateStr: string);
 var
   LIndex: Integer;
   LRotatedFile: string;
@@ -123,7 +137,7 @@ begin
   end;
 end;
 
-class procedure TLogger.Log(const AMsg: string; const ATag: string);
+procedure TConcreteLogger.Log(const AMsg: string; const ATag: string);
 var
   LDir: string;
   LActiveFile: string;
@@ -209,6 +223,35 @@ begin
   finally
     TMonitor.Exit(FLock);
   end;
+end;
+
+{ TLogger }
+
+class constructor TLogger.Create;
+begin
+  FActiveLogger := TConcreteLogger.Create;
+end;
+
+class destructor TLogger.Destroy;
+begin
+  FActiveLogger := nil;
+end;
+
+class procedure TLogger.SetActiveLogger(const ALogger: IRadIALogger);
+begin
+  FActiveLogger := ALogger;
+end;
+
+class procedure TLogger.Configure(const AEnabled: Boolean; const APath: string; const AMaxSizeKB: Integer);
+begin
+  if Assigned(FActiveLogger) then
+    FActiveLogger.Configure(AEnabled, APath, AMaxSizeKB);
+end;
+
+class procedure TLogger.Log(const AMsg: string; const ATag: string);
+begin
+  if Assigned(FActiveLogger) then
+    FActiveLogger.Log(AMsg, ATag);
 end;
 
 end.

@@ -1,4 +1,4 @@
-unit RadIA.Core.Interfaces;
+﻿unit RadIA.Core.Interfaces;
 
 interface
 
@@ -20,6 +20,12 @@ type
   public
     constructor Create;
     procedure Invalidate;
+  end;
+
+  IRadIALogger = interface
+    ['{E8FD28D3-874C-40BD-BBDF-3FE573F4F138}']
+    procedure Log(const AMsg: string; const ATag: string = 'Debug');
+    procedure Configure(const AEnabled: Boolean; const APath: string; const AMaxSizeKB: Integer);
   end;
 
   { Callback type for asynchronous AI responses.
