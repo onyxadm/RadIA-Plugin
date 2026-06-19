@@ -1,4 +1,4 @@
-unit RadIA.Tests.Service;
+﻿unit RadIA.Tests.Service;
 
 interface
 
@@ -11,7 +11,8 @@ uses
   RadIA.Core.Config,
   RadIA.Core.TokenUsage,
   RadIA.Core.ProviderRegistry,
-  RadIA.Core.SettingsStorage;
+  RadIA.Core.SettingsStorage,
+  RadIA.Core.Container;
 
 type
   { Mock minimal config for trimming tests — avoids registry I/O }
@@ -139,6 +140,8 @@ type
     procedure TestSmartConfigResolution;
     [Test]
     procedure TestDelphiVersionInjection;
+    [Test]
+    procedure TestDelphiVersionInjectionWithMockAdapter;
   end;
 
   [TestFixture]
@@ -766,6 +769,117 @@ begin
     Assert.AreEqual('Base Prompt', LPrompt.Trim, 'Prompt should equal the base system prompt when disabled');
   finally
     LService.Free;
+  end;
+end;
+
+type
+  TMockIDEAdapter = class(TInterfacedObject, IIDEAdapter)
+  public
+    function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
+    function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False;
+      const AOriginalText: string = ''): Boolean;
+    function InsertTextAtCursor(const AText: string): Boolean;
+    function InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
+    function GetCurrentCursorLine: Integer;
+    function GetActiveUnitName: string;
+    function GetActiveProjectName: string;
+    function GetActiveProjectFolder: string;
+    function OpenProjectInIDE(const AProjectPath: string): Boolean;
+    function GetDelphiVersionName: string;
+    function GetPreferredLanguageInstruction: string;
+    function GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
+  end;
+
+{ TMockIDEAdapter }
+
+function TMockIDEAdapter.GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean): Boolean;
+begin
+  AText := 'Mock Code';
+  Result := True;
+end;
+
+function TMockIDEAdapter.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean;
+  const AOriginalText: string): Boolean;
+begin
+  Result := True;
+end;
+
+function TMockIDEAdapter.InsertTextAtCursor(const AText: string): Boolean;
+begin
+  Result := True;
+end;
+
+function TMockIDEAdapter.InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
+begin
+  Result := True;
+end;
+
+function TMockIDEAdapter.GetCurrentCursorLine: Integer;
+begin
+  Result := 10;
+end;
+
+function TMockIDEAdapter.GetActiveUnitName: string;
+begin
+  Result := 'MockUnit';
+end;
+
+function TMockIDEAdapter.GetActiveProjectName: string;
+begin
+  Result := 'MockProject';
+end;
+
+function TMockIDEAdapter.GetActiveProjectFolder: string;
+begin
+  Result := 'C:\MockProject';
+end;
+
+function TMockIDEAdapter.OpenProjectInIDE(const AProjectPath: string): Boolean;
+begin
+  Result := True;
+end;
+
+// Delphi Version e Language mockados para validar injeção no prompt
+function TMockIDEAdapter.GetDelphiVersionName: string;
+begin
+  Result := 'Delphi 99 Special';
+end;
+
+function TMockIDEAdapter.GetPreferredLanguageInstruction: string;
+begin
+  Result := 'Please reply in Klingon.';
+end;
+
+function TMockIDEAdapter.GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
+begin
+  AErrorMsg := 'Mock Error';
+  AFileName := 'MockUnit.pas';
+  ALine := 5;
+  Result := True;
+end;
+
+procedure TTestRadIAService.TestDelphiVersionInjectionWithMockAdapter;
+var
+  LConfig: IAIConfig;
+  LService: TRadIAService;
+  LPrompt: string;
+begin
+  TRadIAContainer.Clear;
+  TRadIAContainer.Register<IIDEAdapter>(TMockIDEAdapter.Create);
+  try
+    LConfig := TMockConfig.Create(5, 'Base Prompt');
+    LService := TRadIAService.Create(LConfig);
+    try
+      LConfig.ConciseResponses := False;
+      LConfig.InjectDelphiVersion := True;
+      LPrompt := LService.GetEffectiveSystemPrompt;
+      Assert.IsTrue(LPrompt.Contains('Delphi 99 Special'), 'Prompt should contain mock Delphi version info');
+      Assert.IsTrue(LPrompt.Contains('Please reply in Klingon.'), 'Prompt should contain mock language instruction');
+    finally
+      LService.Free;
+    end;
+  finally
+    TRadIAContainer.Clear;
   end;
 end;
 
