@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ChatPresenter;
+unit RadIA.UI.ChatPresenter;
 
 interface
 
@@ -62,6 +62,7 @@ type
     FLoginPopupOpen: Boolean;
     FOwnsService: Boolean;
     FModelsProvider: IIAProvider;
+    FDataDir: string;
 
     procedure HandleBackgroundLoginComplete;
     procedure UpdateModelsCombo;
@@ -108,7 +109,7 @@ type
     procedure HandleClearChatMessage;
     procedure HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
   public
-    constructor Create(const AView: IChatView; const AConfig: IAIConfig = nil; const AService: IRadIAService = nil);
+    constructor Create(const AView: IChatView; const AConfig: IAIConfig = nil; const AService: IRadIAService = nil; const ADataDir: string = '');
     destructor Destroy; override;
 
     procedure Initialize(const AWebFilesDir: string);
@@ -180,7 +181,7 @@ end;
 
 { TChatPresenter }
 
-constructor TChatPresenter.Create(const AView: IChatView; const AConfig: IAIConfig; const AService: IRadIAService);
+constructor TChatPresenter.Create(const AView: IChatView; const AConfig: IAIConfig; const AService: IRadIAService; const ADataDir: string);
 begin
   inherited Create;
   FView := AView;
@@ -219,12 +220,18 @@ begin
     FOwnsService := True;
   end;
 
+  if ADataDir.IsEmpty then
+    FDataDir := TPath.Combine(TPath.GetHomePath, 'RadIA')
+  else
+    FDataDir := ADataDir;
+
   FPromptHistoryManager := TPromptHistoryManager.Create;
   FAccumulatedUsage := TTokenUsage.Empty;
-  FTemplateManager := TPromptTemplateManager.Create;
+  
+  FTemplateManager := TPromptTemplateManager.Create(FDataDir);
   FTemplateManager.Load;
   
-  FSessionManager := TRadIASessionManager.Create;
+  FSessionManager := TRadIASessionManager.Create(TPath.Combine(FDataDir, 'sessions'));
   FSessionManager.ActiveSessionId := FConfig.ActiveSessionId;
 end;
 
@@ -1773,7 +1780,7 @@ procedure TChatPresenter.LoadPromptHistory;
 var
   LHistoryFile: string;
 begin
-  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\prompt_history.json');
+  LHistoryFile := TPath.Combine(FDataDir, 'prompt_history.json');
   FPromptHistoryManager.LoadFromFile(LHistoryFile);
 end;
 
@@ -1781,7 +1788,7 @@ procedure TChatPresenter.SavePromptHistory;
 var
   LHistoryFile: string;
 begin
-  LHistoryFile := TPath.Combine(TPath.GetHomePath, 'RadIA\prompt_history.json');
+  LHistoryFile := TPath.Combine(FDataDir, 'prompt_history.json');
   FPromptHistoryManager.SaveToFile(LHistoryFile);
 end;
 

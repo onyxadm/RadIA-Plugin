@@ -10,6 +10,7 @@ type
   TTestRadIATemplates = class
   private
     FManager: TPromptTemplateManager;
+    FTempDir: string;
   public
     [Setup]
     procedure Setup;
@@ -45,13 +46,22 @@ uses
 
 procedure TTestRadIATemplates.Setup;
 begin
-  FManager := TPromptTemplateManager.Create;
+  FTempDir := TPath.Combine(TPath.GetTempPath, 'RadIATests_Templates_' + TGUID.NewGuid.ToString);
+  ForceDirectories(FTempDir);
+  FManager := TPromptTemplateManager.Create(FTempDir);
   FManager.Load;
 end;
 
 procedure TTestRadIATemplates.TearDown;
 begin
   FManager.Free;
+  if TDirectory.Exists(FTempDir) then
+  begin
+    try
+      TDirectory.Delete(FTempDir, True);
+    except
+    end;
+  end;
 end;
 
 procedure TTestRadIATemplates.TestDefaultTemplates_ArePresent;
@@ -103,7 +113,7 @@ begin
   FManager.AddTemplate(TEMP_NAME, TEMP_DESC, TEMP_CONTENT);
   FManager.Save;
 
-  LNewManager := TPromptTemplateManager.Create;
+  LNewManager := TPromptTemplateManager.Create(FTempDir);
   try
     LNewManager.Load;
     Assert.IsTrue(LNewManager.FindTemplate(TEMP_NAME, LTemplate), 'Template should be loaded from file');
@@ -113,7 +123,7 @@ begin
   end;
 
   { Clean up custom template }
-  LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  LTempFile := TPath.Combine(FTempDir, 'templates.json');
   if TFile.Exists(LTempFile) then
   begin
     try
@@ -167,7 +177,7 @@ begin
   Assert.IsTrue(LTemplate.IsCustomized, 'Should be marked as customized');
   Assert.AreEqual(CUSTOM_PROMPT, LTemplate.Template);
   
-  LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  LTempFile := TPath.Combine(FTempDir, 'templates.json');
   if TFile.Exists(LTempFile) then
     TFile.Delete(LTempFile);
 end;
@@ -193,7 +203,7 @@ begin
   Assert.IsFalse(LTemplate.IsCustomized);
   Assert.AreEqual(LOriginalTemplate, LTemplate.Template);
   
-  LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  LTempFile := TPath.Combine(FTempDir, 'templates.json');
   if TFile.Exists(LTempFile) then
     TFile.Delete(LTempFile);
 end;
@@ -211,7 +221,7 @@ const
     'readability, and optimization principles:\r\n\r\n{code}",' +
     '"isProjectGenerator":false,"slashCommand":"/explain"}]';
 begin
-  LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  LTempFile := TPath.Combine(FTempDir, 'templates.json');
   ForceDirectories(TPath.GetDirectoryName(LTempFile));
   TFile.WriteAllText(LTempFile, LEGACY_JSON, TEncoding.UTF8);
   
@@ -237,7 +247,7 @@ var
 const
   LEGACY_JSON_NO_USES = '[{"name":"Create Project Delphi","description":"Legacy description","template":"Create project Delphi legacy layout.","isProjectGenerator":true,"slashCommand":"/createproject"}]';
 begin
-  LTempFile := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  LTempFile := TPath.Combine(FTempDir, 'templates.json');
   ForceDirectories(TPath.GetDirectoryName(LTempFile));
   TFile.WriteAllText(LTempFile, LEGACY_JSON_NO_USES, TEncoding.UTF8);
   

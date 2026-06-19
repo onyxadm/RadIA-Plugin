@@ -102,6 +102,7 @@ type
     FOpenAIOriginalMeta: TProviderMetadata;
     FHasOriginalGemini: Boolean;
     FHasOriginalOpenAI: Boolean;
+    FTempDir: string;
 
     procedure DrainQueuedCalls;
   public
@@ -147,7 +148,7 @@ type
 implementation
 
 uses
-  RadIA.Core.Config, RadIA.Core.SettingsStorage;
+  RadIA.Core.Config, RadIA.Core.SettingsStorage, System.IOUtils;
 
 { TMockChatView }
 
@@ -355,6 +356,9 @@ procedure TTestChatPresenter.Setup;
 var
   LMemoryStorage: ISettingsStorage;
 begin
+  FTempDir := TPath.Combine(TPath.GetTempPath, 'RadIATests_Presenter_' + TGUID.NewGuid.ToString);
+  ForceDirectories(FTempDir);
+
   LMemoryStorage := TMemorySettingsStorage.Create;
   TRadIAConfig.SetStorage(LMemoryStorage);
   FConfig := TRadIAConfig.GetInstance;
@@ -384,7 +388,7 @@ begin
   );
 
   FMockView := TMockChatView.Create;
-  FPresenter := TChatPresenter.Create(FMockView, FConfig);
+  FPresenter := TChatPresenter.Create(FMockView, FConfig, nil, FTempDir);
 end;
 
 procedure TTestChatPresenter.TearDown;
@@ -397,6 +401,14 @@ begin
     TProviderRegistry.RegisterProvider(FGeminiOriginalMeta);
   if FHasOriginalOpenAI then
     TProviderRegistry.RegisterProvider(FOpenAIOriginalMeta);
+
+  if TDirectory.Exists(FTempDir) then
+  begin
+    try
+      TDirectory.Delete(FTempDir, True);
+    except
+    end;
+  end;
 end;
 
 procedure TTestChatPresenter.TestInitialization;

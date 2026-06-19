@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.ProjectGenerator;
+unit RadIA.Core.ProjectGenerator;
 
 interface
 
@@ -12,7 +12,7 @@ type
     { Generates a project structure from a JSON array of files.
       Opens a directory selection dialog, validates that it is empty,
       saves all files using UTF-8, and opens the main project file in the IDE. }
-    class function GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string): Boolean; static;
+    class function GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string; const ADestDir: string = ''): Boolean; static;
   end;
 
 implementation
@@ -23,7 +23,7 @@ uses
 
 { TRadIAProjectGenerator }
 
-class function TRadIAProjectGenerator.GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string): Boolean;
+class function TRadIAProjectGenerator.GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string; const ADestDir: string): Boolean;
 var
   LChosenDir: string;
   LJsonValue: TJSONValue;
@@ -73,17 +73,20 @@ begin
     end;
 
     { 1. Ask user for destination folder using modern FileOpenDialog }
-    LChosenDir := '';
-    LOpenDlg := TFileOpenDialog.Create(nil);
-    try
-      LOpenDlg.Title := 'Select a completely empty folder for the project';
-      LOpenDlg.Options := [fdoPickFolders, fdoPathMustExist, fdoForceFileSystem];
-      if LOpenDlg.Execute then
-      begin
-        LChosenDir := LOpenDlg.FileName;
+    LChosenDir := ADestDir;
+    if LChosenDir.IsEmpty then
+    begin
+      LOpenDlg := TFileOpenDialog.Create(nil);
+      try
+        LOpenDlg.Title := 'Select a completely empty folder for the project';
+        LOpenDlg.Options := [fdoPickFolders, fdoPathMustExist, fdoForceFileSystem];
+        if LOpenDlg.Execute then
+        begin
+          LChosenDir := LOpenDlg.FileName;
+        end;
+      finally
+        LOpenDlg.Free;
       end;
-    finally
-      LOpenDlg.Free;
     end;
 
     if LChosenDir.IsEmpty then

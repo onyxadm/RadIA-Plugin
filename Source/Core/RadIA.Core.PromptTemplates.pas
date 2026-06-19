@@ -29,7 +29,7 @@ type
     procedure BuildActiveTemplates;
     procedure CleanRedundantUserTemplates;
   public
-    constructor Create;
+    constructor Create(const ABaseDir: string = '');
     destructor Destroy; override;
     
     procedure Load;
@@ -55,13 +55,16 @@ uses
 
 { TPromptTemplateManager }
 
-constructor TPromptTemplateManager.Create;
+constructor TPromptTemplateManager.Create(const ABaseDir: string);
 begin
   inherited Create;
   FTemplates := TList<TPromptTemplate>.Create;
   FDefaultTemplates := TList<TPromptTemplate>.Create;
   FUserTemplates := TList<TPromptTemplate>.Create;
-  FFilePath := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json');
+  if ABaseDir.IsEmpty then
+    FFilePath := TPath.Combine(TPath.GetHomePath, 'RadIA\templates.json')
+  else
+    FFilePath := TPath.Combine(ABaseDir, 'templates.json');
 end;
 
 destructor TPromptTemplateManager.Destroy;
