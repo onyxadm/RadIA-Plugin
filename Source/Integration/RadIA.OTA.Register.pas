@@ -333,12 +333,15 @@ procedure TRadIAWizard.OnRequestDiff(const AOriginalCode: string; const AReplace
 var
   LForm: TFormAIDiff;
   LActiveFile: string;
-  LEditBuffer: IOTAEditBuffer;
   LConfig: IAIConfig;
   LActiveProvider: string;
+  LAdapter: IIDEAdapter;
 begin
-  LConfig := TRadIAConfig.GetInstance;
-  LConfig.Load;
+  if not TRadIAContainer.TryResolve<IAIConfig>(LConfig) then
+  begin
+    LConfig := TRadIAConfig.GetInstance;
+    LConfig.Load;
+  end;
   LActiveProvider := LConfig.GetActiveProvider;
   if SameText(LConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
   begin
@@ -348,16 +351,26 @@ begin
 
   LForm := TFormAIDiff.Create(nil);
   try
-    LEditBuffer := TRadIAOTAHelper.GetCurrentEditBuffer;
-    if Assigned(LEditBuffer) then
-      LActiveFile := LEditBuffer.FileName
-    else
-      LActiveFile := 'ActiveUnit.pas';
+    LActiveFile := 'ActiveUnit.pas';
+    if TRadIAContainer.TryResolve<IIDEAdapter>(LAdapter) then
+    begin
+      LActiveFile := LAdapter.GetActiveUnitName;
+      if LActiveFile.IsEmpty then
+        LActiveFile := 'ActiveUnit.pas'
+      else
+        LActiveFile := LActiveFile + '.pas';
+    end;
       
-    LForm.InitializeDiff(ExtractFileName(LActiveFile), AOriginalCode);
+    LForm.InitializeDiff(LActiveFile, AOriginalCode);
     if LForm.ShowModal = mrOk then
     begin
-      if not TRadIAOTAHelper.ReplaceActiveEditorText(LForm.SuggestedCode, AReplaceWholeBuffer, AOriginalCode) then
+      var LSuccess: Boolean;
+      if Assigned(LAdapter) then
+        LSuccess := LAdapter.ReplaceActiveEditorText(LForm.SuggestedCode, AReplaceWholeBuffer, AOriginalCode)
+      else
+        LSuccess := TRadIAOTAHelper.ReplaceActiveEditorText(LForm.SuggestedCode, AReplaceWholeBuffer, AOriginalCode);
+
+      if not LSuccess then
         ShowMessage('Could not apply the diff because the original code block was not found in the active editor.');
     end;
   finally

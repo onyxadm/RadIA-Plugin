@@ -161,7 +161,7 @@ implementation
 uses
   System.IOUtils, System.JSON.Builders, RadIA.Core.Config, RadIA.Core.Logger,
   RadIA.Core.ProviderRegistry, RadIA.Core.ConversationExporter,
-  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge, RadIA.OTA.Helper,
+  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge,
   System.SyncObjs, RadIA.Core.Container;
 
 { Helper Functions }
@@ -1445,7 +1445,12 @@ begin
     var LFinalPrompt := APrompt;
     if not LFinalPrompt.Trim.IsEmpty then
     begin
-      LFinalPrompt := LFinalPrompt + sLineBreak + sLineBreak + TRadIAOTAHelper.GetPreferredLanguageInstruction;
+      var LAdapter: IIDEAdapter;
+      var LInstruction: string := '';
+      if TRadIAContainer.TryResolve<IIDEAdapter>(LAdapter) then
+        LInstruction := LAdapter.GetPreferredLanguageInstruction;
+      if not LInstruction.IsEmpty then
+        LFinalPrompt := LFinalPrompt + sLineBreak + sLineBreak + LInstruction;
     end;
     
     LJson.AddPair('text', LFinalPrompt);

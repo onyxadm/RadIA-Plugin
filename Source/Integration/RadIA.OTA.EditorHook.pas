@@ -16,6 +16,7 @@ type
     FEditorNotifiers: TInterfaceList;
     FCreateExampleInProgress: Boolean;
     FCreateExampleService: IRadIAService;
+    FIDEAdapter: IIDEAdapter;
     {$IFNDEF TESTS}
     FTimer: TTimer;
     FHookPending: Boolean;
@@ -230,6 +231,7 @@ end;
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  TRadIAContainer.TryResolve<IIDEAdapter>(FIDEAdapter);
   FOldActiveFormChange := nil;
   FIDENotifierIndex := -1;
   FEditorNotifiers := TInterfaceList.Create;
@@ -819,18 +821,30 @@ begin
 end;
 
 function TRadIAEditorHook.GetEditorCodeContext(out ACode: string; out AUsedSelection: Boolean): Boolean;
+var
+  LHasText: Boolean;
 begin
   Result := False;
   ACode := '';
   AUsedSelection := False;
 
-  if TRadIAOTAHelper.GetActiveEditorText(ACode, True) and (not ACode.Trim.IsEmpty) then
+  if Assigned(FIDEAdapter) then
+    LHasText := FIDEAdapter.GetActiveEditorText(ACode, True)
+  else
+    LHasText := TRadIAOTAHelper.GetActiveEditorText(ACode, True);
+
+  if LHasText and (not ACode.Trim.IsEmpty) then
   begin
     AUsedSelection := True;
     Exit(True);
   end;
 
-  if TRadIAOTAHelper.GetActiveEditorText(ACode, False) and (not ACode.Trim.IsEmpty) then
+  if Assigned(FIDEAdapter) then
+    LHasText := FIDEAdapter.GetActiveEditorText(ACode, False)
+  else
+    LHasText := TRadIAOTAHelper.GetActiveEditorText(ACode, False);
+
+  if LHasText and (not ACode.Trim.IsEmpty) then
     Exit(True);
 end;
 
@@ -1068,14 +1082,29 @@ begin
     Exit;
   end;
 
-  if not TRadIAOTAHelper.GetActiveEditorText(LSourceCode, False) then
+  if Assigned(FIDEAdapter) then
   begin
-    TLogger.Log('OnCreateExampleExecute failed: no active code', 'EditorHook');
-    ShowMessage('No active code file open in the editor.');
-    Exit;
+    if not FIDEAdapter.GetActiveEditorText(LSourceCode, False) then
+    begin
+      TLogger.Log('OnCreateExampleExecute failed: no active code', 'EditorHook');
+      ShowMessage('No active code file open in the editor.');
+      Exit;
+    end;
+  end
+  else
+  begin
+    if not TRadIAOTAHelper.GetActiveEditorText(LSourceCode, False) then
+    begin
+      TLogger.Log('OnCreateExampleExecute failed: no active code', 'EditorHook');
+      ShowMessage('No active code file open in the editor.');
+      Exit;
+    end;
   end;
 
-  LCursorLine := TRadIAOTAHelper.GetCurrentCursorLine;
+  if Assigned(FIDEAdapter) then
+    LCursorLine := FIDEAdapter.GetCurrentCursorLine
+  else
+    LCursorLine := TRadIAOTAHelper.GetCurrentCursorLine;
   if not TRadIAContextParser.TryGetMethodExampleContext(LSourceCode, LCursorLine, LContext, LErrorMessage) then
   begin
     TLogger.Log('OnCreateExampleExecute failed: ' + LErrorMessage, 'EditorHook');
@@ -1124,12 +1153,23 @@ begin
             Exit;
           end;
 
-          if not TRadIAOTAHelper.InsertTextAtLineColumn(LCode + sLineBreak, LContext.InsertionLine,
-            LContext.InsertionColumn) then
+          if Assigned(FIDEAdapter) then
           begin
-            TLogger.Log('OnCreateExampleExecute failed: insert operation returned false', 'EditorHook');
-            ShowMessage('Could not insert the generated example into the active editor.');
-            Exit;
+            if not FIDEAdapter.InsertTextAtLineColumn(LCode + sLineBreak, LContext.InsertionLine, LContext.InsertionColumn) then
+            begin
+              TLogger.Log('OnCreateExampleExecute failed: insert operation returned false', 'EditorHook');
+              ShowMessage('Could not insert the generated example into the active editor.');
+              Exit;
+            end;
+          end
+          else
+          begin
+            if not TRadIAOTAHelper.InsertTextAtLineColumn(LCode + sLineBreak, LContext.InsertionLine, LContext.InsertionColumn) then
+            begin
+              TLogger.Log('OnCreateExampleExecute failed: insert operation returned false', 'EditorHook');
+              ShowMessage('Could not insert the generated example into the active editor.');
+              Exit;
+            end;
           end;
         finally
           FinishCreateExampleRequest;
@@ -1179,11 +1219,23 @@ var
   LActiveCode: string;
   LPrompt: string;
 begin
-  if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False) then
+  if Assigned(FIDEAdapter) then
   begin
-    TLogger.Log('OnReviewExecute failed: no active code', 'EditorHook');
-    ShowMessage('No active code file open in the editor.');
-    Exit;
+    if not FIDEAdapter.GetActiveEditorText(LActiveCode, False) then
+    begin
+      TLogger.Log('OnReviewExecute failed: no active code', 'EditorHook');
+      ShowMessage('No active code file open in the editor.');
+      Exit;
+    end;
+  end
+  else
+  begin
+    if not TRadIAOTAHelper.GetActiveEditorText(LActiveCode, False) then
+    begin
+      TLogger.Log('OnReviewExecute failed: no active code', 'EditorHook');
+      ShowMessage('No active code file open in the editor.');
+      Exit;
+    end;
   end;
 
   TLogger.Log(Format('OnReviewExecute: CodeLength=%d', [Length(LActiveCode)]), 'EditorHook');
@@ -1198,22 +1250,43 @@ var
   LErrorMsg, LFileName, LSourceCode, LPrompt: string;
   LLine: Integer;
 begin
-  if not TRadIAMessageViewHook.GetLastCompilerError(LErrorMsg, LFileName, LLine) then
+  if Assigned(FIDEAdapter) then
   begin
-    TLogger.Log('OnFixErrorExecute failed: no compiler error found in Messages View', 'EditorHook');
-    ShowMessage('No compiler errors found in the Messages View.');
-    Exit;
+    if not FIDEAdapter.GetLastCompilerError(LErrorMsg, LFileName, LLine) then
+    begin
+      TLogger.Log('OnFixErrorExecute failed: no compiler error found in Messages View', 'EditorHook');
+      ShowMessage('No compiler errors found in the Messages View.');
+      Exit;
+    end;
+  end
+  else
+  begin
+    if not TRadIAMessageViewHook.GetLastCompilerError(LErrorMsg, LFileName, LLine) then
+    begin
+      TLogger.Log('OnFixErrorExecute failed: no compiler error found in Messages View', 'EditorHook');
+      ShowMessage('No compiler errors found in the Messages View.');
+      Exit;
+    end;
   end;
   
   TLogger.Log(Format('OnFixErrorExecute: Compiler Error found. File=%s, Line=%d, Msg=%s', [LFileName, LLine, LErrorMsg]), 'EditorHook');
   
   { Extract source code context if line is valid }
   LSourceCode := '';
-  if (LLine > 0) and TRadIAOTAHelper.GetActiveEditorText(LSourceCode, False) then
+  if LLine > 0 then
   begin
-    LSourceCode := 'Source Code Context around the error line:'#13#10'```pascal'#13#10 + 
-                   TRadIAContextParser.GetClassContextAtLine(LSourceCode, LLine) + 
-                   #13#10'```';
+    var LHasText: Boolean;
+    if Assigned(FIDEAdapter) then
+      LHasText := FIDEAdapter.GetActiveEditorText(LSourceCode, False)
+    else
+      LHasText := TRadIAOTAHelper.GetActiveEditorText(LSourceCode, False);
+
+    if LHasText then
+    begin
+      LSourceCode := 'Source Code Context around the error line:'#13#10'```pascal'#13#10 + 
+                     TRadIAContextParser.GetClassContextAtLine(LSourceCode, LLine) + 
+                     #13#10'```';
+    end;
   end;
   
   LPrompt := Format('/fix'#13#10'Compiler Error: %s'#13#10'File: %s (Line %d)'#13#10#13#10'%s',

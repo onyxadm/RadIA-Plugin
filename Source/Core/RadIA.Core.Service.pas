@@ -1,4 +1,4 @@
-unit RadIA.Core.Service;
+﻿unit RadIA.Core.Service;
 
 interface
 
@@ -70,7 +70,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, System.Threading, System.Math, RadIA.OTA.Helper, RadIA.Core.ProjectContext,
+  System.IOUtils, System.JSON, System.Threading, System.Math, RadIA.Core.Container, RadIA.Core.ProjectContext,
   RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs;
 
 procedure LogService(const AMsg: string);
@@ -205,6 +205,9 @@ var
   LProjectContext: string;
   LDelphiVersionPrompt: string;
   LConcisePrompt: string;
+  LAdapter: IIDEAdapter;
+  LDelphiVersionName: string;
+  LPreferredLanguage: string;
 begin
   LSystemPrompt := FConfig.SystemPrompt;
 
@@ -218,12 +221,24 @@ begin
       LSystemPrompt := LSystemPrompt + sLineBreak + sLineBreak + LConcisePrompt;
   end;
   
+  LDelphiVersionName := 'Delphi';
+  LPreferredLanguage := '';
+  LProjectFolder := '';
+
+  if TRadIAContainer.TryResolve<IIDEAdapter>(LAdapter) then
+  begin
+    LDelphiVersionName := LAdapter.GetDelphiVersionName;
+    LPreferredLanguage := LAdapter.GetPreferredLanguageInstruction;
+    LProjectFolder := LAdapter.GetActiveProjectFolder;
+  end;
+
   if FConfig.InjectDelphiVersion then
   begin
-    LDelphiVersionPrompt := 'The user is writing code using Embarcadero ' + TRadIAOTAHelper.GetDelphiVersionName + '. ' +
+    LDelphiVersionPrompt := 'The user is writing code using Embarcadero ' + LDelphiVersionName + '. ' +
                             'Make sure any code, syntax, keywords, and RTL components you generate are fully compatible and compile ' +
-                            'in this version. Avoid newer language features that are not supported in ' + TRadIAOTAHelper.GetDelphiVersionName + '. ' +
-                            TRadIAOTAHelper.GetPreferredLanguageInstruction;
+                            'in this version. Avoid newer language features that are not supported in ' + LDelphiVersionName + '. ';
+    if not LPreferredLanguage.IsEmpty then
+      LDelphiVersionPrompt := LDelphiVersionPrompt + LPreferredLanguage;
     
     if LSystemPrompt.IsEmpty then
       LSystemPrompt := LDelphiVersionPrompt
@@ -231,7 +246,6 @@ begin
       LSystemPrompt := LSystemPrompt + sLineBreak + sLineBreak + LDelphiVersionPrompt;
   end;
 
-  LProjectFolder := TRadIAOTAHelper.GetActiveProjectFolder;
   if not LProjectFolder.IsEmpty then
   begin
     if TProjectContextLoader.LoadContext(LProjectFolder, LProjectContext) and not LProjectContext.IsEmpty then

@@ -1,4 +1,4 @@
-unit RadIA.Core.ProjectGenerator;
+﻿unit RadIA.Core.ProjectGenerator;
 
 interface
 
@@ -19,7 +19,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, Vcl.Dialogs, Vcl.Forms, Winapi.Windows,
-  RadIA.OTA.Helper, RadIA.Core.Logger;
+  RadIA.Core.Logger, RadIA.Core.Interfaces, RadIA.Core.Container;
 
 { TRadIAProjectGenerator }
 
@@ -194,8 +194,11 @@ begin
         TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: Opening project: ' + LProjectFileToOpen, 'Core');
         TThread.Queue(nil,
           procedure
+          var
+            LAdapter: IIDEAdapter;
           begin
-            TRadIAOTAHelper.OpenProjectInIDE(LProjectFileToOpen);
+            if TRadIAContainer.TryResolve<IIDEAdapter>(LAdapter) then
+              LAdapter.OpenProjectInIDE(LProjectFileToOpen);
           end);
       end
       else
