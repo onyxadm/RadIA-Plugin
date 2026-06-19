@@ -1,10 +1,10 @@
-unit RadIA.OTA.EditorHook;
+﻿unit RadIA.OTA.EditorHook;
 
 interface
 
 uses
   System.Classes, System.SysUtils, Vcl.Controls, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI,
-  RadIA.Core.Interfaces, RadIA.Core.Service, RadIA.OTA.ContextParser;
+  RadIA.Core.Interfaces, RadIA.OTA.ContextParser;
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
@@ -84,7 +84,7 @@ uses
   {$IFNDEF TESTS}
   RadIA.OTA.DockableForm,
   {$ENDIF}
-  RadIA.Core.Logger;
+  RadIA.Core.Logger, RadIA.Core.Container, RadIA.Core.Service;
 
 const
   CEditorHookDelayMs = 2500;
@@ -1083,8 +1083,11 @@ begin
     Exit;
   end;
 
-  LConfig := TRadIAConfig.GetInstance;
-  LConfig.Load;
+  if not TRadIAContainer.TryResolve<IAIConfig>(LConfig) then
+  begin
+    LConfig := TRadIAConfig.GetInstance;
+    LConfig.Load;
+  end;
   LActiveProvider := LConfig.GetActiveProvider;
   if SameText(LConfig.GetProviderAuthType(LActiveProvider), 'web_login') then
   begin
@@ -1097,7 +1100,8 @@ begin
     [Length(LPrompt), LContext.InsertionLine]), 'EditorHook');
 
   FCreateExampleInProgress := True;
-  FCreateExampleService := TRadIAService.Create(LConfig);
+  if not TRadIAContainer.TryResolve<IRadIAService>(FCreateExampleService) then
+    FCreateExampleService := TRadIAService.Create(LConfig);
   try
     FCreateExampleService.SendPrompt(LPrompt, [],
       procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)

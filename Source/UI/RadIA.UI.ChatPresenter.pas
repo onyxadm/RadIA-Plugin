@@ -1,4 +1,4 @@
-unit RadIA.UI.ChatPresenter;
+﻿unit RadIA.UI.ChatPresenter;
 
 interface
 
@@ -162,7 +162,7 @@ uses
   System.IOUtils, System.JSON.Builders, RadIA.Core.Config, RadIA.Core.Logger,
   RadIA.Core.ProviderRegistry, RadIA.Core.ConversationExporter,
   RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge, RadIA.OTA.Helper,
-  System.SyncObjs;
+  System.SyncObjs, RadIA.Core.Container;
 
 { Helper Functions }
 
@@ -201,12 +201,16 @@ begin
 
   if Assigned(AConfig) then
     FConfig := AConfig
-  else
+  else if not TRadIAContainer.TryResolve<IAIConfig>(FConfig) then
     FConfig := TRadIAConfig.GetInstance;
 
   if Assigned(AService) then
   begin
     FAIService := AService;
+    FOwnsService := False;
+  end
+  else if TRadIAContainer.TryResolve<IRadIAService>(FAIService) then
+  begin
     FOwnsService := False;
   end
   else

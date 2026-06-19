@@ -1,4 +1,4 @@
-unit RadIA.UI.ConfigPresenter;
+﻿unit RadIA.UI.ConfigPresenter;
 
 interface
 
@@ -124,7 +124,7 @@ type
 implementation
 
 uses
-  System.JSON, System.IOUtils, RadIA.Core.Config;
+  System.JSON, System.IOUtils, RadIA.Core.Config, RadIA.Core.Container;
 
 { TConfigPresenter }
 
@@ -140,7 +140,7 @@ begin
 
   if Assigned(AConfig) then
     FConfig := AConfig
-  else
+  else if not TRadIAContainer.TryResolve<IAIConfig>(FConfig) then
     FConfig := TRadIAConfig.GetInstance;
 
   if Assigned(ATemplateManager) then
