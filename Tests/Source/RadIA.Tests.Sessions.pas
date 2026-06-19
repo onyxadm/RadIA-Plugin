@@ -1,4 +1,4 @@
-unit RadIA.Tests.Sessions;
+﻿unit RadIA.Tests.Sessions;
 
 interface
 
@@ -10,6 +10,7 @@ type
   TTestRadIASessions = class
   private
     FManager: TRadIASessionManager;
+    FTempDir: string;
   public
     [Setup]
     procedure Setup;
@@ -36,26 +37,19 @@ uses
 { TTestRadIASessions }
 
 procedure TTestRadIASessions.Setup;
-var
-  LSessionsDir: string;
 begin
-  LSessionsDir := TPath.Combine(TPath.GetHomePath, 'RadIA\sessions');
-  if TDirectory.Exists(LSessionsDir) then
-    TDirectory.Delete(LSessionsDir, True);
-
-  FManager := TRadIASessionManager.Create;
+  FTempDir := TPath.Combine(TPath.GetTempPath, 'RadIATests_sessions_' + TGUID.NewGuid.ToString.Replace('{', '').Replace('}', ''));
+  FManager := TRadIASessionManager.Create(FTempDir);
 end;
 
 procedure TTestRadIASessions.TearDown;
-var
-  LSessionsDir: string;
 begin
   FManager.Free;
   FManager := nil;
   
-  LSessionsDir := TPath.Combine(TPath.GetHomePath, 'RadIA\sessions');
-  if TDirectory.Exists(LSessionsDir) then
-    TDirectory.Delete(LSessionsDir, True);
+  if not FTempDir.IsEmpty and TDirectory.Exists(FTempDir) then
+    TDirectory.Delete(FTempDir, True);
+  FTempDir := '';
 end;
 
 procedure TTestRadIASessions.TestCreateSession;
@@ -69,7 +63,7 @@ begin
   Assert.AreEqual(1, FManager.Sessions.Count);
   Assert.AreEqual('Test Session', FManager.Sessions[0].Name);
   Assert.IsFalse(LSession.Id.IsEmpty);
-  Assert.IsTrue(TFile.Exists(TPath.Combine(TPath.Combine(TPath.GetHomePath, 'RadIA\sessions'), 'sessions_index.json')));
+  Assert.IsTrue(TFile.Exists(TPath.Combine(FTempDir, 'sessions_index.json')));
 end;
 
 procedure TTestRadIASessions.TestRenameSession;
@@ -83,7 +77,7 @@ begin
   
   // Reload index to check persistence
   FManager.Free;
-  FManager := TRadIASessionManager.Create;
+  FManager := TRadIASessionManager.Create(FTempDir);
   
   Assert.AreEqual('New Name', FManager.Sessions[0].Name);
 end;

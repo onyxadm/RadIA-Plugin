@@ -26,11 +26,12 @@ type
     procedure SaveIndex;
     function FindSessionIndex(const AId: string): Integer;
   public
-    constructor Create;
+    constructor Create(const ASessionsDir: string = '');
     destructor Destroy; override;
     
     property Sessions: TList<TSessionInfo> read FSessions;
     property ActiveSessionId: string read FActiveSessionId write FActiveSessionId;
+    property SessionsDir: string read FSessionsDir;
     
     function CreateSession(const AName: string = ''): TSessionInfo;
     procedure DeleteSession(const AId: string);
@@ -66,11 +67,14 @@ end;
 
 { TRadIASessionManager }
 
-constructor TRadIASessionManager.Create;
+constructor TRadIASessionManager.Create(const ASessionsDir: string);
 begin
   inherited Create;
   FSessions := TList<TSessionInfo>.Create;
-  FSessionsDir := TPath.Combine(TPath.GetHomePath, 'RadIA\sessions');
+  if ASessionsDir.IsEmpty then
+    FSessionsDir := TPath.Combine(TPath.GetHomePath, 'RadIA\sessions')
+  else
+    FSessionsDir := ASessionsDir;
   FIndexFile := TPath.Combine(FSessionsDir, 'sessions_index.json');
   ForceDirectories(FSessionsDir);
   LoadIndex;
