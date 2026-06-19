@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Sessions;
+unit RadIA.Core.Sessions;
 
 interface
 
@@ -373,7 +373,7 @@ begin
             if not LContentStr.IsEmpty then
             begin
               LRole := StringToMessageRole(LRoleStr);
-              Result := Result + [TRadIAService.CreateMessage(LRole, LContentStr, LProviderStr, LModelStr)];
+              Result := Result + [TRadIAChatMessage.CreateMessage(LRole, LContentStr, LProviderStr, LModelStr)];
             end;
           end;
         end;

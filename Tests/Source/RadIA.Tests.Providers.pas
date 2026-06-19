@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Providers;
+unit RadIA.Tests.Providers;
 
 interface
 
@@ -143,7 +143,7 @@ var
   LJson: TJSONObject;
   LContents: TJSONArray;
 begin
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'Hello')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Hello')];
   LPayload := InvokeBuildRequestBody(FGeminiProv, 'How are you?', LHistory);
   
   Assert.IsNotEmpty(LPayload);
@@ -182,7 +182,7 @@ var
   LJson: TJSONObject;
   LMessages: TJSONArray;
 begin
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'Hi')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Hi')];
   LPayload := InvokeBuildRequestBody(FOpenAIProv, 'Hello OpenAI', LHistory);
   
   Assert.IsNotEmpty(LPayload);
@@ -220,7 +220,7 @@ var
   LJson: TJSONObject;
   LMessages: TJSONArray;
 begin
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'Hey')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Hey')];
   LPayload := InvokeBuildRequestBody(FClaudeProv, 'Hello Claude', LHistory);
   
   Assert.IsNotEmpty(LPayload);

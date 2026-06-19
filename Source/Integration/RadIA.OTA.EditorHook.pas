@@ -4,7 +4,7 @@ interface
 
 uses
   System.Classes, System.SysUtils, Vcl.Controls, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI,
-  RadIA.Core.Service, RadIA.OTA.ContextParser;
+  RadIA.Core.Interfaces, RadIA.Core.Service, RadIA.OTA.ContextParser;
 
 type
   { Manager to create and handle RadIA IDE contextual actions }
@@ -15,7 +15,7 @@ type
     FIDENotifierIndex: Integer;
     FEditorNotifiers: TInterfaceList;
     FCreateExampleInProgress: Boolean;
-    FCreateExampleService: TRadIAService;
+    FCreateExampleService: IRadIAService;
     {$IFNDEF TESTS}
     FTimer: TTimer;
     FHookPending: Boolean;
@@ -80,7 +80,7 @@ uses
   System.Generics.Collections,
   Winapi.Windows,
   RadIA.OTA.Helper, RadIA.OTA.MessageViewHook, RadIA.Core.Types,
-  RadIA.Core.Mediator, RadIA.Core.Config, RadIA.Core.Interfaces, RadIA.Core.TokenUsage,
+  RadIA.Core.Mediator, RadIA.Core.Config, RadIA.Core.TokenUsage,
   {$IFNDEF TESTS}
   RadIA.OTA.DockableForm,
   {$ENDIF}
@@ -246,7 +246,7 @@ end;
 destructor TRadIAEditorHook.Destroy;
 begin
   Uninstall;
-  FreeAndNil(FCreateExampleService);
+  FCreateExampleService := nil;
   FEditorNotifiers.Free;
   inherited Destroy;
 end;
@@ -1049,7 +1049,7 @@ end;
 procedure TRadIAEditorHook.FinishCreateExampleRequest;
 begin
   FCreateExampleInProgress := False;
-  FreeAndNil(FCreateExampleService);
+  FCreateExampleService := nil;
 end;
 
 procedure TRadIAEditorHook.OnCreateExampleExecute(Sender: TObject);

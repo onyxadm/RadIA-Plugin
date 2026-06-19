@@ -188,9 +188,9 @@ end;
 procedure TRadIAProviderBase.HTTPClientReceiveData(const Sender: TObject;
   AContentLength, AReadCount: Int64; var AAbort: Boolean);
 begin
-  if FCancelled then
+  if FCancelled or GIsShuttingDown then
   begin
-    TLogger.Log('HTTPClientReceiveData: Aborting request because FCancelled is True', 'Provider');
+    TLogger.Log('HTTPClientReceiveData: Aborting request because FCancelled or GIsShuttingDown is True', 'Provider');
     AAbort := True;
   end;
 end;

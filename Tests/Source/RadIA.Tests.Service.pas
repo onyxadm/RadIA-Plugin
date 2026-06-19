@@ -583,7 +583,7 @@ begin
       LRole := mrUser
     else
       LRole := mrAssistant;
-    Result[I] := TRadIAService.CreateMessage(LRole, 'Message ' + IntToStr(I));
+    Result[I] := TRadIAChatMessage.CreateMessage(LRole, 'Message ' + IntToStr(I));
   end;
 end;
 
@@ -594,14 +594,14 @@ var
 begin
   { First message is system, then user/assistant pairs }
   SetLength(Result, AUserAssistantCount + 1);
-  Result[0] := TRadIAService.CreateMessage(mrSystem, 'You are a Delphi expert.');
+  Result[0] := TRadIAChatMessage.CreateMessage(mrSystem, 'You are a Delphi expert.');
   for I := 1 to AUserAssistantCount do
   begin
     if I mod 2 = 1 then
       LRole := mrUser
     else
       LRole := mrAssistant;
-    Result[I] := TRadIAService.CreateMessage(LRole, 'Message ' + IntToStr(I));
+    Result[I] := TRadIAChatMessage.CreateMessage(LRole, 'Message ' + IntToStr(I));
   end;
 end;
 

@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Sessions;
+unit RadIA.Tests.Sessions;
 
 interface
 
@@ -114,8 +114,8 @@ begin
   LSession := FManager.CreateSession('History Session');
   
   LHistoryIn := [
-    TRadIAService.CreateMessage(mrUser, 'Hello AI', 'Gemini', 'gemini-1.5-flash'),
-    TRadIAService.CreateMessage(mrAssistant, 'Hello Developer!', 'Gemini', 'gemini-1.5-flash')
+    TRadIAChatMessage.CreateMessage(mrUser, 'Hello AI', 'Gemini', 'gemini-1.5-flash'),
+    TRadIAChatMessage.CreateMessage(mrAssistant, 'Hello Developer!', 'Gemini', 'gemini-1.5-flash')
   ];
   
   FManager.SaveSessionHistory(LSession.Id, LHistoryIn);

@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Ollama;
+unit RadIA.Tests.Ollama;
 
 interface
 
@@ -72,8 +72,8 @@ var
 begin
   LPrompt := 'This is a test prompt';
   LHistory := TArray<IChatMessage>.Create(
-    TRadIAService.CreateMessage(mrUser, 'Hello'),
-    TRadIAService.CreateMessage(mrAssistant, 'Hi there')
+    TRadIAChatMessage.CreateMessage(mrUser, 'Hello'),
+    TRadIAChatMessage.CreateMessage(mrAssistant, 'Hi there')
   );
   
   FConfig.SetActiveModel('Ollama', 'llama3:latest');

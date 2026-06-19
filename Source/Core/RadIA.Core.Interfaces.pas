@@ -169,6 +169,21 @@ type
     property ConciseResponses: Boolean read GetConciseResponses write SetConciseResponses;
   end;
 
+  IRadIAService = interface
+    ['{6E7E91FB-E1AD-4A0B-971A-54F5E6CC3B4C}']
+    function GetEffectiveSystemPrompt: string;
+    procedure ResolveParameters(const AProviderName: string; const AProfile: TAIRequestProfile;
+      out ATemperature: Double; out AMaxTokens: Integer);
+    function CreateActiveProvider: IIAProvider;
+    function TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
+    procedure SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TCompletionCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
+    procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
+      const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
+    procedure CancelCurrentRequest;
+    procedure ClearCache;
+  end;
+
 implementation
 
 { TLifecycleGuard }

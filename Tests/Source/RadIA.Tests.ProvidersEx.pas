@@ -211,7 +211,7 @@ const
     '"usage": {"prompt_tokens": 15, "completion_tokens": 25, "total_tokens": 40}}';
 begin
   // 1. Test Payload Generation
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'DeepSeek Query')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'DeepSeek Query')];
   LPayload := InvokeBuildRequestBody(FDeepSeekProv, 'How is the weather?', LHistory, True);
   
   Assert.IsNotEmpty(LPayload);
@@ -278,7 +278,7 @@ const
     '"usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}}';
 begin
   // 1. Test Payload Generation
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'Groq Query')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Groq Query')];
   LPayload := InvokeBuildRequestBody(FGroqProv, 'Analyze this code', LHistory, False);
   
   Assert.IsNotEmpty(LPayload);
@@ -345,7 +345,7 @@ const
     '"usage": {"prompt_tokens": 8, "completion_tokens": 12, "total_tokens": 20}}';
 begin
   // 1. Test Payload Generation
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'OpenRouter Query')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'OpenRouter Query')];
   LPayload := InvokeBuildRequestBody(FOpenRouterProv, 'Hello', LHistory, True);
   
   Assert.IsNotEmpty(LPayload);
@@ -412,7 +412,7 @@ const
     '"usage": {"prompt_tokens": 12, "completion_tokens": 16, "total_tokens": 28}}';
 begin
   // 1. Test Payload Generation
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'LM Studio Query')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'LM Studio Query')];
   LPayload := InvokeBuildRequestBody(FLMStudioProv, 'Test prompt', LHistory, True);
   
   Assert.IsNotEmpty(LPayload);
@@ -482,7 +482,7 @@ begin
   FConfig.SetActiveModel('AzureOpenAI', 'gpt-4o');
 
   // 1. Test Payload Generation
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'Azure Query')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Azure Query')];
   LPayload := InvokeBuildRequestBody(FAzureProv, 'Deploy application', LHistory, True);
   
   Assert.IsNotEmpty(LPayload);
@@ -549,7 +549,7 @@ const
     '"usage": {"prompt_tokens": 12, "completion_tokens": 18, "total_tokens": 30}}';
 begin
   // 1. Test Payload Generation
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'Qwen Query')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Qwen Query')];
   LPayload := InvokeBuildRequestBody(FQwenProv, 'Write code', LHistory, True);
   
   Assert.IsNotEmpty(LPayload);
@@ -616,7 +616,7 @@ const
     '"usage": {"prompt_tokens": 20, "completion_tokens": 15, "total_tokens": 35}}';
 begin
   // 1. Test Payload Generation
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'Mistral Query')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Mistral Query')];
   LPayload := InvokeBuildRequestBody(FMistralProv, 'Translate', LHistory, True);
   
   Assert.IsNotEmpty(LPayload);
@@ -683,7 +683,7 @@ const
     '"usage": {"input_tokens": 14, "output_tokens": 26}}';
 begin
   // 1. Test Payload Generation
-  LHistory := [TRadIAService.CreateMessage(mrUser, 'Bedrock Query')];
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Bedrock Query')];
   LPayload := InvokeBuildRequestBody(FBedrockProv, 'Code review this class', LHistory, False);
 
   Assert.IsNotEmpty(LPayload);

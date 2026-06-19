@@ -37,8 +37,8 @@ uses
 procedure TTestRadIAExporter.Setup;
 begin
   FHistory := TArray<IChatMessage>.Create(
-    TRadIAService.CreateMessage(mrUser, 'Como criar uma classe em Delphi?'),
-    TRadIAService.CreateMessage(mrAssistant, 'Use a sintaxe `type TMyClass = class`.')
+    TRadIAChatMessage.CreateMessage(mrUser, 'Como criar uma classe em Delphi?'),
+    TRadIAChatMessage.CreateMessage(mrAssistant, 'Use a sintaxe `type TMyClass = class`.')
   );
 end;
 
@@ -104,3 +104,4 @@ initialization
   TDUnitX.RegisterTestFixture(TTestRadIAExporter);
 
 end.
+

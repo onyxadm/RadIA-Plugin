@@ -6,7 +6,6 @@ param(
     [string]$DelphiVersion,
     [switch]$Test
 )
-Clear-Host
 $ErrorActionPreference = "Stop"
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

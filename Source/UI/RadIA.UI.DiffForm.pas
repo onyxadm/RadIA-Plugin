@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.DiffForm;
+unit RadIA.UI.DiffForm;
 
 interface
 
@@ -28,7 +28,7 @@ type
     procedure CreateWnd; override;
   private
     FConfig: IAIConfig;
-    FAIService: TRadIAService;
+    FAIService: IRadIAService;
     FOriginalCode: string;
     FSuggestedCode: string;
     FUnitName: string;
@@ -131,7 +131,7 @@ procedure TFormAIDiff.FormDestroy(Sender: TObject);
 begin
   SaveWindowPlacement;
   (FLifecycleGuard as ILifecycleGuard).Invalidate;
-  FAIService.Free;
+  FAIService := nil;
 end;
 
 procedure TFormAIDiff.LoadWindowPlacement;

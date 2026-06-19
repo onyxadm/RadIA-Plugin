@@ -43,7 +43,7 @@ type
   private
     FView: IChatView;
     FConfig: IAIConfig;
-    FAIService: TRadIAService;
+    FAIService: IRadIAService;
     FSessionManager: TRadIASessionManager;
     FPromptHistoryManager: TPromptHistoryManager;
     FTemplateManager: TPromptTemplateManager;
@@ -108,7 +108,7 @@ type
     procedure HandleClearChatMessage;
     procedure HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
   public
-    constructor Create(const AView: IChatView; const AConfig: IAIConfig = nil; const AService: TRadIAService = nil);
+    constructor Create(const AView: IChatView; const AConfig: IAIConfig = nil; const AService: IRadIAService = nil);
     destructor Destroy; override;
 
     procedure Initialize(const AWebFilesDir: string);
@@ -180,7 +180,7 @@ end;
 
 { TChatPresenter }
 
-constructor TChatPresenter.Create(const AView: IChatView; const AConfig: IAIConfig; const AService: TRadIAService);
+constructor TChatPresenter.Create(const AView: IChatView; const AConfig: IAIConfig; const AService: IRadIAService);
 begin
   inherited Create;
   FView := AView;
@@ -251,7 +251,7 @@ begin
   FSessionManager.Free;
   
   if FOwnsService and Assigned(FAIService) then
-    FreeAndNil(FAIService);
+    FAIService := nil;
 
   inherited Destroy;
 end;
@@ -753,7 +753,7 @@ begin
   else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) or APromptText.StartsWith('Analyze the following Delphi stack trace', True) then
     LProfile := rpExplainCode;
   
-  LUserMsg := TRadIAService.CreateMessage(mrUser, APromptText, LActiveProvider, LActiveModel);
+  LUserMsg := TRadIAChatMessage.CreateMessage(mrUser, APromptText, LActiveProvider, LActiveModel);
   FHistory := FHistory + [LUserMsg];
   SaveChatHistory;
 
@@ -795,7 +795,7 @@ begin
                     try
                       try
                         LOrigHistory := Self.FSessionManager.LoadSessionHistory(LSessionId);
-                        LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+                        LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
                         LOrigHistory := LOrigHistory + [LAssistantMsg];
                         Self.FSessionManager.SaveSessionHistory(LSessionId, LOrigHistory);
                       except
@@ -817,7 +817,7 @@ begin
               
               if not LFullResponse.IsEmpty then
               begin
-                LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse + ' [Cancelled by user]', LActiveProvider, LActiveModel);
+                LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse + ' [Cancelled by user]', LActiveProvider, LActiveModel);
                 Self.FHistory := Self.FHistory + [LAssistantMsg];
                 Self.SaveChatHistory;
               end;
@@ -839,7 +839,7 @@ begin
                 LFullResponse := LFullResponse + #13#10#13#10 + '**Error:** ' + AError;
                 Self.PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + AError, True, LActiveProvider, LActiveModel);
                 
-                LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+                LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
                 Self.FHistory := Self.FHistory + [LAssistantMsg];
                 Self.SaveChatHistory;
               end
@@ -882,7 +882,7 @@ begin
                 Exit;
               end;
 
-              LAssistantMsg := TRadIAService.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+              LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
               Self.FHistory := Self.FHistory + [LAssistantMsg];
               Self.SaveChatHistory;
 

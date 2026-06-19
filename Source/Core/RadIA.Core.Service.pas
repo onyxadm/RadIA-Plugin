@@ -25,6 +25,9 @@ type
     constructor Create(const ARole: TAIMessageRole; const AContent: string;
       const AProvider: string = ''; const AModel: string = '');
 
+    class function CreateMessage(const ARole: TAIMessageRole; const AContent: string;
+      const AProvider: string = ''; const AModel: string = ''): IChatMessage; static;
+
     property Role: TAIMessageRole read GetRole;
     property Content: string read GetContent write SetContent;
     property Provider: string read GetProvider write SetProvider;
@@ -32,7 +35,7 @@ type
   end;
 
   { Orchestrator service to manage active provider instantiation }
-  TRadIAService = class
+  TRadIAService = class(TInterfacedObject, IRadIAService)
   private
     FConfig: IAIConfig;
     FCacheManager: TRadIACacheManager;
@@ -62,19 +65,12 @@ type
       const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
     procedure CancelCurrentRequest;
     procedure ClearCache;
-
-    class function CreateMessage(const ARole: TAIMessageRole; const AContent: string;
-      const AProvider: string = ''; const AModel: string = ''): IChatMessage;
   end;
 
 implementation
 
 uses
   System.IOUtils, System.JSON, System.Threading, System.Math, RadIA.OTA.Helper, RadIA.Core.ProjectContext,
-  RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude, RadIA.Provider.Ollama,
-  RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter, RadIA.Provider.LMStudio,
-  RadIA.Provider.WebViewBridge, RadIA.Provider.AzureOpenAI, RadIA.Provider.Qwen, RadIA.Provider.Mistral,
-  RadIA.Provider.Bedrock,
   RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs;
 
 procedure LogService(const AMsg: string);
@@ -93,6 +89,12 @@ begin
   FContent := AContent;
   FProvider := AProvider;
   FModel := AModel;
+end;
+
+class function TRadIAChatMessage.CreateMessage(const ARole: TAIMessageRole; const AContent: string;
+  const AProvider: string; const AModel: string): IChatMessage;
+begin
+  Result := TRadIAChatMessage.Create(ARole, AContent, AProvider, AModel);
 end;
 
 function TRadIAChatMessage.GetContent: string;
@@ -611,12 +613,6 @@ procedure TRadIAService.ClearCache;
 begin
   if Assigned(FCacheManager) then
     FCacheManager.Clear;
-end;
-
-class function TRadIAService.CreateMessage(const ARole: TAIMessageRole; const AContent: string;
-  const AProvider: string; const AModel: string): IChatMessage;
-begin
-  Result := TRadIAChatMessage.Create(ARole, AContent, AProvider, AModel);
 end;
 
 end.
