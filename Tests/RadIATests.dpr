@@ -1,4 +1,4 @@
-program RadIATests;
+﻿program RadIATests;
 
 {$DEFINE TESTS}
 {$APPTYPE CONSOLE}
@@ -11,6 +11,7 @@ uses
   // Production Units
   RadIA.Core.Types in '..\Source\Core\RadIA.Core.Types.pas',
   RadIA.Core.Interfaces in '..\Source\Core\RadIA.Core.Interfaces.pas',
+  RadIA.Core.Container in '..\Source\Core\RadIA.Core.Container.pas',
   RadIA.Core.Logger in '..\Source\Core\RadIA.Core.Logger.pas',
   RadIA.Core.ConfigDefaults in '..\Source\Core\RadIA.Core.ConfigDefaults.pas',
   RadIA.Core.CredentialProtector in '..\Source\Core\RadIA.Core.CredentialProtector.pas',

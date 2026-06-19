@@ -1,4 +1,4 @@
-unit RadIA.OTA.Register;
+﻿unit RadIA.OTA.Register;
 
 interface
 
@@ -43,7 +43,8 @@ implementation
 uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
-  RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options, RadIA.Providers.Link;
+  RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options, RadIA.Providers.Link, RadIA.Core.Container,
+  RadIA.Core.Service;
 
 const
   GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;
@@ -558,7 +559,13 @@ begin
 end;
 
 initialization
+  TRadIAContainer.Register<IAIConfig>(TRadIAConfig.GetInstance);
+  TRadIAContainer.Register<IRadIALogger>(TConcreteLogger.Create);
+  TLogger.SetActiveLogger(TRadIAContainer.Resolve<IRadIALogger>);
+  TRadIAContainer.Register<IRadIAService>(TRadIAService.Create(TRadIAContainer.Resolve<IAIConfig>));
 
-
+finalization
+  TLogger.SetActiveLogger(nil);
+  TRadIAContainer.Clear;
 
 end.
