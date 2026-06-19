@@ -28,6 +28,7 @@ uses
   RadIA.Core.Sessions in '..\Source\Core\RadIA.Core.Sessions.pas',
   RadIA.Core.DTO.Generator in '..\Source\Core\RadIA.Core.DTO.Generator.pas',
   RadIA.Core.ProjectGenerator in '..\Source\Core\RadIA.Core.ProjectGenerator.pas',
+  RadIA.OTA.Adapter in '..\Source\Integration\RadIA.OTA.Adapter.pas',
   RadIA.OTA.Helper in '..\Source\Integration\RadIA.OTA.Helper.pas',
   RadIA.OTA.EditorHook in '..\Source\Integration\RadIA.OTA.EditorHook.pas',
   RadIA.OTA.ContextParser in '..\Source\Integration\RadIA.OTA.ContextParser.pas',

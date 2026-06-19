@@ -190,6 +190,23 @@ type
     procedure ClearCache;
   end;
 
+  IIDEAdapter = interface
+    ['{20B2F2A9-4B52-4731-9BA0-4F296D4D1D41}']
+    function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
+    function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False;
+      const AOriginalText: string = ''): Boolean;
+    function InsertTextAtCursor(const AText: string): Boolean;
+    function InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
+    function GetCurrentCursorLine: Integer;
+    function GetActiveUnitName: string;
+    function GetActiveProjectName: string;
+    function GetActiveProjectFolder: string;
+    function OpenProjectInIDE(const AProjectPath: string): Boolean;
+    function GetDelphiVersionName: string;
+    function GetPreferredLanguageInstruction: string;
+    function GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
+  end;
+
 implementation
 
 { TLifecycleGuard }
