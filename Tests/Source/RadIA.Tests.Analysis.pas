@@ -1,4 +1,4 @@
-unit RadIA.Tests.Analysis;
+﻿unit RadIA.Tests.Analysis;
 
 interface
 
@@ -111,7 +111,7 @@ var
   LInput, LExpected, LActual: string;
 begin
   LInput := 'line1'#13#10'line2'#13#10'line3';
-  LExpected := 'line1'#10'line2'#10'line3';
+  LExpected := 'line1'#13#10'line2'#13#10'line3';
   LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
   Assert.AreEqual(LExpected, LActual);
 end;
@@ -121,7 +121,7 @@ var
   LInput, LExpected, LActual: string;
 begin
   LInput := 'line1'#13'line2'#13'line3';
-  LExpected := 'line1'#10'line2'#10'line3';
+  LExpected := 'line1'#13#10'line2'#13#10'line3';
   LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
   Assert.AreEqual(LExpected, LActual);
 end;
@@ -131,7 +131,7 @@ var
   LInput, LExpected, LActual: string;
 begin
   LInput := 'line1'#10'line2'#10'line3';
-  LExpected := 'line1'#10'line2'#10'line3';
+  LExpected := 'line1'#13#10'line2'#13#10'line3';
   LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
   Assert.AreEqual(LExpected, LActual);
 end;
@@ -141,7 +141,7 @@ var
   LInput, LExpected, LActual: string;
 begin
   LInput := 'line1'#13#10'line2'#13'line3'#10'line4';
-  LExpected := 'line1'#10'line2'#10'line3'#10'line4';
+  LExpected := 'line1'#13#10'line2'#13#10'line3'#13#10'line4';
   LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
   Assert.AreEqual(LExpected, LActual);
 end;

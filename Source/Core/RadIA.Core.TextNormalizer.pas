@@ -1,4 +1,4 @@
-unit RadIA.Core.TextNormalizer;
+﻿unit RadIA.Core.TextNormalizer;
 
 interface
 
@@ -17,7 +17,7 @@ implementation
 
 function TRadIATextNormalizer.NormalizeLineBreaks(const AText: string): string;
 begin
-  Result := AText.Replace(#13#10, #10).Replace(#13, #10);
+  Result := AText.Replace(#13#10, #10).Replace(#13, #10).Replace(#10, #13#10);
 end;
 
 end.

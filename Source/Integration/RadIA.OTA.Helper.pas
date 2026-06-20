@@ -1,4 +1,4 @@
-unit RadIA.OTA.Helper;
+﻿unit RadIA.OTA.Helper;
 
 interface
 
@@ -46,7 +46,7 @@ begin
   if TRadIAContainer.TryResolve<IRadIATextNormalizer>(LNormalizer) then
     Result := LNormalizer.NormalizeLineBreaks(AText)
   else
-    Result := AText.Replace(#13#10, #10).Replace(#13, #10);
+    Result := AText.Replace(#13#10, #10).Replace(#13, #10).Replace(#10, #13#10);
 end;
 
 class function TRadIAOTAHelper.GetCurrentEditBuffer: IOTAEditBuffer;
