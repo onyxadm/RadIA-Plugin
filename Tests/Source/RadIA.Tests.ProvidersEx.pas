@@ -26,6 +26,12 @@ type
       const AHistory: TArray<IRadIAChatMessage>; const AStream: Boolean = False): string;
     function InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
     procedure InvokeProcessStreamBuffer(AProvider: TObject; var ABuffer: string; const ACallback: TStreamChunkCallback);
+    procedure RunOpenAIPayloadTest(AProvider: TObject; const APrompt: string;
+      const AHistoryQuery: string; const AMockResponse: string; const AExpectedModel: string;
+      const AExpectedResponse: string; const AStream: Boolean;
+      APromptTokens, ACompletionTokens, ATotalTokens: Integer);
+    procedure RunOpenAIStreamingTest(AProvider: TObject; const AInputBuffer: string;
+      const AExpectedText: string; AExpectedCallbackCount: Integer);
   public
     [Setup]
     procedure Setup;
@@ -197,7 +203,10 @@ begin
     raise Exception.Create('ProcessStreamBuffer method not found via RTTI');
 end;
 
-procedure TTestRadIAProvidersEx.TestDeepSeek_PayloadAndParsing;
+procedure TTestRadIAProvidersEx.RunOpenAIPayloadTest(AProvider: TObject; const APrompt: string;
+  const AHistoryQuery: string; const AMockResponse: string; const AExpectedModel: string;
+  const AExpectedResponse: string; const AStream: Boolean;
+  APromptTokens, ACompletionTokens, ATotalTokens: Integer);
 var
   LPayload: string;
   LHistory: TArray<IRadIAChatMessage>;
@@ -205,468 +214,183 @@ var
   LMessages: TJSONArray;
   LText: string;
   LUsage: TTokenUsage;
+begin
+  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, AHistoryQuery)];
+  LPayload := InvokeBuildRequestBody(AProvider, APrompt, LHistory, AStream);
+  
+  Assert.IsNotEmpty(LPayload);
+  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
+  try
+    Assert.IsNotNull(LJsonObj);
+    Assert.AreEqual(AExpectedModel, LJsonObj.GetValue('model').Value);
+    
+    if AStream then
+      Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'))
+    else
+      Assert.IsNull(LJsonObj.GetValue('stream'));
+      
+    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
+    Assert.IsNotNull(LMessages);
+    Assert.AreEqual(2, LMessages.Count);
+  finally
+    LJsonObj.Free;
+  end;
+
+  LText := InvokeParseResponseBody(AProvider, AMockResponse, LUsage);
+  Assert.AreEqual(AExpectedResponse, LText);
+  Assert.AreEqual(APromptTokens, LUsage.PromptTokens);
+  Assert.AreEqual(ACompletionTokens, LUsage.CompletionTokens);
+  Assert.AreEqual(ATotalTokens, LUsage.TotalTokens);
+end;
+
+procedure TTestRadIAProvidersEx.RunOpenAIStreamingTest(AProvider: TObject; const AInputBuffer: string;
+  const AExpectedText: string; AExpectedCallbackCount: Integer);
+var
+  LBuffer: string;
+  LReceivedText: string;
+  LCallbackCount: Integer;
+  LIsDone: Boolean;
+begin
+  LBuffer := AInputBuffer;
+  LReceivedText := '';
+  LCallbackCount := 0;
+  LIsDone := False;
+
+  InvokeProcessStreamBuffer(AProvider, LBuffer,
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      if AIsDone then
+        LIsDone := True
+      else
+        LReceivedText := LReceivedText + AChunk;
+      Assert.IsEmpty(AError);
+    end);
+
+  Assert.AreEqual(AExpectedCallbackCount, LCallbackCount);
+  Assert.AreEqual(AExpectedText, LReceivedText);
+  Assert.IsTrue(LIsDone);
+  Assert.IsEmpty(LBuffer);
+end;
+
+procedure TTestRadIAProvidersEx.TestDeepSeek_PayloadAndParsing;
 const
   MOCK_DEEPSEEK_RESPONSE = 
     '{"choices": [{"message": {"role": "assistant", "content": "DeepSeek response text"}}], ' +
     '"usage": {"prompt_tokens": 15, "completion_tokens": 25, "total_tokens": 40}}';
 begin
-  // 1. Test Payload Generation
-  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'DeepSeek Query')];
-  LPayload := InvokeBuildRequestBody(FDeepSeekProv, 'How is the weather?', LHistory, True);
-  
-  Assert.IsNotEmpty(LPayload);
-  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
-  try
-    Assert.IsNotNull(LJsonObj);
-    Assert.AreEqual('deepseek-chat', LJsonObj.GetValue('model').Value);
-    Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'));
-    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
-    Assert.IsNotNull(LMessages);
-    Assert.AreEqual(2, LMessages.Count);
-  finally
-    LJsonObj.Free;
-  end;
-
-  // 2. Test Response Parsing
-  LText := InvokeParseResponseBody(FDeepSeekProv, MOCK_DEEPSEEK_RESPONSE, LUsage);
-  Assert.AreEqual('DeepSeek response text', LText);
-  Assert.AreEqual(15, LUsage.PromptTokens);
-  Assert.AreEqual(25, LUsage.CompletionTokens);
-  Assert.AreEqual(40, LUsage.TotalTokens);
+  RunOpenAIPayloadTest(FDeepSeekProv, 'How is the weather?', 'DeepSeek Query',
+    MOCK_DEEPSEEK_RESPONSE, 'deepseek-chat', 'DeepSeek response text', True, 15, 25, 40);
 end;
 
 procedure TTestRadIAProvidersEx.TestDeepSeek_StreamingSSE;
-var
-  LBuffer: string;
-  LReceivedText: string;
-  LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
-  LBuffer := 'data: {"choices":[{"delta":{"content":"Deep"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"Seek"}}]}' + #10 + 'data: [DONE]' + #10;
-  LReceivedText := '';
-  LCallbackCount := 0;
-  LIsDone := False;
-
-  InvokeProcessStreamBuffer(FDeepSeekProv, LBuffer,
-    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    begin
-      Inc(LCallbackCount);
-      if AIsDone then
-        LIsDone := True
-      else
-        LReceivedText := LReceivedText + AChunk;
-      Assert.IsEmpty(AError);
-    end);
-
-  Assert.AreEqual(3, LCallbackCount);
-  Assert.AreEqual('DeepSeek', LReceivedText);
-  Assert.IsTrue(LIsDone);
-  Assert.IsEmpty(LBuffer);
+  RunOpenAIStreamingTest(FDeepSeekProv,
+    'data: {"choices":[{"delta":{"content":"Deep"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"Seek"}}]}' + #10 + 'data: [DONE]' + #10,
+    'DeepSeek', 3);
 end;
 
 procedure TTestRadIAProvidersEx.TestGroq_PayloadAndParsing;
-var
-  LPayload: string;
-  LHistory: TArray<IRadIAChatMessage>;
-  LJsonObj: TJSONObject;
-  LMessages: TJSONArray;
-  LText: string;
-  LUsage: TTokenUsage;
 const
   MOCK_GROQ_RESPONSE = 
     '{"choices": [{"message": {"role": "assistant", "content": "Groq response text"}}], ' +
     '"usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}}';
 begin
-  // 1. Test Payload Generation
-  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Groq Query')];
-  LPayload := InvokeBuildRequestBody(FGroqProv, 'Analyze this code', LHistory, False);
-  
-  Assert.IsNotEmpty(LPayload);
-  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
-  try
-    Assert.IsNotNull(LJsonObj);
-    Assert.AreEqual('llama-3.3-70b-versatile', LJsonObj.GetValue('model').Value);
-    Assert.IsNull(LJsonObj.GetValue('stream')); // stream should not be present if False
-    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
-    Assert.IsNotNull(LMessages);
-    Assert.AreEqual(2, LMessages.Count);
-  finally
-    LJsonObj.Free;
-  end;
-
-  // 2. Test Response Parsing
-  LText := InvokeParseResponseBody(FGroqProv, MOCK_GROQ_RESPONSE, LUsage);
-  Assert.AreEqual('Groq response text', LText);
-  Assert.AreEqual(10, LUsage.PromptTokens);
-  Assert.AreEqual(20, LUsage.CompletionTokens);
-  Assert.AreEqual(30, LUsage.TotalTokens);
+  RunOpenAIPayloadTest(FGroqProv, 'Analyze this code', 'Groq Query',
+    MOCK_GROQ_RESPONSE, 'llama-3.3-70b-versatile', 'Groq response text', False, 10, 20, 30);
 end;
 
 procedure TTestRadIAProvidersEx.TestGroq_StreamingSSE;
-var
-  LBuffer: string;
-  LReceivedText: string;
-  LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
-  LBuffer := 'data: {"choices":[{"delta":{"content":"Gro"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"q"}}]}' + #10 + 'data: [DONE]' + #10;
-  LReceivedText := '';
-  LCallbackCount := 0;
-  LIsDone := False;
-
-  InvokeProcessStreamBuffer(FGroqProv, LBuffer,
-    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    begin
-      Inc(LCallbackCount);
-      if AIsDone then
-        LIsDone := True
-      else
-        LReceivedText := LReceivedText + AChunk;
-      Assert.IsEmpty(AError);
-    end);
-
-  Assert.AreEqual(3, LCallbackCount);
-  Assert.AreEqual('Groq', LReceivedText);
-  Assert.IsTrue(LIsDone);
-  Assert.IsEmpty(LBuffer);
+  RunOpenAIStreamingTest(FGroqProv,
+    'data: {"choices":[{"delta":{"content":"Gro"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"q"}}]}' + #10 + 'data: [DONE]' + #10,
+    'Groq', 3);
 end;
 
 procedure TTestRadIAProvidersEx.TestOpenRouter_PayloadAndParsing;
-var
-  LPayload: string;
-  LHistory: TArray<IRadIAChatMessage>;
-  LJsonObj: TJSONObject;
-  LMessages: TJSONArray;
-  LText: string;
-  LUsage: TTokenUsage;
 const
   MOCK_OPENROUTER_RESPONSE = 
     '{"choices": [{"message": {"role": "assistant", "content": "OpenRouter response text"}}], ' +
     '"usage": {"prompt_tokens": 8, "completion_tokens": 12, "total_tokens": 20}}';
 begin
-  // 1. Test Payload Generation
-  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'OpenRouter Query')];
-  LPayload := InvokeBuildRequestBody(FOpenRouterProv, 'Hello', LHistory, True);
-  
-  Assert.IsNotEmpty(LPayload);
-  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
-  try
-    Assert.IsNotNull(LJsonObj);
-    Assert.AreEqual('google/gemini-2.5-pro', LJsonObj.GetValue('model').Value);
-    Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'));
-    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
-    Assert.IsNotNull(LMessages);
-    Assert.AreEqual(2, LMessages.Count);
-  finally
-    LJsonObj.Free;
-  end;
-
-  // 2. Test Response Parsing
-  LText := InvokeParseResponseBody(FOpenRouterProv, MOCK_OPENROUTER_RESPONSE, LUsage);
-  Assert.AreEqual('OpenRouter response text', LText);
-  Assert.AreEqual(8, LUsage.PromptTokens);
-  Assert.AreEqual(12, LUsage.CompletionTokens);
-  Assert.AreEqual(20, LUsage.TotalTokens);
+  RunOpenAIPayloadTest(FOpenRouterProv, 'Hello', 'OpenRouter Query',
+    MOCK_OPENROUTER_RESPONSE, 'google/gemini-2.5-pro', 'OpenRouter response text', True, 8, 12, 20);
 end;
 
 procedure TTestRadIAProvidersEx.TestOpenRouter_StreamingSSE;
-var
-  LBuffer: string;
-  LReceivedText: string;
-  LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
-  LBuffer := 'data: {"choices":[{"delta":{"content":"Open"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"Router"}}]}' + #10 + 'data: [DONE]' + #10;
-  LReceivedText := '';
-  LCallbackCount := 0;
-  LIsDone := False;
-
-  InvokeProcessStreamBuffer(FOpenRouterProv, LBuffer,
-    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    begin
-      Inc(LCallbackCount);
-      if AIsDone then
-        LIsDone := True
-      else
-        LReceivedText := LReceivedText + AChunk;
-      Assert.IsEmpty(AError);
-    end);
-
-  Assert.AreEqual(3, LCallbackCount);
-  Assert.AreEqual('OpenRouter', LReceivedText);
-  Assert.IsTrue(LIsDone);
-  Assert.IsEmpty(LBuffer);
+  RunOpenAIStreamingTest(FOpenRouterProv,
+    'data: {"choices":[{"delta":{"content":"Open"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"Router"}}]}' + #10 + 'data: [DONE]' + #10,
+    'OpenRouter', 3);
 end;
 
 procedure TTestRadIAProvidersEx.TestLMStudio_PayloadAndParsing;
-var
-  LPayload: string;
-  LHistory: TArray<IRadIAChatMessage>;
-  LJsonObj: TJSONObject;
-  LMessages: TJSONArray;
-  LText: string;
-  LUsage: TTokenUsage;
 const
   MOCK_LMSTUDIO_RESPONSE = 
     '{"choices": [{"message": {"role": "assistant", "content": "LM Studio response text"}}], ' +
     '"usage": {"prompt_tokens": 12, "completion_tokens": 16, "total_tokens": 28}}';
 begin
-  // 1. Test Payload Generation
-  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'LM Studio Query')];
-  LPayload := InvokeBuildRequestBody(FLMStudioProv, 'Test prompt', LHistory, True);
-  
-  Assert.IsNotEmpty(LPayload);
-  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
-  try
-    Assert.IsNotNull(LJsonObj);
-    Assert.AreEqual('lms-default', LJsonObj.GetValue('model').Value);
-    Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'));
-    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
-    Assert.IsNotNull(LMessages);
-    Assert.AreEqual(2, LMessages.Count);
-  finally
-    LJsonObj.Free;
-  end;
-
-  // 2. Test Response Parsing
-  LText := InvokeParseResponseBody(FLMStudioProv, MOCK_LMSTUDIO_RESPONSE, LUsage);
-  Assert.AreEqual('LM Studio response text', LText);
-  Assert.AreEqual(12, LUsage.PromptTokens);
-  Assert.AreEqual(16, LUsage.CompletionTokens);
-  Assert.AreEqual(28, LUsage.TotalTokens);
+  RunOpenAIPayloadTest(FLMStudioProv, 'Test prompt', 'LM Studio Query',
+    MOCK_LMSTUDIO_RESPONSE, 'lms-default', 'LM Studio response text', True, 12, 16, 28);
 end;
 
 procedure TTestRadIAProvidersEx.TestLMStudio_StreamingSSE;
-var
-  LBuffer: string;
-  LReceivedText: string;
-  LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
-  LBuffer := 'data: {"choices":[{"delta":{"content":"LM"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":" Studio"}}]}' + #10 + 'data: [DONE]' + #10;
-  LReceivedText := '';
-  LCallbackCount := 0;
-  LIsDone := False;
-
-  InvokeProcessStreamBuffer(FLMStudioProv, LBuffer,
-    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    begin
-      Inc(LCallbackCount);
-      if AIsDone then
-        LIsDone := True
-      else
-        LReceivedText := LReceivedText + AChunk;
-      Assert.IsEmpty(AError);
-    end);
-
-  Assert.AreEqual(3, LCallbackCount);
-  Assert.AreEqual('LM Studio', LReceivedText);
-  Assert.IsTrue(LIsDone);
-  Assert.IsEmpty(LBuffer);
+  RunOpenAIStreamingTest(FLMStudioProv,
+    'data: {"choices":[{"delta":{"content":"LM"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":" Studio"}}]}' + #10 + 'data: [DONE]' + #10,
+    'LM Studio', 3);
 end;
 
 procedure TTestRadIAProvidersEx.TestAzureOpenAI_PayloadAndParsing;
-var
-  LPayload: string;
-  LHistory: TArray<IRadIAChatMessage>;
-  LJsonObj: TJSONObject;
-  LMessages: TJSONArray;
-  LText: string;
-  LUsage: TTokenUsage;
 const
   MOCK_AZURE_RESPONSE = 
     '{"choices": [{"message": {"role": "assistant", "content": "Azure response text"}}], ' +
     '"usage": {"prompt_tokens": 5, "completion_tokens": 10, "total_tokens": 15}}';
 begin
-  // Set config active model to avoid missing error
   FConfig.SetActiveModel('AzureOpenAI', 'gpt-4o');
-
-  // 1. Test Payload Generation
-  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Azure Query')];
-  LPayload := InvokeBuildRequestBody(FAzureProv, 'Deploy application', LHistory, True);
-  
-  Assert.IsNotEmpty(LPayload);
-  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
-  try
-    Assert.IsNotNull(LJsonObj);
-    Assert.AreEqual('gpt-4o', LJsonObj.GetValue('model').Value);
-    Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'));
-    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
-    Assert.IsNotNull(LMessages);
-    Assert.AreEqual(2, LMessages.Count);
-  finally
-    LJsonObj.Free;
-  end;
-
-  // 2. Test Response Parsing
-  LText := InvokeParseResponseBody(FAzureProv, MOCK_AZURE_RESPONSE, LUsage);
-  Assert.AreEqual('Azure response text', LText);
-  Assert.AreEqual(5, LUsage.PromptTokens);
-  Assert.AreEqual(10, LUsage.CompletionTokens);
-  Assert.AreEqual(15, LUsage.TotalTokens);
+  RunOpenAIPayloadTest(FAzureProv, 'Deploy application', 'Azure Query',
+    MOCK_AZURE_RESPONSE, 'gpt-4o', 'Azure response text', True, 5, 10, 15);
 end;
 
 procedure TTestRadIAProvidersEx.TestAzureOpenAI_StreamingSSE;
-var
-  LBuffer: string;
-  LReceivedText: string;
-  LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
-  LBuffer := 'data: {"choices":[{"delta":{"content":"Azure"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":" OpenAI"}}]}' + #10 + 'data: [DONE]' + #10;
-  LReceivedText := '';
-  LCallbackCount := 0;
-  LIsDone := False;
-
-  InvokeProcessStreamBuffer(FAzureProv, LBuffer,
-    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    begin
-      Inc(LCallbackCount);
-      if AIsDone then
-        LIsDone := True
-      else
-        LReceivedText := LReceivedText + AChunk;
-      Assert.IsEmpty(AError);
-    end);
-
-  Assert.AreEqual(3, LCallbackCount);
-  Assert.AreEqual('Azure OpenAI', LReceivedText);
-  Assert.IsTrue(LIsDone);
-  Assert.IsEmpty(LBuffer);
+  RunOpenAIStreamingTest(FAzureProv,
+    'data: {"choices":[{"delta":{"content":"Azure"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":" OpenAI"}}]}' + #10 + 'data: [DONE]' + #10,
+    'Azure OpenAI', 3);
 end;
 
 procedure TTestRadIAProvidersEx.TestQwen_PayloadAndParsing;
-var
-  LPayload: string;
-  LHistory: TArray<IRadIAChatMessage>;
-  LJsonObj: TJSONObject;
-  LMessages: TJSONArray;
-  LText: string;
-  LUsage: TTokenUsage;
 const
   MOCK_QWEN_RESPONSE = 
     '{"choices": [{"message": {"role": "assistant", "content": "Qwen response text"}}], ' +
     '"usage": {"prompt_tokens": 12, "completion_tokens": 18, "total_tokens": 30}}';
 begin
-  // 1. Test Payload Generation
-  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Qwen Query')];
-  LPayload := InvokeBuildRequestBody(FQwenProv, 'Write code', LHistory, True);
-  
-  Assert.IsNotEmpty(LPayload);
-  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
-  try
-    Assert.IsNotNull(LJsonObj);
-    Assert.AreEqual('qwen2.5-coder-32b-instruct', LJsonObj.GetValue('model').Value);
-    Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'));
-    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
-    Assert.IsNotNull(LMessages);
-    Assert.AreEqual(2, LMessages.Count);
-  finally
-    LJsonObj.Free;
-  end;
-
-  // 2. Test Response Parsing
-  LText := InvokeParseResponseBody(FQwenProv, MOCK_QWEN_RESPONSE, LUsage);
-  Assert.AreEqual('Qwen response text', LText);
-  Assert.AreEqual(12, LUsage.PromptTokens);
-  Assert.AreEqual(18, LUsage.CompletionTokens);
-  Assert.AreEqual(30, LUsage.TotalTokens);
+  RunOpenAIPayloadTest(FQwenProv, 'Write code', 'Qwen Query',
+    MOCK_QWEN_RESPONSE, 'qwen2.5-coder-32b-instruct', 'Qwen response text', True, 12, 18, 30);
 end;
 
 procedure TTestRadIAProvidersEx.TestQwen_StreamingSSE;
-var
-  LBuffer: string;
-  LReceivedText: string;
-  LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
-  LBuffer := 'data: {"choices":[{"delta":{"content":"Ali"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"baba"}}]}' + #10 + 'data: [DONE]' + #10;
-  LReceivedText := '';
-  LCallbackCount := 0;
-  LIsDone := False;
-
-  InvokeProcessStreamBuffer(FQwenProv, LBuffer,
-    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    begin
-      Inc(LCallbackCount);
-      if AIsDone then
-        LIsDone := True
-      else
-        LReceivedText := LReceivedText + AChunk;
-      Assert.IsEmpty(AError);
-    end);
-
-  Assert.AreEqual(3, LCallbackCount);
-  Assert.AreEqual('Alibaba', LReceivedText);
-  Assert.IsTrue(LIsDone);
-  Assert.IsEmpty(LBuffer);
+  RunOpenAIStreamingTest(FQwenProv,
+    'data: {"choices":[{"delta":{"content":"Ali"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"baba"}}]}' + #10 + 'data: [DONE]' + #10,
+    'Alibaba', 3);
 end;
 
 procedure TTestRadIAProvidersEx.TestMistral_PayloadAndParsing;
-var
-  LPayload: string;
-  LHistory: TArray<IRadIAChatMessage>;
-  LJsonObj: TJSONObject;
-  LMessages: TJSONArray;
-  LText: string;
-  LUsage: TTokenUsage;
 const
   MOCK_MISTRAL_RESPONSE = 
     '{"choices": [{"message": {"role": "assistant", "content": "Mistral response text"}}], ' +
     '"usage": {"prompt_tokens": 20, "completion_tokens": 15, "total_tokens": 35}}';
 begin
-  // 1. Test Payload Generation
-  LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Mistral Query')];
-  LPayload := InvokeBuildRequestBody(FMistralProv, 'Translate', LHistory, True);
-  
-  Assert.IsNotEmpty(LPayload);
-  LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
-  try
-    Assert.IsNotNull(LJsonObj);
-    Assert.AreEqual('codestral-latest', LJsonObj.GetValue('model').Value);
-    Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'));
-    LMessages := LJsonObj.GetValue('messages') as TJSONArray;
-    Assert.IsNotNull(LMessages);
-    Assert.AreEqual(2, LMessages.Count);
-  finally
-    LJsonObj.Free;
-  end;
-
-  // 2. Test Response Parsing
-  LText := InvokeParseResponseBody(FMistralProv, MOCK_MISTRAL_RESPONSE, LUsage);
-  Assert.AreEqual('Mistral response text', LText);
-  Assert.AreEqual(20, LUsage.PromptTokens);
-  Assert.AreEqual(15, LUsage.CompletionTokens);
-  Assert.AreEqual(35, LUsage.TotalTokens);
+  RunOpenAIPayloadTest(FMistralProv, 'Translate', 'Mistral Query',
+    MOCK_MISTRAL_RESPONSE, 'codestral-latest', 'Mistral response text', True, 20, 15, 35);
 end;
 
 procedure TTestRadIAProvidersEx.TestMistral_StreamingSSE;
-var
-  LBuffer: string;
-  LReceivedText: string;
-  LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
-  LBuffer := 'data: {"choices":[{"delta":{"content":"Mis"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"tral"}}]}' + #10 + 'data: [DONE]' + #10;
-  LReceivedText := '';
-  LCallbackCount := 0;
-  LIsDone := False;
-
-  InvokeProcessStreamBuffer(FMistralProv, LBuffer,
-    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-    begin
-      Inc(LCallbackCount);
-      if AIsDone then
-        LIsDone := True
-      else
-        LReceivedText := LReceivedText + AChunk;
-      Assert.IsEmpty(AError);
-    end);
-
-  Assert.AreEqual(3, LCallbackCount);
-  Assert.AreEqual('Mistral', LReceivedText);
-  Assert.IsTrue(LIsDone);
-  Assert.IsEmpty(LBuffer);
+  RunOpenAIStreamingTest(FMistralProv,
+    'data: {"choices":[{"delta":{"content":"Mis"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"tral"}}]}' + #10 + 'data: [DONE]' + #10,
+    'Mistral', 3);
 end;
 
 procedure TTestRadIAProvidersEx.TestBedrock_PayloadAndParsing;
