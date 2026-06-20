@@ -16,7 +16,7 @@ uses
 
 type
   { Mock minimal config for trimming tests — avoids registry I/O }
-  TMockConfig = class(TInterfacedObject, IAIConfig)
+  TMockConfig = class(TInterfacedObject, IRadIAConfig)
   private
     FMaxHistoryMessages: Integer;
     FSystemPrompt: string;
@@ -124,8 +124,8 @@ type
   [TestFixture]
   TTestRadIAService = class
   private
-    function MakeHistory(const ACount: Integer): TArray<IChatMessage>;
-    function MakeHistoryWithSystem(const AUserAssistantCount: Integer): TArray<IChatMessage>;
+    function MakeHistory(const ACount: Integer): TArray<IRadIAChatMessage>;
+    function MakeHistoryWithSystem(const AUserAssistantCount: Integer): TArray<IRadIAChatMessage>;
   public
     [Test]
     procedure TestTrimming_NoTrimWhenUnderLimit;
@@ -148,7 +148,7 @@ type
   [TestFixture]
   TTestRadIAConfigExtended = class
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
   public
     [Setup]
     procedure Setup;
@@ -582,7 +582,7 @@ end;
 
 { TTestRadIAService helpers }
 
-function TTestRadIAService.MakeHistory(const ACount: Integer): TArray<IChatMessage>;
+function TTestRadIAService.MakeHistory(const ACount: Integer): TArray<IRadIAChatMessage>;
 var
   I: Integer;
   LRole: TAIMessageRole;
@@ -598,7 +598,7 @@ begin
   end;
 end;
 
-function TTestRadIAService.MakeHistoryWithSystem(const AUserAssistantCount: Integer): TArray<IChatMessage>;
+function TTestRadIAService.MakeHistoryWithSystem(const AUserAssistantCount: Integer): TArray<IRadIAChatMessage>;
 var
   I: Integer;
   LRole: TAIMessageRole;
@@ -620,10 +620,10 @@ end;
 
 procedure TTestRadIAService.TestTrimming_NoTrimWhenUnderLimit;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LService: TRadIAService;
-  LHistory: TArray<IChatMessage>;
-  LTrimmed: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
+  LTrimmed: TArray<IRadIAChatMessage>;
 begin
   { MaxHistoryMessages = 5 → limit = 10 messages; we send 6 → no trim }
   LConfig := TMockConfig.Create(5);
@@ -639,10 +639,10 @@ end;
 
 procedure TTestRadIAService.TestTrimming_NoTrimWhenAtExactLimit;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LService: TRadIAService;
-  LHistory: TArray<IChatMessage>;
-  LTrimmed: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
+  LTrimmed: TArray<IRadIAChatMessage>;
 begin
   { MaxHistoryMessages = 5 → limit = 10; we send exactly 10 → no trim }
   LConfig := TMockConfig.Create(5);
@@ -658,10 +658,10 @@ end;
 
 procedure TTestRadIAService.TestTrimming_TrimsOldestWhenOverLimit;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LService: TRadIAService;
-  LHistory: TArray<IChatMessage>;
-  LTrimmed: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
+  LTrimmed: TArray<IRadIAChatMessage>;
 begin
   { MaxHistoryMessages = 3 → limit = 6; we send 10 → trim to 6 }
   LConfig := TMockConfig.Create(3);
@@ -677,10 +677,10 @@ end;
 
 procedure TTestRadIAService.TestTrimming_AlwaysPreservesNewestMessages;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LService: TRadIAService;
-  LHistory: TArray<IChatMessage>;
-  LTrimmed: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
+  LTrimmed: TArray<IRadIAChatMessage>;
 begin
   { MaxHistoryMessages = 2 → limit = 4; send 8 messages → keeps last 4 }
   LConfig := TMockConfig.Create(2);
@@ -698,10 +698,10 @@ end;
 
 procedure TTestRadIAService.TestTrimming_SystemMessagesIgnoredInCount;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LService: TRadIAService;
-  LHistory: TArray<IChatMessage>;
-  LTrimmed: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
+  LTrimmed: TArray<IRadIAChatMessage>;
 begin
   { MaxHistoryMessages = 3 → limit = 6 user/assistant; 1 system + 4 user/assistant = 5 total.
     System messages are filtered out before counting, so 4 <= 6 → no trim. }
@@ -720,7 +720,7 @@ end;
 
 procedure TTestRadIAService.TestSmartConfigResolution;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LService: TRadIAService;
   LTemp: Double;
   LMaxTokens: Integer;
@@ -756,7 +756,7 @@ end;
 
 procedure TTestRadIAService.TestDelphiVersionInjection;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LService: TRadIAService;
   LPrompt: string;
 begin
@@ -868,7 +868,7 @@ end;
 
 procedure TTestRadIAService.TestDelphiVersionInjectionWithMockAdapter;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LService: TRadIAService;
   LPrompt: string;
 begin
@@ -932,7 +932,7 @@ end;
 
 procedure TTestRadIAConfigExtended.TestOpenAICustomBaseUrl_DefaultIsEmpty;
 var
-  LFreshConfig: IAIConfig;
+  LFreshConfig: IRadIAConfig;
 begin
   { Create fresh mock config: default custom URL must be empty }
   LFreshConfig := TMockConfig.Create(20);
@@ -970,7 +970,7 @@ end;
 
 procedure TTestRadIAProviderRegistry.TestCreateProviderRaisesExceptionOnUnknown;
 var
-  LCfg: IAIConfig;
+  LCfg: IRadIAConfig;
   LExceptRaised: Boolean;
 begin
   LCfg := TMockConfig.Create(20);

@@ -11,13 +11,13 @@ type
   [TestFixture]
   TTestRadIAProviders = class
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FGeminiProv: TRadIAGeminiProvider;
     FOpenAIProv: TRadIAOpenAIProvider;
     FClaudeProv: TRadIAClaudeProvider;
     
     function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
-      const AHistory: TArray<IChatMessage>): string;
+      const AHistory: TArray<IRadIAChatMessage>): string;
     function InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
   public
     [Setup]
@@ -78,7 +78,7 @@ begin
 end;
 
 function TTestRadIAProviders.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
-  const AHistory: TArray<IChatMessage>): string;
+  const AHistory: TArray<IRadIAChatMessage>): string;
 var
   LContext: TRttiContext;
   LType: TRttiInstanceType;
@@ -93,13 +93,13 @@ begin
   if Assigned(LMethod) then
   begin
     case Length(LMethod.GetParameters) of
-      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), 0.7, 2048]);
-      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), False, 0.7, 2048]);
+      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), 0.7, 2048]);
+      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), False, 0.7, 2048]);
     else
       if Length(LMethod.GetParameters) = 3 then
-        LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), False])
+        LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), False])
       else
-        LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory)]);
+        LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory)]);
     end;
     Result := LResult.AsString;
   end
@@ -139,7 +139,7 @@ end;
 procedure TTestRadIAProviders.TestGeminiPayloadGeneration;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJson: TJSONObject;
   LContents: TJSONArray;
 begin
@@ -178,7 +178,7 @@ end;
 procedure TTestRadIAProviders.TestOpenAIPayloadGeneration;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJson: TJSONObject;
   LMessages: TJSONArray;
 begin
@@ -216,7 +216,7 @@ end;
 procedure TTestRadIAProviders.TestClaudePayloadGeneration;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJson: TJSONObject;
   LMessages: TJSONArray;
 begin
@@ -256,7 +256,7 @@ end;
 
 procedure TTestOpenAICustomUrl.TestOpenAI_UsesDefaultUrl_WhenCustomEmpty;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LProvider: TRadIAOpenAIProvider;
 begin
   { Use TMockConfig to avoid registry state contamination from other tests }
@@ -273,7 +273,7 @@ end;
 
 procedure TTestOpenAICustomUrl.TestOpenAI_CustomBaseUrl_ReplacesDefault;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
 const
   CUSTOM_URL = 'http://localhost:1234/v1';
 begin
@@ -289,7 +289,7 @@ end;
 
 procedure TTestOpenAICustomUrl.TestOpenAI_CustomBaseUrl_TrailingSlashRemoved;
 var
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LExpectedChatUrl: string;
 const
   CUSTOM_URL_WITH_SLASH = 'http://localhost:1234/v1/';

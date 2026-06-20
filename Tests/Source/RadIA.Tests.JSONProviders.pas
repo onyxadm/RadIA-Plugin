@@ -10,7 +10,7 @@ type
   [TestFixture]
   TTestRadIAJSONProviders = class
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FTestJsonFile: string;
     procedure CreateMockJsonProvider;
     procedure DeleteMockJsonProvider;
@@ -112,7 +112,7 @@ end;
 
 procedure TTestRadIAJSONProviders.TestJSONProvider_InstanceCreation;
 var
-  LProvider: IIAProvider;
+  LProvider: IRadIAProvider;
 begin
   TProviderRegistry.LoadJsonProviders;
 

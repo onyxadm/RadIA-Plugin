@@ -12,7 +12,7 @@ type
   [TestFixture]
   TTestRadIAProvidersEx = class
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FDeepSeekProv: TRadIADeepSeekProvider;
     FGroqProv: TRadIAGroqProvider;
     FOpenRouterProv: TRadIAOpenRouterProvider;
@@ -23,7 +23,7 @@ type
     FBedrockProv: TRadIABedrockProvider;
     
     function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
-      const AHistory: TArray<IChatMessage>; const AStream: Boolean = False): string;
+      const AHistory: TArray<IRadIAChatMessage>; const AStream: Boolean = False): string;
     function InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
     procedure InvokeProcessStreamBuffer(AProvider: TObject; var ABuffer: string; const ACallback: TStreamChunkCallback);
   public
@@ -113,7 +113,7 @@ begin
 end;
 
 function TTestRadIAProvidersEx.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
-  const AHistory: TArray<IChatMessage>; const AStream: Boolean): string;
+  const AHistory: TArray<IRadIAChatMessage>; const AStream: Boolean): string;
 var
   LContext: TRttiContext;
   LType: TRttiInstanceType;
@@ -130,10 +130,10 @@ begin
   if Assigned(LMethod) then
   begin
     case Length(LMethod.GetParameters) of
-      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
-      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream, TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
+      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
+      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), AStream, TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
     else
-      LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IChatMessage>>(AHistory), AStream]);
+      LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), AStream]);
     end;
     Result := LResult.AsString;
   end
@@ -200,7 +200,7 @@ end;
 procedure TTestRadIAProvidersEx.TestDeepSeek_PayloadAndParsing;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LText: string;
@@ -267,7 +267,7 @@ end;
 procedure TTestRadIAProvidersEx.TestGroq_PayloadAndParsing;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LText: string;
@@ -334,7 +334,7 @@ end;
 procedure TTestRadIAProvidersEx.TestOpenRouter_PayloadAndParsing;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LText: string;
@@ -401,7 +401,7 @@ end;
 procedure TTestRadIAProvidersEx.TestLMStudio_PayloadAndParsing;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LText: string;
@@ -468,7 +468,7 @@ end;
 procedure TTestRadIAProvidersEx.TestAzureOpenAI_PayloadAndParsing;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LText: string;
@@ -538,7 +538,7 @@ end;
 procedure TTestRadIAProvidersEx.TestQwen_PayloadAndParsing;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LText: string;
@@ -605,7 +605,7 @@ end;
 procedure TTestRadIAProvidersEx.TestMistral_PayloadAndParsing;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LText: string;
@@ -672,7 +672,7 @@ end;
 procedure TTestRadIAProvidersEx.TestBedrock_PayloadAndParsing;
 var
   LPayload: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LText: string;

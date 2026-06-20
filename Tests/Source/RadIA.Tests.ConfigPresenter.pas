@@ -140,7 +140,7 @@ type
   private
     FMockView: TMockConfigView;
     FPresenter: TConfigPresenter;
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
   public
     [Setup]
     procedure Setup;

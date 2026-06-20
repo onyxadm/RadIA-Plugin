@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.Register;
+unit RadIA.OTA.Register;
 
 interface
 
@@ -44,7 +44,7 @@ uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
   RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options, RadIA.Providers.Link, RadIA.Core.Container,
-  RadIA.Core.Service, RadIA.OTA.Adapter;
+  RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer;
 
 const
   GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;
@@ -333,11 +333,11 @@ procedure TRadIAWizard.OnRequestDiff(const AOriginalCode: string; const AReplace
 var
   LForm: TFormAIDiff;
   LActiveFile: string;
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LActiveProvider: string;
   LAdapter: IIDEAdapter;
 begin
-  if not TRadIAContainer.TryResolve<IAIConfig>(LConfig) then
+  if not TRadIAContainer.TryResolve<IRadIAConfig>(LConfig) then
   begin
     LConfig := TRadIAConfig.GetInstance;
     LConfig.Load;
@@ -572,11 +572,12 @@ begin
 end;
 
 initialization
-  TRadIAContainer.Register<IAIConfig>(TRadIAConfig.GetInstance);
+  TRadIAContainer.Register<IRadIAConfig>(TRadIAConfig.GetInstance);
   TRadIAContainer.Register<IRadIALogger>(TConcreteLogger.Create);
   TLogger.SetActiveLogger(TRadIAContainer.Resolve<IRadIALogger>);
   TRadIAContainer.Register<IIDEAdapter>(TConcreteIDEAdapter.Create);
-  TRadIAContainer.Register<IRadIAService>(TRadIAService.Create(TRadIAContainer.Resolve<IAIConfig>));
+  TRadIAContainer.Register<IRadIAService>(TRadIAService.Create(TRadIAContainer.Resolve<IRadIAConfig>));
+  TRadIAContainer.Register<IRadIATextNormalizer>(TRadIATextNormalizer.Create);
 
 finalization
   TLogger.SetActiveLogger(nil);

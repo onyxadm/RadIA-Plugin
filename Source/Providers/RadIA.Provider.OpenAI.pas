@@ -14,7 +14,7 @@ type
     function GetModelsDiscoveryUrl: string; override;
     function FilterModelId(const AId: string): Boolean; override;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -28,7 +28,7 @@ uses
 
 { TRadIAOpenAIProvider }
 
-constructor TRadIAOpenAIProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAOpenAIProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'OpenAI';
@@ -79,7 +79,7 @@ initialization
       True, // HasApiKey
       True, // HasCustomUrl
       [MODEL_OPENAI_GPT4O_MINI, MODEL_OPENAI_GPT4O],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAOpenAIProvider.Create(ACfg);
       end

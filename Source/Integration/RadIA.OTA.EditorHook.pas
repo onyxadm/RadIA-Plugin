@@ -1068,7 +1068,7 @@ var
   LContext: TMethodExampleContext;
   LErrorMessage: string;
   LPrompt: string;
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
   LActiveProvider: string;
 begin
   if FCreateExampleInProgress then
@@ -1092,7 +1092,7 @@ begin
     Exit;
   end;
 
-  if not TRadIAContainer.TryResolve<IAIConfig>(LConfig) then
+  if not TRadIAContainer.TryResolve<IRadIAConfig>(LConfig) then
   begin
     LConfig := TRadIAConfig.GetInstance;
     LConfig.Load;

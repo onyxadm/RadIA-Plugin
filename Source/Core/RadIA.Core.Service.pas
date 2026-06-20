@@ -6,8 +6,8 @@ uses
   System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Cache, RadIA.Core.TokenUsage;
 
 type
-  { Simple concrete class implementing IChatMessage }
-  TRadIAChatMessage = class(TInterfacedObject, IChatMessage)
+  { Simple concrete class implementing IRadIAChatMessage }
+  TRadIAChatMessage = class(TInterfacedObject, IRadIAChatMessage)
   private
     FRole: TAIMessageRole;
     FContent: string;
@@ -26,7 +26,7 @@ type
       const AProvider: string = ''; const AModel: string = '');
 
     class function CreateMessage(const ARole: TAIMessageRole; const AContent: string;
-      const AProvider: string = ''; const AModel: string = ''): IChatMessage; static;
+      const AProvider: string = ''; const AModel: string = ''): IRadIAChatMessage; static;
 
     property Role: TAIMessageRole read GetRole;
     property Content: string read GetContent write SetContent;
@@ -37,18 +37,18 @@ type
   { Orchestrator service to manage active provider instantiation }
   TRadIAService = class(TInterfacedObject, IRadIAService)
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FCacheManager: TRadIACacheManager;
-    FActiveProvider: IIAProvider;
+    FActiveProvider: IRadIAProvider;
 
     function BuildEffectiveHistory(const ASystemPrompt: string;
-      const ATrimmedHistory: TArray<IChatMessage>): TArray<IChatMessage>;
-    function SerializeHistoryToJson(const AHistory: TArray<IChatMessage>): string;
+      const ATrimmedHistory: TArray<IRadIAChatMessage>): TArray<IRadIAChatMessage>;
+    function SerializeHistoryToJson(const AHistory: TArray<IRadIAChatMessage>): string;
     function ComputePromptHash(const APrompt: string;
-      const ATrimmedHistory: TArray<IChatMessage>; const ASystemPrompt: string): string;
+      const ATrimmedHistory: TArray<IRadIAChatMessage>; const ASystemPrompt: string): string;
     function IsLocalQuotaLimitReached: Boolean;
   public
-    constructor Create(const AConfig: IAIConfig);
+    constructor Create(const AConfig: IRadIAConfig);
     destructor Destroy; override;
 
     function GetEffectiveSystemPrompt: string;
@@ -56,11 +56,11 @@ type
     procedure ResolveParameters(const AProviderName: string; const AProfile: TAIRequestProfile;
       out ATemperature: Double; out AMaxTokens: Integer);
 
-    function CreateActiveProvider: IIAProvider;
-    function TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
-    procedure SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    function CreateActiveProvider: IRadIAProvider;
+    function TrimHistory(const AHistory: TArray<IRadIAChatMessage>): TArray<IRadIAChatMessage>;
+    procedure SendPrompt(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
-    procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
     procedure CancelCurrentRequest;
     procedure ClearCache;
@@ -91,7 +91,7 @@ begin
 end;
 
 class function TRadIAChatMessage.CreateMessage(const ARole: TAIMessageRole; const AContent: string;
-  const AProvider: string; const AModel: string): IChatMessage;
+  const AProvider: string; const AModel: string): IRadIAChatMessage;
 begin
   Result := TRadIAChatMessage.Create(ARole, AContent, AProvider, AModel);
 end;
@@ -133,7 +133,7 @@ end;
 
 { TRadIAService }
 
-constructor TRadIAService.Create(const AConfig: IAIConfig);
+constructor TRadIAService.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create;
   FConfig := AConfig;
@@ -146,14 +146,14 @@ begin
   inherited Destroy;
 end;
 
-function TRadIAService.TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
+function TRadIAService.TrimHistory(const AHistory: TArray<IRadIAChatMessage>): TArray<IRadIAChatMessage>;
 var
   LMaxMessages: Integer;
   LMaxPairs: Integer;
   LStartIndex: Integer;
   LCount: Integer;
-  LNonSystemHistory: TArray<IChatMessage>;
-  LMsg: IChatMessage;
+  LNonSystemHistory: TArray<IRadIAChatMessage>;
+  LMsg: IRadIAChatMessage;
   I: Integer;
 begin
   LMaxMessages := FConfig.GetMaxHistoryMessages;
@@ -186,7 +186,7 @@ begin
     Result[I] := LNonSystemHistory[LStartIndex + I];
 end;
 
-function TRadIAService.CreateActiveProvider: IIAProvider;
+function TRadIAService.CreateActiveProvider: IRadIAProvider;
 var
   LProviderName: string;
 begin
@@ -256,7 +256,7 @@ begin
 end;
 
 function TRadIAService.BuildEffectiveHistory(const ASystemPrompt: string;
-  const ATrimmedHistory: TArray<IChatMessage>): TArray<IChatMessage>;
+  const ATrimmedHistory: TArray<IRadIAChatMessage>): TArray<IRadIAChatMessage>;
 var
   I: Integer;
 begin
@@ -271,10 +271,10 @@ begin
     Result := ATrimmedHistory;
 end;
 
-function TRadIAService.SerializeHistoryToJson(const AHistory: TArray<IChatMessage>): string;
+function TRadIAService.SerializeHistoryToJson(const AHistory: TArray<IRadIAChatMessage>): string;
 var
   LHistoryJson: TJSONArray;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
   LMsgObj: TJSONObject;
 begin
   LHistoryJson := TJSONArray.Create;
@@ -293,7 +293,7 @@ begin
 end;
 
 function TRadIAService.ComputePromptHash(const APrompt: string;
-  const ATrimmedHistory: TArray<IChatMessage>; const ASystemPrompt: string): string;
+  const ATrimmedHistory: TArray<IRadIAChatMessage>; const ASystemPrompt: string): string;
 var
   LProviderName: string;
   LModelName: string;
@@ -316,7 +316,7 @@ begin
     (FConfig.QuotaUsed >= FConfig.QuotaLimit);
 end;
 
-procedure TRadIAService.SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
+procedure TRadIAService.SendPrompt(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TCompletionCallback; const AProfile: TAIRequestProfile);
 begin
   if IsLocalQuotaLimitReached then
@@ -329,12 +329,12 @@ begin
   TTask.Run(
     procedure
     var
-      LProvider: IIAProvider;
+      LProvider: IRadIAProvider;
       LHash: string;
       LCachedResponse: string;
       LSystemPrompt: string;
-      LHistory: TArray<IChatMessage>;
-      LTrimmedHistory: TArray<IChatMessage>;
+      LHistory: TArray<IRadIAChatMessage>;
+      LTrimmedHistory: TArray<IRadIAChatMessage>;
       LTemperature: Double;
       LMaxTokens: Integer;
     begin
@@ -420,7 +420,7 @@ begin
     end);
 end;
 
-procedure TRadIAService.SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
+procedure TRadIAService.SendPromptStream(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile);
 begin
   if IsLocalQuotaLimitReached then
@@ -433,10 +433,10 @@ begin
   TTask.Run(
     procedure
     var
-      LProvider: IIAProvider;
+      LProvider: IRadIAProvider;
       LSystemPrompt: string;
-      LHistory: TArray<IChatMessage>;
-      LTrimmedHistory: TArray<IChatMessage>;
+      LHistory: TArray<IRadIAChatMessage>;
+      LTrimmedHistory: TArray<IRadIAChatMessage>;
       LHash: string;
       LCachedResponse: string;
       LAccumulator: string;
@@ -546,7 +546,7 @@ end;
 
 procedure TRadIAService.CancelCurrentRequest;
 var
-  LProvider: IIAProvider;
+  LProvider: IRadIAProvider;
 begin
   TMonitor.Enter(Self);
   try

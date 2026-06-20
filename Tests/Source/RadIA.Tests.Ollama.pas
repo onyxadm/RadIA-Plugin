@@ -10,7 +10,7 @@ type
   [TestFixture]
   TTestRadIAOllama = class
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FProvider: TRadIAOllamaProvider;
     
     function CallPrivateMethod(const AMethodName: string; const AArgs: array of TValue): TValue;
@@ -64,14 +64,14 @@ end;
 procedure TTestRadIAOllama.TestRequestBodyFormatting;
 var
   LPrompt: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
   LResultJson: string;
   LJsonObj: TJSONObject;
   LMessages: TJSONArray;
   LMsgObj: TJSONObject;
 begin
   LPrompt := 'This is a test prompt';
-  LHistory := TArray<IChatMessage>.Create(
+  LHistory := TArray<IRadIAChatMessage>.Create(
     TRadIAChatMessage.CreateMessage(mrUser, 'Hello'),
     TRadIAChatMessage.CreateMessage(mrAssistant, 'Hi there')
   );
@@ -79,7 +79,7 @@ begin
   FConfig.SetActiveModel('Ollama', 'llama3:latest');
   
   { Invoke private method BuildRequestBody via RTTI }
-  LResultJson := CallPrivateMethod('BuildRequestBody', [LPrompt, TValue.From<TArray<IChatMessage>>(LHistory), False, 0.7, 2048]).AsString;
+  LResultJson := CallPrivateMethod('BuildRequestBody', [LPrompt, TValue.From<TArray<IRadIAChatMessage>>(LHistory), False, 0.7, 2048]).AsString;
   
   Assert.IsFalse(LResultJson.IsEmpty, 'JSON Request body should not be empty');
   

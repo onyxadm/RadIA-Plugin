@@ -14,7 +14,7 @@ type
     function GetModelsDiscoveryUrl: string; override;
     function FilterModelId(const AId: string): Boolean; override;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -28,7 +28,7 @@ uses
 
 { TRadIAGroqProvider }
 
-constructor TRadIAGroqProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAGroqProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'Groq';
@@ -76,7 +76,7 @@ initialization
       True, // HasApiKey
       False, // HasCustomUrl
       [MODEL_GROQ_LLAMA33, MODEL_GROQ_MIXTRAL, MODEL_GROQ_GEMMA2],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAGroqProvider.Create(ACfg);
       end

@@ -13,7 +13,7 @@ type
   [TestFixture]
   TTestRadIAStreaming = class
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FOpenAI: TRadIAOpenAIProvider;
     FGemini: TRadIAGeminiProvider;
     FClaude: TRadIAClaudeProvider;

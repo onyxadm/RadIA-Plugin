@@ -35,12 +35,27 @@ type
     procedure TestNormalizeLineBreaks_UnixStyle;
     [Test]
     procedure TestNormalizeLineBreaks_MixedStyle;
+    [Test]
+    procedure TestNormalizeLineBreaks_UsesInjectedNormalizer;
   end;
 
 implementation
 
 uses
-  System.SysUtils, RadIA.OTA.Helper;
+  System.SysUtils, RadIA.OTA.Helper, RadIA.Core.Container, RadIA.Core.Interfaces;
+
+type
+  TMockTextNormalizer = class(TInterfacedObject, IRadIATextNormalizer)
+  public
+    function NormalizeLineBreaks(const AText: string): string;
+  end;
+
+{ TMockTextNormalizer }
+
+function TMockTextNormalizer.NormalizeLineBreaks(const AText: string): string;
+begin
+  Result := 'MOCK:' + AText;
+end;
 
 { TTestRadIAAnalysis }
 
@@ -129,6 +144,23 @@ begin
   LExpected := 'line1'#10'line2'#10'line3'#10'line4';
   LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
   Assert.AreEqual(LExpected, LActual);
+end;
+
+procedure TTestRadIAOTAHelper.TestNormalizeLineBreaks_UsesInjectedNormalizer;
+var
+  LNormalizer: IRadIATextNormalizer;
+  LInput, LExpected, LActual: string;
+begin
+  LNormalizer := TMockTextNormalizer.Create;
+  TRadIAContainer.Register<IRadIATextNormalizer>(LNormalizer);
+  try
+    LInput := 'hello';
+    LExpected := 'MOCK:hello';
+    LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
+    Assert.AreEqual(LExpected, LActual);
+  finally
+    TRadIAContainer.Clear;
+  end;
 end;
 
 initialization

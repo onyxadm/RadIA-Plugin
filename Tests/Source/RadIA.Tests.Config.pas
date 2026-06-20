@@ -10,7 +10,7 @@ type
   [TestFixture]
   TTestRadIAConfig = class
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FStorage: ISettingsStorage;
   public
     [Setup]
@@ -200,7 +200,7 @@ const
   LEGACY_VALUE = 'legacy-value';
 var
   LStorage: ISettingsStorage;
-  LConfig: IAIConfig;
+  LConfig: IRadIAConfig;
 begin
   LStorage := TMemorySettingsStorage.Create;
   TRadIAConfig.SetBaseRegistryPath(TEST_ROOT);

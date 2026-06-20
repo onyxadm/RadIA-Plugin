@@ -13,11 +13,11 @@ type
     function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -31,7 +31,7 @@ uses
 
 { TRadIALMStudioProvider }
 
-constructor TRadIALMStudioProvider.Create(const AConfig: IAIConfig);
+constructor TRadIALMStudioProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'LMStudio';
@@ -66,7 +66,7 @@ begin
 end;
 
 procedure TRadIALMStudioProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TCompletionCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
@@ -100,7 +100,7 @@ begin
 end;
 
 procedure TRadIALMStudioProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
@@ -146,7 +146,7 @@ initialization
       False, { HasApiKey }
       True,  { HasCustomUrl }
       ['lms-default'],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIALMStudioProvider.Create(ACfg);
       end

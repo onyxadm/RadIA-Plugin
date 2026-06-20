@@ -42,13 +42,13 @@ type
   TChatPresenter = class
   private
     FView: IChatView;
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FAIService: IRadIAService;
     FSessionManager: TRadIASessionManager;
     FPromptHistoryManager: TPromptHistoryManager;
     FTemplateManager: TPromptTemplateManager;
     FAccumulatedUsage: TTokenUsage;
-    FHistory: TArray<IChatMessage>;
+    FHistory: TArray<IRadIAChatMessage>;
     FRequestInProgress: Boolean;
     FCancelledByUser: Boolean;
     FLoadingConfig: Boolean;
@@ -61,7 +61,7 @@ type
     FCurrentBackgroundUrl: string;
     FLoginPopupOpen: Boolean;
     FOwnsService: Boolean;
-    FModelsProvider: IIAProvider;
+    FModelsProvider: IRadIAProvider;
     FDataDir: string;
 
     procedure HandleBackgroundLoginComplete;
@@ -108,7 +108,7 @@ type
     procedure HandleClearChatMessage;
     procedure HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
   public
-    constructor Create(const AView: IChatView; const AConfig: IAIConfig = nil; const AService: IRadIAService = nil; const ADataDir: string = '');
+    constructor Create(const AView: IChatView; const AConfig: IRadIAConfig = nil; const AService: IRadIAService = nil; const ADataDir: string = '');
     destructor Destroy; override;
 
     procedure Initialize(const AWebFilesDir: string);
@@ -180,7 +180,7 @@ end;
 
 { TChatPresenter }
 
-constructor TChatPresenter.Create(const AView: IChatView; const AConfig: IAIConfig; const AService: IRadIAService; const ADataDir: string);
+constructor TChatPresenter.Create(const AView: IChatView; const AConfig: IRadIAConfig; const AService: IRadIAService; const ADataDir: string);
 begin
   inherited Create;
   FView := AView;
@@ -201,7 +201,7 @@ begin
 
   if Assigned(AConfig) then
     FConfig := AConfig
-  else if not TRadIAContainer.TryResolve<IAIConfig>(FConfig) then
+  else if not TRadIAContainer.TryResolve<IRadIAConfig>(FConfig) then
     FConfig := TRadIAConfig.GetInstance;
 
   if Assigned(AService) then
@@ -356,7 +356,7 @@ end;
 
 procedure TChatPresenter.UpdateModelsCombo;
 var
-  LProvider: IIAProvider;
+  LProvider: IRadIAProvider;
   LGuard: ILifecycleGuard;
 begin
   FView.UpdateModels(['Loading...'], 'Loading...', False);
@@ -711,7 +711,7 @@ end;
 
 procedure TChatPresenter.SendPromptToAI(const APromptText: string);
 var
-  LUserMsg: IChatMessage;
+  LUserMsg: IRadIAChatMessage;
   LFullResponse: string;
   LGuard: ILifecycleGuard;
   LProfile: TAIRequestProfile;
@@ -772,7 +772,7 @@ begin
           TThreadProcedure(
           procedure
           var
-            LAssistantMsg: IChatMessage;
+            LAssistantMsg: IRadIAChatMessage;
             LStats: string;
             LUsage: TTokenUsage;
           begin
@@ -791,8 +791,8 @@ begin
                 TThread.CreateAnonymousThread(
                   procedure
                   var
-                    LOrigHistory: TArray<IChatMessage>;
-                    LAssistantMsg: IChatMessage;
+                    LOrigHistory: TArray<IRadIAChatMessage>;
+                    LAssistantMsg: IRadIAChatMessage;
                   begin
                     try
                       try
@@ -1730,7 +1730,7 @@ end;
 
 procedure TChatPresenter.LoadChatHistory;
 var
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
 begin
   FHistory := [];
   if FSessionManager.ActiveSessionId.IsEmpty then

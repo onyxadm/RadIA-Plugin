@@ -46,7 +46,7 @@ type
     const AError: string);
 
   { Interface representing a message in the chat history }
-  IChatMessage = interface
+  IRadIAChatMessage = interface
     ['{69A8A5DC-0F88-46E1-AD7A-8A46101EA97D}']
     function GetRole: TAIMessageRole;
     function GetContent: string;
@@ -62,11 +62,11 @@ type
   end;
 
   { Interface representing an AI Provider }
-  IIAProvider = interface
+  IRadIAProvider = interface
     ['{A2833F50-9A0B-432D-8B8D-20DFF15FF25D}']
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
     function GetAvailableModels: TArray<string>;
@@ -76,7 +76,7 @@ type
   end;
 
   { Interface representing Configuration Management }
-  IAIConfig = interface
+  IRadIAConfig = interface
     ['{88A9678F-520E-4BF5-BFB4-5C04A5826A6F}']
     function GetActiveProvider: string;
     procedure SetActiveProvider(const AProvider: string);
@@ -181,11 +181,11 @@ type
     function GetEffectiveSystemPrompt: string;
     procedure ResolveParameters(const AProviderName: string; const AProfile: TAIRequestProfile;
       out ATemperature: Double; out AMaxTokens: Integer);
-    function CreateActiveProvider: IIAProvider;
-    function TrimHistory(const AHistory: TArray<IChatMessage>): TArray<IChatMessage>;
-    procedure SendPrompt(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    function CreateActiveProvider: IRadIAProvider;
+    function TrimHistory(const AHistory: TArray<IRadIAChatMessage>): TArray<IRadIAChatMessage>;
+    procedure SendPrompt(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
-    procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStream(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile = rpGeneralChat);
     procedure CancelCurrentRequest;
     procedure ClearCache;
@@ -206,6 +206,11 @@ type
     function GetDelphiVersionName: string;
     function GetPreferredLanguageInstruction: string;
     function GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
+  end;
+
+  IRadIATextNormalizer = interface
+    ['{E3FA7BCE-9FBA-4A2D-BE1E-D7C6FBFA9A2B}']
+    function NormalizeLineBreaks(const AText: string): string;
   end;
 
 implementation

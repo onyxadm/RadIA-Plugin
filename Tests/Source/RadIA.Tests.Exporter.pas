@@ -10,7 +10,7 @@ type
   [TestFixture]
   TTestRadIAExporter = class
   private
-    FHistory: TArray<IChatMessage>;
+    FHistory: TArray<IRadIAChatMessage>;
   public
     [Setup]
     procedure Setup;
@@ -36,7 +36,7 @@ uses
 
 procedure TTestRadIAExporter.Setup;
 begin
-  FHistory := TArray<IChatMessage>.Create(
+  FHistory := TArray<IRadIAChatMessage>.Create(
     TRadIAChatMessage.CreateMessage(mrUser, 'Como criar uma classe em Delphi?'),
     TRadIAChatMessage.CreateMessage(mrAssistant, 'Use a sintaxe `type TMyClass = class`.')
   );
@@ -74,7 +74,7 @@ end;
 procedure TTestRadIAExporter.TestExportMarkdown_EmptyHistory;
 var
   LMarkdown: string;
-  LEmptyHistory: TArray<IChatMessage>;
+  LEmptyHistory: TArray<IRadIAChatMessage>;
 begin
   LEmptyHistory := [];
   LMarkdown := TConversationExporter.ExportToMarkdown(LEmptyHistory, 'OpenAI', 'gpt-4o');

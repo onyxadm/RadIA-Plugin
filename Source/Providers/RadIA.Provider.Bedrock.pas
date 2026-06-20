@@ -28,16 +28,16 @@ type
   TRadIABedrockProvider = class(TRadIAProviderBase)
   private
     function BuildBedrockRequestBody(const APrompt: string;
-      const AHistory: TArray<IChatMessage>; const ATemperature: Double;
+      const AHistory: TArray<IRadIAChatMessage>; const ATemperature: Double;
       const AMaxTokens: Integer): string;
     function ParseBedrockResponse(const AResponseJson: string;
       out AUsage: TTokenUsage): string;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
     
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
       
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
@@ -197,7 +197,7 @@ end;
 
 { TRadIABedrockProvider }
 
-constructor TRadIABedrockProvider.Create(const AConfig: IAIConfig);
+constructor TRadIABedrockProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'Bedrock';
@@ -230,13 +230,13 @@ begin
 end;
 
 function TRadIABedrockProvider.BuildBedrockRequestBody(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ATemperature: Double;
+  const AHistory: TArray<IRadIAChatMessage>; const ATemperature: Double;
   const AMaxTokens: Integer): string;
 var
   LRoot: TJSONObject;
   LMessages: TJSONArray;
   LMsgObj: TJSONObject;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
   LMaxTok: Integer;
   LSystemPrompt: string;
 begin
@@ -317,7 +317,7 @@ begin
 end;
 
 procedure TRadIABedrockProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TCompletionCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LHeaders: TNetHeaders;
@@ -331,7 +331,7 @@ var
   LSessionToken: string;
   LModelId: string;
   LTask: TProc;
-  LProviderRef: IIAProvider;
+  LProviderRef: IRadIAProvider;
 begin
   LProviderRef := Self;
   FCancelled := False;
@@ -414,7 +414,7 @@ begin
 end;
 
 procedure TRadIABedrockProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LHeaders: TNetHeaders;
@@ -428,7 +428,7 @@ var
   LSessionToken: string;
   LModelId: string;
   LTask: TProc;
-  LProviderRef: IIAProvider;
+  LProviderRef: IRadIAProvider;
 begin
   LProviderRef := Self;
   FCancelled := False;
@@ -540,7 +540,7 @@ initialization
       False, // HasApiKey
       False, // HasCustomUrl
       ['anthropic.claude-3-5-sonnet-20241022-v2:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0'],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIABedrockProvider.Create(ACfg);
       end

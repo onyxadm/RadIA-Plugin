@@ -103,7 +103,7 @@ end;
 procedure TTestRadIASessions.TestHistoryLoadSave;
 var
   LSession: TSessionInfo;
-  LHistoryIn, LHistoryOut: TArray<IChatMessage>;
+  LHistoryIn, LHistoryOut: TArray<IRadIAChatMessage>;
 begin
   LSession := FManager.CreateSession('History Session');
   

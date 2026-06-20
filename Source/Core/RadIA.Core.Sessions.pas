@@ -40,8 +40,8 @@ type
     
     function GetSessionFilePath(const AId: string): string;
     function SessionHasHistory(const AId: string): Boolean;
-    function LoadSessionHistory(const AId: string): TArray<IChatMessage>;
-    procedure SaveSessionHistory(const AId: string; const AHistory: TArray<IChatMessage>);
+    function LoadSessionHistory(const AId: string): TArray<IRadIAChatMessage>;
+    procedure SaveSessionHistory(const AId: string; const AHistory: TArray<IRadIAChatMessage>);
   end;
 
 implementation
@@ -321,7 +321,7 @@ begin
   end;
 end;
 
-function TRadIASessionManager.LoadSessionHistory(const AId: string): TArray<IChatMessage>;
+function TRadIASessionManager.LoadSessionHistory(const AId: string): TArray<IRadIAChatMessage>;
 var
   LFile: string;
   LContent: string;
@@ -390,12 +390,12 @@ begin
   end;
 end;
 
-procedure TRadIASessionManager.SaveSessionHistory(const AId: string; const AHistory: TArray<IChatMessage>);
+procedure TRadIASessionManager.SaveSessionHistory(const AId: string; const AHistory: TArray<IRadIAChatMessage>);
 var
   LFile: string;
   LJsonArr: TJSONArray;
   LMsgObj: TJSONObject;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
 begin
   if AId.IsEmpty then
     Exit;

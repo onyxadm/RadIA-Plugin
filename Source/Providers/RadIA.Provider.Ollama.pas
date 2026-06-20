@@ -10,15 +10,15 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAOllamaProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
     
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -34,7 +34,7 @@ uses
 
 { TRadIAOllamaProvider }
 
-constructor TRadIAOllamaProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAOllamaProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'Ollama';
@@ -50,13 +50,13 @@ begin
   Result := 'Ollama Local/Network';
 end;
 
-function TRadIAOllamaProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+function TRadIAOllamaProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
   LMsgObj: TJSONObject;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
   LOptionsObj: TJSONObject;
 begin
   LRootObj := TJSONObject.Create;
@@ -133,7 +133,7 @@ begin
   end;
 end;
 
-procedure TRadIAOllamaProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+procedure TRadIAOllamaProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
@@ -161,7 +161,7 @@ procedure TRadIAOllamaProvider.FetchAvailableModelsAsync(const ACallback: TProc<
 var
   LUrl: string;
   LTaskProc: TProc;
-  LProviderRef: IIAProvider;
+  LProviderRef: IRadIAProvider;
 begin
   LProviderRef := Self;
   LUrl := FConfig.OllamaBaseUrl + '/api/tags';
@@ -306,7 +306,7 @@ begin
     end);
 end;
 
-procedure TRadIAOllamaProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+procedure TRadIAOllamaProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
@@ -343,7 +343,7 @@ initialization
       False, // HasApiKey
       True, // HasCustomUrl
       ['llama3:latest', 'codellama:latest', 'mistral:latest', 'phi3:latest'],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAOllamaProvider.Create(ACfg);
       end

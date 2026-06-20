@@ -13,7 +13,7 @@ type
     function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -27,7 +27,7 @@ uses
 
 { TRadIADeepSeekProvider }
 
-constructor TRadIADeepSeekProvider.Create(const AConfig: IAIConfig);
+constructor TRadIADeepSeekProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'DeepSeek';
@@ -68,7 +68,7 @@ initialization
       True, // HasApiKey
       False, // HasCustomUrl
       [MODEL_DEEPSEEK_CHAT, MODEL_DEEPSEEK_REASONING],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIADeepSeekProvider.Create(ACfg);
       end

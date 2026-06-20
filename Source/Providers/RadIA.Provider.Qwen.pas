@@ -13,7 +13,7 @@ type
     function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -27,7 +27,7 @@ uses
 
 { TRadIAQwenProvider }
 
-constructor TRadIAQwenProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAQwenProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'Qwen';
@@ -68,7 +68,7 @@ initialization
       True, // HasApiKey
       False, // HasCustomUrl
       [MODEL_QWEN_25_CODER_32B, MODEL_QWEN_25_CODER_7B, MODEL_QWEN_25_PLUS],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAQwenProvider.Create(ACfg);
       end

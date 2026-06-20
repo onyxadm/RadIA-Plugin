@@ -9,7 +9,7 @@ type
   [TestFixture]
   TTestRadIAQuota = class
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FService: TRadIAService;
   public
     [Setup]
@@ -98,7 +98,7 @@ procedure TTestRadIAQuota.TestQuotaBlocking;
 var
   LDoneEvent: TSimpleEvent;
   LErrorMsg: string;
-  LHistory: TArray<IChatMessage>;
+  LHistory: TArray<IRadIAChatMessage>;
 begin
   FConfig.QuotaEnabled := True;
   FConfig.SetActiveProvider('Gemini');

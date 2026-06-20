@@ -21,11 +21,11 @@ type
     function GetAuthorizationHeader: string; override;
     function EnsureSessionToken: string;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
 
     function GetAvailableModels: TArray<string>; override;
@@ -60,7 +60,7 @@ begin
   FSessionLock.Free;
 end;
 
-constructor TRadIAGithubCopilotProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAGithubCopilotProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'GithubCopilot';
@@ -166,7 +166,7 @@ begin
 end;
 
 procedure TRadIAGithubCopilotProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TCompletionCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 begin
   TInterlocked.Increment(GActiveThreadCount);
@@ -233,7 +233,7 @@ begin
 end;
 
 procedure TRadIAGithubCopilotProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 begin
   TInterlocked.Increment(GActiveThreadCount);
@@ -514,7 +514,7 @@ initialization
       True,  { Requer API Key (ghu_... / gho_...) }
       False, { Não permite URL customizada }
       ['gpt-4', 'gpt-3.5-turbo'],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAGithubCopilotProvider.Create(ACfg);
       end

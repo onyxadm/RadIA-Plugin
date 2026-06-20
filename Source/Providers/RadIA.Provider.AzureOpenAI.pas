@@ -14,11 +14,11 @@ type
     function GetBaseUrl: string;
     function GetApiVersion: string;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
 
     function GetAvailableModels: TArray<string>; override;
@@ -32,7 +32,7 @@ uses
 
 { TRadIAAzureOpenAIProvider }
 
-constructor TRadIAAzureOpenAIProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAAzureOpenAIProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'AzureOpenAI';
@@ -64,7 +64,7 @@ begin
 end;
 
 procedure TRadIAAzureOpenAIProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TCompletionCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
@@ -114,7 +114,7 @@ begin
 end;
 
 procedure TRadIAAzureOpenAIProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
@@ -176,7 +176,7 @@ initialization
       True,  { Requer API Key }
       True,  { Permite URL customizada (Resource Endpoint) }
       ['gpt-4o', 'gpt-4', 'gpt-35-turbo'],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAAzureOpenAIProvider.Create(ACfg);
       end

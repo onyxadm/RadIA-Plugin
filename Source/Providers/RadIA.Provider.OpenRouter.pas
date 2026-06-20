@@ -13,7 +13,7 @@ type
     function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -27,7 +27,7 @@ uses
 
 { TRadIAOpenRouterProvider }
 
-constructor TRadIAOpenRouterProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAOpenRouterProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'OpenRouter';
@@ -68,7 +68,7 @@ initialization
       True, // HasApiKey
       False, // HasCustomUrl
       [MODEL_OPENROUTER_GEMINI25_PRO, MODEL_OPENROUTER_LLAMA33, MODEL_OPENROUTER_DEEPSEEK_R1],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAOpenRouterProvider.Create(ACfg);
       end

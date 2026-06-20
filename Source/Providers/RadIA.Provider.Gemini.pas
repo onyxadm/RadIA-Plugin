@@ -10,15 +10,15 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAGeminiProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -34,7 +34,7 @@ uses
 
 { TRadIAGeminiProvider }
 
-constructor TRadIAGeminiProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAGeminiProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'Gemini';
@@ -50,7 +50,7 @@ begin
   Result := 'Google Gemini';
 end;
 
-function TRadIAGeminiProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+function TRadIAGeminiProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
@@ -58,7 +58,7 @@ var
   LContentObj: TJSONObject;
   LPartsArr: TJSONArray;
   LPartObj: TJSONObject;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
   LRoleStr: string;
   LSystemPrompt: string;
   LSystemObj: TJSONObject;
@@ -195,7 +195,7 @@ begin
   end;
 end;
 
-procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+procedure TRadIAGeminiProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
@@ -234,7 +234,7 @@ var
   LApiKey: string;
   LUrl: string;
   LTaskProc: TProc;
-  LProviderRef: IIAProvider;
+  LProviderRef: IRadIAProvider;
 begin
   LProviderRef := Self;
   LApiKey := GetApiKey;
@@ -495,7 +495,7 @@ begin
   TLogger.Log(Format('PSB: Exit Objs=%d ResidualLen=%d', [LObjectCount, ABuffer.Length]), 'Provider');
 end;
 
-procedure TRadIAGeminiProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+procedure TRadIAGeminiProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LModel, LRequestBody: string;
@@ -542,7 +542,7 @@ initialization
       True, // HasApiKey
       False, // HasCustomUrl
       [MODEL_GEMINI_15_FLASH, MODEL_GEMINI_15_PRO],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAGeminiProvider.Create(ACfg);
       end

@@ -7,7 +7,7 @@ uses
   RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Core.SettingsStorage;
 
 type
-  TRadIAConfig = class(TInterfacedObject, IAIConfig)
+  TRadIAConfig = class(TInterfacedObject, IRadIAConfig)
   private
     class var FBaseRegistryPath: string;
     class var FInstance: TRadIAConfig;
@@ -61,12 +61,12 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    class function GetInstance: IAIConfig;
+    class function GetInstance: IRadIAConfig;
     class procedure SetBaseRegistryPath(const APath: string);
     class function GetRegistryPath: string;
     class procedure SetStorage(const AStorage: ISettingsStorage);
 
-    { IAIConfig implementation }
+    { IRadIAConfig implementation }
     function GetActiveProvider: string;
     procedure SetActiveProvider(const AProvider: string);
     function GetSystemPrompt: string;
@@ -967,7 +967,7 @@ begin
   Result := TCredentialProtector.Unprotect(AValue);
 end;
 
-class function TRadIAConfig.GetInstance: IAIConfig;
+class function TRadIAConfig.GetInstance: IRadIAConfig;
 begin
   if FInstance = nil then
     FInstance := TRadIAConfig.Create;

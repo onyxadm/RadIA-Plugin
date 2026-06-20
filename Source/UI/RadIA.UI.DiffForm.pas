@@ -27,7 +27,7 @@ type
   protected
     procedure CreateWnd; override;
   private
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FAIService: IRadIAService;
     FOriginalCode: string;
     FSuggestedCode: string;
@@ -103,7 +103,7 @@ begin
   FPendingRender := False;
   FCanApply := False;
   FLifecycleGuard := TLifecycleGuard.Create;
-  if not TRadIAContainer.TryResolve<IAIConfig>(FConfig) then
+  if not TRadIAContainer.TryResolve<IRadIAConfig>(FConfig) then
   begin
     FConfig := TRadIAConfig.GetInstance;
     FConfig.Load;

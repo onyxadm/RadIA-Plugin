@@ -74,16 +74,16 @@ type
     procedure OpenSettingsDialog;
   end;
 
-  TMockIAProvider = class(TInterfacedObject, IIAProvider)
+  TMockIAProvider = class(TInterfacedObject, IRadIAProvider)
   private
     FId: string;
     FName: string;
     FModels: TArray<string>;
   public
     constructor Create(const AId, AName: string; const AModels: TArray<string>);
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
     function GetAvailableModels: TArray<string>;
@@ -97,7 +97,7 @@ type
   private
     FMockView: TMockChatView;
     FPresenter: TChatPresenter;
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FGeminiOriginalMeta: TProviderMetadata;
     FOpenAIOriginalMeta: TProviderMetadata;
     FHasOriginalGemini: Boolean;
@@ -306,12 +306,12 @@ begin
   FModels := AModels;
 end;
 
-procedure TMockIAProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+procedure TMockIAProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
 end;
 
-procedure TMockIAProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+procedure TMockIAProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
 end;
@@ -371,7 +371,7 @@ begin
   
   TProviderRegistry.RegisterProvider(
     TProviderMetadata.Create('Gemini', 'Gemini Mock', '', True, False, TArray<string>.Create('gemini-1.5-flash', 'gemini-1.5-pro'),
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TMockIAProvider.Create('Gemini', 'Gemini Mock', TArray<string>.Create('gemini-1.5-flash', 'gemini-1.5-pro'));
       end
@@ -380,7 +380,7 @@ begin
 
   TProviderRegistry.RegisterProvider(
     TProviderMetadata.Create('OpenAI', 'OpenAI Mock', '', True, False, TArray<string>.Create('gpt-4o-mini', 'gpt-4o'),
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TMockIAProvider.Create('OpenAI', 'OpenAI Mock', TArray<string>.Create('gpt-4o-mini', 'gpt-4o'));
       end

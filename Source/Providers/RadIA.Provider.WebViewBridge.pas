@@ -18,12 +18,12 @@ type
     class var FOnCancel: TWebViewBridgeCancelEvent;
     FActiveCallback: TStreamChunkCallback;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
     destructor Destroy; override;
     
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
       
     function GetAvailableModels: TArray<string>; override;
@@ -43,7 +43,7 @@ uses
 
 { TRadIAWebViewBridgeProvider }
 
-constructor TRadIAWebViewBridgeProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAWebViewBridgeProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'WebViewBridge';
@@ -58,7 +58,7 @@ begin
 end;
 
 procedure TRadIAWebViewBridgeProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TCompletionCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LAccumulator: TStringBuilder;
@@ -90,7 +90,7 @@ begin
 end;
 
 procedure TRadIAWebViewBridgeProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LOnSendPrompt: TWebViewBridgeSendPromptEvent;
@@ -178,7 +178,7 @@ initialization
       False, // HasApiKey
       False, // HasCustomUrl
       ['Web-Browser'],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAWebViewBridgeProvider.Create(ACfg);
       end

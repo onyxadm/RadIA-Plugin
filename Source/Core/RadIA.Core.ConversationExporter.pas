@@ -12,11 +12,11 @@ type
     class function MarkdownToSimpleHTML(const AMarkdownText: string): string; static;
   public
     { Formats the history as a Markdown document }
-    class function ExportToMarkdown(const AHistory: TArray<IChatMessage>; 
+    class function ExportToMarkdown(const AHistory: TArray<IRadIAChatMessage>; 
       const AProviderName, AModelName: string): string; static;
 
     { Formats the history as a standalone HTML document }
-    class function ExportToHTML(const AHistory: TArray<IChatMessage>; 
+    class function ExportToHTML(const AHistory: TArray<IRadIAChatMessage>; 
       const AProviderName, AModelName: string): string; static;
   end;
 
@@ -84,11 +84,11 @@ begin
   end;
 end;
 
-class function TConversationExporter.ExportToMarkdown(const AHistory: TArray<IChatMessage>; 
+class function TConversationExporter.ExportToMarkdown(const AHistory: TArray<IRadIAChatMessage>; 
   const AProviderName, AModelName: string): string;
 var
   LSb: TStringBuilder;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
 begin
   LSb := TStringBuilder.Create;
   try
@@ -126,11 +126,11 @@ begin
   end;
 end;
 
-class function TConversationExporter.ExportToHTML(const AHistory: TArray<IChatMessage>; 
+class function TConversationExporter.ExportToHTML(const AHistory: TArray<IRadIAChatMessage>; 
   const AProviderName, AModelName: string): string;
 var
   LSb: TStringBuilder;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
   LRoleName: string;
   LRoleClass: string;
 begin

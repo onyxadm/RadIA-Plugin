@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces, RadIA.Core.Types;
 
 type
-  TProviderFactoryFunc = reference to function(const AConfig: IAIConfig): IIAProvider;
+  TProviderFactoryFunc = reference to function(const AConfig: IRadIAConfig): IRadIAProvider;
 
   TProviderMetadata = record
     Id: string;
@@ -33,7 +33,7 @@ type
     class procedure RegisterProvider(const AMetadata: TProviderMetadata);
     class function GetProvider(const AId: string; out AMetadata: TProviderMetadata): Boolean;
     class function GetProviders: TArray<TProviderMetadata>;
-    class function CreateProvider(const AId: string; const AConfig: IAIConfig): IIAProvider;
+    class function CreateProvider(const AId: string; const AConfig: IRadIAConfig): IRadIAProvider;
     class function HasProvider(const AId: string): Boolean;
   end;
 
@@ -71,7 +71,7 @@ class procedure TProviderRegistry.LoadJsonProviders;
     const AModels: TArray<string>; const AApiKey: string): TProviderFactoryFunc;
   begin
     Result :=
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAGenericOpenAIProvider.Create(
           ACfg, AId, ADisplayName, ABaseUrl, AModels, AApiKey
@@ -233,7 +233,7 @@ begin
   end;
 end;
 
-class function TProviderRegistry.CreateProvider(const AId: string; const AConfig: IAIConfig): IIAProvider;
+class function TProviderRegistry.CreateProvider(const AId: string; const AConfig: IRadIAConfig): IRadIAProvider;
 var
   LMeta: TProviderMetadata;
 begin

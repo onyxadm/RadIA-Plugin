@@ -11,10 +11,10 @@ type
   TProcessBufferFunc = reference to function(const ABuffer: string): string;
 
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
-  { Base class for AI Providers implementing IIAProvider }
-  TRadIAProviderBase = class(TInterfacedObject, IIAProvider)
+  { Base class for AI Providers implementing IRadIAProvider }
+  TRadIAProviderBase = class(TInterfacedObject, IRadIAProvider)
   protected
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FProviderId: string;
     FHTTPClient: THTTPClient;
     FCancelled: Boolean;
@@ -43,7 +43,7 @@ type
 
     { OpenAI-compatible helpers (shared by OpenAI, DeepSeek, Groq providers) }
     function BuildOpenAICompatibleRequestBody(const APrompt: string;
-      const AHistory: TArray<IChatMessage>; const AStream: Boolean;
+      const AHistory: TArray<IRadIAChatMessage>; const AStream: Boolean;
       const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseOpenAICompatibleResponse(const AResponseJson: string;
       out AUsage: TTokenUsage): string;
@@ -56,13 +56,13 @@ type
     function GetModelsDiscoveryUrl: string; virtual;
     function FilterModelId(const AId: string): Boolean; virtual;
   public
-    constructor Create(const AConfig: IAIConfig); virtual;
+    constructor Create(const AConfig: IRadIAConfig); virtual;
     destructor Destroy; override;
 
-    { IIAProvider implementation }
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    { IRadIAProvider implementation }
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); virtual; abstract;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); virtual;
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); virtual;
     function GetAvailableModels: TArray<string>; virtual; abstract;
@@ -77,9 +77,9 @@ type
     function GetBaseUrl: string; virtual; abstract;
     function GetAuthorizationHeader: string; virtual;
   public
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
   end;
 
@@ -170,7 +170,7 @@ begin
   end;
 end;
 
-constructor TRadIAProviderBase.Create(const AConfig: IAIConfig);
+constructor TRadIAProviderBase.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create;
   FConfig := AConfig;
@@ -388,7 +388,7 @@ procedure TRadIAProviderBase.ExecuteRequestAsync(const AUrl: string; const AHead
   const ACallback: TCompletionCallback);
 var
   LTaskProc: TProc;
-  LProviderRef: IIAProvider;
+  LProviderRef: IRadIAProvider;
 begin
   LProviderRef := Self;
   LTaskProc :=
@@ -447,7 +447,7 @@ procedure TRadIAProviderBase.ExecuteRequestStreamAsync(const AUrl: string; const
   const ACallback: TStreamChunkCallback);
 var
   LTaskProc: TProc;
-  LProviderRef: IIAProvider;
+  LProviderRef: IRadIAProvider;
 begin
   LProviderRef := Self;
   LTaskProc :=
@@ -581,7 +581,7 @@ begin
 end;
 
 procedure TRadIAProviderBase.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 begin
   { Default fallback simulating streaming }
@@ -610,13 +610,13 @@ end;
 { --- OpenAI-Compatible Shared Helpers --- }
 
 function TRadIAProviderBase.BuildOpenAICompatibleRequestBody(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const AStream: Boolean;
+  const AHistory: TArray<IRadIAChatMessage>; const AStream: Boolean;
   const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
   LMsgObj: TJSONObject;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
 begin
   LRootObj := TJSONObject.Create;
   try
@@ -802,7 +802,7 @@ var
   LApiKey: string;
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
-  LProviderRef: IIAProvider;
+  LProviderRef: IRadIAProvider;
 begin
   LProviderRef := Self;
   LUrl := GetModelsDiscoveryUrl;
@@ -957,7 +957,7 @@ begin
 end;
 
 procedure TRadIAOpenAICompatibleProvider.SendPromptAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TCompletionCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TCompletionCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
@@ -991,7 +991,7 @@ begin
 end;
 
 procedure TRadIAOpenAICompatibleProvider.SendPromptStreamAsync(const APrompt: string;
-  const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
+  const AHistory: TArray<IRadIAChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;

@@ -17,7 +17,7 @@ type
     function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
   public
-    constructor Create(const AConfig: IAIConfig; const AProviderId, ADisplayName, ADefaultBaseUrl: string; const ADefaultModels: TArray<string>; const AApiKey: string = ''); reintroduce;
+    constructor Create(const AConfig: IRadIAConfig; const AProviderId, ADisplayName, ADefaultBaseUrl: string; const ADefaultModels: TArray<string>; const AApiKey: string = ''); reintroduce;
 
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -31,7 +31,7 @@ uses
 
 { TRadIAGenericOpenAIProvider }
 
-constructor TRadIAGenericOpenAIProvider.Create(const AConfig: IAIConfig;
+constructor TRadIAGenericOpenAIProvider.Create(const AConfig: IRadIAConfig;
   const AProviderId, ADisplayName, ADefaultBaseUrl: string;
   const ADefaultModels: TArray<string>; const AApiKey: string);
 begin

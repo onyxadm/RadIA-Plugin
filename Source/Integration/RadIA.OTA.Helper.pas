@@ -35,13 +35,18 @@ type
 implementation
 
 uses
-  Winapi.Windows;
+  Winapi.Windows, RadIA.Core.Container, RadIA.Core.Interfaces;
 
 { TRadIAOTAHelper }
 
 class function TRadIAOTAHelper.NormalizeLineBreaks(const AText: string): string;
+var
+  LNormalizer: IRadIATextNormalizer;
 begin
-  Result := AText.Replace(#13#10, #10).Replace(#13, #10);
+  if TRadIAContainer.TryResolve<IRadIATextNormalizer>(LNormalizer) then
+    Result := LNormalizer.NormalizeLineBreaks(AText)
+  else
+    Result := AText.Replace(#13#10, #10).Replace(#13, #10);
 end;
 
 class function TRadIAOTAHelper.GetCurrentEditBuffer: IOTAEditBuffer;

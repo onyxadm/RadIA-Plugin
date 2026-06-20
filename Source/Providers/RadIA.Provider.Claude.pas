@@ -10,15 +10,15 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAClaudeProvider = class(TRadIAProviderBase)
   private
-    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    function BuildRequestBody(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
     
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+    procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
@@ -32,7 +32,7 @@ uses
 
 { TRadIAClaudeProvider }
 
-constructor TRadIAClaudeProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAClaudeProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'Claude';
@@ -48,13 +48,13 @@ begin
   Result := 'Anthropic Claude';
 end;
 
-function TRadIAClaudeProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IChatMessage>;
+function TRadIAClaudeProvider.BuildRequestBody(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const AStream: Boolean; const ATemperature: Double; const AMaxTokens: Integer): string;
 var
   LRootObj: TJSONObject;
   LMessagesArr: TJSONArray;
   LMsgObj: TJSONObject;
-  LMsg: IChatMessage;
+  LMsg: IRadIAChatMessage;
   LSystemPrompt: string;
 begin
   LRootObj := TJSONObject.Create;
@@ -152,7 +152,7 @@ begin
   end;
 end;
 
-procedure TRadIAClaudeProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>; 
+procedure TRadIAClaudeProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
@@ -243,7 +243,7 @@ begin
     end);
 end;
 
-procedure TRadIAClaudeProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
+procedure TRadIAClaudeProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
@@ -292,7 +292,7 @@ initialization
       True, // HasApiKey
       False, // HasCustomUrl
       [MODEL_CLAUDE_3_HAIKU, MODEL_CLAUDE_35_SONNET],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAClaudeProvider.Create(ACfg);
       end

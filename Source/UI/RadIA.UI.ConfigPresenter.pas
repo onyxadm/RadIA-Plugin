@@ -85,7 +85,7 @@ type
   TConfigPresenter = class
   private
     FView: IConfigView;
-    FConfig: IAIConfig;
+    FConfig: IRadIAConfig;
     FTemplateManager: TPromptTemplateManager;
     FOwnsTemplateManager: Boolean;
     FProvidersList: TArray<string>;
@@ -93,7 +93,7 @@ type
     function ValidateUrl(const AUrl: string; const AFieldName: string): Boolean;
     procedure PopulateTemplatesList;
   public
-    constructor Create(const AView: IConfigView; const AConfig: IAIConfig = nil; const ATemplateManager: TPromptTemplateManager = nil);
+    constructor Create(const AView: IConfigView; const AConfig: IRadIAConfig = nil; const ATemplateManager: TPromptTemplateManager = nil);
     destructor Destroy; override;
 
     procedure LoadConfig;
@@ -128,7 +128,7 @@ uses
 
 { TConfigPresenter }
 
-constructor TConfigPresenter.Create(const AView: IConfigView; const AConfig: IAIConfig; const ATemplateManager: TPromptTemplateManager);
+constructor TConfigPresenter.Create(const AView: IConfigView; const AConfig: IRadIAConfig; const ATemplateManager: TPromptTemplateManager);
 begin
   inherited Create;
   FView := AView;
@@ -140,7 +140,7 @@ begin
 
   if Assigned(AConfig) then
     FConfig := AConfig
-  else if not TRadIAContainer.TryResolve<IAIConfig>(FConfig) then
+  else if not TRadIAContainer.TryResolve<IRadIAConfig>(FConfig) then
     FConfig := TRadIAConfig.GetInstance;
 
   if Assigned(ATemplateManager) then

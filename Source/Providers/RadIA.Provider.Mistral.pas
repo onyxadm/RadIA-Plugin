@@ -13,7 +13,7 @@ type
     function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
 
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
@@ -27,7 +27,7 @@ uses
 
 { TRadIAMistralProvider }
 
-constructor TRadIAMistralProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAMistralProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'Mistral';
@@ -68,7 +68,7 @@ initialization
       True, // HasApiKey
       False, // HasCustomUrl
       [MODEL_MISTRAL_CODESTRAL, MODEL_MISTRAL_LARGE, MODEL_MISTRAL_OPEN_7B],
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAMistralProvider.Create(ACfg);
       end
