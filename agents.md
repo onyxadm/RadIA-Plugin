@@ -84,12 +84,18 @@ Siga o padrão clássico de estilo Pascal do Delphi:
 *   **Regra Geral:** Toda interface ou classe de domínio que faz parte da lógica central, utilitários, infraestrutura ou UI própria do Rad IA deve incluir o prefixo `RadIA` após o prefixo do tipo (`T` ou `I`).
     *   **Interfaces:** `IRadIA<Nome>` (ex: `IRadIAService`, `IRadIATextNormalizer`).
     *   **Classes:** `TRadIA<Nome>` (ex: `TRadIAService`, `TRadIATextNormalizer`).
-*   **Exceções Temporárias (Legado a ser refatorado):**
-    As seguintes classes e interfaces do legado ainda não seguem o prefixo padrão e deverão ser renomeadas futuramente em tarefas específicas de refatoração:
-    *   **Interfaces de Core/MVP:** `IAIConfig`, `IChatMessage`, `IIAProvider`, `IIDEAdapter`, `ILifecycleGuard`, `ISettingsStorage`, `IChatView`, `IConfigView`.
-    *   **Classes de Core/MVP:** `TRegistrySettingsStorage`, `TMemorySettingsStorage`, `TConcreteIDEAdapter`, `TChatPresenter`, `TConfigPresenter`.
-    *   **Forms e Frames de UI:** `TFormAIConfig`, `TFrameAIConfig`, `TFrameAIChat`, `TFormAIDiff`, `TFormWebLogin`, `TFormGithubAuth`.
-    *   **Utilitários e Parsers:** `TUIHelper`, `TStreamingTargetStream`, `TUtf8ChunkDecoder`, `TAwsEventStreamParser`.
+*   **Sem Exceções:** Todo o código ativo do Rad IA está totalmente aderente a esta regra de prefixos.
+
+### 3.2 Padrão de Nomenclatura de Arquivos
+
+*   **Regra Geral:** Todos os arquivos de código-fonte (`.pas`) e layouts da interface (`.dfm`) do Rad IA devem seguir o padrão de nomenclatura de namespace em caixa alta/baixa iniciando com `RadIA.`:
+    *   Formato: `RadIA.<Modulo>.<NomeDaUnit>.pas`
+    *   Exemplos de subdiretórios e namespaces:
+        *   **Core (Domínio Central):** `RadIA.Core.<NomeDaUnit>.pas` (ex: [RadIA.Core.Interfaces.pas](file:///d:/Projetos/PluginDelphiIA/Source/Core/RadIA.Core.Interfaces.pas))
+        *   **Integration (IDE / Open Tools API):** `RadIA.OTA.<NomeDaUnit>.pas` (ex: [RadIA.OTA.Helper.pas](file:///d:/Projetos/PluginDelphiIA/Source/Integration/RadIA.OTA.Helper.pas))
+        *   **Providers (Modelos de IA):** `RadIA.Provider.<Provedor>.pas` (ex: `RadIA.Provider.Gemini.pas`)
+        *   **UI (Telas, Frames, Presenters):** `RadIA.UI.<NomeDaTela>.pas` (ex: `RadIA.UI.ChatPresenter.pas`)
+*   Nenhum arquivo físico de código fonte ou de layout deve ser criado sem obedecer a esse formato prefixado por `RadIA.`.
 
 ---
 
