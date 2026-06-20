@@ -2,6 +2,10 @@
 
 This technical guide is intended for developers and software architects who want to understand the internal engineering, design patterns, concurrent workflows, and infrastructure of **Rad IA**. The plugin runs integrated into the main process of the Delphi IDE (`bds.exe`), which imposes strict memory management, thread safety, and lifecycle control constraints.
 
+<p align="center">
+  <img src="images/radia_architecture_schema.png" alt="Rad IA General Architecture Diagram" width="100%" />
+</p>
+
 ---
 
 ## 1. Presentation Design Patterns (Model-View-Presenter - MVP)
