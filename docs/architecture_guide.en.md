@@ -89,11 +89,11 @@ classDiagram
         -FService: IRadIAService
         +SendPrompt(prompt)
         +CancelRequest()
-    end
+    }
     class IRadIAService {
         <<interface>>
         +SendPrompt(prompt, callback)
-    end
+    }
 
     TRadIAFrameAIChat ..|> IRadIAChatView : Implements
     TRadIAChatPresenter --> IRadIAChatView : Interacts via
