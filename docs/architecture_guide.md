@@ -8,6 +8,64 @@ Este guia técnico destina-se a desenvolvedores e arquitetores de software que d
 
 ---
 
+## Visão Geral da Arquitetura de Camadas
+
+A arquitetura do Rad IA está organizada em camadas bem definidas e fracamente acopladas, garantindo o isolamento entre lógicas de apresentação visual, integrações com a IDE, regras de negócio e infraestrutura de rede, erros e internacionalização:
+
+```mermaid
+graph TD
+    %% Estilos de nós
+    classDef interfaceNode fill:#007acc,stroke:#333,stroke-width:1px,color:#fff;
+    classDef concreteNode fill:#252526,stroke:#3c3c3c,stroke-width:1px,color:#d4d4d4;
+    classDef uiNode fill:#0b253a,stroke:#007acc,stroke-width:1px,color:#d4d4d4;
+
+    subgraph ui_layer ["UI Layer (MVP Passivo)"]
+        View["IRadIAChatView / TRadIAFrameAIChat"]:::uiNode <--> Presenter["TRadIAChatPresenter"]:::concreteNode
+        Presenter -->|Resolve| IRadIALocalizer["IRadIALocalizer"]:::interfaceNode
+    end
+
+    subgraph ota_integration ["Integration Layer (IDE / OTA)"]
+        EditorHook["TRadIAEditorHook"]:::concreteNode -->|Resolve| IRadIAMediator["IRadIAMediator"]:::interfaceNode
+        IRadIAMediator -.->|Implements| Mediator["TRadIAMediator"]:::concreteNode
+        Mediator --> Presenter
+        EditorHook -->|Uso via Abstracao| IRadIAIDEAdapter["IRadIAIDEAdapter"]:::interfaceNode
+    end
+
+    subgraph core_abstractions ["Core Abstractions (IoC Resolvers)"]
+        Presenter --> IRadIAService["IRadIAService"]:::interfaceNode
+        Presenter --> IRadIAConfig["IRadIAConfig"]:::interfaceNode
+        Presenter --> IRadIADTOBuilder["IRadIADTOBuilder"]:::interfaceNode
+        Presenter --> IRadIAProjectGenerator["IRadIAProjectGenerator"]:::interfaceNode
+        IRadIAService --> IRadIAProvider["IRadIAProvider"]:::interfaceNode
+        IRadIAProvider -->|Uso de Conectividade| IRadIAHttpClient["IRadIAHttpClient"]:::interfaceNode
+        IRadIAProvider -->|Uso de Parsing| IRadIAErrorDecoder["IRadIAErrorDecoder"]:::interfaceNode
+        TRadIAOTAHelper["TRadIAOTAHelper"]:::concreteNode -->|Resolve| IRadIATextNormalizer["IRadIATextNormalizer"]:::interfaceNode
+    end
+
+    subgraph core_implementations ["Core Implementations"]
+        TRadIAServiceImpl["TRadIAService"]:::concreteNode -.->|Implements| IRadIAService
+        TRadIAConfigImpl["TRadIAConfig"]:::concreteNode -.->|Implements| IRadIAConfig
+        TRadIAConcreteIDEAdapter["TRadIAConcreteIDEAdapter"]:::concreteNode -.->|Implements| IRadIAIDEAdapter
+        TRadIATextNormalizerImpl["TRadIATextNormalizer"]:::concreteNode -.->|Implements| IRadIATextNormalizer
+        TRadIADTOBuilderImpl["TRadIADTOBuilder"]:::concreteNode -.->|Implements| IRadIADTOBuilder
+        TRadIAProjectGeneratorImpl["TRadIAProjectGenerator"]:::concreteNode -.->|Implements| IRadIAProjectGenerator
+        TRadIAConcreteHttpClient["TRadIAConcreteHttpClient"]:::concreteNode -.->|Implements| IRadIAHttpClient
+        TRadIAErrorDecoderImpl["TRadIAErrorDecoder"]:::concreteNode -.->|Implements| IRadIAErrorDecoder
+        TRadIALocalizerImpl["TRadIALocalizer"]:::concreteNode -.->|Implements| IRadIALocalizer
+    end
+
+    subgraph data_models ["Data Models"]
+        TRadIAChatMessage["TRadIAChatMessage"]:::concreteNode
+    end
+
+    subgraph dynamic_providers ["Dynamic Provider Registry"]
+        TRadIAProviderRegistry["TProviderRegistry"]:::concreteNode -->|Instancia| Providers["Gemini, OpenAI, Claude, DeepSeek, Ollama, Qwen, Bedrock, etc."]:::concreteNode
+        Providers -.->|Implement| IRadIAProvider
+    end
+```
+
+---
+
 ## 1. Padrões de Design de Apresentação (Model-View-Presenter - MVP)
 
 O Rad IA adota o padrão de design **Model-View-Presenter (MVP)** na variante *Passive View* para gerenciar suas telas (como o painel de chat e a tela de configurações). Esse padrão isola a lógica de controle visual da infraestrutura de componentes VCL e WebView2, maximizando a testabilidade unitária automatizada de forma offline.
