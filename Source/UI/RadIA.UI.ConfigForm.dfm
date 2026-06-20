@@ -1,4 +1,4 @@
-object FormAIConfig: TFormAIConfig
+object FormAIConfig: TRadIAFormAIConfig
   Left = 0
   Top = 0
   BorderStyle = bsDialog

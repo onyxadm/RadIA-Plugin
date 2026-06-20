@@ -11,7 +11,7 @@ uses
   RadIA.Core.ProviderRegistry;
 
 type
-  TFrameAIChat = class(TFrame, IRadIAChatView)
+  TRadIAFrameAIChat = class(TFrame, IRadIAChatView)
     pnlToolbar: TPanel;
     lblTitle: TLabel;
     btnToggleSessions: TSpeedButton;
@@ -197,9 +197,9 @@ begin
   Id := AId;
 end;
 
-{ TFrameAIChat }
+{ TRadIAFrameAIChat }
 
-constructor TFrameAIChat.Create(AOwner: TComponent);
+constructor TRadIAFrameAIChat.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
 begin
@@ -238,7 +238,7 @@ begin
   TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
 end;
 
-destructor TFrameAIChat.Destroy;
+destructor TRadIAFrameAIChat.Destroy;
 var
   I: Integer;
 begin
@@ -296,14 +296,14 @@ begin
   inherited Destroy;
 end;
 
-procedure TFrameAIChat.CMShowingChanged(var Message: TMessage);
+procedure TRadIAFrameAIChat.CMShowingChanged(var Message: TMessage);
 begin
   inherited;
   if Showing then
     EnsureMainWebView;
 end;
 
-procedure TFrameAIChat.CreateEdgeBrowser;
+procedure TRadIAFrameAIChat.CreateEdgeBrowser;
 begin
   if not Assigned(EdgeBrowser) then
   begin
@@ -316,14 +316,14 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.CreateWnd;
+procedure TRadIAFrameAIChat.CreateWnd;
 begin
   inherited CreateWnd;
   if Showing then
     EnsureMainWebView;
 end;
 
-procedure TFrameAIChat.EnsureMainWebView;
+procedure TRadIAFrameAIChat.EnsureMainWebView;
 begin
   CreateEdgeBrowser;
   pnlBrowser.Caption := 'Loading Rad IA Chat...';
@@ -343,12 +343,12 @@ begin
     UpdateWebViewNavigation;
 end;
 
-procedure TFrameAIChat.EnsureVisibleContent;
+procedure TRadIAFrameAIChat.EnsureVisibleContent;
 begin
   EnsureMainWebView;
 end;
 
-procedure TFrameAIChat.DestroyWnd;
+procedure TRadIAFrameAIChat.DestroyWnd;
 var
   LEdgeToFree: TEdgeBrowser;
 begin
@@ -372,7 +372,7 @@ begin
   inherited DestroyWnd;
 end;
 
-procedure TFrameAIChat.CopyDirectory(const ASourceDir, ADestDir: string);
+procedure TRadIAFrameAIChat.CopyDirectory(const ASourceDir, ADestDir: string);
 var
   LFile: string;
   LDir: string;
@@ -397,7 +397,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.CopyWebFiles;
+procedure TRadIAFrameAIChat.CopyWebFiles;
 var
   LSourceDir: string;
   LModuleDir: string;
@@ -428,13 +428,13 @@ begin
   CopyDirectory(LSourceDir, FWebFilesDir);
 end;
 
-procedure TFrameAIChat.InitializeWebView;
+procedure TRadIAFrameAIChat.InitializeWebView;
 begin
   EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
   EdgeBrowser.CreateWebView;
 end;
 
-procedure TFrameAIChat.UpdateWebViewNavigation;
+procedure TRadIAFrameAIChat.UpdateWebViewNavigation;
 var
   LTargetUrl: string;
 begin
@@ -452,12 +452,12 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.btnSendClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnSendClick(Sender: TObject);
 begin
   FPresenter.SendPrompt;
 end;
 
-procedure TFrameAIChat.cbProviderChange(Sender: TObject);
+procedure TRadIAFrameAIChat.cbProviderChange(Sender: TObject);
 begin
   if cbProvider.ItemIndex <> -1 then
   begin
@@ -465,7 +465,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.cbModelChange(Sender: TObject);
+procedure TRadIAFrameAIChat.cbModelChange(Sender: TObject);
 begin
   if cbModel.ItemIndex <> -1 then
   begin
@@ -473,37 +473,37 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.btnClearClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnClearClick(Sender: TObject);
 begin
   FPresenter.ClearChat;
 end;
 
-procedure TFrameAIChat.btnExportClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnExportClick(Sender: TObject);
 begin
   FPresenter.ExportChat;
 end;
 
-procedure TFrameAIChat.btnSettingsClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnSettingsClick(Sender: TObject);
 begin
   FPresenter.OpenSettings;
 end;
 
-procedure TFrameAIChat.memPromptKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+procedure TRadIAFrameAIChat.memPromptKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   FPresenter.HandlePromptInputKeyDown(Key, Shift);
 end;
 
-procedure TFrameAIChat.btnToggleSessionsClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnToggleSessionsClick(Sender: TObject);
 begin
   FPresenter.ToggleSessions;
 end;
 
-procedure TFrameAIChat.btnNewSessionClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnNewSessionClick(Sender: TObject);
 begin
   FPresenter.CreateNewSession;
 end;
 
-procedure TFrameAIChat.btnRenameSessionClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnRenameSessionClick(Sender: TObject);
 var
   LNewName: string;
   LCurrentName: string;
@@ -519,7 +519,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.btnDeleteSessionClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnDeleteSessionClick(Sender: TObject);
 begin
   if MessageDlg('Deseja realmente excluir esta conversa e todo o seu histórico?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
@@ -527,7 +527,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.lstSessionsClick(Sender: TObject);
+procedure TRadIAFrameAIChat.lstSessionsClick(Sender: TObject);
 begin
   if lstSessions.ItemIndex <> -1 then
   begin
@@ -535,7 +535,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+procedure TRadIAFrameAIChat.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
 var
   LSettings: ICoreWebView2Settings;
 begin
@@ -563,7 +563,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+procedure TRadIAFrameAIChat.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
   LJsonStr: PWideChar;
@@ -590,7 +590,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.btnTemplatesClick(Sender: TObject);
+procedure TRadIAFrameAIChat.btnTemplatesClick(Sender: TObject);
 var
   LPoint: TPoint;
 begin
@@ -598,18 +598,18 @@ begin
   FPopupMenuTemplates.Popup(LPoint.X, LPoint.Y);
 end;
 
-procedure TFrameAIChat.OnTemplateMenuClick(Sender: TObject);
+procedure TRadIAFrameAIChat.OnTemplateMenuClick(Sender: TObject);
 begin
   if Sender is TMenuItem then
     FPresenter.HandleTemplateSelected(TMenuItem(Sender).Caption);
 end;
 
-procedure TFrameAIChat.OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
+procedure TRadIAFrameAIChat.OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
 begin
   FPresenter.HandleGlobalPromptRequest(APrompt, AOpenChat);
 end;
 
-procedure TFrameAIChat.SetTheme(const AThemeName: string);
+procedure TRadIAFrameAIChat.SetTheme(const AThemeName: string);
 var
   LJson: TJSONObject;
   LColors: TRadIAThemeColors;
@@ -647,12 +647,12 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.ApplyCurrentTheme;
+procedure TRadIAFrameAIChat.ApplyCurrentTheme;
 begin
   SetTheme(GetCurrentIDEThemeName);
 end;
 
-function TFrameAIChat.GetCurrentIDEThemeName: string;
+function TRadIAFrameAIChat.GetCurrentIDEThemeName: string;
 var
   LThemingServices: IOTAIDEThemingServices;
 begin
@@ -664,7 +664,7 @@ begin
   end;
 end;
 
-function TFrameAIChat.GetWebThemeName(const AThemeName: string): string;
+function TRadIAFrameAIChat.GetWebThemeName(const AThemeName: string): string;
 begin
   if IsThemeDark(AThemeName) then
     Result := 'dark'
@@ -672,7 +672,7 @@ begin
     Result := 'light';
 end;
 
-function TFrameAIChat.ColorToHex(AColor: TColor): string;
+function TRadIAFrameAIChat.ColorToHex(AColor: TColor): string;
 var
   LColorRGB: Longint;
   R, G, B: Byte;
@@ -684,7 +684,7 @@ begin
   Result := Format('#%.2x%.2x%.2x', [R, G, B]);
 end;
 
-procedure TFrameAIChat.UpdateSendButtonVisual(const AInProgress: Boolean);
+procedure TRadIAFrameAIChat.UpdateSendButtonVisual(const AInProgress: Boolean);
 var
   LIsDark: Boolean;
   LThemingServices: IOTAIDEThemingServices;
@@ -729,7 +729,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.UpdateVCLColors(const AColors: TRadIAThemeColors);
+procedure TRadIAFrameAIChat.UpdateVCLColors(const AColors: TRadIAThemeColors);
 begin
   Self.Color := AColors.BgBase;
   pnlToolbar.Color := AColors.BgBase;
@@ -753,7 +753,7 @@ end;
 
 { IRadIAChatView Implementation }
 
-procedure TFrameAIChat.SetRequestState(const AInProgress: Boolean);
+procedure TRadIAFrameAIChat.SetRequestState(const AInProgress: Boolean);
 var
   LJson: TJSONObject;
 begin
@@ -770,11 +770,11 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.UpdateTokensStats(const AStats: string);
+procedure TRadIAFrameAIChat.UpdateTokensStats(const AStats: string);
 begin
 end;
 
-procedure TFrameAIChat.PostMessageToWeb(const AJson: string);
+procedure TRadIAFrameAIChat.PostMessageToWeb(const AJson: string);
 begin
   if FBrowserInitialized and Assigned(EdgeBrowser) and Assigned(EdgeBrowser.DefaultInterface) then
   begin
@@ -782,7 +782,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.PostMessageToBackgroundWeb(const AJson: string);
+procedure TRadIAFrameAIChat.PostMessageToBackgroundWeb(const AJson: string);
 begin
   if FBrowserWebInitialized and Assigned(FEdgeBrowserWeb) and Assigned(FEdgeBrowserWeb.DefaultInterface) then
   begin
@@ -790,28 +790,28 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.CreateBackgroundBrowser;
+procedure TRadIAFrameAIChat.CreateBackgroundBrowser;
 begin
   CreateEdgeBrowserWeb;
 end;
 
-function TFrameAIChat.IsBackgroundBrowserInitialized: Boolean;
+function TRadIAFrameAIChat.IsBackgroundBrowserInitialized: Boolean;
 begin
   Result := FBrowserWebInitialized;
 end;
 
-procedure TFrameAIChat.NavigateBackgroundBrowser(const AUrl: string);
+procedure TRadIAFrameAIChat.NavigateBackgroundBrowser(const AUrl: string);
 begin
   if Assigned(FEdgeBrowserWeb) then
     FEdgeBrowserWeb.Navigate(AUrl);
 end;
 
-procedure TFrameAIChat.ShowLoginWindow(const AUrl: string; AOnLoginSuccess: TProc);
+procedure TRadIAFrameAIChat.ShowLoginWindow(const AUrl: string; AOnLoginSuccess: TProc);
 begin
-  TFormWebLogin.ShowLogin(Self, AUrl, AOnLoginSuccess);
+  TRadIAFormWebLogin.ShowLogin(Self, AUrl, AOnLoginSuccess);
 end;
 
-procedure TFrameAIChat.UpdateProviders(const AProviders: TArray<string>; const AActiveProvider: string);
+procedure TRadIAFrameAIChat.UpdateProviders(const AProviders: TArray<string>; const AActiveProvider: string);
 var
   LProviderId: string;
   I, LFoundIndex: Integer;
@@ -851,7 +851,7 @@ begin
     cbProvider.ItemIndex := 0;
 end;
 
-procedure TFrameAIChat.UpdateModels(const AModels: TArray<string>; const AActiveModel: string; const AEnabled: Boolean);
+procedure TRadIAFrameAIChat.UpdateModels(const AModels: TArray<string>; const AActiveModel: string; const AEnabled: Boolean);
 var
   LModel: string;
 begin
@@ -862,7 +862,7 @@ begin
   cbModel.Enabled := AEnabled;
 end;
 
-procedure TFrameAIChat.UpdateSessions(const ASessions: TArray<TSessionInfo>; const AActiveSessionId: string);
+procedure TRadIAFrameAIChat.UpdateSessions(const ASessions: TArray<TSessionInfo>; const AActiveSessionId: string);
 var
   LSession: TSessionInfo;
   I, LIndexToSelect: Integer;
@@ -898,7 +898,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.UpdateTemplates(const ATemplates: TArray<string>);
+procedure TRadIAFrameAIChat.UpdateTemplates(const ATemplates: TArray<string>);
 var
   LTemplateName: string;
   LMenuItem: TMenuItem;
@@ -920,45 +920,45 @@ begin
   end;
 end;
 
-function TFrameAIChat.GetPromptInput: string;
+function TRadIAFrameAIChat.GetPromptInput: string;
 begin
   Result := memPrompt.Text;
 end;
 
-procedure TFrameAIChat.SetPromptInput(const APrompt: string);
+procedure TRadIAFrameAIChat.SetPromptInput(const APrompt: string);
 begin
   memPrompt.Text := APrompt;
   memPrompt.SelStart := Length(APrompt);
 end;
 
-procedure TFrameAIChat.FocusPromptInput;
+procedure TRadIAFrameAIChat.FocusPromptInput;
 begin
   memPrompt.SetFocus;
 end;
 
-function TFrameAIChat.GetActiveEditorText(out ACode: string; const AOnlySelected: Boolean): Boolean;
+function TRadIAFrameAIChat.GetActiveEditorText(out ACode: string; const AOnlySelected: Boolean): Boolean;
 begin
   Result := TRadIAOTAHelper.GetActiveEditorText(ACode, AOnlySelected);
 end;
 
-procedure TFrameAIChat.ReplaceActiveEditorText(const ACode: string);
+procedure TRadIAFrameAIChat.ReplaceActiveEditorText(const ACode: string);
 begin
   TRadIAOTAHelper.ReplaceActiveEditorText(ACode);
 end;
 
-procedure TFrameAIChat.ShowMessageDialog(const AMessage: string);
+procedure TRadIAFrameAIChat.ShowMessageDialog(const AMessage: string);
 begin
   ShowMessage(AMessage);
 end;
 
-function TFrameAIChat.SaveDialogExecute(out AFileName: string): Boolean;
+function TRadIAFrameAIChat.SaveDialogExecute(out AFileName: string): Boolean;
 begin
   Result := SaveDialog.Execute;
   if Result then
     AFileName := SaveDialog.FileName;
 end;
 
-procedure TFrameAIChat.ToggleSessionsPanel;
+procedure TRadIAFrameAIChat.ToggleSessionsPanel;
 begin
   pnlSessions.Visible := not pnlSessions.Visible;
   splitterSessions.Visible := pnlSessions.Visible;
@@ -966,12 +966,12 @@ begin
     splitterSessions.Left := pnlSessions.Left + pnlSessions.Width + 1;
 end;
 
-procedure TFrameAIChat.OpenSettingsDialog;
+procedure TRadIAFrameAIChat.OpenSettingsDialog;
 var
-  LForm: TFormAIConfig;
+  LForm: TRadIAFormAIConfig;
   LThemingServices: IOTAIDEThemingServices;
 begin
-  LForm := TFormAIConfig.Create(nil);
+  LForm := TRadIAFormAIConfig.Create(nil);
   try
     if Assigned(Vcl.Forms.Application.MainForm) then
     begin
@@ -998,7 +998,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.CreateEdgeBrowserWeb;
+procedure TRadIAFrameAIChat.CreateEdgeBrowserWeb;
 begin
   if not Assigned(FpnlBrowserWeb) then
   begin
@@ -1027,7 +1027,7 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+procedure TRadIAFrameAIChat.EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
 var
   LSettings: ICoreWebView2Settings;
   LSettings2: ICoreWebView2Settings2_Local;
@@ -1070,13 +1070,13 @@ begin
   end;
 end;
 
-procedure TFrameAIChat.EdgeBrowserWebSourceChanged(Sender: TCustomEdgeBrowser; IsNewDocument: Boolean);
+procedure TRadIAFrameAIChat.EdgeBrowserWebSourceChanged(Sender: TCustomEdgeBrowser; IsNewDocument: Boolean);
 begin
   if Assigned(FPresenter) then
     FPresenter.OnBackgroundBrowserNavigation(Sender.LocationURL);
 end;
 
-procedure TFrameAIChat.EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+procedure TRadIAFrameAIChat.EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
   LJsonStr: PWideChar;

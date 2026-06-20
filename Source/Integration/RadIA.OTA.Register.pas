@@ -186,8 +186,8 @@ begin
   { Register custom forms in IDE Theming Services }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
-    LThemingServices.RegisterFormClass(TFormAIDiff);
-    LThemingServices.RegisterFormClass(TFormAIConfig);
+    LThemingServices.RegisterFormClass(TRadIAFormAIDiff);
+    LThemingServices.RegisterFormClass(TRadIAFormAIConfig);
     LThemingServices.RegisterFormClass(TFormRadIADockable);
   end;
   
@@ -331,7 +331,7 @@ end;
 
 procedure TRadIAWizard.OnRequestDiff(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean);
 var
-  LForm: TFormAIDiff;
+  LForm: TRadIAFormAIDiff;
   LActiveFile: string;
   LConfig: IRadIAConfig;
   LActiveProvider: string;
@@ -349,7 +349,7 @@ begin
     ShowRadIAChat;
   end;
 
-  LForm := TFormAIDiff.Create(nil);
+  LForm := TRadIAFormAIDiff.Create(nil);
   try
     LActiveFile := 'ActiveUnit.pas';
     if TRadIAContainer.TryResolve<IRadIAIDEAdapter>(LAdapter) then

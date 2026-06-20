@@ -1,4 +1,4 @@
-object FrameAIConfig: TFrameAIConfig
+object FrameAIConfig: TRadIAFrameAIConfig
   Left = 0
   Top = 0
   Width = 630

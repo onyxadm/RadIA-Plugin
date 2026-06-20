@@ -10,7 +10,7 @@ uses
 type
   TFormRadIADockable = class(TDockableForm)
   private
-    FChatFrame: TFrameAIChat;
+    FChatFrame: TRadIAFrameAIChat;
     procedure ApplyIDETheme;
     procedure LoadWindowSize;
     procedure SaveVisibilityState(const AVisible: Boolean);
@@ -88,7 +88,7 @@ begin
   Height := 650;
   LoadWindowSize;
   
-  FChatFrame := TFrameAIChat.Create(Self);
+  FChatFrame := TRadIAFrameAIChat.Create(Self);
   FChatFrame.Parent := Self;
   FChatFrame.Align := alClient;
   

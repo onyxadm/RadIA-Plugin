@@ -1,4 +1,4 @@
-object FormGithubAuth: TFormGithubAuth
+object FormGithubAuth: TRadIAFormGithubAuth
   Left = 0
   Top = 0
   BorderIcons = [biSystemMenu]

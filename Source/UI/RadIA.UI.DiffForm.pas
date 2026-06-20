@@ -9,7 +9,7 @@ uses
 
 type
   { Form to compare code changes side-by-side before applying them to the editor }
-  TFormAIDiff = class(TForm)
+  TRadIAFormAIDiff = class(TForm)
     pnlFooter: TPanel;
     lblSeparator: TLabel;
     btnPrevConflict: TButton;
@@ -70,7 +70,7 @@ const
   CDiffDefaultTimeoutMs = 60000;
   CDiffWebLoginTimeoutMs = 300000;
 
-procedure TFormAIDiff.CreateWnd;
+procedure TRadIAFormAIDiff.CreateWnd;
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
@@ -92,7 +92,7 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.FormCreate(Sender: TObject);
+procedure TRadIAFormAIDiff.FormCreate(Sender: TObject);
 var
   LThemingServices: IOTAIDEThemingServices;
 begin
@@ -132,14 +132,14 @@ begin
   OnShow := FormShow;
 end;
 
-procedure TFormAIDiff.FormDestroy(Sender: TObject);
+procedure TRadIAFormAIDiff.FormDestroy(Sender: TObject);
 begin
   SaveWindowPlacement;
   (FLifecycleGuard as IRadIALifecycleGuard).Invalidate;
   FAIService := nil;
 end;
 
-procedure TFormAIDiff.LoadWindowPlacement;
+procedure TRadIAFormAIDiff.LoadWindowPlacement;
 var
   LReg: TRegistry;
   LRegPath: string;
@@ -184,7 +184,7 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.SaveWindowPlacement;
+procedure TRadIAFormAIDiff.SaveWindowPlacement;
 var
   LReg: TRegistry;
   LRegPath: string;
@@ -209,7 +209,7 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.FormShow(Sender: TObject);
+procedure TRadIAFormAIDiff.FormShow(Sender: TObject);
 var
   LThemingServices: IOTAIDEThemingServices;
 begin
@@ -228,7 +228,7 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.InitializeDiff(const AUnitName, AOriginalCode: string; const AWebFilesDir: string);
+procedure TRadIAFormAIDiff.InitializeDiff(const AUnitName, AOriginalCode: string; const AWebFilesDir: string);
 begin
   FUnitName := AUnitName;
   FOriginalCode := AOriginalCode;
@@ -236,13 +236,13 @@ begin
     FWebFilesDir := AWebFilesDir;
 end;
 
-procedure TFormAIDiff.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+procedure TRadIAFormAIDiff.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
 begin
   if Succeeded(AResult) then
     FBrowserInitialized := True;
 end;
 
-procedure TFormAIDiff.EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser;
+procedure TRadIAFormAIDiff.EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser;
   IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
 var
   LThemingServices: IOTAIDEThemingServices;
@@ -273,7 +273,7 @@ begin
     TryStartRefactoring;
 end;
 
-procedure TFormAIDiff.PostToWebView(const AAction, AText: string);
+procedure TRadIAFormAIDiff.PostToWebView(const AAction, AText: string);
 var
   LJson: TJSONObject;
 begin
@@ -293,7 +293,7 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.RenderDiffInBrowser;
+procedure TRadIAFormAIDiff.RenderDiffInBrowser;
 var
   LJson: TJSONObject;
 begin
@@ -319,7 +319,7 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.TryStartRefactoring;
+procedure TRadIAFormAIDiff.TryStartRefactoring;
 begin
   if FRequestStarted or not FBrowserInitialized or not FPageReady then
     Exit;
@@ -329,7 +329,7 @@ begin
   RequestRefactoring;
 end;
 
-procedure TFormAIDiff.RequestTimeoutElapsed(Sender: TObject);
+procedure TRadIAFormAIDiff.RequestTimeoutElapsed(Sender: TObject);
 begin
   FRequestTimeoutTimer.Enabled := False;
 
@@ -344,7 +344,7 @@ begin
   RenderDiffInBrowser;
 end;
 
-function TFormAIDiff.CleanSuggestedCode(const AResponse: string): string;
+function TRadIAFormAIDiff.CleanSuggestedCode(const AResponse: string): string;
 var
   LLines: TStringList;
   I: Integer;
@@ -377,7 +377,7 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.RequestRefactoring;
+procedure TRadIAFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
   LGuard: IRadIALifecycleGuard;
@@ -446,7 +446,7 @@ begin
     end, rpRefactorCode);
 end;
 
-procedure TFormAIDiff.btnPrevConflictClick(Sender: TObject);
+procedure TRadIAFormAIDiff.btnPrevConflictClick(Sender: TObject);
 var
   LJson: TJSONObject;
 begin
@@ -462,7 +462,7 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.btnNextConflictClick(Sender: TObject);
+procedure TRadIAFormAIDiff.btnNextConflictClick(Sender: TObject);
 var
   LJson: TJSONObject;
 begin

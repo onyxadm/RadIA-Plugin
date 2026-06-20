@@ -15,7 +15,7 @@ type
   private
     FTag: TRadIAPageTag;
     FTitle: string;
-    FFrame: TFrameAIConfig;
+    FFrame: TRadIAFrameAIConfig;
   public
     constructor Create(const ATitle: string; ATag: TRadIAPageTag);
     
@@ -66,14 +66,14 @@ end;
 
 function TRadIAAddInOptions.GetFrameClass: TCustomFrameClass;
 begin
-  Result := TFrameAIConfig;
+  Result := TRadIAFrameAIConfig;
 end;
 
 procedure TRadIAAddInOptions.FrameCreated(AFrame: TCustomFrame);
 begin
-  if AFrame is TFrameAIConfig then
+  if AFrame is TRadIAFrameAIConfig then
   begin
-    FFrame := TFrameAIConfig(AFrame);
+    FFrame := TRadIAFrameAIConfig(AFrame);
     FFrame.LoadConfig;
     
     // Selecionar a aba adequada

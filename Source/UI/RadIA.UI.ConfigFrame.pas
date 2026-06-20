@@ -9,7 +9,7 @@ uses
   RadIA.Core.PromptTemplates, RadIA.UI.ConfigPresenter;
 
 type
-  TFrameAIConfig = class(TFrame, IRadIAConfigView)
+  TRadIAFrameAIConfig = class(TFrame, IRadIAConfigView)
   published
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
@@ -276,7 +276,7 @@ type
   TTabSheetColorHack = class(TTabSheet);
   TWinControlHack = class(TWinControl);
 
-function TFrameAIConfig.CreateCheckBox(AParent: TWinControl; const ACaption: string;
+function TRadIAFrameAIConfig.CreateCheckBox(AParent: TWinControl; const ACaption: string;
   const ALeft, ATop, AWidth: Integer): TCheckBox;
 begin
   Result := TCheckBox.Create(Self);
@@ -288,7 +288,7 @@ begin
   Result.Caption := ACaption;
 end;
 
-function TFrameAIConfig.CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer;
+function TRadIAFrameAIConfig.CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer;
   const ANumbersOnly: Boolean): TEdit;
 begin
   Result := TEdit.Create(Self);
@@ -299,7 +299,7 @@ begin
   Result.NumbersOnly := ANumbersOnly;
 end;
 
-function TFrameAIConfig.CreateLabel(AParent: TWinControl; const ACaption: string;
+function TRadIAFrameAIConfig.CreateLabel(AParent: TWinControl; const ACaption: string;
   const ALeft, ATop: Integer): TLabel;
 begin
   Result := TLabel.Create(Self);
@@ -309,7 +309,7 @@ begin
   Result.Caption := ACaption;
 end;
 
-procedure TFrameAIConfig.CreateTemplateOriginLabel;
+procedure TRadIAFrameAIConfig.CreateTemplateOriginLabel;
 begin
   lblTemplateOrigin := TLabel.Create(Self);
   lblTemplateOrigin.Parent := pnlTemplatesClient;
@@ -320,7 +320,7 @@ begin
   lblTemplateOrigin.Caption := '';
 end;
 
-procedure TFrameAIConfig.CreateGeneralTab;
+procedure TRadIAFrameAIConfig.CreateGeneralTab;
 begin
   tsGeneral := TTabSheet.Create(Self);
   tsGeneral.PageControl := pgcSettings;
@@ -385,7 +385,7 @@ begin
   btnResetQuota.OnClick := btnResetQuotaClick;
 end;
 
-constructor TFrameAIConfig.Create(AOwner: TComponent);
+constructor TRadIAFrameAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
@@ -434,7 +434,7 @@ begin
   FPresenter.LoadConfig;
 end;
 
-destructor TFrameAIConfig.Destroy;
+destructor TRadIAFrameAIConfig.Destroy;
 begin
   FPresenter.Free;
   FEdtTemperatures.Free;
@@ -443,7 +443,7 @@ begin
   inherited Destroy;
 end;
 
-procedure TFrameAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
+procedure TRadIAFrameAIConfig.CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
 var
   LGroupBox: TGroupBox;
   LLabel: TLabel;
@@ -513,7 +513,7 @@ begin
   FEdtTimeouts.Add(AProviderId, LEdtTime);
 end;
 
-procedure TFrameAIConfig.UpdateVCLColors(const AThemeName: string);
+procedure TRadIAFrameAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LColors: TRadIAThemeColors;
   I: Integer;
@@ -850,22 +850,22 @@ begin
   end;
 end;
 
-procedure TFrameAIConfig.LoadConfig;
+procedure TRadIAFrameAIConfig.LoadConfig;
 begin
   FPresenter.LoadConfig;
 end;
 
-procedure TFrameAIConfig.lstTemplatesClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lstTemplatesClick(Sender: TObject);
 begin
   FPresenter.HandleTemplateSelected;
 end;
 
-procedure TFrameAIConfig.btnNewTemplateClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnNewTemplateClick(Sender: TObject);
 begin
   FPresenter.CreateNewTemplate;
 end;
 
-procedure TFrameAIConfig.btnDeleteTemplateClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnDeleteTemplateClick(Sender: TObject);
 var
   LConfirmMsg: string;
 begin
@@ -886,12 +886,12 @@ begin
   end;
 end;
 
-procedure TFrameAIConfig.btnSaveTemplateClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnSaveTemplateClick(Sender: TObject);
 begin
   FPresenter.SaveTemplate;
 end;
 
-procedure TFrameAIConfig.btnRestoreDefaultsClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnRestoreDefaultsClick(Sender: TObject);
 begin
   if MessageDlg('Are you sure you want to restore default templates? This will overwrite your changes.',
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
@@ -900,12 +900,12 @@ begin
   end;
 end;
 
-procedure TFrameAIConfig.btnExportTemplatesClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnExportTemplatesClick(Sender: TObject);
 begin
   FPresenter.ExportTemplates;
 end;
 
-procedure TFrameAIConfig.btnImportTemplatesClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnImportTemplatesClick(Sender: TObject);
 var
   LErrorMsg: string;
   LMerge: Boolean;
@@ -934,23 +934,23 @@ begin
   end;
 end;
 
-procedure TFrameAIConfig.btnBrowseLogPathClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnBrowseLogPathClick(Sender: TObject);
 begin
   FPresenter.BrowseLogPath;
 end;
 
-procedure TFrameAIConfig.btnResetQuotaClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnResetQuotaClick(Sender: TObject);
 begin
   FPresenter.ResetQuota;
 end;
 
-procedure TFrameAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
+procedure TRadIAFrameAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
 begin
   if Node <> nil then
     SelectCategoryByName(Node.Text);
 end;
 
-procedure TFrameAIConfig.SelectCategoryByName(const ACategoryName: string);
+procedure TRadIAFrameAIConfig.SelectCategoryByName(const ACategoryName: string);
 begin
   if SameText(ACategoryName, 'General / Logs') then
     pgcSettings.ActivePage := tsGeneral
@@ -986,7 +986,7 @@ begin
     pgcSettings.ActivePage := tsBedrock
 end;
 
-procedure TFrameAIConfig.grpGeminiAuthTypeClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.grpGeminiAuthTypeClick(Sender: TObject);
 var
   LIsApiKey: Boolean;
 begin
@@ -998,7 +998,7 @@ begin
     edtGeminiKey.Text := '';
 end;
 
-procedure TFrameAIConfig.grpOpenAIAuthTypeClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.grpOpenAIAuthTypeClick(Sender: TObject);
 var
   LIsApiKey: Boolean;
 begin
@@ -1015,67 +1015,67 @@ begin
   end;
 end;
 
-procedure TFrameAIConfig.OpenUrl(const AUrl: string);
+procedure TRadIAFrameAIConfig.OpenUrl(const AUrl: string);
 begin
   ShellExecute(0, 'open', PChar(AUrl), nil, nil, SW_SHOWNORMAL);
 end;
 
-procedure TFrameAIConfig.lnkGeminiGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkGeminiGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://aistudio.google.com/app/apikey');
 end;
 
-procedure TFrameAIConfig.lnkOpenAIGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkOpenAIGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://platform.openai.com/api-keys');
 end;
 
-procedure TFrameAIConfig.lnkClaudeGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkClaudeGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://console.anthropic.com/settings/keys');
 end;
 
-procedure TFrameAIConfig.lnkDeepSeekGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkDeepSeekGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://platform.deepseek.com/api_keys');
 end;
 
-procedure TFrameAIConfig.lnkGroqGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkGroqGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://console.groq.com/keys');
 end;
 
-procedure TFrameAIConfig.lnkOpenRouterGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkOpenRouterGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://openrouter.ai/keys');
 end;
 
-procedure TFrameAIConfig.lnkQwenGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkQwenGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://bailian.console.aliyun.com/');
 end;
 
-procedure TFrameAIConfig.lnkMistralGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkMistralGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://console.mistral.ai/api-keys/');
 end;
 
-procedure TFrameAIConfig.lnkBedrockGetKeyClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.lnkBedrockGetKeyClick(Sender: TObject);
 begin
   OpenUrl('https://console.aws.amazon.com/iam/');
 end;
 
-procedure TFrameAIConfig.btnConnectGithubClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnConnectGithubClick(Sender: TObject);
 var
   LToken: string;
 begin
-  if TFormGithubAuth.Execute(Self, LToken) then
+  if TRadIAFormGithubAuth.Execute(Self, LToken) then
   begin
     FPresenter.ConnectGithub(LToken);
   end;
 end;
 
-procedure TFrameAIConfig.btnImportVSCodeClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnImportVSCodeClick(Sender: TObject);
 var
   LPath: string;
   LJsonStr: string;
@@ -1138,9 +1138,9 @@ begin
   end;
 end;
 
-procedure TFrameAIConfig.btnGeminiWebLoginClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnGeminiWebLoginClick(Sender: TObject);
 begin
-  TFormWebLogin.ShowLogin(Self, 'https://gemini.google.com',
+  TRadIAFormWebLogin.ShowLogin(Self, 'https://gemini.google.com',
     procedure
     begin
       grpGeminiAuthType.ItemIndex := 1;
@@ -1150,9 +1150,9 @@ begin
     end);
 end;
 
-procedure TFrameAIConfig.btnOpenAIWebLoginClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnOpenAIWebLoginClick(Sender: TObject);
 begin
-  TFormWebLogin.ShowLogin(Self, 'https://chatgpt.com',
+  TRadIAFormWebLogin.ShowLogin(Self, 'https://chatgpt.com',
     procedure
     begin
       grpOpenAIAuthType.ItemIndex := 1;
@@ -1162,19 +1162,19 @@ begin
     end);
 end;
 
-procedure TFrameAIConfig.btnSaveClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnSaveClick(Sender: TObject);
 begin
   FPresenter.SaveConfig;
 end;
 
-procedure TFrameAIConfig.btnCancelClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.btnCancelClick(Sender: TObject);
 begin
   FPresenter.CancelConfig;
 end;
 
 { IRadIAConfigView Implementation }
 
-function TFrameAIConfig.GetApiKey(const AProviderId: string): string;
+function TRadIAFrameAIConfig.GetApiKey(const AProviderId: string): string;
 begin
   if SameText(AProviderId, 'Gemini') then Result := edtGeminiKey.Text
   else if SameText(AProviderId, 'OpenAI') then Result := edtOpenAIKey.Text
@@ -1189,7 +1189,7 @@ begin
   else Result := '';
 end;
 
-procedure TFrameAIConfig.SetApiKey(const AProviderId: string; const AKey: string);
+procedure TRadIAFrameAIConfig.SetApiKey(const AProviderId: string; const AKey: string);
 begin
   if SameText(AProviderId, 'Gemini') then edtGeminiKey.Text := AKey
   else if SameText(AProviderId, 'OpenAI') then edtOpenAIKey.Text := AKey
@@ -1203,7 +1203,7 @@ begin
   else if SameText(AProviderId, 'Mistral') then edtMistralKey.Text := AKey;
 end;
 
-function TFrameAIConfig.GetCustomUrl(const AProviderId: string): string;
+function TRadIAFrameAIConfig.GetCustomUrl(const AProviderId: string): string;
 begin
   if SameText(AProviderId, 'OpenAI') then Result := edtOpenAICustomUrl.Text
   else if SameText(AProviderId, 'Ollama') then Result := edtOllamaUrl.Text
@@ -1212,7 +1212,7 @@ begin
   else Result := '';
 end;
 
-procedure TFrameAIConfig.SetCustomUrl(const AProviderId: string; const AUrl: string);
+procedure TRadIAFrameAIConfig.SetCustomUrl(const AProviderId: string; const AUrl: string);
 begin
   if SameText(AProviderId, 'OpenAI') then edtOpenAICustomUrl.Text := AUrl
   else if SameText(AProviderId, 'Ollama') then edtOllamaUrl.Text := AUrl
@@ -1220,14 +1220,14 @@ begin
   else if SameText(AProviderId, 'AzureOpenAI') then edtAzureUrl.Text := AUrl;
 end;
 
-function TFrameAIConfig.GetAuthTypeIndex(const AProviderId: string): Integer;
+function TRadIAFrameAIConfig.GetAuthTypeIndex(const AProviderId: string): Integer;
 begin
   if SameText(AProviderId, 'Gemini') then Result := grpGeminiAuthType.ItemIndex
   else if SameText(AProviderId, 'OpenAI') then Result := grpOpenAIAuthType.ItemIndex
   else Result := 0;
 end;
 
-procedure TFrameAIConfig.SetAuthTypeIndex(const AProviderId: string; const AIndex: Integer);
+procedure TRadIAFrameAIConfig.SetAuthTypeIndex(const AProviderId: string; const AIndex: Integer);
 begin
   if SameText(AProviderId, 'Gemini') then
   begin
@@ -1241,115 +1241,115 @@ begin
   end;
 end;
 
-function TFrameAIConfig.GetTemperatureInput(const AProviderId: string): string;
+function TRadIAFrameAIConfig.GetTemperatureInput(const AProviderId: string): string;
 var
   LEdit: TEdit;
 begin
   if FEdtTemperatures.TryGetValue(AProviderId, LEdit) then Result := LEdit.Text else Result := '0.7';
 end;
 
-procedure TFrameAIConfig.SetTemperatureInput(const AProviderId: string; const AValue: string);
+procedure TRadIAFrameAIConfig.SetTemperatureInput(const AProviderId: string; const AValue: string);
 var
   LEdit: TEdit;
 begin
   if FEdtTemperatures.TryGetValue(AProviderId, LEdit) then LEdit.Text := AValue;
 end;
 
-function TFrameAIConfig.GetMaxTokensInput(const AProviderId: string): string;
+function TRadIAFrameAIConfig.GetMaxTokensInput(const AProviderId: string): string;
 var
   LEdit: TEdit;
 begin
   if FEdtMaxTokens.TryGetValue(AProviderId, LEdit) then Result := LEdit.Text else Result := '2048';
 end;
 
-procedure TFrameAIConfig.SetMaxTokensInput(const AProviderId: string; const AValue: string);
+procedure TRadIAFrameAIConfig.SetMaxTokensInput(const AProviderId: string; const AValue: string);
 var
   LEdit: TEdit;
 begin
   if FEdtMaxTokens.TryGetValue(AProviderId, LEdit) then LEdit.Text := AValue;
 end;
 
-function TFrameAIConfig.GetTimeoutInput(const AProviderId: string): string;
+function TRadIAFrameAIConfig.GetTimeoutInput(const AProviderId: string): string;
 var
   LEdit: TEdit;
 begin
   if FEdtTimeouts.TryGetValue(AProviderId, LEdit) then Result := LEdit.Text else Result := '60';
 end;
 
-procedure TFrameAIConfig.SetTimeoutInput(const AProviderId: string; const AValue: string);
+procedure TRadIAFrameAIConfig.SetTimeoutInput(const AProviderId: string; const AValue: string);
 var
   LEdit: TEdit;
 begin
   if FEdtTimeouts.TryGetValue(AProviderId, LEdit) then LEdit.Text := AValue;
 end;
 
-function TFrameAIConfig.GetAzureModel: string; begin Result := edtAzureModel.Text; end;
-procedure TFrameAIConfig.SetAzureModel(const AValue: string); begin edtAzureModel.Text := AValue; end;
-function TFrameAIConfig.GetAzureApiVersion: string; begin Result := edtAzureApiVersion.Text; end;
-procedure TFrameAIConfig.SetAzureApiVersion(const AValue: string); begin edtAzureApiVersion.Text := AValue; end;
+function TRadIAFrameAIConfig.GetAzureModel: string; begin Result := edtAzureModel.Text; end;
+procedure TRadIAFrameAIConfig.SetAzureModel(const AValue: string); begin edtAzureModel.Text := AValue; end;
+function TRadIAFrameAIConfig.GetAzureApiVersion: string; begin Result := edtAzureApiVersion.Text; end;
+procedure TRadIAFrameAIConfig.SetAzureApiVersion(const AValue: string); begin edtAzureApiVersion.Text := AValue; end;
 
-function TFrameAIConfig.GetAwsAccessKeyId: string; begin Result := edtAwsAccessKeyId.Text; end;
-procedure TFrameAIConfig.SetAwsAccessKeyId(const AValue: string); begin edtAwsAccessKeyId.Text := AValue; end;
-function TFrameAIConfig.GetAwsSecretAccessKey: string; begin Result := edtAwsSecretAccessKey.Text; end;
-procedure TFrameAIConfig.SetAwsSecretAccessKey(const AValue: string); begin edtAwsSecretAccessKey.Text := AValue; end;
-function TFrameAIConfig.GetAwsRegion: string; begin Result := edtAwsRegion.Text; end;
-procedure TFrameAIConfig.SetAwsRegion(const AValue: string); begin edtAwsRegion.Text := AValue; end;
-function TFrameAIConfig.GetAwsSessionToken: string; begin Result := edtAwsSessionToken.Text; end;
-procedure TFrameAIConfig.SetAwsSessionToken(const AValue: string); begin edtAwsSessionToken.Text := AValue; end;
+function TRadIAFrameAIConfig.GetAwsAccessKeyId: string; begin Result := edtAwsAccessKeyId.Text; end;
+procedure TRadIAFrameAIConfig.SetAwsAccessKeyId(const AValue: string); begin edtAwsAccessKeyId.Text := AValue; end;
+function TRadIAFrameAIConfig.GetAwsSecretAccessKey: string; begin Result := edtAwsSecretAccessKey.Text; end;
+procedure TRadIAFrameAIConfig.SetAwsSecretAccessKey(const AValue: string); begin edtAwsSecretAccessKey.Text := AValue; end;
+function TRadIAFrameAIConfig.GetAwsRegion: string; begin Result := edtAwsRegion.Text; end;
+procedure TRadIAFrameAIConfig.SetAwsRegion(const AValue: string); begin edtAwsRegion.Text := AValue; end;
+function TRadIAFrameAIConfig.GetAwsSessionToken: string; begin Result := edtAwsSessionToken.Text; end;
+procedure TRadIAFrameAIConfig.SetAwsSessionToken(const AValue: string); begin edtAwsSessionToken.Text := AValue; end;
 
-function TFrameAIConfig.GetSystemPrompt: string; begin Result := memSystemPrompt.Text; end;
-procedure TFrameAIConfig.SetSystemPrompt(const AValue: string); begin memSystemPrompt.Text := AValue; end;
-function TFrameAIConfig.GetSmartConfigEnabled: Boolean; begin Result := FChkSmartConfig.Checked; end;
-procedure TFrameAIConfig.SetSmartConfigEnabled(const AValue: Boolean); begin FChkSmartConfig.Checked := AValue; end;
-function TFrameAIConfig.GetInjectDelphiVersion: Boolean; begin Result := chkInjectDelphiVersion.Checked; end;
-procedure TFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean); begin chkInjectDelphiVersion.Checked := AValue; end;
-function TFrameAIConfig.GetConciseResponses: Boolean; begin Result := chkConciseResponses.Checked; end;
-procedure TFrameAIConfig.SetConciseResponses(const AValue: Boolean); begin chkConciseResponses.Checked := AValue; end;
-function TFrameAIConfig.GetLogEnabled: Boolean; begin Result := chkLogEnabled.Checked; end;
-procedure TFrameAIConfig.SetLogEnabled(const AValue: Boolean); begin chkLogEnabled.Checked := AValue; end;
-function TFrameAIConfig.GetLogPath: string; begin Result := edtLogPath.Text; end;
-procedure TFrameAIConfig.SetLogPath(const AValue: string); begin edtLogPath.Text := AValue; end;
-function TFrameAIConfig.GetLogMaxSize: string; begin Result := edtLogMaxSize.Text; end;
-procedure TFrameAIConfig.SetLogMaxSize(const AValue: string); begin edtLogMaxSize.Text := AValue; end;
+function TRadIAFrameAIConfig.GetSystemPrompt: string; begin Result := memSystemPrompt.Text; end;
+procedure TRadIAFrameAIConfig.SetSystemPrompt(const AValue: string); begin memSystemPrompt.Text := AValue; end;
+function TRadIAFrameAIConfig.GetSmartConfigEnabled: Boolean; begin Result := FChkSmartConfig.Checked; end;
+procedure TRadIAFrameAIConfig.SetSmartConfigEnabled(const AValue: Boolean); begin FChkSmartConfig.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetInjectDelphiVersion: Boolean; begin Result := chkInjectDelphiVersion.Checked; end;
+procedure TRadIAFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean); begin chkInjectDelphiVersion.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetConciseResponses: Boolean; begin Result := chkConciseResponses.Checked; end;
+procedure TRadIAFrameAIConfig.SetConciseResponses(const AValue: Boolean); begin chkConciseResponses.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetLogEnabled: Boolean; begin Result := chkLogEnabled.Checked; end;
+procedure TRadIAFrameAIConfig.SetLogEnabled(const AValue: Boolean); begin chkLogEnabled.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetLogPath: string; begin Result := edtLogPath.Text; end;
+procedure TRadIAFrameAIConfig.SetLogPath(const AValue: string); begin edtLogPath.Text := AValue; end;
+function TRadIAFrameAIConfig.GetLogMaxSize: string; begin Result := edtLogMaxSize.Text; end;
+procedure TRadIAFrameAIConfig.SetLogMaxSize(const AValue: string); begin edtLogMaxSize.Text := AValue; end;
 
-function TFrameAIConfig.GetQuotaEnabled: Boolean; begin Result := chkQuotaEnabled.Checked; end;
-procedure TFrameAIConfig.SetQuotaEnabled(const AValue: Boolean); begin chkQuotaEnabled.Checked := AValue; end;
-function TFrameAIConfig.GetQuotaLimit: string; begin Result := edtQuotaLimit.Text; end;
-procedure TFrameAIConfig.SetQuotaLimit(const AValue: string); begin edtQuotaLimit.Text := AValue; end;
-procedure TFrameAIConfig.SetQuotaUsedText(const AText: string); begin lblQuotaUsed.Caption := AText; end;
+function TRadIAFrameAIConfig.GetQuotaEnabled: Boolean; begin Result := chkQuotaEnabled.Checked; end;
+procedure TRadIAFrameAIConfig.SetQuotaEnabled(const AValue: Boolean); begin chkQuotaEnabled.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetQuotaLimit: string; begin Result := edtQuotaLimit.Text; end;
+procedure TRadIAFrameAIConfig.SetQuotaLimit(const AValue: string); begin edtQuotaLimit.Text := AValue; end;
+procedure TRadIAFrameAIConfig.SetQuotaUsedText(const AText: string); begin lblQuotaUsed.Caption := AText; end;
 
-procedure TFrameAIConfig.ShowMessageDialog(const AMessage: string);
+procedure TRadIAFrameAIConfig.ShowMessageDialog(const AMessage: string);
 begin
   ShowMessage(AMessage);
 end;
 
-function TFrameAIConfig.SaveDialogExecute(out AFileName: string): Boolean;
+function TRadIAFrameAIConfig.SaveDialogExecute(out AFileName: string): Boolean;
 begin
   Result := dlgsTemplatesSave.Execute;
   if Result then AFileName := dlgsTemplatesSave.FileName;
 end;
 
-function TFrameAIConfig.OpenDialogExecute(out AFileName: string): Boolean;
+function TRadIAFrameAIConfig.OpenDialogExecute(out AFileName: string): Boolean;
 begin
   Result := dlgsTemplatesOpen.Execute;
   if Result then AFileName := dlgsTemplatesOpen.FileName;
 end;
 
-function TFrameAIConfig.FolderDialogExecute(out AFolderName: string): Boolean;
+function TRadIAFrameAIConfig.FolderDialogExecute(out AFolderName: string): Boolean;
 begin
   Result := Vcl.FileCtrl.SelectDirectory('Select Log Folder', '', AFolderName, [sdNewUI, sdNewFolder]);
 end;
 
-procedure TFrameAIConfig.CloseView(const AModalResult: Integer);
+procedure TRadIAFrameAIConfig.CloseView(const AModalResult: Integer);
 var
   LForm: TCustomForm;
 begin
   LForm := GetParentForm(Self);
-  if (LForm <> nil) and SameText(LForm.ClassName, 'TFormAIConfig') then
+  if (LForm <> nil) and SameText(LForm.ClassName, 'TRadIAFormAIConfig') then
     LForm.ModalResult := AModalResult;
 end;
 
-procedure TFrameAIConfig.UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
+procedure TRadIAFrameAIConfig.UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
 var
   LName: string;
 begin
@@ -1364,7 +1364,7 @@ begin
   lstTemplates.ItemIndex := ASelectedIndex;
 end;
 
-procedure TFrameAIConfig.GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
+procedure TRadIAFrameAIConfig.GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
 begin
   AName := Trim(edtTemplateName.Text);
   ADesc := Trim(edtTemplateDesc.Text);
@@ -1373,7 +1373,7 @@ begin
   AIsProjGen := chkIsProjectGenerator.Checked;
 end;
 
-procedure TFrameAIConfig.SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+procedure TRadIAFrameAIConfig.SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
 begin
   edtTemplateName.Text := AName;
   edtTemplateDesc.Text := ADesc;
@@ -1383,7 +1383,7 @@ begin
   edtTemplateName.ReadOnly := AIsSystem;
 end;
 
-procedure TFrameAIConfig.ClearTemplateFields;
+procedure TRadIAFrameAIConfig.ClearTemplateFields;
 begin
   edtTemplateName.Text := '';
   edtTemplateDesc.Text := '';
@@ -1393,28 +1393,28 @@ begin
   edtTemplateName.ReadOnly := False;
 end;
 
-procedure TFrameAIConfig.FocusTemplateName;
+procedure TRadIAFrameAIConfig.FocusTemplateName;
 begin
   edtTemplateName.SetFocus;
 end;
 
-function TFrameAIConfig.GetSelectedTemplateIndex: Integer;
+function TRadIAFrameAIConfig.GetSelectedTemplateIndex: Integer;
 begin
   Result := lstTemplates.ItemIndex;
 end;
 
-procedure TFrameAIConfig.SetSelectedTemplateIndex(const AIndex: Integer);
+procedure TRadIAFrameAIConfig.SetSelectedTemplateIndex(const AIndex: Integer);
 begin
   lstTemplates.ItemIndex := AIndex;
 end;
 
-procedure TFrameAIConfig.SetDeleteTemplateButtonState(const ACaption: string; const AEnabled: Boolean);
+procedure TRadIAFrameAIConfig.SetDeleteTemplateButtonState(const ACaption: string; const AEnabled: Boolean);
 begin
   btnDeleteTemplate.Caption := ACaption;
   btnDeleteTemplate.Enabled := AEnabled;
 end;
 
-procedure TFrameAIConfig.SetTemplateOriginLabel(const AText: string; const AColor: TColor);
+procedure TRadIAFrameAIConfig.SetTemplateOriginLabel(const AText: string; const AColor: TColor);
 begin
   lblTemplateOrigin.Caption := AText;
   lblTemplateOrigin.Font.Color := AColor;

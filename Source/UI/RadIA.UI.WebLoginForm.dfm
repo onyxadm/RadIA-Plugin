@@ -1,4 +1,4 @@
-object FormWebLogin: TFormWebLogin
+object FormWebLogin: TRadIAFormWebLogin
   Left = 0
   Top = 0
   BorderIcons = [biSystemMenu]

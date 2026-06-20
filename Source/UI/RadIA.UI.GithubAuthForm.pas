@@ -8,7 +8,7 @@ uses
   System.Threading, RadIA.Provider.GithubCopilot;
 
 type
-  TFormGithubAuth = class(TForm)
+  TRadIAFormGithubAuth = class(TForm)
     pnlClient: TPanel;
     lblTitle: TLabel;
     lblInstructions: TLabel;
@@ -44,9 +44,9 @@ implementation
 uses
   Winapi.ShellAPI, ToolsAPI, RadIA.UI.Resources, Vcl.Themes;
 
-class function TFormGithubAuth.Execute(AOwner: TComponent; out AAccessToken: string): Boolean;
+class function TRadIAFormGithubAuth.Execute(AOwner: TComponent; out AAccessToken: string): Boolean;
 var
-  LForm: TFormGithubAuth;
+  LForm: TRadIAFormGithubAuth;
   LDeviceCode, LUserCode, LVerificationUri: string;
   LInterval, LExpiresIn: Integer;
   LErrorMsg: string;
@@ -62,7 +62,7 @@ begin
     Exit(False);
   end;
 
-  LForm := TFormGithubAuth.Create(AOwner);
+  LForm := TRadIAFormGithubAuth.Create(AOwner);
   try
     LForm.FDeviceCode := LDeviceCode;
     LForm.FUserCode := LUserCode;
@@ -86,7 +86,7 @@ begin
   end;
 end;
 
-constructor TFormGithubAuth.Create(AOwner: TComponent);
+constructor TRadIAFormGithubAuth.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
@@ -128,7 +128,7 @@ begin
   lblStatus.Font.Color := LColors.TextColor;
 end;
 
-procedure TFormGithubAuth.CreateWnd;
+procedure TRadIAFormGithubAuth.CreateWnd;
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
@@ -145,14 +145,14 @@ begin
     TUIHelper.ApplyDarkTitleBar(Self, True);
 end;
 
-procedure TFormGithubAuth.FormShow(Sender: TObject);
+procedure TRadIAFormGithubAuth.FormShow(Sender: TObject);
 begin
   StartPolling;
 end;
 
-procedure TFormGithubAuth.StartPolling;
+procedure TRadIAFormGithubAuth.StartPolling;
 var
-  LForm: TFormGithubAuth;
+  LForm: TRadIAFormGithubAuth;
   LDeviceCode: string;
   LInterval: Integer;
   LExpiresIn: Integer;
@@ -198,18 +198,18 @@ begin
     end);
 end;
 
-procedure TFormGithubAuth.btnOpenBrowserClick(Sender: TObject);
+procedure TRadIAFormGithubAuth.btnOpenBrowserClick(Sender: TObject);
 begin
   ShellExecute(0, 'open', PChar(FVerificationUri), nil, nil, SW_SHOWNORMAL);
 end;
 
-procedure TFormGithubAuth.btnCancelClick(Sender: TObject);
+procedure TRadIAFormGithubAuth.btnCancelClick(Sender: TObject);
 begin
   FCancelled := True;
   ModalResult := mrCancel;
 end;
 
-procedure TFormGithubAuth.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TRadIAFormGithubAuth.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   FCancelled := True;
 end;

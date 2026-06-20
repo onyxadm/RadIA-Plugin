@@ -1,4 +1,4 @@
-object FormAIDiff: TFormAIDiff
+object FormAIDiff: TRadIAFormAIDiff
   Left = 0
   Top = 0
   Caption = 'Rad IA - Smart Diff'

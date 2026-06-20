@@ -1,4 +1,4 @@
-object FrameAIChat: TFrameAIChat
+object FrameAIChat: TRadIAFrameAIChat
   Left = 0
   Top = 0
   Width = 990

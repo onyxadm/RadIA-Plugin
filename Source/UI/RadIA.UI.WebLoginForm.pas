@@ -9,7 +9,7 @@ uses
   RadIA.Core.Logger;
 
 type
-  TFormWebLogin = class(TForm)
+  TRadIAFormWebLogin = class(TForm)
     pnlHeader: TPanel;
     btnDone: TSpeedButton;
     lblTitle: TLabel;
@@ -99,13 +99,13 @@ begin
   end;
 end;
 
-{ TFormWebLogin }
+{ TRadIAFormWebLogin }
 
-class procedure TFormWebLogin.ShowLogin(const AParent: TComponent; const AUrl: string; const AOnSuccess: TProc);
+class procedure TRadIAFormWebLogin.ShowLogin(const AParent: TComponent; const AUrl: string; const AOnSuccess: TProc);
 var
-  LForm: TFormWebLogin;
+  LForm: TRadIAFormWebLogin;
 begin
-  LForm := TFormWebLogin.Create(AParent);
+  LForm := TRadIAFormWebLogin.Create(AParent);
   try
     LForm.FUrl := AUrl;
     LForm.FOnLoginSuccess := AOnSuccess;
@@ -121,17 +121,17 @@ begin
   end;
 end;
 
-procedure TFormWebLogin.FormCreate(Sender: TObject);
+procedure TRadIAFormWebLogin.FormCreate(Sender: TObject);
 begin
   UpdateTheme;
 end;
 
-procedure TFormWebLogin.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TRadIAFormWebLogin.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caHide;
 end;
 
-procedure TFormWebLogin.FormDestroy(Sender: TObject);
+procedure TRadIAFormWebLogin.FormDestroy(Sender: TObject);
 begin
   if Assigned(FEdgeBrowser) then
   begin
@@ -146,23 +146,23 @@ begin
   FreeAndNil(FAutoCloseTimer);
 end;
 
-procedure TFormWebLogin.FormShow(Sender: TObject);
+procedure TRadIAFormWebLogin.FormShow(Sender: TObject);
 begin
   CreateEdgeBrowser;
 end;
 
-procedure TFormWebLogin.btnDoneClick(Sender: TObject);
+procedure TRadIAFormWebLogin.btnDoneClick(Sender: TObject);
 begin
   CompleteWithCurrentSession;
 end;
 
-procedure TFormWebLogin.btnRetryBrowserClick(Sender: TObject);
+procedure TRadIAFormWebLogin.btnRetryBrowserClick(Sender: TObject);
 begin
   pnlBrowserFallback.Visible := False;
   NavigateToProvider;
 end;
 
-procedure TFormWebLogin.CompleteWithCurrentSession;
+procedure TRadIAFormWebLogin.CompleteWithCurrentSession;
 begin
   lblStatus.Caption := 'Using the confirmed browser session...';
   if Assigned(FOnLoginSuccess) then
@@ -170,7 +170,7 @@ begin
   ModalResult := mrOk;
 end;
 
-procedure TFormWebLogin.ScheduleAutoClose;
+procedure TRadIAFormWebLogin.ScheduleAutoClose;
 begin
   if not Assigned(FAutoCloseTimer) then
   begin
@@ -182,7 +182,7 @@ begin
   FAutoCloseTimer.Enabled := True;
 end;
 
-procedure TFormWebLogin.AutoCloseTimerElapsed(Sender: TObject);
+procedure TRadIAFormWebLogin.AutoCloseTimerElapsed(Sender: TObject);
 begin
   if Assigned(FAutoCloseTimer) then
     FAutoCloseTimer.Enabled := False;
@@ -190,7 +190,7 @@ begin
   CompleteWithCurrentSession;
 end;
 
-procedure TFormWebLogin.CreateEdgeBrowser;
+procedure TRadIAFormWebLogin.CreateEdgeBrowser;
 begin
   if Assigned(FEdgeBrowser) then
     Exit;
@@ -205,7 +205,7 @@ begin
   NavigateToProvider;
 end;
 
-procedure TFormWebLogin.NavigateToProvider;
+procedure TRadIAFormWebLogin.NavigateToProvider;
 begin
   if FUrl.Trim.IsEmpty then
   begin
@@ -229,7 +229,7 @@ begin
   FNavigationTimer.Enabled := True;
 end;
 
-procedure TFormWebLogin.UpdateTheme;
+procedure TRadIAFormWebLogin.UpdateTheme;
 var
   LThemingServices: IOTAIDEThemingServices;
   LThemeName: string;
@@ -283,7 +283,7 @@ begin
   TUIHelper.ApplyDarkTitleBar(Self, LColors.IsDark);
 end;
 
-procedure TFormWebLogin.NavigationTimerElapsed(Sender: TObject);
+procedure TRadIAFormWebLogin.NavigationTimerElapsed(Sender: TObject);
 begin
   if Assigned(FNavigationTimer) then
     FNavigationTimer.Enabled := False;
@@ -294,11 +294,11 @@ begin
       'Sign-in page is taking longer than expected',
       'Use your existing session or retry the embedded browser.');
     lblStatus.Caption := 'Embedded browser is still starting.';
-    TLogger.Log('TFormWebLogin: WebView2 is still creating after the navigation timeout.', 'UI');
+    TLogger.Log('TRadIAFormWebLogin: WebView2 is still creating after the navigation timeout.', 'UI');
   end;
 end;
 
-procedure TFormWebLogin.ShowBrowserFallback(const ATitle, AInfo: string);
+procedure TRadIAFormWebLogin.ShowBrowserFallback(const ATitle, AInfo: string);
 begin
   lblFallbackTitle.Caption := ATitle;
   lblFallbackInfo.Caption := AInfo;
@@ -306,7 +306,7 @@ begin
   pnlBrowserFallback.BringToFront;
 end;
 
-procedure TFormWebLogin.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+procedure TRadIAFormWebLogin.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
 var
   LSettings: ICoreWebView2Settings;
   LSettings2: ICoreWebView2Settings2_Local;
@@ -360,11 +360,11 @@ begin
       FNavigationTimer.Enabled := False;
 
     lblStatus.Caption := Format('Unable to initialize WebView2. HRESULT: %.8x', [Cardinal(AResult)]);
-    TLogger.Log(Format('TFormWebLogin: WebView2 initialization failed. HRESULT: %.8x', [Cardinal(AResult)]), 'UI');
+    TLogger.Log(Format('TRadIAFormWebLogin: WebView2 initialization failed. HRESULT: %.8x', [Cardinal(AResult)]), 'UI');
   end;
 end;
 
-procedure TFormWebLogin.EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean;
+procedure TRadIAFormWebLogin.EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean;
   WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
 begin
   if Assigned(FNavigationTimer) then
@@ -384,7 +384,7 @@ begin
   end;
 end;
 
-procedure TFormWebLogin.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+procedure TRadIAFormWebLogin.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
   LJsonStr: PWideChar;
@@ -411,7 +411,7 @@ begin
   end;
 end;
 
-procedure TFormWebLogin.ProcessWebMessage(const AMessage: string);
+procedure TRadIAFormWebLogin.ProcessWebMessage(const AMessage: string);
 var
   LParsed: TJSONValue;
   LJson: TJSONObject;
@@ -429,7 +429,7 @@ begin
     
     if SameText(LAction, 'login_complete') then
     begin
-      TLogger.Log('TFormWebLogin: Existing signed-in provider session detected.', 'UI');
+      TLogger.Log('TRadIAFormWebLogin: Existing signed-in provider session detected.', 'UI');
       lblStatus.Caption := 'You are already signed in. Returning to Rad IA...';
       ScheduleAutoClose;
     end;

@@ -8,7 +8,7 @@ uses
   Vcl.ComCtrls, RadIA.UI.ConfigFrame, ToolsAPI;
 
 type
-  TFormAIConfig = class(TForm)
+  TRadIAFormAIConfig = class(TForm)
   published
     pnlSidebar: TPanel;
     tvCategories: TTreeView;
@@ -22,7 +22,7 @@ type
   protected
     procedure CreateWnd; override;
   private
-    FFrameConfig: TFrameAIConfig;
+    FFrameConfig: TRadIAFrameAIConfig;
     procedure UpdateVCLColors(const AThemeName: string);
   public
     constructor Create(AOwner: TComponent); override;
@@ -36,7 +36,7 @@ implementation
 uses
   RadIA.UI.Resources, Vcl.Themes;
 
-constructor TFormAIConfig.Create(AOwner: TComponent);
+constructor TRadIAFormAIConfig.Create(AOwner: TComponent);
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
@@ -45,7 +45,7 @@ var
 begin
   inherited Create(AOwner);
   
-  FFrameConfig := TFrameAIConfig.Create(Self);
+  FFrameConfig := TRadIAFrameAIConfig.Create(Self);
   FFrameConfig.Parent := Self;
   FFrameConfig.Align := alClient;
   FFrameConfig.Visible := True;
@@ -90,7 +90,7 @@ begin
     UpdateVCLColors(LActiveTheme);
 end;
 
-procedure TFormAIConfig.CreateWnd;
+procedure TRadIAFormAIConfig.CreateWnd;
 var
   LThemingServices: IOTAIDEThemingServices;
   LActiveTheme: string;
@@ -112,30 +112,30 @@ begin
   end;
 end;
 
-procedure TFormAIConfig.LoadConfig;
+procedure TRadIAFormAIConfig.LoadConfig;
 begin
   FFrameConfig.LoadConfig;
 end;
 
-procedure TFormAIConfig.btnSaveClick(Sender: TObject);
+procedure TRadIAFormAIConfig.btnSaveClick(Sender: TObject);
 begin
   FFrameConfig.btnSaveClick(Sender);
   if Self.ModalResult = mrOk then
     ShowMessage('Settings saved successfully.');
 end;
 
-procedure TFormAIConfig.btnCancelClick(Sender: TObject);
+procedure TRadIAFormAIConfig.btnCancelClick(Sender: TObject);
 begin
   FFrameConfig.btnCancelClick(Sender);
 end;
 
-procedure TFormAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
+procedure TRadIAFormAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
 begin
   if Node = nil then Exit;
   FFrameConfig.tvCategoriesChange(Sender, Node);
 end;
 
-procedure TFormAIConfig.UpdateVCLColors(const AThemeName: string);
+procedure TRadIAFormAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LColors: TRadIAThemeColors;
 begin
