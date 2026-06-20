@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Analysis;
+unit RadIA.Tests.Analysis;
 
 interface
 
@@ -24,10 +24,23 @@ type
     procedure TestResolveReviewTemplate;
   end;
 
+  [TestFixture]
+  TTestRadIAOTAHelper = class
+  public
+    [Test]
+    procedure TestNormalizeLineBreaks_WindowsStyle;
+    [Test]
+    procedure TestNormalizeLineBreaks_MacStyle;
+    [Test]
+    procedure TestNormalizeLineBreaks_UnixStyle;
+    [Test]
+    procedure TestNormalizeLineBreaks_MixedStyle;
+  end;
+
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils, RadIA.OTA.Helper;
 
 { TTestRadIAAnalysis }
 
@@ -76,7 +89,50 @@ begin
   Assert.IsTrue(LResolved.Contains(CODE), 'Should contain the code to analyze');
 end;
 
+{ TTestRadIAOTAHelper }
+
+procedure TTestRadIAOTAHelper.TestNormalizeLineBreaks_WindowsStyle;
+var
+  LInput, LExpected, LActual: string;
+begin
+  LInput := 'line1'#13#10'line2'#13#10'line3';
+  LExpected := 'line1'#10'line2'#10'line3';
+  LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
+  Assert.AreEqual(LExpected, LActual);
+end;
+
+procedure TTestRadIAOTAHelper.TestNormalizeLineBreaks_MacStyle;
+var
+  LInput, LExpected, LActual: string;
+begin
+  LInput := 'line1'#13'line2'#13'line3';
+  LExpected := 'line1'#10'line2'#10'line3';
+  LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
+  Assert.AreEqual(LExpected, LActual);
+end;
+
+procedure TTestRadIAOTAHelper.TestNormalizeLineBreaks_UnixStyle;
+var
+  LInput, LExpected, LActual: string;
+begin
+  LInput := 'line1'#10'line2'#10'line3';
+  LExpected := 'line1'#10'line2'#10'line3';
+  LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
+  Assert.AreEqual(LExpected, LActual);
+end;
+
+procedure TTestRadIAOTAHelper.TestNormalizeLineBreaks_MixedStyle;
+var
+  LInput, LExpected, LActual: string;
+begin
+  LInput := 'line1'#13#10'line2'#13'line3'#10'line4';
+  LExpected := 'line1'#10'line2'#10'line3'#10'line4';
+  LActual := TRadIAOTAHelper.NormalizeLineBreaks(LInput);
+  Assert.AreEqual(LExpected, LActual);
+end;
+
 initialization
   TDUnitX.RegisterTestFixture(TTestRadIAAnalysis);
+  TDUnitX.RegisterTestFixture(TTestRadIAOTAHelper);
 
 end.

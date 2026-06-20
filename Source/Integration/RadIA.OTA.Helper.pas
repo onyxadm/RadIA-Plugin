@@ -15,6 +15,7 @@ type
     class function ReadCurrentSourceEditorText(out AText: string): Boolean;
     class procedure RefreshEditView(const AView: IOTAEditView);
   public
+    class function NormalizeLineBreaks(const AText: string): string;
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     class function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False;
       const AOriginalText: string = ''): Boolean;
@@ -37,6 +38,11 @@ uses
   Winapi.Windows;
 
 { TRadIAOTAHelper }
+
+class function TRadIAOTAHelper.NormalizeLineBreaks(const AText: string): string;
+begin
+  Result := AText.Replace(#13#10, #10).Replace(#13, #10);
+end;
 
 class function TRadIAOTAHelper.GetCurrentEditBuffer: IOTAEditBuffer;
 var
@@ -277,7 +283,7 @@ begin
     if LBufferSize > 0 then
       LEditWriter.DeleteTo(LBufferSize);
 
-    LUtf8Text := UTF8String(ANewText);
+    LUtf8Text := UTF8String(NormalizeLineBreaks(ANewText));
     LEditWriter.Insert(PAnsiChar(LUtf8Text));
     Result := True;
     RefreshEditView(LView);
@@ -312,7 +318,7 @@ begin
     LEditWriter.CopyTo(LStartOffset);
     LEditWriter.DeleteTo(LEndOffset);
 
-    LUtf8Text := UTF8String(ANewText);
+    LUtf8Text := UTF8String(NormalizeLineBreaks(ANewText));
     LEditWriter.Insert(PAnsiChar(LUtf8Text));
     Result := True;
     RefreshEditView(LView);
@@ -328,7 +334,7 @@ begin
     LSaveAutoIndent := LOptions.AutoIndent;
     LOptions.AutoIndent := False;
     try
-      LPosition.InsertText(LFormattedText);
+      LPosition.InsertText(NormalizeLineBreaks(LFormattedText));
       Result := True;
     finally
       LOptions.AutoIndent := LSaveAutoIndent;
@@ -336,7 +342,7 @@ begin
   end
   else
   begin
-    LPosition.InsertText(LFormattedText);
+    LPosition.InsertText(NormalizeLineBreaks(LFormattedText));
     Result := True;
   end;
 
@@ -367,7 +373,7 @@ begin
       LSaveAutoIndent := LOptions.AutoIndent;
       LOptions.AutoIndent := False;
       try
-        LPosition.InsertText(LFormattedText);
+        LPosition.InsertText(NormalizeLineBreaks(LFormattedText));
         Result := True;
       finally
         LOptions.AutoIndent := LSaveAutoIndent;
@@ -375,7 +381,7 @@ begin
     end
     else
     begin
-      LPosition.InsertText(LFormattedText);
+      LPosition.InsertText(NormalizeLineBreaks(LFormattedText));
       Result := True;
     end;
 
@@ -409,7 +415,7 @@ begin
       LSaveAutoIndent := LOptions.AutoIndent;
       LOptions.AutoIndent := False;
       try
-        LPosition.InsertText(AText);
+        LPosition.InsertText(NormalizeLineBreaks(AText));
         Result := True;
       finally
         LOptions.AutoIndent := LSaveAutoIndent;
@@ -417,7 +423,7 @@ begin
     end
     else
     begin
-      LPosition.InsertText(AText);
+      LPosition.InsertText(NormalizeLineBreaks(AText));
       Result := True;
     end;
 
