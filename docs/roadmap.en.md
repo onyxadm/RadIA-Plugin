@@ -14,6 +14,14 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.26 — Real Provider Icons with Official SVGs (Completed)</b></summary>
+
+  *   **Value Delivered**: Premium and high-fidelity visual identification of each AI provider using official SVG vector logos with their respective brand colors and linear gradients.
+  *   **Highlights**: Generic robot icon replaced by official brand SVGs in the chat panel, a customized provider selection dropdown in the top bar, and matching logos injected into assistant message avatars (Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama, GitHub Copilot, Azure, Qwen, Mistral, AWS Bedrock, LM Studio, OpenRouter).
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.26)](backlog.en.md#v0026--real-provider-icons-with-official-svgs-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.25 — Simplified Web Login and Safe Apply Changes (Completed)</b></summary>
 
   *   **Value Delivered**: More direct and reliable ChatGPT/Gemini web login, with explicit confirmation for already authenticated sessions, and safer diff application in the editor to prevent duplicated code.

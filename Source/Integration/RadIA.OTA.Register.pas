@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.Register;
+unit RadIA.OTA.Register;
 
 interface
 
@@ -124,7 +124,7 @@ begin
         LBitmap.Handle,
         False,
         'Apache 2.0 License',
-        'v0.0.25'
+        'v0.0.26'
       );
     end;
   finally

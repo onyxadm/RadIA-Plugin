@@ -13,6 +13,7 @@ O quadro abaixo resume o status atual das features mapeadas a curto e médio pra
 | **Smart SQL Optimizer no Editor** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.23 |
 | **Delphi Compiler & OS Warning Scanner** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.24 |
 | **Web Login Simplificado e Apply Changes Seguro** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.25 |
+| **Ícones de Provedores Reais com SVGs Oficiais** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.26 |
 | **Revisão Automática de Código no Save** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.1.0 |
 | **Histórico de Refatorações Aplicadas** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐ Média | v0.1.0 |
 | **Otimizador de Cláusula Uses (Clean Uses)** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.2.0 |
@@ -49,6 +50,23 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 ## ✅ 3. Histórico de Conclusões (Completed)
 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
+
+<details>
+  <summary><b>📦 v0.0.26 — Ícones de Provedores Reais com SVGs Oficiais (Clique para expandir)</b></summary>
+
+  #### 1. Ícones SVG Oficiais das IAs
+  *   **Descrição**: Substituição das imagens e vetores genéricos de IAs por logotipos oficiais precisos e fidelizados extraídos da biblioteca especializada Lobe Icons (`@lobehub/icons-static-svg`).
+  *   **Detalhes**:
+      *   Criação de caminhos vetoriais exatos e gradientes correspondentes aos logos das empresas.
+      *   Gemini (gradiente azul-roxo-rosa), OpenAI (verde `#10A37F`), Claude (Anthropic `#D97706`), DeepSeek (baleia `#0D53FF`), Copilot (robô `#5856D6`), Mistral (origami `#FD5A24`), AWS Bedrock (laranja `#FF9900`), LM Studio (`#EC4899`), Alibaba Qwen (`#615CED`), Groq (`#F97316`) e demais provedores nativos.
+      *   Os ícones são renderizados de maneira harmoniosa nos temas Light e Dark.
+
+  #### 2. Seletor de Provedor Customizado e Avatares no Chat
+  *   **Descrição**: Nova barra de seleção de provedor estilizada com o respectivo logotipo e nome de cada modelo, além de injeção dos ícones dinâmicos correspondentes nas bolhas de resposta.
+  *   **Detalhes**:
+      *   O elemento select nativo foi ocultado e funciona como proxy de eventos via JS, mantendo compatibilidade direta com a Open Tools API do Delphi.
+      *   As bolhas de avatar das mensagens do assistente mostram dinamicamente o logotipo oficial da IA correspondente em vez do robô genérico do Rad IA.
+</details>
 
 <details>
   <summary><b>📦 v0.0.25 — Web Login Simplificado e Apply Changes Seguro (Clique para expandir)</b></summary>

@@ -14,6 +14,14 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.26 — Ícones de Provedores Reais com SVGs Oficiais (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Identificação visual e estética premium de cada provedor de IA com logotipos vetoriais SVG oficiais e suas respectivas cores de marca e gradientes fiéis.
+  *   **Destaques**: Substituição do Robô genérico por logos oficiais no chat, dropdown customizado de provedores na barra superior, e injeção do logo oficial correspondente nos avatares das mensagens (Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama, GitHub Copilot, Azure, Qwen, Mistral, AWS Bedrock, LM Studio, OpenRouter).
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.26)](backlog.md#v0026--ícones-de-provedores-reais-com-svgs-oficiais-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.25 — Web Login Simplificado e Apply Changes Seguro (Concluído)</b></summary>
 
   *   **Valor Entregue**: Login web mais direto e confiável para ChatGPT/Gemini, com confirmação explícita de sessão já autenticada, e aplicação de diffs mais segura no editor para evitar duplicação de código.

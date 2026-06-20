@@ -13,6 +13,7 @@ The board below summarizes the current status of mapped short and medium-term fe
 | **Smart SQL Optimizer in Editor** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.23 |
 | **Delphi Compiler & OS Warning Scanner** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.24 |
 | **Simplified Web Login and Safe Apply Changes** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.25 |
+| **Real Provider Icons with Official SVGs** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.26 |
 | **Automatic Code Review on Save** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Applied Refactoring History** | 🔲 Planned | 🟢 Low | ⭐⭐⭐ Medium | v0.1.0 |
 | **Uses Clause Optimizer (Clean Uses)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
@@ -49,6 +50,22 @@ For complete details on objectives, impacts, and technical specifications for ea
 ## ✅ 3. Completed History
 
 Check the implementation details of each completed feature grouped by target release version:
+
+<details>
+  <summary><b>📦 v0.0.26 — Real Provider Icons with Official SVGs (Click to expand)</b></summary>
+
+  #### 1. Official AI SVG Icons
+  *   **Description**: Replaced generic AI robot images and custom vectors with high-fidelity, accurate official brand logos extracted from the `@lobehub/icons-static-svg` (Lobe Icons) library.
+  *   **Details**:
+      *   Created precise path vectors and matching gradients for Gemini (blue-purple-pink linear gradient), OpenAI (green `#10A37F`), Claude (Anthropic `#D97706`), DeepSeek (baleia `#0D53FF`), Copilot (robot `#5856D6`), Mistral (origami `#FD5A24`), AWS Bedrock (orange `#FF9900`), LM Studio (`#EC4899`), Alibaba Qwen (`#615CED`), Groq (`#F97316`) and other native backends.
+      *   SVGs render beautifully across both light and dark IDE themes.
+
+  #### 2. Custom Provider Dropdown Seletor and Chat Message Avatars
+  *   **Description**: Customized styled provider selection bar displaying the brand's logo and model name, alongside dynamic matching avatar bubbles inside chat logs.
+  *   **Details**:
+      *   The native select selector is visually hidden and proxies change events in JS, maintaining direct backward-compatibility with Delphi's Open Tools API hooks.
+      *   Assistant message bubble avatars now dynamically inject the specific AI provider logo instead of the generic Rad IA assistant robot.
+</details>
 
 <details>
   <summary><b>📦 v0.0.25 — Simplified Web Login and Safe Apply Changes (Click to expand)</b></summary>
