@@ -77,7 +77,8 @@ uses
   RadIA.Tests.Analysis in 'Source\RadIA.Tests.Analysis.pas',
   RadIA.Tests.ChatPresenter in 'Source\RadIA.Tests.ChatPresenter.pas',
   RadIA.Tests.ConfigPresenter in 'Source\RadIA.Tests.ConfigPresenter.pas',
-  RadIA.Tests.ProjectGenerator in 'Source\RadIA.Tests.ProjectGenerator.pas';
+  RadIA.Tests.ProjectGenerator in 'Source\RadIA.Tests.ProjectGenerator.pas',
+  RadIA.Tests.Container in 'Source\RadIA.Tests.Container.pas';
 
 var
   Runner: ITestRunner;

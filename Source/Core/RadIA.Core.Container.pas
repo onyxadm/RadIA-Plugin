@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Container;
+unit RadIA.Core.Container;
 
 interface
 
@@ -41,7 +41,12 @@ var
   LGuid: TGUID;
 begin
   LGuid := GetTypeData(TypeInfo(T))^.Guid;
-  FServices.AddOrSetValue(LGuid, AInstance);
+  TMonitor.Enter(FServices);
+  try
+    FServices.AddOrSetValue(LGuid, AInstance);
+  finally
+    TMonitor.Exit(FServices);
+  end;
 end;
 
 class function TRadIAContainer.Resolve<T>: T;
@@ -50,10 +55,15 @@ var
   LIntf: IInterface;
 begin
   LGuid := GetTypeData(TypeInfo(T))^.Guid;
-  if FServices.TryGetValue(LGuid, LIntf) then
-  begin
-    if Supports(LIntf, LGuid, Result) then
-      Exit;
+  TMonitor.Enter(FServices);
+  try
+    if FServices.TryGetValue(LGuid, LIntf) then
+    begin
+      if Supports(LIntf, LGuid, Result) then
+        Exit;
+    end;
+  finally
+    TMonitor.Exit(FServices);
   end;
   raise Exception.CreateFmt('Service interface %s is not registered in the container.', [GetTypeName(TypeInfo(T))]);
 end;
@@ -65,16 +75,26 @@ var
 begin
   Result := False;
   LGuid := GetTypeData(TypeInfo(T))^.Guid;
-  if FServices.TryGetValue(LGuid, LIntf) then
-  begin
-    if Supports(LIntf, LGuid, AInstance) then
-      Result := True;
+  TMonitor.Enter(FServices);
+  try
+    if FServices.TryGetValue(LGuid, LIntf) then
+    begin
+      if Supports(LIntf, LGuid, AInstance) then
+        Result := True;
+    end;
+  finally
+    TMonitor.Exit(FServices);
   end;
 end;
 
 class procedure TRadIAContainer.Clear;
 begin
-  FServices.Clear;
+  TMonitor.Enter(FServices);
+  try
+    FServices.Clear;
+  finally
+    TMonitor.Exit(FServices);
+  end;
 end;
 
 end.
