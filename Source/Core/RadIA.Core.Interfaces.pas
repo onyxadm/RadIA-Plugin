@@ -6,14 +6,14 @@ uses
   System.SysUtils, System.Classes, RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 type
-  ILifecycleGuard = interface
+  IRadIALifecycleGuard = interface
     ['{F4EED9A6-6CBA-43B6-9E39-1E38AA2C7301}']
     function GetIsAlive: Boolean;
     procedure Invalidate;
     property IsAlive: Boolean read GetIsAlive;
   end;
 
-  TLifecycleGuard = class(TInterfacedObject, ILifecycleGuard)
+  TLifecycleGuard = class(TInterfacedObject, IRadIALifecycleGuard)
   private
     FIsAlive: Boolean;
     function GetIsAlive: Boolean;
@@ -191,7 +191,7 @@ type
     procedure ClearCache;
   end;
 
-  IIDEAdapter = interface
+  IRadIAIDEAdapter = interface
     ['{20B2F2A9-4B52-4731-9BA0-4F296D4D1D41}']
     function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False;

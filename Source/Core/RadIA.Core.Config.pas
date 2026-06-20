@@ -11,7 +11,7 @@ type
   private
     class var FBaseRegistryPath: string;
     class var FInstance: TRadIAConfig;
-    class var FStorage: ISettingsStorage;
+    class var FStorage: IRadIASettingsStorage;
     FActiveProvider: string;
     FSystemPrompt: string;
     FOllamaBaseUrl: string;
@@ -64,7 +64,7 @@ type
     class function GetInstance: IRadIAConfig;
     class procedure SetBaseRegistryPath(const APath: string);
     class function GetRegistryPath: string;
-    class procedure SetStorage(const AStorage: ISettingsStorage);
+    class procedure SetStorage(const AStorage: IRadIASettingsStorage);
 
     { IRadIAConfig implementation }
     function GetActiveProvider: string;
@@ -974,7 +974,7 @@ begin
   Result := FInstance;
 end;
 
-class procedure TRadIAConfig.SetStorage(const AStorage: ISettingsStorage);
+class procedure TRadIAConfig.SetStorage(const AStorage: IRadIASettingsStorage);
 begin
   FStorage := AStorage;
   if FStorage = nil then

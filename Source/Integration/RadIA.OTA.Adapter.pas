@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, RadIA.Core.Interfaces;
 
 type
-  TConcreteIDEAdapter = class(TInterfacedObject, IIDEAdapter)
+  TConcreteIDEAdapter = class(TInterfacedObject, IRadIAIDEAdapter)
   public
     function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False;

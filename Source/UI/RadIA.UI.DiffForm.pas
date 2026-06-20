@@ -135,7 +135,7 @@ end;
 procedure TFormAIDiff.FormDestroy(Sender: TObject);
 begin
   SaveWindowPlacement;
-  (FLifecycleGuard as ILifecycleGuard).Invalidate;
+  (FLifecycleGuard as IRadIALifecycleGuard).Invalidate;
   FAIService := nil;
 end;
 
@@ -380,7 +380,7 @@ end;
 procedure TFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
-  LGuard: ILifecycleGuard;
+  LGuard: IRadIALifecycleGuard;
   LActiveProvider: string;
 begin
   LActiveProvider := FConfig.GetActiveProvider;
@@ -406,7 +406,7 @@ begin
              'Do not split the source into multiple code blocks or explanations.' +
              #13#10'Here is the code:'#13#10 + FOriginalCode;
              
-  LGuard := FLifecycleGuard as ILifecycleGuard;
+  LGuard := FLifecycleGuard as IRadIALifecycleGuard;
 
   FRequestTimeoutTimer.Enabled := True;
              

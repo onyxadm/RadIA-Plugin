@@ -16,7 +16,7 @@ type
     FEditorNotifiers: TInterfaceList;
     FCreateExampleInProgress: Boolean;
     FCreateExampleService: IRadIAService;
-    FIDEAdapter: IIDEAdapter;
+    FIDEAdapter: IRadIAIDEAdapter;
     {$IFNDEF TESTS}
     FTimer: TTimer;
     FHookPending: Boolean;
@@ -231,7 +231,7 @@ end;
 constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  if not TRadIAContainer.TryResolve<IIDEAdapter>(FIDEAdapter) then
+  if not TRadIAContainer.TryResolve<IRadIAIDEAdapter>(FIDEAdapter) then
     FIDEAdapter := TConcreteIDEAdapter.Create;
   FOldActiveFormChange := nil;
   FIDENotifierIndex := -1;

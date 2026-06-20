@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, System.Generics.Collections;
 
 type
-  ISettingsStorage = interface
+  IRadIASettingsStorage = interface
     ['{8A95E81A-98C3-4874-8A83-AC5EE2298FDF}']
     function OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
     procedure CloseKey;
@@ -22,7 +22,7 @@ type
     procedure WriteFloat(const AName: string; AValue: Double);
   end;
 
-  TRegistrySettingsStorage = class(TInterfacedObject, ISettingsStorage)
+  TRegistrySettingsStorage = class(TInterfacedObject, IRadIASettingsStorage)
   private
     FReg: TObject; // Typed as TObject to reduce interface namespace pollution
   public
@@ -43,7 +43,7 @@ type
     procedure WriteFloat(const AName: string; AValue: Double);
   end;
 
-  TMemorySettingsStorage = class(TInterfacedObject, ISettingsStorage)
+  TMemorySettingsStorage = class(TInterfacedObject, IRadIASettingsStorage)
   private
     FData: TDictionary<string, TDictionary<string, string>>;
     FCurrentPath: string;

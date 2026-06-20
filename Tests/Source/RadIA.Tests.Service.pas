@@ -781,7 +781,7 @@ begin
 end;
 
 type
-  TMockIDEAdapter = class(TInterfacedObject, IIDEAdapter)
+  TMockIDEAdapter = class(TInterfacedObject, IRadIAIDEAdapter)
   public
     function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False;
@@ -873,7 +873,7 @@ var
   LPrompt: string;
 begin
   TRadIAContainer.Clear;
-  TRadIAContainer.Register<IIDEAdapter>(TMockIDEAdapter.Create);
+  TRadIAContainer.Register<IRadIAIDEAdapter>(TMockIDEAdapter.Create);
   try
     LConfig := TMockConfig.Create(5, 'Base Prompt');
     LService := TRadIAService.Create(LConfig);

@@ -251,7 +251,7 @@ begin
   TRadIAWebViewBridgeProvider.OnCancel := nil;
 
   if Assigned(FLifecycleGuard) then
-    (FLifecycleGuard as ILifecycleGuard).Invalidate;
+    (FLifecycleGuard as IRadIALifecycleGuard).Invalidate;
 
   if Assigned(FAIService) then
     FAIService.CancelCurrentRequest;
@@ -357,10 +357,10 @@ end;
 procedure TChatPresenter.UpdateModelsCombo;
 var
   LProvider: IRadIAProvider;
-  LGuard: ILifecycleGuard;
+  LGuard: IRadIALifecycleGuard;
 begin
   FView.UpdateModels(['Loading...'], 'Loading...', False);
-  LGuard := FLifecycleGuard as ILifecycleGuard;
+  LGuard := FLifecycleGuard as IRadIALifecycleGuard;
  
   try
     if Assigned(FModelsProvider) then
@@ -713,7 +713,7 @@ procedure TChatPresenter.SendPromptToAI(const APromptText: string);
 var
   LUserMsg: IRadIAChatMessage;
   LFullResponse: string;
-  LGuard: ILifecycleGuard;
+  LGuard: IRadIALifecycleGuard;
   LProfile: TAIRequestProfile;
   LDoneHandled: Boolean;
   LActiveProvider: string;
@@ -760,7 +760,7 @@ begin
   SaveChatHistory;
 
   LFullResponse := '';
-  LGuard := FLifecycleGuard as ILifecycleGuard;
+  LGuard := FLifecycleGuard as IRadIALifecycleGuard;
   
   PostToWebView('show_typing', '', '');
   
@@ -939,7 +939,7 @@ end;
 procedure TChatPresenter.GenerateDTO(const AInput, AInputType, AOutputType: string);
 var
   LPromptText: string;
-  LGuard: ILifecycleGuard;
+  LGuard: IRadIALifecycleGuard;
   LDoneHandled: Boolean;
   LActiveProvider: string;
   LActiveModel: string;
@@ -967,7 +967,7 @@ begin
     [LActiveProvider, LActiveModel, Length(AInput), AInputType, AOutputType]), 'UI');
 
   LPromptText := TRadIADTOBuilder.BuildPrompt(AInput, AInputType, AOutputType);
-  LGuard := FLifecycleGuard as ILifecycleGuard;
+  LGuard := FLifecycleGuard as IRadIALifecycleGuard;
 
   try
     FAIService.SendPromptStream(LPromptText, [],
@@ -1443,9 +1443,9 @@ begin
     var LFinalPrompt := APrompt;
     if not LFinalPrompt.Trim.IsEmpty then
     begin
-      var LAdapter: IIDEAdapter;
+      var LAdapter: IRadIAIDEAdapter;
       var LInstruction: string := '';
-      if TRadIAContainer.TryResolve<IIDEAdapter>(LAdapter) then
+      if TRadIAContainer.TryResolve<IRadIAIDEAdapter>(LAdapter) then
         LInstruction := LAdapter.GetPreferredLanguageInstruction;
       if not LInstruction.IsEmpty then
         LFinalPrompt := LFinalPrompt + sLineBreak + sLineBreak + LInstruction;

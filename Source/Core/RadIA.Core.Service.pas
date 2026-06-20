@@ -204,7 +204,7 @@ var
   LProjectContext: string;
   LDelphiVersionPrompt: string;
   LConcisePrompt: string;
-  LAdapter: IIDEAdapter;
+  LAdapter: IRadIAIDEAdapter;
   LDelphiVersionName: string;
   LPreferredLanguage: string;
 begin
@@ -224,7 +224,7 @@ begin
   LPreferredLanguage := '';
   LProjectFolder := '';
 
-  if TRadIAContainer.TryResolve<IIDEAdapter>(LAdapter) then
+  if TRadIAContainer.TryResolve<IRadIAIDEAdapter>(LAdapter) then
   begin
     LDelphiVersionName := LAdapter.GetDelphiVersionName;
     LPreferredLanguage := LAdapter.GetPreferredLanguageInstruction;

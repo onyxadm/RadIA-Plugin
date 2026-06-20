@@ -335,7 +335,7 @@ var
   LActiveFile: string;
   LConfig: IRadIAConfig;
   LActiveProvider: string;
-  LAdapter: IIDEAdapter;
+  LAdapter: IRadIAIDEAdapter;
 begin
   if not TRadIAContainer.TryResolve<IRadIAConfig>(LConfig) then
   begin
@@ -352,7 +352,7 @@ begin
   LForm := TFormAIDiff.Create(nil);
   try
     LActiveFile := 'ActiveUnit.pas';
-    if TRadIAContainer.TryResolve<IIDEAdapter>(LAdapter) then
+    if TRadIAContainer.TryResolve<IRadIAIDEAdapter>(LAdapter) then
     begin
       LActiveFile := LAdapter.GetActiveUnitName;
       if LActiveFile.IsEmpty then
@@ -575,7 +575,7 @@ initialization
   TRadIAContainer.Register<IRadIAConfig>(TRadIAConfig.GetInstance);
   TRadIAContainer.Register<IRadIALogger>(TConcreteLogger.Create);
   TLogger.SetActiveLogger(TRadIAContainer.Resolve<IRadIALogger>);
-  TRadIAContainer.Register<IIDEAdapter>(TConcreteIDEAdapter.Create);
+  TRadIAContainer.Register<IRadIAIDEAdapter>(TConcreteIDEAdapter.Create);
   TRadIAContainer.Register<IRadIAService>(TRadIAService.Create(TRadIAContainer.Resolve<IRadIAConfig>));
   TRadIAContainer.Register<IRadIATextNormalizer>(TRadIATextNormalizer.Create);
 

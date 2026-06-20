@@ -354,7 +354,7 @@ end;
 
 procedure TTestChatPresenter.Setup;
 var
-  LMemoryStorage: ISettingsStorage;
+  LMemoryStorage: IRadIASettingsStorage;
 begin
   FTempDir := TPath.Combine(TPath.GetTempPath, 'RadIATests_Presenter_' + TGUID.NewGuid.ToString);
   ForceDirectories(FTempDir);

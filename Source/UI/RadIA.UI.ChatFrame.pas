@@ -243,7 +243,7 @@ var
   I: Integer;
 begin
   if Assigned(FLifecycleGuard) then
-    (FLifecycleGuard as ILifecycleGuard).Invalidate;
+    (FLifecycleGuard as IRadIALifecycleGuard).Invalidate;
   TRadIAMediator.Instance.UnregisterPromptHandler;
   
   if Assigned(FPopupMenuTemplates) then

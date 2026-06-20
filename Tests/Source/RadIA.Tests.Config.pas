@@ -11,7 +11,7 @@ type
   TTestRadIAConfig = class
   private
     FConfig: IRadIAConfig;
-    FStorage: ISettingsStorage;
+    FStorage: IRadIASettingsStorage;
   public
     [Setup]
     procedure Setup;
@@ -199,7 +199,7 @@ const
   TEST_AWS_SESSION_TOKEN = 'aws-session-token';
   LEGACY_VALUE = 'legacy-value';
 var
-  LStorage: ISettingsStorage;
+  LStorage: IRadIASettingsStorage;
   LConfig: IRadIAConfig;
 begin
   LStorage := TMemorySettingsStorage.Create;

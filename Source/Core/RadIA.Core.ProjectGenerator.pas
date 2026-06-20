@@ -198,9 +198,9 @@ begin
         TThread.Queue(nil,
           procedure
           var
-            LAdapter: IIDEAdapter;
+            LAdapter: IRadIAIDEAdapter;
           begin
-            if TRadIAContainer.TryResolve<IIDEAdapter>(LAdapter) then
+            if TRadIAContainer.TryResolve<IRadIAIDEAdapter>(LAdapter) then
               LAdapter.OpenProjectInIDE(LProjectFileToOpen);
           end);
       end

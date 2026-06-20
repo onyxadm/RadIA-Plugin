@@ -388,7 +388,7 @@ end;
 
 procedure TTestConfigPresenter.Setup;
 var
-  LMemoryStorage: ISettingsStorage;
+  LMemoryStorage: IRadIASettingsStorage;
 begin
   LMemoryStorage := TMemorySettingsStorage.Create;
   TRadIAConfig.SetStorage(LMemoryStorage);
