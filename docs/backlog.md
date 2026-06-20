@@ -52,7 +52,7 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
 
 <details>
-  <summary><b>📦 v0.0.26 — Ícones de Provedores Reais com SVGs Oficiais (Clique para expandir)</b></summary>
+  <summary><b>📦 v0.0.26 — Ícones de Provedores Visuais e Reformulação Arquitetural (Clique para expandir)</b></summary>
 
   #### 1. Ícones SVG Oficiais das IAs
   *   **Descrição**: Substituição das imagens e vetores genéricos de IAs por logotipos oficiais precisos e fidelizados extraídos da biblioteca especializada Lobe Icons (`@lobehub/icons-static-svg`).
@@ -66,6 +66,34 @@ Consulte os detalhes de implementação de cada recurso agrupado por versão:
   *   **Detalhes**:
       *   O elemento select nativo foi ocultado e funciona como proxy de eventos via JS, mantendo compatibilidade direta com a Open Tools API do Delphi.
       *   As bolhas de avatar das mensagens do assistente mostram dinamicamente o logotipo oficial da IA correspondente em vez do robô genérico do Rad IA.
+
+  #### 3. Desacoplamento Arquitetural e Inversão de Controle (DIP & IoC)
+  *   **Descrição**: Ampla refatoração estrutural da base de código do plugin para remover acoplamentos concretos, viabilizar testes unitários isolados em background e introduzir injeção de dependências.
+  *   **Detalhes**:
+      *   **Introdução da Interface `IRadIAService`**: Abstração do orquestrador central e refatoração dos consumidores (`TRadIAChatPresenter`, `TRadIAFormAIDiff` e `TRadIAEditorHook`) para usar a interface em vez da classe concreta.
+      *   **Composition Root (`RadIA.Providers.Link.pas`)**: Criação de uma unit dedicada para centralizar imports físicos de todos os provedores concretos nativos, desacoplando o uses do orquestrador `TRadIAService` e permitindo auto-registro dinâmico.
+      *   **Container de IoC (`TRadIAContainer`)**: Criação de um container genérico e thread-safe (utilizando `TMonitor`) para registro e resolução de dependências no boot do orquestrador da IDE (`RadIA.OTA.Register.pas`).
+      *   **Desacoplamento da Open Tools API (`IRadIAIDEAdapter`)**: Abstração de todas as interações de runtime da IDE do Delphi, permitindo injetar mocks de editor (`TMockIDEAdapter`) nos testes de regressão offline.
+
+  #### 4. Isolamento de I/O em Testes e Segurança de Dados
+  *   **Descrição**: Blindagem das configurações, sessões de chat e templates locais do desenvolvedor durante a execução da suíte de testes unitários.
+  *   **Detalhes**:
+      *   Parametrização de caminhos base (`ABaseDir` em `TPromptTemplateManager`, `ASessionsDir` em `TRadIASessionManager`, `AWebFilesDir` em `TRadIAFormAIDiff`) para permitir injeção dinâmica de caminhos de arquivos.
+      *   Isolamento de diretórios em testes de persistência com criação de pastas temporárias baseadas em GUIDs, criadas no `Setup` e limpas no `TearDown`, impedindo que a suíte DUnitX delete dados reais de produção do desenvolvedor.
+
+  #### 5. Correção de Regressão: Normalização de CRLF no Editor
+  *   **Descrição**: Criação do serviço de normalização `IRadIATextNormalizer` para corrigir regressão que colava blocos de código em uma única linha contínua no editor.
+  *   **Detalhes**:
+      *   O normalizador converte quebras de linha (`LF`, `CR`) uniformemente para o padrão nativo Windows (`CRLF` - `#13#10`) antes da inserção nos buffers de escrita OTA do editor (`ReplaceActiveEditorText`, `InsertTextAtCursor`), permitindo que a IDE renderize a formatação corretamente.
+
+  #### 6. Novas Abstrações de Infraestrutura (DIP, SRP, i18n)
+  *   **Descrição**: Divisão de responsabilidades de infraestrutura em serviços dedicados para melhor manutenção e desacoplamento.
+  *   **Detalhes**:
+      *   **Cliente HTTP (`IRadIAHttpClient`)**: Interface e implementação encapsulando chamadas assíncronas do `THTTPClient`, retirando lógicas de rede dos provedores concretos.
+      *   **Decodificador de Erros (`IRadIAErrorDecoder`)**: Parsing centralizado e rico de payloads JSON de erro de diferentes provedores (Gemini, OpenAI, Claude).
+      *   **Internacionalização (`IRadIALocalizer`)**: Dicionário dinâmico em memória para suporte inicial a `pt-BR` e `en` na interface do plugin.
+      *   **Refatoração DRY em Testes**: Consolidação de testes repetitivos de payloads e SSE no arquivo `RadIA.Tests.ProvidersEx.pas` usando helpers privados, reduzindo o arquivo em mais de 500 linhas.
+      *   **Nomenclatura Padrão**: Refatoração de classes e interfaces para o padrão `TRadIA` / `IRadIA` e nomes de arquivos físicos no namespace `RadIA.*.pas`.
 </details>
 
 <details>

@@ -14,11 +14,17 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
-  <summary><b>📦 v0.0.26 — Real Provider Icons with Official SVGs (Completed)</b></summary>
+  <summary><b>📦 v0.0.26 — Visual Provider Icons and Architectural Refactoring (Completed)</b></summary>
 
-  *   **Value Delivered**: Premium and high-fidelity visual identification of each AI provider using official SVG vector logos with their respective brand colors and linear gradients.
-  *   **Highlights**: Generic robot icon replaced by official brand SVGs in the chat panel, a customized provider selection dropdown in the top bar, and matching logos injected into assistant message avatars (Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama, GitHub Copilot, Azure, Qwen, Mistral, AWS Bedrock, LM Studio, OpenRouter).
-  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.26)](backlog.en.md#v0026--real-provider-icons-with-official-svgs-click-to-expand).*
+  *   **Value Delivered**: Premium and high-fidelity visual identification of each AI provider using official SVG vector logos, combined with a deep architectural overhaul introducing Dependency Inversion (DIP), Dependency Injection, and I/O test isolation for maximum stability and offline testability.
+  *   **Highlights**:
+      *   Replaced the generic robot icon with official brand SVGs in the chat panel, customized provider dropdown, and dynamic colored assistant message avatars.
+      *   Introduced a thread-safe IoC Container (`TRadIAContainer`) and dependency injection for core services and utilities.
+      *   Isolated and decoupled the Delphi IDE API (`IRadIAIDEAdapter`), allowing complete mock support inside DUnitX tests.
+      *   Complete developer AppData protection inside tests using GUID-based transient folders created on `Setup` and swept clean in `TearDown`.
+      *   Fixed editor code pasting on a single line by integrating the CRLF line-break normalizer `IRadIATextNormalizer`.
+      *   Decoupled utilities into specialized services: HTTP client (`IRadIAHttpClient`), API error parser (`IRadIAErrorDecoder`), and localized translation provider (`IRadIALocalizer`).
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.26)](backlog.en.md#v0026--visual-provider-icons-and-architectural-refactoring-click-to-expand).*
 </details>
 
 <details>

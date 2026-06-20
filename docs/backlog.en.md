@@ -52,7 +52,7 @@ For complete details on objectives, impacts, and technical specifications for ea
 Check the implementation details of each completed feature grouped by target release version:
 
 <details>
-  <summary><b>📦 v0.0.26 — Real Provider Icons with Official SVGs (Click to expand)</b></summary>
+  <summary><b>📦 v0.0.26 — Visual Provider Icons and Architectural Refactoring (Click to expand)</b></summary>
 
   #### 1. Official AI SVG Icons
   *   **Description**: Replaced generic AI robot images and custom vectors with high-fidelity, accurate official brand logos extracted from the `@lobehub/icons-static-svg` (Lobe Icons) library.
@@ -65,6 +65,34 @@ Check the implementation details of each completed feature grouped by target rel
   *   **Details**:
       *   The native select selector is visually hidden and proxies change events in JS, maintaining direct backward-compatibility with Delphi's Open Tools API hooks.
       *   Assistant message bubble avatars now dynamically inject the specific AI provider logo instead of the generic Rad IA assistant robot.
+
+  #### 3. Architectural Decoupling and Dependency Inversion (DIP & IoC)
+  *   **Description**: Comprehensive structural refactoring of the plugin codebase to remove concrete coupling, enable isolated background unit testing, and introduce dependency injection.
+  *   **Details**:
+      *   **`IRadIAService` Interface**: Centralized service abstraction and adaptation of consumers (`TRadIAChatPresenter`, `TRadIAFormAIDiff`, and `TRadIAEditorHook`) to consume the interface, cleaning up concrete couplings.
+      *   **Composition Root (`RadIA.Providers.Link.pas`)**: Dedicated unit created to physically bind all concrete providers, removing direct imports from `TRadIAService` and enabling dynamic self-registration.
+      *   **IoC Container (`TRadIAContainer`)**: Thread-safe generic container (built using `TMonitor`) managing service registrations during the IDE's boot flow (`RadIA.OTA.Register.pas`).
+      *   **Open Tools API Decoupling (`IRadIAIDEAdapter`)**: Abstraction layer for all Delphi IDE editor and message services, enabling editor mock injection (`TMockIDEAdapter`) in offline regression tests.
+
+  #### 4. I/O Isolation in Tests and Developer Data Safety
+  *   **Description**: Absolute protection of developer's local settings, chats, and templates during unit test runs.
+  *   **Details**:
+      *   Parametrized base directories (`ABaseDir` in `TPromptTemplateManager`, `ASessionsDir` in `TRadIASessionManager`, `AWebFilesDir` in `TRadIAFormAIDiff`) allowing dynamic temporary path injection.
+      *   Isolated folder setup in tests using GUID-based transient directories created during `Setup` and swept clean in `TearDown`, preventing unit test runs from erasing the developer's live production AppData profiles.
+
+  #### 5. Regression Fix: Line Break Normalization in Editor (CRLF)
+  *   **Description**: Shipped `IRadIATextNormalizer` service to resolve a regression causing code blocks to paste on a single continuous line.
+  *   **Details**:
+      *   The text normalizer converts line breaks (`LF`, `CR`) uniformly to Windows style (**CRLF - `#13#10`**) before inserting it into OTA edit buffers (`ReplaceActiveEditorText`, `InsertTextAtCursor`), ensuring the IDE renders block formatting correctly.
+
+  #### 6. New Infrastructure Abstractions (DIP, SRP, i18n)
+  *   **Description**: Separated infrastructure concerns into decoupled services for cleaner maintenance.
+  *   **Details**:
+      *   **HTTP Client (`IRadIAHttpClient`)**: Abstracted asynchronous network client wrapping `THTTPClient`, keeping providers clean of low-level sockets.
+      *   **API Error Decoder (`IRadIAErrorDecoder`)**: Centralized parsing of JSON payloads and HTTP error status codes from different gateways (Gemini, OpenAI, Claude).
+      *   **i18n Localization (`IRadIALocalizer`)**: Dictionary management service offering `pt-BR` and `en` translations for UI keys.
+      *   **DRY Tests Consolidation**: Consolidated repetitive SSE stream and JSON payload assertions in `RadIA.Tests.ProvidersEx.pas` using private helpers, eliminating 500+ lines of duplicate tests.
+      *   **Standard Naming Guide**: Refactored legacy types to align with `TRadIA` / `IRadIA` prefix conventions and renamed units to the physical namespace pattern `RadIA.*.pas`.
 </details>
 
 <details>

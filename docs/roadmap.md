@@ -14,11 +14,17 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
-  <summary><b>📦 v0.0.26 — Ícones de Provedores Reais com SVGs Oficiais (Concluído)</b></summary>
+  <summary><b>📦 v0.0.26 — Ícones de Provedores Visuais e Reformulação Arquitetural (Concluído)</b></summary>
 
-  *   **Valor Entregue**: Identificação visual e estética premium de cada provedor de IA com logotipos vetoriais SVG oficiais e suas respectivas cores de marca e gradientes fiéis.
-  *   **Destaques**: Substituição do Robô genérico por logos oficiais no chat, dropdown customizado de provedores na barra superior, e injeção do logo oficial correspondente nos avatares das mensagens (Gemini, OpenAI, Claude, DeepSeek, Groq, Ollama, GitHub Copilot, Azure, Qwen, Mistral, AWS Bedrock, LM Studio, OpenRouter).
-  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.26)](backlog.md#v0026--ícones-de-provedores-reais-com-svgs-oficiais-clique-para-expandir).*
+  *   **Valor Entregue**: Interface do plugin com estética premium integrada com logotipos oficiais das IAs, somada a uma profunda reforma na arquitetura interna com inversão de controle (IoC), injeção de dependências (DIP) e isolamento de I/O nos testes para máxima estabilidade, segurança e testabilidade offline.
+  *   **Destaques**:
+      *   Substituição do Robô genérico por logos SVGs oficiais no chat, dropdown customizado de provedores na barra superior, e avatares dinâmicos coloridos por provedor.
+      *   Introdução de container de IoC (`TRadIAContainer`) thread-safe e injeção de dependência para serviços e utilitários.
+      *   Isolamento e abstração da API da IDE (`IRadIAIDEAdapter`), permitindo mockagem completa em testes unitários.
+      *   Blindagem absoluta contra apagamento acidental de dados locais de produção através de injeção de diretórios temporários baseados em GUIDs nos testes.
+      *   Correção de colagem de código em uma única linha no editor com o normalizador centralizado `IRadIATextNormalizer` (CRLF).
+      *   Novos serviços desacoplados: cliente HTTP centralizado (`IRadIAHttpClient`), decodificador de erros de APIs (`IRadIAErrorDecoder`) e dicionário de localização (`IRadIALocalizer`).
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.26)](backlog.md#v0026--ícones-de-provedores-visuais-e-reformulação-arquitetural-clique-para-expandir).*
 </details>
 
 <details>
