@@ -77,6 +77,10 @@ For an in-depth understanding of the plugin's infrastructure, asynchronous concu
 
 👉 [**Software Architecture Guide (docs/architecture_guide.en.md)**](docs/architecture_guide.en.md)
 
+To understand the physical file structure, unit responsibilities mapping, and step-by-step guides for common maintenance tasks, please refer to our:
+
+👉 [**Developer Source Code Guide (docs/source_code_guide.en.md)**](docs/source_code_guide.en.md)
+
 ### 4. Prerequisites
 *   **IDE:** Embarcadero Delphi 11 Alexandria, 12 Athens, or 13 Florence.
 *   **OS:** Windows 10 / 11 (64-bit).
@@ -115,6 +119,7 @@ To get the most out of Rad IA features in your daily development workflow, check
 *   👉 [**Commit Message Convention (docs/commit_convention.en.md)**](docs/commit_convention.en.md): English commit message standard using prefixes like `feat`, `fix`, `docs`, `refactor`, and others.
 *   👉 [**Branch Naming Convention (docs/branch_convention.en.md)**](docs/branch_convention.en.md): `<type>/<description>` standard with prefixes like `feat/`, `fix/`, `docs/`, `test/`, and `chore/`.
 *   👉 [**Release Finalization Process (docs/release_process.en.md)**](docs/release_process.en.md): Checklist to update versions, validate builds, merge `develop`/`main`, create tags, and clean up branches.
+*   👉 [**Developer Source Code Guide (docs/source_code_guide.en.md)**](docs/source_code_guide.en.md): Unit mapping, step-by-step common maintenance workflows, and best practices in the Delphi compiler.
 
 ---
 

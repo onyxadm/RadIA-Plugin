@@ -77,6 +77,10 @@ Para uma compreensão aprofundada da infraestrutura do plugin, fluxos concorrent
 
 👉 [**Guia de Arquitetura de Software (docs/architecture_guide.md)**](docs/architecture_guide.md)
 
+Para entender a estrutura física dos arquivos de código-fonte, mapeamento de responsabilidade de cada unit e guias passo a passo de como fazer manutenções comuns, consulte o nosso:
+
+👉 [**Guia dos Arquivos Fontes para o Desenvolvedor (docs/source_code_guide.md)**](docs/source_code_guide.md)
+
 ### 4. Requisitos do Sistema
 *   **IDE:** Embarcadero Delphi 11 Alexandria, 12 Athens ou 13 Florence.
 *   **OS:** Windows 10 / 11 (64-bit).
@@ -113,6 +117,7 @@ Para aprender a tirar o máximo proveito das funcionalidades do Rad IA no seu di
 *   👉 [**Convenção de Mensagens de Commit (docs/commit_convention.md)**](docs/commit_convention.md): Padrão de mensagens em inglês com prefixos como `feat`, `fix`, `docs`, `refactor` e outros.
 *   👉 [**Convenção de Nomes de Branch (docs/branch_convention.md)**](docs/branch_convention.md): Padrão `<tipo>/<descrição>` com prefixos como `feat/`, `fix/`, `docs/`, `test/` e `chore/`.
 *   👉 [**Processo de Finalização de Release (docs/release_process.md)**](docs/release_process.md): Checklist para atualizar versão, validar build, mergear `develop`/`main`, criar tag e limpar branches.
+*   👉 [**Guia dos Arquivos Fontes para o Desenvolvedor (docs/source_code_guide.md)**](docs/source_code_guide.md): Mapeamento de unidades, fluxo passo a passo de manutenção comum e melhores práticas no compilador Delphi.
 
 ---
 
