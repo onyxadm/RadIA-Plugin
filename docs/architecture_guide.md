@@ -95,6 +95,102 @@ graph TD
 7.  **`IRadIAErrorDecoder`:** Decodificador de erros de servidores HTTP e payloads de falha das IAs.
 8.  **`IRadIALocalizer`:** Componente de internacionalização (i18n) para localização de strings da UI.
 
+### Diagrama de Dependências Geral (Classes & Interfaces)
+
+Abaixo é apresentado o mapeamento completo do acoplamento flexível do plugin. Todas as dependências entre a UI (Presenter), lógica de negócios (Service, Config) e infraestrutura (HttpClient, Storage, IDEAdapter) são sustentadas por contratos de interfaces, permitindo a substituição de qualquer componente por stubs de simulação nos testes de regressão:
+
+```mermaid
+classDiagram
+    direction TB
+
+    %% Interfaces
+    class IRadIAConfig {
+        <<interface>>
+    }
+    class IRadIAIDEAdapter {
+        <<interface>>
+    }
+    class IRadIAService {
+        <<interface>>
+    }
+    class IRadIAProvider {
+        <<interface>>
+    }
+    class IRadIAHttpClient {
+        <<interface>>
+    }
+    class IRadIAErrorDecoder {
+        <<interface>>
+    }
+    class IRadIALocalizer {
+        <<interface>>
+    }
+    class IRadIASettingsStorage {
+        <<interface>>
+    }
+    class IRadIAChatView {
+        <<interface>>
+    }
+
+    %% Classes Concretas
+    class TRadIAChatPresenter {
+        -FView : IRadIAChatView
+        -FService : IRadIAService
+        -FConfig : IRadIAConfig
+        -FLocalizer : IRadIALocalizer
+    }
+    class TRadIAFrameAIChat {
+        -FPresenter : TRadIAChatPresenter
+    }
+    class TRadIAService {
+        -FConfig : IRadIAConfig
+        -FIDEAdapter : IRadIAIDEAdapter
+        -FActiveProvider : IRadIAProvider
+    }
+    class TRadIAConfig {
+        -FStorage : IRadIASettingsStorage
+    }
+    class TRadIAProviderBase {
+        -FConfig : IRadIAConfig
+        -FHTTPClient : IRadIAHttpClient
+        -FErrorDecoder : IRadIAErrorDecoder
+    }
+    class TRadIAConcreteHttpClient {
+        -FConfig : IRadIAConfig
+    }
+    class TRadIARegistrySettingsStorage {
+    }
+    class TRadIAConcreteIDEAdapter {
+    }
+
+    %% Relacionamentos de Implementação
+    TRadIAFrameAIChat ..|> IRadIAChatView : Implementa
+    TRadIAService ..|> IRadIAService : Implementa
+    TRadIAConfig ..|> IRadIAConfig : Implementa
+    TRadIAProviderBase ..|> IRadIAProvider : Implementa
+    TRadIAConcreteHttpClient ..|> IRadIAHttpClient : Implementa
+    TRadIARegistrySettingsStorage ..|> IRadIASettingsStorage : Implementa
+    TRadIAConcreteIDEAdapter ..|> IRadIAIDEAdapter : Implementa
+
+    %% Relacionamentos de Associação/Consumo
+    TRadIAChatPresenter --> IRadIAChatView : Consome
+    TRadIAChatPresenter --> IRadIAService : Consome
+    TRadIAChatPresenter --> IRadIAConfig : Consome
+    TRadIAChatPresenter --> IRadIALocalizer : Consome
+
+    TRadIAService --> IRadIAConfig : Consome
+    TRadIAService --> IRadIAIDEAdapter : Consome
+    TRadIAService --> IRadIAProvider : Consome
+
+    TRadIAConfig --> IRadIASettingsStorage : Consome
+
+    TRadIAProviderBase --> IRadIAConfig : Consome
+    TRadIAProviderBase --> IRadIAHttpClient : Consome
+    TRadIAProviderBase --> IRadIAErrorDecoder : Consome
+
+    TRadIAConcreteHttpClient --> IRadIAConfig : Consome
+```
+
 ---
 
 ## 3. Arquitetura de Provedores de IA (Polimorfismo e SRP)
