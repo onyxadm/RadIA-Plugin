@@ -11,7 +11,7 @@ type
   TEventStreamChunkEvent = reference to procedure(const AChunk: string; AIsDone: Boolean; const AError: string);
 
   { Parser for AWS EventStream binary chunks }
-  TAwsEventStreamParser = class
+  TRadIAAwsEventStreamParser = class
   private
     FBuffer: TBytes;
     FOnChunk: TEventStreamChunkEvent;
@@ -51,22 +51,22 @@ uses
   System.JSON, System.Threading, System.NetEncoding, System.Math,
   RadIA.Core.AwsSigner, RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs;
 
-{ TAwsEventStreamParser }
+{ TRadIAAwsEventStreamParser }
 
-constructor TAwsEventStreamParser.Create(const AOnChunk: TEventStreamChunkEvent);
+constructor TRadIAAwsEventStreamParser.Create(const AOnChunk: TEventStreamChunkEvent);
 begin
   inherited Create;
   FOnChunk := AOnChunk;
   FBuffer := nil;
 end;
 
-destructor TAwsEventStreamParser.Destroy;
+destructor TRadIAAwsEventStreamParser.Destroy;
 begin
   FBuffer := nil;
   inherited Destroy;
 end;
 
-function TAwsEventStreamParser.ReadBigEndian32(AOffset: Integer): Cardinal;
+function TRadIAAwsEventStreamParser.ReadBigEndian32(AOffset: Integer): Cardinal;
 begin
   Result := (Cardinal(FBuffer[AOffset]) shl 24) or
             (Cardinal(FBuffer[AOffset + 1]) shl 16) or
@@ -74,7 +74,7 @@ begin
              Cardinal(FBuffer[AOffset + 3]);
 end;
 
-procedure TAwsEventStreamParser.ProcessBytes(const ANewBytes: TBytes);
+procedure TRadIAAwsEventStreamParser.ProcessBytes(const ANewBytes: TBytes);
 var
   LOldLen, LNewLen: Integer;
   LTotalLength: Cardinal;
@@ -105,7 +105,7 @@ begin
     except
       on E: Exception do
       begin
-        TLogger.Log('TAwsEventStreamParser.ProcessBytes error: ' + E.Message, 'Bedrock');
+        TLogger.Log('TRadIAAwsEventStreamParser.ProcessBytes error: ' + E.Message, 'Bedrock');
         if Assigned(FOnChunk) then
           FOnChunk('', True, 'AWS EventStream Parse Error: ' + E.Message);
       end;
@@ -123,7 +123,7 @@ begin
   end;
 end;
 
-procedure TAwsEventStreamParser.ParseFrame(const AFrameBytes: TBytes);
+procedure TRadIAAwsEventStreamParser.ParseFrame(const AFrameBytes: TBytes);
 var
   LTotalLength, LHeadersLength: Cardinal;
   LPayloadOffset: Cardinal;
@@ -465,14 +465,14 @@ begin
   LTask :=
     procedure
     var
-      LParser: TAwsEventStreamParser;
+      LParser: TRadIAAwsEventStreamParser;
       LErrorMsg: string;
     begin
       try
         System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
         LProviderRef.GetProviderId;
 
-        LParser := TAwsEventStreamParser.Create(
+        LParser := TRadIAAwsEventStreamParser.Create(
           procedure(const AChunk: string; AIsDone: Boolean; const AError: string)
           begin
             if not GIsShuttingDown then

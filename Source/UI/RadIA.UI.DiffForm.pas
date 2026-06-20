@@ -88,7 +88,7 @@ begin
   
   if SameText(LActiveTheme, 'dark') then
   begin
-    TUIHelper.ApplyDarkTitleBar(Self, True);
+    TRadIAUIHelper.ApplyDarkTitleBar(Self, True);
   end;
 end;
 

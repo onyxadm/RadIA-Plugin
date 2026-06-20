@@ -314,7 +314,7 @@ procedure TRadIAProviderBase.DoPostRequestStream(const AUrl: string; const AHead
   const ARequestBody: string; const AOnWrite: TProc<TBytes>);
 var
   LSourceStream: TStringStream;
-  LTargetStream: TStreamingTargetStream;
+  LTargetStream: TRadIAStreamingTargetStream;
   LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
 begin
@@ -324,7 +324,7 @@ begin
 
   FCancelled := False;
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
-  LTargetStream := TStreamingTargetStream.Create(AOnWrite);
+  LTargetStream := TRadIAStreamingTargetStream.Create(AOnWrite);
   try
     LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000;
     if LTimeoutMs <= 0 then LTimeoutMs := 60000;
@@ -362,9 +362,9 @@ end;
 procedure TRadIAProviderBase.DoPostRequestStreamString(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string; const AOnStringChunk: TProc<string>);
 var
-  LDecoder: TUtf8ChunkDecoder;
+  LDecoder: TRadIAUtf8ChunkDecoder;
 begin
-  LDecoder := TUtf8ChunkDecoder.Create;
+  LDecoder := TRadIAUtf8ChunkDecoder.Create;
   try
     DoPostRequestStream(AUrl, AHeaders, ARequestBody,
       procedure(ABytes: TBytes)

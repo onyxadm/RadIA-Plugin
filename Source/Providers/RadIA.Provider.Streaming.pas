@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes;
 
 type
-  TStreamingTargetStream = class(TStream)
+  TRadIAStreamingTargetStream = class(TStream)
   private
     FOnWrite: TProc<TBytes>;
   public
@@ -16,7 +16,7 @@ type
     function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
   end;
 
-  TUtf8ChunkDecoder = class
+  TRadIAUtf8ChunkDecoder = class
   private
     FPendingBytes: TBytes;
   public
@@ -25,15 +25,15 @@ type
 
 implementation
 
-{ TStreamingTargetStream }
+{ TRadIAStreamingTargetStream }
 
-constructor TStreamingTargetStream.Create(const AOnWrite: TProc<TBytes>);
+constructor TRadIAStreamingTargetStream.Create(const AOnWrite: TProc<TBytes>);
 begin
   inherited Create;
   FOnWrite := AOnWrite;
 end;
 
-function TStreamingTargetStream.Write(const Buffer; Count: Longint): Longint;
+function TRadIAStreamingTargetStream.Write(const Buffer; Count: Longint): Longint;
 var
   LBytes: TBytes;
 begin
@@ -48,19 +48,19 @@ begin
     FOnWrite(LBytes);
 end;
 
-function TStreamingTargetStream.Read(var Buffer; Count: Longint): Longint;
+function TRadIAStreamingTargetStream.Read(var Buffer; Count: Longint): Longint;
 begin
   Result := 0;
 end;
 
-function TStreamingTargetStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
+function TRadIAStreamingTargetStream.Seek(const Offset: Int64; Origin: TSeekOrigin): Int64;
 begin
   Result := 0;
 end;
 
-{ TUtf8ChunkDecoder }
+{ TRadIAUtf8ChunkDecoder }
 
-function TUtf8ChunkDecoder.Decode(const ABytes: TBytes): string;
+function TRadIAUtf8ChunkDecoder.Decode(const ABytes: TBytes): string;
 var
   LCombined: TBytes;
   LLenCombined: Integer;

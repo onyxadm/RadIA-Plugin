@@ -142,7 +142,7 @@ begin
   end;
   
   if SameText(LActiveTheme, 'dark') then
-    TUIHelper.ApplyDarkTitleBar(Self, True);
+    TRadIAUIHelper.ApplyDarkTitleBar(Self, True);
 end;
 
 procedure TRadIAFormGithubAuth.FormShow(Sender: TObject);

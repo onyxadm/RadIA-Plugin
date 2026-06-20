@@ -819,7 +819,7 @@ procedure TTestRadIAProvidersEx.TestBedrock_EventStreamParser;
   end;
 
 var
-  LParser: TAwsEventStreamParser;
+  LParser: TRadIAAwsEventStreamParser;
   LChunk1, LChunk2: TBytes;
   LReceivedText: string;
   LCallbackCount: Integer;
@@ -829,7 +829,7 @@ begin
   LCallbackCount := 0;
   LIsDone := False;
 
-  LParser := TAwsEventStreamParser.Create(
+  LParser := TRadIAAwsEventStreamParser.Create(
     procedure(const AChunk: string; AIsDone: Boolean; const AError: string)
     begin
       Inc(LCallbackCount);

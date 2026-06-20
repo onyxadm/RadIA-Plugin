@@ -21,7 +21,7 @@ type
     class function GetColorsForTheme(const AThemeName: string): TRadIAThemeColors; static;
   end;
 
-  TUIHelper = class
+  TRadIAUIHelper = class
   public
     class procedure ApplyDarkTitleBar(AForm: TForm; const AEnable: Boolean);
   end;
@@ -37,9 +37,9 @@ const
   RADIA_DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
   RADIA_DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
 
-{ TUIHelper }
+{ TRadIAUIHelper }
 
-class procedure TUIHelper.ApplyDarkTitleBar(AForm: TForm; const AEnable: Boolean);
+class procedure TRadIAUIHelper.ApplyDarkTitleBar(AForm: TForm; const AEnable: Boolean);
 var
   LValue: DWORD;
 begin

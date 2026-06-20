@@ -301,10 +301,10 @@ end;
 
 procedure TTestRadIAStreaming.TestUtf8ChunkDecoderKeepsSplitMultibyteCharacter;
 var
-  LDecoder: TUtf8ChunkDecoder;
+  LDecoder: TRadIAUtf8ChunkDecoder;
   LBytes: TBytes;
 begin
-  LDecoder := TUtf8ChunkDecoder.Create;
+  LDecoder := TRadIAUtf8ChunkDecoder.Create;
   try
     SetLength(LBytes, 2);
     LBytes[0] := Ord('O');
@@ -322,9 +322,9 @@ end;
 
 procedure TTestRadIAStreaming.TestUtf8ChunkDecoderReturnsAsciiImmediately;
 var
-  LDecoder: TUtf8ChunkDecoder;
+  LDecoder: TRadIAUtf8ChunkDecoder;
 begin
-  LDecoder := TUtf8ChunkDecoder.Create;
+  LDecoder := TRadIAUtf8ChunkDecoder.Create;
   try
     Assert.AreEqual('plain text', LDecoder.Decode(TEncoding.UTF8.GetBytes('plain text')));
   finally

@@ -280,7 +280,7 @@ begin
   btnDone.Font.Color := LColors.AccentColor;
   btnUseSessionFallback.Font.Color := LColors.AccentColor;
   btnRetryBrowser.Font.Color := LColors.TextColor;
-  TUIHelper.ApplyDarkTitleBar(Self, LColors.IsDark);
+  TRadIAUIHelper.ApplyDarkTitleBar(Self, LColors.IsDark);
 end;
 
 procedure TRadIAFormWebLogin.NavigationTimerElapsed(Sender: TObject);
