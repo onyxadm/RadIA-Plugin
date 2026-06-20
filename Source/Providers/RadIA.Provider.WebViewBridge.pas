@@ -13,11 +13,13 @@ type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
   TRadIAWebViewBridgeProvider = class(TRadIAProviderBase)
   private
-    class var FActiveCallback: TStreamChunkCallback;
+    class var FActiveInstance: TRadIAWebViewBridgeProvider;
     class var FOnSendPrompt: TWebViewBridgeSendPromptEvent;
     class var FOnCancel: TWebViewBridgeCancelEvent;
+    FActiveCallback: TStreamChunkCallback;
   public
     constructor Create(const AConfig: IAIConfig); override;
+    destructor Destroy; override;
     
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
@@ -45,6 +47,14 @@ constructor TRadIAWebViewBridgeProvider.Create(const AConfig: IAIConfig);
 begin
   inherited Create(AConfig);
   FProviderId := 'WebViewBridge';
+  FActiveInstance := Self;
+end;
+
+destructor TRadIAWebViewBridgeProvider.Destroy;
+begin
+  if FActiveInstance = Self then
+    FActiveInstance := nil;
+  inherited Destroy;
 end;
 
 procedure TRadIAWebViewBridgeProvider.SendPromptAsync(const APrompt: string;
@@ -82,20 +92,22 @@ end;
 procedure TRadIAWebViewBridgeProvider.SendPromptStreamAsync(const APrompt: string;
   const AHistory: TArray<IChatMessage>; const ACallback: TStreamChunkCallback;
   const ATemperature: Double; const AMaxTokens: Integer);
+var
+  LOnSendPrompt: TWebViewBridgeSendPromptEvent;
 begin
   TLogger.Log('WebViewBridge.SendPromptStreamAsync started.', 'Provider');
   FCancelled := False;
   FActiveCallback := ACallback;
   
-  if Assigned(FOnSendPrompt) then
+  LOnSendPrompt := FOnSendPrompt;
+  if Assigned(LOnSendPrompt) then
   begin
     if not GIsShuttingDown then
     begin
       TThread.Queue(nil,
         procedure
         begin
-          if Assigned(FOnSendPrompt) then
-            FOnSendPrompt(APrompt);
+          LOnSendPrompt(APrompt);
         end);
     end;
   end
@@ -118,18 +130,20 @@ begin
 end;
 
 procedure TRadIAWebViewBridgeProvider.CancelCurrentRequest;
+var
+  LOnCancel: TWebViewBridgeCancelEvent;
 begin
   TLogger.Log('WebViewBridge.CancelCurrentRequest invoked.', 'Provider');
   inherited CancelCurrentRequest;
-  if Assigned(FOnCancel) then
+  LOnCancel := FOnCancel;
+  if Assigned(LOnCancel) then
   begin
     if not GIsShuttingDown then
     begin
       TThread.Queue(nil,
         procedure
         begin
-          if Assigned(FOnCancel) then
-            FOnCancel();
+          LOnCancel();
         end);
     end;
   end;
@@ -141,17 +155,17 @@ begin
   TLogger.Log(Format('WebViewBridge.ReceiveChunk: ChunkLen=%d, IsDone=%s, HasError=%s', 
     [Length(AChunk), BoolToStr(AIsDone, True), BoolToStr(not AError.IsEmpty, True)]), 'Provider');
     
-  if Assigned(FActiveCallback) then
+  if Assigned(FActiveInstance) and Assigned(FActiveInstance.FActiveCallback) then
   begin
-    var LCallback := FActiveCallback;
+    var LCallback := FActiveInstance.FActiveCallback;
     if AIsDone or not AError.IsEmpty then
-      FActiveCallback := nil;
+      FActiveInstance.FActiveCallback := nil;
       
     LCallback(AChunk, AIsDone, AError);
   end
   else
   begin
-    TLogger.Log('WebViewBridge.ReceiveChunk Warning: No active callback found to process chunk.', 'Provider');
+    TLogger.Log('WebViewBridge.ReceiveChunk Warning: No active callback or active instance found to process chunk.', 'Provider');
   end;
 end;
 
