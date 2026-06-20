@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Service;
+unit RadIA.Tests.Service;
 
 interface
 
@@ -118,6 +118,7 @@ type
     procedure SetAutocompleteDelay(const AValue: Integer);
     function GetProviderAuthType(const AProviderName: string): string;
     procedure SetProviderAuthType(const AProviderName: string; const AValue: string);
+    function IsWebLoginProvider(const AProviderName: string): Boolean;
   end;
 
   [TestFixture]
@@ -570,6 +571,13 @@ end;
 
 procedure TMockConfig.SetProviderAuthType(const AProviderName: string; const AValue: string);
 begin
+end;
+
+function TMockConfig.IsWebLoginProvider(const AProviderName: string): Boolean;
+begin
+  if SameText(AProviderName, 'WebViewBridge') then
+    Exit(True);
+  Result := SameText(GetProviderAuthType(AProviderName), 'web_login');
 end;
 
 { TTestRadIAService helpers }

@@ -138,6 +138,7 @@ type
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
+    function IsWebLoginProvider(const AProviderName: string): Boolean;
   end;
 
 implementation
@@ -952,6 +953,13 @@ begin
     FQuotaCycleStart := Now;
     Save;
   end;
+end;
+
+function TRadIAConfig.IsWebLoginProvider(const AProviderName: string): Boolean;
+begin
+  if SameText(AProviderName, 'WebViewBridge') then
+    Exit(True);
+  Result := SameText(GetProviderAuthType(AProviderName), 'web_login');
 end;
 
 function TRadIAConfig.UnprotectString(const AValue: string): string;

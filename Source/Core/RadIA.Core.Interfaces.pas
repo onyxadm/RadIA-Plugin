@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Interfaces;
+unit RadIA.Core.Interfaces;
 
 interface
 
@@ -149,6 +149,7 @@ type
     procedure AddToQuotaUsage(const AUsage: TTokenUsage);
     procedure Save;
     procedure Load;
+    function IsWebLoginProvider(const AProviderName: string): Boolean;
     property SystemPrompt: string read GetSystemPrompt write SetSystemPrompt;
     property OllamaBaseUrl: string read GetOllamaBaseUrl write SetOllamaBaseUrl;
     property MaxHistoryMessages: Integer read GetMaxHistoryMessages write SetMaxHistoryMessages;

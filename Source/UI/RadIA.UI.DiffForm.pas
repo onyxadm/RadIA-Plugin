@@ -50,7 +50,6 @@ type
     procedure SaveWindowPlacement;
     procedure TryStartRefactoring;
     function CleanSuggestedCode(const AResponse: string): string;
-    function IsWebLoginProvider(const AProviderName: string): Boolean;
     procedure PostToWebView(const AAction, AText: string);
   public
     procedure InitializeDiff(const AUnitName, AOriginalCode: string);
@@ -108,7 +107,7 @@ begin
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   FRequestTimeoutTimer := TTimer.Create(Self);
   FRequestTimeoutTimer.Enabled := False;
-  if IsWebLoginProvider(FConfig.GetActiveProvider) then
+  if FConfig.IsWebLoginProvider(FConfig.GetActiveProvider) then
     FRequestTimeoutTimer.Interval := CDiffWebLoginTimeoutMs
   else
     FRequestTimeoutTimer.Interval := CDiffDefaultTimeoutMs;
@@ -370,14 +369,6 @@ begin
   end;
 end;
 
-function TFormAIDiff.IsWebLoginProvider(const AProviderName: string): Boolean;
-begin
-  if SameText(AProviderName, 'WebViewBridge') then
-    Exit(True);
-
-  Result := SameText(FConfig.GetProviderAuthType(AProviderName), 'web_login');
-end;
-
 procedure TFormAIDiff.RequestRefactoring;
 var
   LPrompt: string;
@@ -385,7 +376,7 @@ var
   LActiveProvider: string;
 begin
   LActiveProvider := FConfig.GetActiveProvider;
-  if (not IsWebLoginProvider(LActiveProvider)) and
+  if (not FConfig.IsWebLoginProvider(LActiveProvider)) and
      (SameText(LActiveProvider, 'Gemini') or SameText(LActiveProvider, 'OpenAI')) and
      FConfig.GetApiKey(LActiveProvider).Trim.IsEmpty then
   begin

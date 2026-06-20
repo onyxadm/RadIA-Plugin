@@ -74,7 +74,6 @@ type
     procedure UpdateSessionsList;
     function PreProcessPrompt(const APromptText: string): string;
     function IsProviderConfigured(const AProviderId: string): Boolean;
-    function IsWebLoginProvider(const AProviderId: string): Boolean;
     function GetWebLoginUrl(const AProvider: string): string;
     function CanChangeSession: Boolean;
 
@@ -299,19 +298,11 @@ begin
     if TProviderRegistry.GetProvider(AProviderId, LMeta) and LMeta.IsDynamic then
       Exit(True);
 
-    if IsWebLoginProvider(AProviderId) then
+    if FConfig.IsWebLoginProvider(AProviderId) then
       Exit(True);
 
     Result := not FConfig.GetApiKey(AProviderId).Trim.IsEmpty;
   end;
-end;
-
-function TChatPresenter.IsWebLoginProvider(const AProviderId: string): Boolean;
-begin
-  if SameText(AProviderId, 'WebViewBridge') then
-    Exit(True);
-
-  Result := SameText(FConfig.GetProviderAuthType(AProviderId), 'web_login');
 end;
 
 function TChatPresenter.GetWebLoginUrl(const AProvider: string): string;
@@ -729,7 +720,7 @@ var
   LActiveModel: string;
   LSessionId: string;
 begin
-  if FConfig.QuotaEnabled and (not IsWebLoginProvider(FConfig.GetActiveProvider)) then
+  if FConfig.QuotaEnabled and (not FConfig.IsWebLoginProvider(FConfig.GetActiveProvider)) then
   begin
     FConfig.Load;
     if FConfig.QuotaUsed >= FConfig.QuotaLimit then
@@ -747,7 +738,7 @@ begin
 
   LActiveProvider := FConfig.GetActiveProvider;
   LActiveModel := FConfig.GetActiveModel(LActiveProvider);
-  if IsWebLoginProvider(LActiveProvider) then
+  if FConfig.IsWebLoginProvider(LActiveProvider) then
     LActiveModel := 'Web Login';
   LSessionId := FSessionManager.ActiveSessionId;
 
@@ -874,7 +865,7 @@ begin
             if not AChunk.IsEmpty then
             begin
               LFullResponse := LFullResponse + AChunk;
-              if not Self.IsWebLoginProvider(LActiveProvider) then
+              if not Self.FConfig.IsWebLoginProvider(LActiveProvider) then
                 Self.PostToWebView('append_message', 'assistant', AChunk, False, LActiveProvider, LActiveModel);
             end;
 
@@ -907,11 +898,11 @@ begin
                 Self.FAccumulatedUsage.CompletionTokens := Self.FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
                 Self.FAccumulatedUsage.TotalTokens := Self.FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
 
-                if not Self.IsWebLoginProvider(LActiveProvider) then
+                if not Self.FConfig.IsWebLoginProvider(LActiveProvider) then
                   Self.FConfig.AddToQuotaUsage(LUsage);
 
                 LStats := Self.FAccumulatedUsage.FormatStats;
-                if Self.FConfig.QuotaEnabled and (not Self.IsWebLoginProvider(LActiveProvider)) then
+                if Self.FConfig.QuotaEnabled and (not Self.FConfig.IsWebLoginProvider(LActiveProvider)) then
                 begin
                   LStats := LStats + Format(' · Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 end;
@@ -953,7 +944,7 @@ var
   LActiveProvider: string;
   LActiveModel: string;
 begin
-  if FConfig.QuotaEnabled and (not IsWebLoginProvider(FConfig.GetActiveProvider)) then
+  if FConfig.QuotaEnabled and (not FConfig.IsWebLoginProvider(FConfig.GetActiveProvider)) then
   begin
     FConfig.Load;
     if FConfig.QuotaUsed >= FConfig.QuotaLimit then
@@ -1030,10 +1021,10 @@ begin
 
               if LUsage.TotalTokens > 0 then
               begin
-                if not Self.IsWebLoginProvider(LActiveProvider) then
+                if not Self.FConfig.IsWebLoginProvider(LActiveProvider) then
                   Self.FConfig.AddToQuotaUsage(LUsage);
                 LStats := Self.FAccumulatedUsage.FormatStats;
-                if Self.FConfig.QuotaEnabled and (not Self.IsWebLoginProvider(LActiveProvider)) then
+                if Self.FConfig.QuotaEnabled and (not Self.FConfig.IsWebLoginProvider(LActiveProvider)) then
                   LStats := LStats + Format(' · Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 Self.PostToWebView('update_tokens', '', LStats);
               end;
@@ -1226,7 +1217,7 @@ begin
     begin
       LActiveProvider := FConfig.GetActiveProvider;
       LActiveModel := FConfig.GetActiveModel(LActiveProvider);
-      if IsWebLoginProvider(LActiveProvider) then
+      if FConfig.IsWebLoginProvider(LActiveProvider) then
         LActiveModel := 'Web Login';
 
       PostToWebView('update_message', 'assistant', AText, AIsDone, LActiveProvider, LActiveModel);
@@ -1840,7 +1831,7 @@ begin
     Exit;
 
   LDisplayModel := AModel;
-  if (not AProvider.IsEmpty) and IsWebLoginProvider(AProvider) then
+  if (not AProvider.IsEmpty) and FConfig.IsWebLoginProvider(AProvider) then
     LDisplayModel := 'Web Login';
 
   TLogger.Log(Format('PostToWebView: Action=%s, Role=%s, TextLen=%d, IsDone=%s, Provider=%s, Model=%s',
@@ -1887,7 +1878,7 @@ begin
 
   LActiveProvider := FConfig.GetActiveProvider;
   LActiveModel := FConfig.GetActiveModel(LActiveProvider);
-  LIsWebLogin := IsWebLoginProvider(LActiveProvider);
+  LIsWebLogin := FConfig.IsWebLoginProvider(LActiveProvider);
 
   LJson := TJSONObject.Create;
   LProvidersJson := TJSONArray.Create;
