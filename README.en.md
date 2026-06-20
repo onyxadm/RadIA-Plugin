@@ -73,6 +73,10 @@ The user interface uses a hybrid architecture:
 3.  **MVP (Model-View-Presenter) Pattern:** Presentation logic and flow coordination (such as sending messages, changing providers, and saving configuration) are completely decoupled from VCL forms and encapsulated in Presenters (`TChatPresenter` and `TConfigPresenter`), allowing UI components to act as passive Views.
 4.  **Storage Abstraction (`ISettingsStorage`):** For better maintainability and testing isolation, the option persistence layer has been abstracted. In production, settings are stored in the Windows Registry (`TRegistrySettingsStorage`), while unit tests run against an in-memory storage (`TMemorySettingsStorage`), ensuring tests do not corrupt the developer's local registry keys.
 
+For an in-depth understanding of the plugin's infrastructure, asynchronous concurrent flows (streaming via background threads), WebView2 lifecycle management on IDE shutdown, and design patterns, please refer to our:
+
+👉 [**Software Architecture Guide (docs/architecture_guide.en.md)**](docs/architecture_guide.en.md)
+
 ### 4. Prerequisites
 *   **IDE:** Embarcadero Delphi 11 Alexandria, 12 Athens, or 13 Florence.
 *   **OS:** Windows 10 / 11 (64-bit).

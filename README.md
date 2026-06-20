@@ -73,6 +73,10 @@ A interface utiliza uma arquitetura híbrida:
 3.  **Padrão MVP (Model-View-Presenter):** A lógica de apresentação e a coordenação de fluxos (como envio de mensagens, troca de provedores e salvamento de configurações) são totalmente desacopladas do formulário VCL e encapsuladas em Presenters (`TChatPresenter` e `TConfigPresenter`), permitindo que a interface gráfica atue como uma View passiva.
 4.  **Abstração de Armazenamento (`ISettingsStorage`):** Para maior manutenibilidade e testabilidade, o mecanismo de persistência de opções foi abstraído. Em produção, os dados são salvos no Registro do Windows (`TRegistrySettingsStorage`), enquanto nos testes unitários são persistidos temporariamente em memória (`TMemorySettingsStorage`), garantindo isolamento total dos testes sem corromper as credenciais reais do desenvolvedor.
 
+Para uma compreensão aprofundada da infraestrutura do plugin, fluxos concorrentes assíncronos (streaming via background threads), ciclo de vida do WebView2 no encerramento da IDE e padrões de projeto aplicados, consulte o nosso:
+
+👉 [**Guia de Arquitetura de Software (docs/architecture_guide.md)**](docs/architecture_guide.md)
+
 ### 4. Requisitos do Sistema
 *   **IDE:** Embarcadero Delphi 11 Alexandria, 12 Athens ou 13 Florence.
 *   **OS:** Windows 10 / 11 (64-bit).

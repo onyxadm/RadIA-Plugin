@@ -32,7 +32,7 @@ type
   protected
     function GetBaseUrl: string; override;
   public
-    constructor Create(const AConfig: IAIConfig); override;
+    constructor Create(const AConfig: IRadIAConfig); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -47,7 +47,7 @@ implementation
 uses
   RadIA.Core.ProviderRegistry;
 
-constructor TRadIAMyAwesomeAIProvider.Create(const AConfig: IAIConfig);
+constructor TRadIAMyAwesomeAIProvider.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create(AConfig);
   // ESSENTIAL: FProviderId must be set to the exact same string identifier
@@ -84,7 +84,7 @@ initialization
       True,                          // Requires API Key? (HasApiKey)
       False,                         // Supports custom endpoint URLs? (HasCustomUrl)
       ['awesome-chat-v1', 'awesome-coder-v2'], // Default fallback models list
-      function(const ACfg: IAIConfig): IIAProvider
+      function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
         Result := TRadIAMyAwesomeAIProvider.Create(ACfg);
       end
