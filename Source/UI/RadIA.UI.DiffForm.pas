@@ -52,7 +52,7 @@ type
     function CleanSuggestedCode(const AResponse: string): string;
     procedure PostToWebView(const AAction, AText: string);
   public
-    procedure InitializeDiff(const AUnitName, AOriginalCode: string);
+    procedure InitializeDiff(const AUnitName, AOriginalCode: string; const AWebFilesDir: string = '');
     
     property OriginalCode: string read FOriginalCode;
     property SuggestedCode: string read FSuggestedCode;
@@ -63,7 +63,8 @@ implementation
 {$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources;
+  System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources,
+  RadIA.Core.Container;
 
 const
   CDiffDefaultTimeoutMs = 60000;
@@ -102,8 +103,13 @@ begin
   FPendingRender := False;
   FCanApply := False;
   FLifecycleGuard := TLifecycleGuard.Create;
-  FConfig := TRadIAConfig.GetInstance;
-  FAIService := TRadIAService.Create(FConfig);
+  if not TRadIAContainer.TryResolve<IAIConfig>(FConfig) then
+  begin
+    FConfig := TRadIAConfig.GetInstance;
+    FConfig.Load;
+  end;
+  if not TRadIAContainer.TryResolve<IRadIAService>(FAIService) then
+    FAIService := TRadIAService.Create(FConfig);
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   FRequestTimeoutTimer := TTimer.Create(Self);
   FRequestTimeoutTimer.Enabled := False;
@@ -222,10 +228,12 @@ begin
   end;
 end;
 
-procedure TFormAIDiff.InitializeDiff(const AUnitName, AOriginalCode: string);
+procedure TFormAIDiff.InitializeDiff(const AUnitName, AOriginalCode: string; const AWebFilesDir: string);
 begin
   FUnitName := AUnitName;
   FOriginalCode := AOriginalCode;
+  if not AWebFilesDir.IsEmpty then
+    FWebFilesDir := AWebFilesDir;
 end;
 
 procedure TFormAIDiff.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
