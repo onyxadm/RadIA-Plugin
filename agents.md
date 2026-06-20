@@ -79,6 +79,18 @@ Siga o padrão clássico de estilo Pascal do Delphi:
 | **Variáveis Locais** | Prefixo `L` | `LTemplate: TPromptTemplate` |
 | **Tipos Genéricos** | Prefixo `T` | `TList<T>` |
 
+### 3.1 Regra de Prefixo do Projeto (RadIA)
+
+*   **Regra Geral:** Toda interface ou classe de domínio que faz parte da lógica central, utilitários, infraestrutura ou UI própria do Rad IA deve incluir o prefixo `RadIA` após o prefixo do tipo (`T` ou `I`).
+    *   **Interfaces:** `IRadIA<Nome>` (ex: `IRadIAService`, `IRadIATextNormalizer`).
+    *   **Classes:** `TRadIA<Nome>` (ex: `TRadIAService`, `TRadIATextNormalizer`).
+*   **Exceções Temporárias (Legado a ser refatorado):**
+    As seguintes classes e interfaces do legado ainda não seguem o prefixo padrão e deverão ser renomeadas futuramente em tarefas específicas de refatoração:
+    *   **Interfaces de Core/MVP:** `IAIConfig`, `IChatMessage`, `IIAProvider`, `IIDEAdapter`, `ILifecycleGuard`, `ISettingsStorage`, `IChatView`, `IConfigView`.
+    *   **Classes de Core/MVP:** `TRegistrySettingsStorage`, `TMemorySettingsStorage`, `TConcreteIDEAdapter`, `TChatPresenter`, `TConfigPresenter`.
+    *   **Forms e Frames de UI:** `TFormAIConfig`, `TFrameAIConfig`, `TFrameAIChat`, `TFormAIDiff`, `TFormWebLogin`, `TFormGithubAuth`.
+    *   **Utilitários e Parsers:** `TUIHelper`, `TStreamingTargetStream`, `TUtf8ChunkDecoder`, `TAwsEventStreamParser`.
+
 ---
 
 ## 4. Segurança em Threads (Thread Safety na IDE)
