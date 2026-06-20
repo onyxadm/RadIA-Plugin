@@ -32,7 +32,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.IOUtils, RadIA.Core.Service, RadIA.Core.Types;
+  System.SysUtils, System.IOUtils, RadIA.Core.Service, RadIA.Core.Types, RadIA.Core.ChatMessage;
 
 { TTestRadIASessions }
 

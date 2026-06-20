@@ -1,4 +1,4 @@
-unit RadIA.OTA.Register;
+﻿unit RadIA.OTA.Register;
 
 interface
 
@@ -44,7 +44,8 @@ uses
   Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
   RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options, RadIA.Providers.Link, RadIA.Core.Container,
-  RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer;
+  RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer,
+  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator;
 
 const
   GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;
@@ -201,7 +202,7 @@ begin
   FTimer.OnTimer := OnTimerEvent;
   FTimer.Enabled := True;
   
-  TRadIAMediator.Instance.RegisterDiffHandler(OnRequestDiff);
+  TRadIAContainer.Resolve<IRadIAMediator>.RegisterDiffHandler(OnRequestDiff);
 end;
 
 destructor TRadIAWizard.Destroy;
@@ -212,7 +213,9 @@ begin
   RadIA.OTA.DockableForm.UnregisterDockableForm;
   {$ENDIF}
 
-  TRadIAMediator.Instance.UnregisterDiffHandler;
+  var LMediator: IRadIAMediator;
+  if TRadIAContainer.TryResolve<IRadIAMediator>(LMediator) then
+    LMediator.UnregisterDiffHandler;
   if Assigned(FTimer) then
   begin
     FTimer.Enabled := False;
@@ -578,6 +581,9 @@ initialization
   TRadIAContainer.Register<IRadIAIDEAdapter>(TRadIAConcreteIDEAdapter.Create);
   TRadIAContainer.Register<IRadIAService>(TRadIAService.Create(TRadIAContainer.Resolve<IRadIAConfig>));
   TRadIAContainer.Register<IRadIATextNormalizer>(TRadIATextNormalizer.Create);
+  TRadIAContainer.Register<IRadIAMediator>(TRadIAMediator.Instance);
+  TRadIAContainer.Register<IRadIADTOBuilder>(TRadIADTOBuilder.Create);
+  TRadIAContainer.Register<IRadIAProjectGenerator>(TRadIAProjectGenerator.Create);
 
 finalization
   TLogger.SetActiveLogger(nil);

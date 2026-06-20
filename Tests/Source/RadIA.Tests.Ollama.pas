@@ -1,4 +1,4 @@
-unit RadIA.Tests.Ollama;
+﻿unit RadIA.Tests.Ollama;
 
 interface
 
@@ -29,7 +29,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.JSON;
+  System.SysUtils, System.JSON, RadIA.Core.ChatMessage;
 
 function TTestRadIAOllama.CallPrivateMethod(const AMethodName: string; const AArgs: array of TValue): TValue;
 var

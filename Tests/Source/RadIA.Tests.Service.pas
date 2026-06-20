@@ -1,4 +1,4 @@
-unit RadIA.Tests.Service;
+﻿unit RadIA.Tests.Service;
 
 interface
 
@@ -8,6 +8,7 @@ uses
   RadIA.Core.Interfaces,
   RadIA.Core.Types,
   RadIA.Core.Service,
+  RadIA.Core.ChatMessage,
   RadIA.Core.Config,
   RadIA.Core.TokenUsage,
   RadIA.Core.ProviderRegistry,

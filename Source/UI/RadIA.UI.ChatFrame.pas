@@ -1,4 +1,4 @@
-unit RadIA.UI.ChatFrame;
+﻿unit RadIA.UI.ChatFrame;
 
 interface
 
@@ -126,7 +126,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
-  RadIA.Core.Mediator, RadIA.Core.Logger, Vcl.Themes, RadIA.UI.WebLoginForm;
+  RadIA.Core.Mediator, RadIA.Core.Logger, Vcl.Themes, RadIA.UI.WebLoginForm, RadIA.Core.Container;
 
 {$R *.dfm}
 
@@ -235,7 +235,11 @@ begin
   FPresenter.Initialize(FWebFilesDir);
 
   memPrompt.OnKeyDown := Self.memPromptKeyDown;
-  TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
+  var LMediator: IRadIAMediator;
+  if TRadIAContainer.TryResolve<IRadIAMediator>(LMediator) then
+    LMediator.RegisterPromptHandler(Self.OnGlobalPromptRequest)
+  else
+    TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
 end;
 
 destructor TRadIAFrameAIChat.Destroy;
@@ -244,7 +248,11 @@ var
 begin
   if Assigned(FLifecycleGuard) then
     (FLifecycleGuard as IRadIALifecycleGuard).Invalidate;
-  TRadIAMediator.Instance.UnregisterPromptHandler;
+  var LMediator: IRadIAMediator;
+  if TRadIAContainer.TryResolve<IRadIAMediator>(LMediator) then
+    LMediator.UnregisterPromptHandler
+  else
+    TRadIAMediator.Instance.UnregisterPromptHandler;
   
   if Assigned(FPopupMenuTemplates) then
   begin

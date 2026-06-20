@@ -11,6 +11,7 @@ uses
   // Production Units
   RadIA.Core.Types in '..\Source\Core\RadIA.Core.Types.pas',
   RadIA.Core.Interfaces in '..\Source\Core\RadIA.Core.Interfaces.pas',
+  RadIA.Core.ChatMessage in '..\Source\Core\RadIA.Core.ChatMessage.pas',
   RadIA.Core.Container in '..\Source\Core\RadIA.Core.Container.pas',
   RadIA.Core.Logger in '..\Source\Core\RadIA.Core.Logger.pas',
   RadIA.Core.ConfigDefaults in '..\Source\Core\RadIA.Core.ConfigDefaults.pas',

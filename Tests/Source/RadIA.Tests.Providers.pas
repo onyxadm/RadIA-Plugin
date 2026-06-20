@@ -1,4 +1,4 @@
-unit RadIA.Tests.Providers;
+﻿unit RadIA.Tests.Providers;
 
 interface
 
@@ -53,7 +53,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Rtti, System.JSON, RadIA.Core.Service, RadIA.Tests.Service;
+  System.SysUtils, System.Rtti, System.JSON, RadIA.Core.Service, RadIA.Tests.Service, RadIA.Core.ChatMessage;
 
 { TTestRadIAProviders }
 

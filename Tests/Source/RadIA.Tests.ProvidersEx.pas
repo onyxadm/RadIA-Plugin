@@ -1,4 +1,4 @@
-unit RadIA.Tests.ProvidersEx;
+﻿unit RadIA.Tests.ProvidersEx;
 
 interface
 
@@ -72,7 +72,7 @@ implementation
 
 uses
   System.SysUtils, System.Classes, System.Rtti, System.JSON, RadIA.Core.Service, RadIA.Tests.Service,
-  System.NetEncoding;
+  System.NetEncoding, RadIA.Core.ChatMessage;
 
 { TTestRadIAProvidersEx }
 

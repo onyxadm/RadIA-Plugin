@@ -1,4 +1,4 @@
-unit RadIA.Core.Interfaces;
+﻿unit RadIA.Core.Interfaces;
 
 interface
 
@@ -211,6 +211,29 @@ type
   IRadIATextNormalizer = interface
     ['{E3FA7BCE-9FBA-4A2D-BE1E-D7C6FBFA9A2B}']
     function NormalizeLineBreaks(const AText: string): string;
+  end;
+
+  TOnRequestPromptProc = reference to procedure(const APrompt: string; const AOpenChat: Boolean);
+  TOnRequestDiffProc   = reference to procedure(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean);
+
+  IRadIAMediator = interface
+    ['{3C4D9E2B-0FEE-4AE2-9BE3-4F296D4D1D43}']
+    procedure RegisterPromptHandler(const AHandler: TOnRequestPromptProc);
+    procedure RegisterDiffHandler(const AHandler: TOnRequestDiffProc);
+    procedure RequestPrompt(const APrompt: string; const AOpenChat: Boolean);
+    procedure RequestDiff(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean = False);
+    procedure UnregisterPromptHandler;
+    procedure UnregisterDiffHandler;
+  end;
+
+  IRadIADTOBuilder = interface
+    ['{E12C8D9E-0FDA-4B2D-BE1E-D7C6FBFA9A2C}']
+    function BuildPrompt(const AInput, AInputType, AOutputType: string): string;
+  end;
+
+  IRadIAProjectGenerator = interface
+    ['{C28D9E3B-0FEA-4B2D-BE1E-D7C6FBFA9A2D}']
+    function GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string; const ADestDir: string = ''): Boolean;
   end;
 
 implementation

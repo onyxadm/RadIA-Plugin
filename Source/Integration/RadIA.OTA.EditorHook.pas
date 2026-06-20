@@ -1,4 +1,4 @@
-unit RadIA.OTA.EditorHook;
+﻿unit RadIA.OTA.EditorHook;
 
 interface
 
@@ -17,6 +17,7 @@ type
     FCreateExampleInProgress: Boolean;
     FCreateExampleService: IRadIAService;
     FIDEAdapter: IRadIAIDEAdapter;
+    FMediator: IRadIAMediator;
     {$IFNDEF TESTS}
     FTimer: TTimer;
     FHookPending: Boolean;
@@ -233,6 +234,8 @@ begin
   inherited Create(AOwner);
   if not TRadIAContainer.TryResolve<IRadIAIDEAdapter>(FIDEAdapter) then
     FIDEAdapter := TRadIAConcreteIDEAdapter.Create;
+  if not TRadIAContainer.TryResolve<IRadIAMediator>(FMediator) then
+    FMediator := TRadIAMediator.Instance;
   FOldActiveFormChange := nil;
   FIDENotifierIndex := -1;
   FEditorNotifiers := TInterfaceList.Create;
@@ -865,7 +868,7 @@ begin
     '```pascal' + sLineBreak +
     LCode.TrimRight + sLineBreak +
     '```';
-  TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
+  FMediator.RequestPrompt(LPrompt, True);
 end;
 
 procedure TRadIAEditorHook.OnExplainExecute(Sender: TObject);
@@ -902,7 +905,7 @@ begin
 
   TLogger.Log(Format('OnOptimizeExecute: CodeLength=%d, UsedSelection=%s',
     [Length(LCode), BoolToStr(LUsedSelection, True)]), 'EditorHook');
-  TRadIAMediator.Instance.RequestDiff(LCode, not LUsedSelection);
+  FMediator.RequestDiff(LCode, not LUsedSelection);
 end;
 
 function TRadIAEditorHook.BuildCreateExamplePrompt(const ASourceCode: string;
@@ -1179,7 +1182,7 @@ begin
   TLogger.Log(Format('OnDocExecute: CodeLength=%d, UsedSelection=%s',
     [Length(LCode), BoolToStr(LUsedSelection, True)]), 'EditorHook');
   LPrompt := Format('/doc'#13#10'```pascal'#13#10'%s'#13#10'```', [LCode]);
-  TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
+  FMediator.RequestPrompt(LPrompt, True);
 end;
 
 procedure TRadIAEditorHook.OnReviewExecute(Sender: TObject);
@@ -1198,7 +1201,7 @@ begin
   ShowRadIAChat;
 
   LPrompt := Format('/review'#13#10'```pascal'#13#10'%s'#13#10'```', [LActiveCode]);
-  TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
+  FMediator.RequestPrompt(LPrompt, True);
 end;
 
 procedure TRadIAEditorHook.OnFixErrorExecute(Sender: TObject);
@@ -1233,7 +1236,7 @@ begin
   LPrompt := Format('/fix'#13#10'Compiler Error: %s'#13#10'File: %s (Line %d)'#13#10#13#10'%s',
     [LErrorMsg, ExtractFileName(LFileName), LLine, LSourceCode]);
 
-  TRadIAMediator.Instance.RequestPrompt(LPrompt, True);
+  FMediator.RequestPrompt(LPrompt, True);
 end;
 
 {$IFNDEF TESTS}

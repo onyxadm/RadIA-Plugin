@@ -15,19 +15,19 @@
 interface
 
 uses
-  System.SysUtils;
+  System.SysUtils, RadIA.Core.Interfaces;
 
 type
-  TOnRequestPromptProc = reference to procedure(const APrompt: string; const AOpenChat: Boolean);
-  TOnRequestDiffProc   = reference to procedure(const AOriginalCode: string; const AReplaceWholeBuffer: Boolean);
-
-  TRadIAMediator = class
+  TRadIAMediator = class(TInterfacedObject, IRadIAMediator)
   private
     class var FInstance: TRadIAMediator;
     FOnRequestPrompt: TOnRequestPromptProc;
     FOnRequestDiff: TOnRequestDiffProc;
 
     constructor CreatePrivate;
+  protected
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     class function Instance: TRadIAMediator;
     class destructor Destroy;
@@ -54,6 +54,16 @@ begin
   inherited Create;
   FOnRequestPrompt := nil;
   FOnRequestDiff   := nil;
+end;
+
+function TRadIAMediator._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function TRadIAMediator._Release: Integer;
+begin
+  Result := -1;
 end;
 
 class function TRadIAMediator.Instance: TRadIAMediator;

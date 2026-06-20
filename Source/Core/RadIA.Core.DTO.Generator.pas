@@ -1,11 +1,14 @@
-﻿unit RadIA.Core.DTO.Generator;
+unit RadIA.Core.DTO.Generator;
 
 interface
 
+uses
+  RadIA.Core.Interfaces;
+
 type
-  TRadIADTOBuilder = class
+  TRadIADTOBuilder = class(TInterfacedObject, IRadIADTOBuilder)
   public
-    class function BuildPrompt(const AInput, AInputType, AOutputType: string): string;
+    function BuildPrompt(const AInput, AInputType, AOutputType: string): string;
   end;
 
 implementation
@@ -13,7 +16,7 @@ implementation
 uses
   System.SysUtils;
 
-class function TRadIADTOBuilder.BuildPrompt(const AInput, AInputType, AOutputType: string): string;
+function TRadIADTOBuilder.BuildPrompt(const AInput, AInputType, AOutputType: string): string;
 var
   LFormatRules: string;
 begin

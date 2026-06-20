@@ -1,15 +1,16 @@
-unit RadIA.Tests.ProjectGenerator;
+﻿unit RadIA.Tests.ProjectGenerator;
 
 interface
 
 uses
-  DUnitX.TestFramework;
+  DUnitX.TestFramework, RadIA.Core.Interfaces;
 
 type
   [TestFixture]
   TTestRadIAProjectGenerator = class
   private
     FTempDir: string;
+    FGenerator: IRadIAProjectGenerator;
   public
     [Setup]
     procedure Setup;
@@ -35,10 +36,12 @@ procedure TTestRadIAProjectGenerator.Setup;
 begin
   // Create a unique temporary directory for each test execution
   FTempDir := TPath.Combine(TPath.GetTempPath, 'RadIATests_ProjGen_' + TGUID.NewGuid.ToString);
+  FGenerator := TRadIAProjectGenerator.Create;
 end;
 
 procedure TTestRadIAProjectGenerator.TearDown;
 begin
+  FGenerator := nil;
   // Recursively clean up the temporary directory if it exists
   if TDirectory.Exists(FTempDir) then
   begin
@@ -77,7 +80,7 @@ begin
     LJson.Free;
   end;
 
-  LSuccess := TRadIAProjectGenerator.GenerateFromJSON(LJsonStr, LErrorMsg, FTempDir);
+  LSuccess := FGenerator.GenerateFromJSON(LJsonStr, LErrorMsg, FTempDir);
 
   Assert.IsTrue(LSuccess, 'Project generation should succeed. Error: ' + LErrorMsg);
   Assert.IsEmpty(LErrorMsg, 'Error message should be empty on success');
@@ -97,14 +100,14 @@ var
   LSuccess: Boolean;
   LErrorMsg: string;
 begin
-  LSuccess := TRadIAProjectGenerator.GenerateFromJSON('', LErrorMsg, FTempDir);
+  LSuccess := FGenerator.GenerateFromJSON('', LErrorMsg, FTempDir);
   Assert.IsFalse(LSuccess, 'Generation should fail for empty JSON string');
   Assert.IsNotEmpty(LErrorMsg, 'Error message should be provided for empty JSON');
 
-  LSuccess := TRadIAProjectGenerator.GenerateFromJSON('   ', LErrorMsg, FTempDir);
+  LSuccess := FGenerator.GenerateFromJSON('   ', LErrorMsg, FTempDir);
   Assert.IsFalse(LSuccess, 'Generation should fail for whitespace JSON string');
 
-  LSuccess := TRadIAProjectGenerator.GenerateFromJSON('[]', LErrorMsg, FTempDir);
+  LSuccess := FGenerator.GenerateFromJSON('[]', LErrorMsg, FTempDir);
   Assert.IsFalse(LSuccess, 'Generation should fail for empty JSON array');
 end;
 
@@ -136,7 +139,7 @@ begin
     LJson.Free;
   end;
 
-  LSuccess := TRadIAProjectGenerator.GenerateFromJSON(LJsonStr, LErrorMsg, FTempDir);
+  LSuccess := FGenerator.GenerateFromJSON(LJsonStr, LErrorMsg, FTempDir);
 
   Assert.IsFalse(LSuccess, 'Project generation should fail due to invalid file path');
   Assert.IsNotEmpty(LErrorMsg, 'Error message should be captured during exception');

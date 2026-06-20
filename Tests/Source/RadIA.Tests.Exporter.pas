@@ -30,7 +30,7 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils, RadIA.Core.ChatMessage;
 
 { TTestRadIAExporter }
 

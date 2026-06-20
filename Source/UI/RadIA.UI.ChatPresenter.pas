@@ -63,6 +63,8 @@ type
     FOwnsService: Boolean;
     FModelsProvider: IRadIAProvider;
     FDataDir: string;
+    FDTOBuilder: IRadIADTOBuilder;
+    FProjectGenerator: IRadIAProjectGenerator;
 
     procedure HandleBackgroundLoginComplete;
     procedure UpdateModelsCombo;
@@ -162,7 +164,7 @@ uses
   System.IOUtils, System.JSON.Builders, RadIA.Core.Config, RadIA.Core.Logger,
   RadIA.Core.ProviderRegistry, RadIA.Core.ConversationExporter,
   RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge,
-  System.SyncObjs, RadIA.Core.Container;
+  System.SyncObjs, RadIA.Core.Container, RadIA.Core.ChatMessage;
 
 { Helper Functions }
 
@@ -218,6 +220,11 @@ begin
     FAIService := TRadIAService.Create(FConfig);
     FOwnsService := True;
   end;
+
+  if not TRadIAContainer.TryResolve<IRadIADTOBuilder>(FDTOBuilder) then
+    FDTOBuilder := TRadIADTOBuilder.Create;
+  if not TRadIAContainer.TryResolve<IRadIAProjectGenerator>(FProjectGenerator) then
+    FProjectGenerator := TRadIAProjectGenerator.Create;
 
   if ADataDir.IsEmpty then
     FDataDir := TPath.Combine(TPath.GetHomePath, 'RadIA')
@@ -966,7 +973,7 @@ begin
   TLogger.Log(Format('GenerateDTO started. Provider=%s, Model=%s, InputLength=%d, InputType=%s, OutputType=%s',
     [LActiveProvider, LActiveModel, Length(AInput), AInputType, AOutputType]), 'UI');
 
-  LPromptText := TRadIADTOBuilder.BuildPrompt(AInput, AInputType, AOutputType);
+  LPromptText := FDTOBuilder.BuildPrompt(AInput, AInputType, AOutputType);
   LGuard := FLifecycleGuard as IRadIALifecycleGuard;
 
   try
@@ -1254,7 +1261,7 @@ begin
     begin
       if not AFilesJson.IsEmpty then
       begin
-        if not TRadIAProjectGenerator.GenerateFromJSON(AFilesJson, LErrorMsg) then
+        if not FProjectGenerator.GenerateFromJSON(AFilesJson, LErrorMsg) then
         begin
           if not LErrorMsg.IsEmpty then
             FView.ShowMessageDialog(LErrorMsg);

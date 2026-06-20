@@ -1,4 +1,4 @@
-unit RadIA.Core.Sessions;
+﻿unit RadIA.Core.Sessions;
 
 interface
 
@@ -48,7 +48,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON, System.DateUtils, System.Generics.Defaults,
-  RadIA.Core.Types, RadIA.Core.Service, RadIA.Core.Logger;
+  RadIA.Core.Types, RadIA.Core.Service, RadIA.Core.Logger, RadIA.Core.ChatMessage;
 
 procedure LogSession(const AMsg: string);
 begin
