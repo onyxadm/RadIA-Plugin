@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, RadIA.Core.Interfaces;
 
 type
-  TConcreteIDEAdapter = class(TInterfacedObject, IRadIAIDEAdapter)
+  TRadIAConcreteIDEAdapter = class(TInterfacedObject, IRadIAIDEAdapter)
   public
     function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
     function ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean = False;
@@ -28,65 +28,65 @@ implementation
 uses
   RadIA.OTA.Helper, RadIA.OTA.MessageViewHook;
 
-{ TConcreteIDEAdapter }
+{ TRadIAConcreteIDEAdapter }
 
-function TConcreteIDEAdapter.GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean): Boolean;
+function TRadIAConcreteIDEAdapter.GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean): Boolean;
 begin
   Result := TRadIAOTAHelper.GetActiveEditorText(AText, ASelectedOnly);
 end;
 
-function TConcreteIDEAdapter.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean;
+function TRadIAConcreteIDEAdapter.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean;
   const AOriginalText: string): Boolean;
 begin
   Result := TRadIAOTAHelper.ReplaceActiveEditorText(ANewText, AReplaceWholeBuffer, AOriginalText);
 end;
 
-function TConcreteIDEAdapter.InsertTextAtCursor(const AText: string): Boolean;
+function TRadIAConcreteIDEAdapter.InsertTextAtCursor(const AText: string): Boolean;
 begin
   Result := TRadIAOTAHelper.InsertTextAtCursor(AText);
 end;
 
-function TConcreteIDEAdapter.InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
+function TRadIAConcreteIDEAdapter.InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
 begin
   Result := TRadIAOTAHelper.InsertTextAtLineColumn(AText, ALine, AColumn);
 end;
 
-function TConcreteIDEAdapter.GetCurrentCursorLine: Integer;
+function TRadIAConcreteIDEAdapter.GetCurrentCursorLine: Integer;
 begin
   Result := TRadIAOTAHelper.GetCurrentCursorLine;
 end;
 
-function TConcreteIDEAdapter.GetActiveUnitName: string;
+function TRadIAConcreteIDEAdapter.GetActiveUnitName: string;
 begin
   Result := TRadIAOTAHelper.GetActiveUnitName;
 end;
 
-function TConcreteIDEAdapter.GetActiveProjectName: string;
+function TRadIAConcreteIDEAdapter.GetActiveProjectName: string;
 begin
   Result := TRadIAOTAHelper.GetActiveProjectName;
 end;
 
-function TConcreteIDEAdapter.GetActiveProjectFolder: string;
+function TRadIAConcreteIDEAdapter.GetActiveProjectFolder: string;
 begin
   Result := TRadIAOTAHelper.GetActiveProjectFolder;
 end;
 
-function TConcreteIDEAdapter.OpenProjectInIDE(const AProjectPath: string): Boolean;
+function TRadIAConcreteIDEAdapter.OpenProjectInIDE(const AProjectPath: string): Boolean;
 begin
   Result := TRadIAOTAHelper.OpenProjectInIDE(AProjectPath);
 end;
 
-function TConcreteIDEAdapter.GetDelphiVersionName: string;
+function TRadIAConcreteIDEAdapter.GetDelphiVersionName: string;
 begin
   Result := TRadIAOTAHelper.GetDelphiVersionName;
 end;
 
-function TConcreteIDEAdapter.GetPreferredLanguageInstruction: string;
+function TRadIAConcreteIDEAdapter.GetPreferredLanguageInstruction: string;
 begin
   Result := TRadIAOTAHelper.GetPreferredLanguageInstruction;
 end;
 
-function TConcreteIDEAdapter.GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
+function TRadIAConcreteIDEAdapter.GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
 begin
   Result := TRadIAMessageViewHook.GetLastCompilerError(AErrorMsg, AFileName, ALine);
 end;

@@ -36,7 +36,7 @@ uses
 procedure TTestRadIAJSONProviders.Setup;
 begin
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAJSONProviders');
-  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
+  TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   CreateMockJsonProvider;
 end;

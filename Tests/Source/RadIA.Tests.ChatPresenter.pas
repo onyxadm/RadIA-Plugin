@@ -8,7 +8,7 @@ uses
   RadIA.Core.ProviderRegistry, RadIA.UI.ChatPresenter;
 
 type
-  TMockChatView = class(TInterfacedObject, IChatView)
+  TMockChatView = class(TInterfacedObject, IRadIAChatView)
   public
     RequestStateInProgress: Boolean;
     RequestStateSetCalled: Boolean;
@@ -49,7 +49,7 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    { IChatView }
+    { IRadIAChatView }
     procedure SetRequestState(const AInProgress: Boolean);
     procedure UpdateTokensStats(const AStats: string);
     procedure PostMessageToWeb(const AJson: string);
@@ -96,7 +96,7 @@ type
   TTestChatPresenter = class
   private
     FMockView: TMockChatView;
-    FPresenter: TChatPresenter;
+    FPresenter: TRadIAChatPresenter;
     FConfig: IRadIAConfig;
     FGeminiOriginalMeta: TProviderMetadata;
     FOpenAIOriginalMeta: TProviderMetadata;
@@ -359,7 +359,7 @@ begin
   FTempDir := TPath.Combine(TPath.GetTempPath, 'RadIATests_Presenter_' + TGUID.NewGuid.ToString);
   ForceDirectories(FTempDir);
 
-  LMemoryStorage := TMemorySettingsStorage.Create;
+  LMemoryStorage := TRadIAMemorySettingsStorage.Create;
   TRadIAConfig.SetStorage(LMemoryStorage);
   FConfig := TRadIAConfig.GetInstance;
   FConfig.Load;
@@ -388,7 +388,7 @@ begin
   );
 
   FMockView := TMockChatView.Create;
-  FPresenter := TChatPresenter.Create(FMockView, FConfig, nil, FTempDir);
+  FPresenter := TRadIAChatPresenter.Create(FMockView, FConfig, nil, FTempDir);
 end;
 
 procedure TTestChatPresenter.TearDown;

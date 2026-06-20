@@ -7,7 +7,7 @@ uses
   RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.PromptTemplates;
 
 type
-  IConfigView = interface
+  IRadIAConfigView = interface
     ['{AFB8E0CA-7186-4F18-A7EE-3E081BE27FDF}']
     // General Provider Inputs
     function GetApiKey(const AProviderId: string): string;
@@ -82,9 +82,9 @@ type
     procedure SetTemplateOriginLabel(const AText: string; const AColor: TColor);
   end;
 
-  TConfigPresenter = class
+  TRadIAConfigPresenter = class
   private
-    FView: IConfigView;
+    FView: IRadIAConfigView;
     FConfig: IRadIAConfig;
     FTemplateManager: TPromptTemplateManager;
     FOwnsTemplateManager: Boolean;
@@ -93,7 +93,7 @@ type
     function ValidateUrl(const AUrl: string; const AFieldName: string): Boolean;
     procedure PopulateTemplatesList;
   public
-    constructor Create(const AView: IConfigView; const AConfig: IRadIAConfig = nil; const ATemplateManager: TPromptTemplateManager = nil);
+    constructor Create(const AView: IRadIAConfigView; const AConfig: IRadIAConfig = nil; const ATemplateManager: TPromptTemplateManager = nil);
     destructor Destroy; override;
 
     procedure LoadConfig;
@@ -126,9 +126,9 @@ implementation
 uses
   System.JSON, System.IOUtils, RadIA.Core.Config, RadIA.Core.Container;
 
-{ TConfigPresenter }
+{ TRadIAConfigPresenter }
 
-constructor TConfigPresenter.Create(const AView: IConfigView; const AConfig: IRadIAConfig; const ATemplateManager: TPromptTemplateManager);
+constructor TRadIAConfigPresenter.Create(const AView: IRadIAConfigView; const AConfig: IRadIAConfig; const ATemplateManager: TPromptTemplateManager);
 begin
   inherited Create;
   FView := AView;
@@ -156,14 +156,14 @@ begin
   end;
 end;
 
-destructor TConfigPresenter.Destroy;
+destructor TRadIAConfigPresenter.Destroy;
 begin
   if FOwnsTemplateManager then
     FTemplateManager.Free;
   inherited Destroy;
 end;
 
-function TConfigPresenter.ValidateUrl(const AUrl: string; const AFieldName: string): Boolean;
+function TRadIAConfigPresenter.ValidateUrl(const AUrl: string; const AFieldName: string): Boolean;
 begin
   Result := True;
   if not AUrl.Trim.IsEmpty then
@@ -176,7 +176,7 @@ begin
   end;
 end;
 
-procedure TConfigPresenter.LoadConfig;
+procedure TRadIAConfigPresenter.LoadConfig;
 var
   LFormatSettings: TFormatSettings;
   LProviderId: string;
@@ -241,7 +241,7 @@ begin
   PopulateTemplatesList;
 end;
 
-procedure TConfigPresenter.SaveConfig;
+procedure TRadIAConfigPresenter.SaveConfig;
 var
   LFormatSettings: TFormatSettings;
   LOllamaUrl: string;
@@ -361,17 +361,17 @@ begin
   FView.CloseView(1); // mrOk
 end;
 
-procedure TConfigPresenter.CancelConfig;
+procedure TRadIAConfigPresenter.CancelConfig;
 begin
   LoadConfig;
   FView.CloseView(2); // mrCancel
 end;
 
-procedure TConfigPresenter.RegisterProvider(const AProviderId: string);
+procedure TRadIAConfigPresenter.RegisterProvider(const AProviderId: string);
 begin
 end;
 
-procedure TConfigPresenter.PopulateTemplatesList;
+procedure TRadIAConfigPresenter.PopulateTemplatesList;
 var
   LTemplate: TPromptTemplate;
   LNames: TArray<string>;
@@ -390,7 +390,7 @@ begin
   FView.UpdateTemplatesList(LNames, LSelectedIndex);
 end;
 
-procedure TConfigPresenter.HandleTemplateSelected;
+procedure TRadIAConfigPresenter.HandleTemplateSelected;
 var
   LIndex: Integer;
   LNames: TArray<string>;
@@ -447,7 +447,7 @@ begin
   end;
 end;
 
-procedure TConfigPresenter.CreateNewTemplate;
+procedure TRadIAConfigPresenter.CreateNewTemplate;
 begin
   FView.SetSelectedTemplateIndex(-1);
   FView.ClearTemplateFields;
@@ -456,7 +456,7 @@ begin
   FView.FocusTemplateName;
 end;
 
-procedure TConfigPresenter.DeleteTemplate;
+procedure TRadIAConfigPresenter.DeleteTemplate;
 var
   LIndex: Integer;
   LNames: TArray<string>;
@@ -496,7 +496,7 @@ begin
   end;
 end;
 
-procedure TConfigPresenter.SaveTemplate;
+procedure TRadIAConfigPresenter.SaveTemplate;
 var
   LName, LDesc, LBody, LSlash: string;
   LIsProjGen: Boolean;
@@ -540,7 +540,7 @@ begin
   FView.ShowMessageDialog('Template saved successfully.');
 end;
 
-procedure TConfigPresenter.RestoreDefaultTemplates;
+procedure TRadIAConfigPresenter.RestoreDefaultTemplates;
 begin
   FTemplateManager.RestoreDefaultTemplates;
   PopulateTemplatesList;
@@ -548,7 +548,7 @@ begin
   FView.ShowMessageDialog('Default templates restored successfully.');
 end;
 
-procedure TConfigPresenter.ExportTemplates;
+procedure TRadIAConfigPresenter.ExportTemplates;
 var
   LFileName: string;
 begin
@@ -564,11 +564,11 @@ begin
   end;
 end;
 
-procedure TConfigPresenter.ImportTemplates;
+procedure TRadIAConfigPresenter.ImportTemplates;
 begin
 end;
 
-procedure TConfigPresenter.BrowseLogPath;
+procedure TRadIAConfigPresenter.BrowseLogPath;
 var
   LFolder: string;
 begin
@@ -576,7 +576,7 @@ begin
     FView.SetLogPath(LFolder);
 end;
 
-procedure TConfigPresenter.ResetQuota;
+procedure TRadIAConfigPresenter.ResetQuota;
 begin
   FConfig.QuotaUsed := 0;
   FConfig.QuotaCycleStart := Now;
@@ -586,13 +586,13 @@ begin
   FView.ShowMessageDialog('Token usage counter reset successfully.');
 end;
 
-procedure TConfigPresenter.ConnectGithub(const AToken: string);
+procedure TRadIAConfigPresenter.ConnectGithub(const AToken: string);
 begin
   FView.SetApiKey('GithubCopilot', AToken);
   FView.ShowMessageDialog('Autenticado com sucesso no GitHub Copilot!');
 end;
 
-procedure TConfigPresenter.ImportVSCodeCopilotToken(const AToken: string; const AUser: string);
+procedure TRadIAConfigPresenter.ImportVSCodeCopilotToken(const AToken: string; const AUser: string);
 begin
   FView.SetApiKey('GithubCopilot', AToken);
   if not AUser.IsEmpty then

@@ -60,7 +60,7 @@ uses
 procedure TTestRadIAProviders.Setup;
 begin
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAProviders');
-  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
+  TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FGeminiProv := TRadIAGeminiProvider.Create(FConfig);
   FOpenAIProv := TRadIAOpenAIProvider.Create(FConfig);

@@ -55,7 +55,7 @@ implementation
 procedure TTestRadIAStreaming.Setup;
 begin
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAStreaming');
-  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
+  TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FOpenAI := TRadIAOpenAIProvider.Create(FConfig);
   FGemini := TRadIAGeminiProvider.Create(FConfig);

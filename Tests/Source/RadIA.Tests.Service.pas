@@ -896,7 +896,7 @@ end;
 procedure TTestRadIAConfigExtended.Setup;
 begin
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAConfigExtended');
-  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
+  TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
 end;
 

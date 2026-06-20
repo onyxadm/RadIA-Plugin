@@ -575,7 +575,7 @@ initialization
   TRadIAContainer.Register<IRadIAConfig>(TRadIAConfig.GetInstance);
   TRadIAContainer.Register<IRadIALogger>(TConcreteLogger.Create);
   TLogger.SetActiveLogger(TRadIAContainer.Resolve<IRadIALogger>);
-  TRadIAContainer.Register<IRadIAIDEAdapter>(TConcreteIDEAdapter.Create);
+  TRadIAContainer.Register<IRadIAIDEAdapter>(TRadIAConcreteIDEAdapter.Create);
   TRadIAContainer.Register<IRadIAService>(TRadIAService.Create(TRadIAContainer.Resolve<IRadIAConfig>));
   TRadIAContainer.Register<IRadIATextNormalizer>(TRadIATextNormalizer.Create);
 

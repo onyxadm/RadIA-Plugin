@@ -22,7 +22,7 @@ type
     procedure WriteFloat(const AName: string; AValue: Double);
   end;
 
-  TRegistrySettingsStorage = class(TInterfacedObject, IRadIASettingsStorage)
+  TRadIARegistrySettingsStorage = class(TInterfacedObject, IRadIASettingsStorage)
   private
     FReg: TObject; // Typed as TObject to reduce interface namespace pollution
   public
@@ -43,7 +43,7 @@ type
     procedure WriteFloat(const AName: string; AValue: Double);
   end;
 
-  TMemorySettingsStorage = class(TInterfacedObject, IRadIASettingsStorage)
+  TRadIAMemorySettingsStorage = class(TInterfacedObject, IRadIASettingsStorage)
   private
     FData: TDictionary<string, TDictionary<string, string>>;
     FCurrentPath: string;
@@ -72,9 +72,9 @@ implementation
 uses
   System.Win.Registry, Winapi.Windows, System.Math;
 
-{ TRegistrySettingsStorage }
+{ TRadIARegistrySettingsStorage }
 
-constructor TRegistrySettingsStorage.Create;
+constructor TRadIARegistrySettingsStorage.Create;
 var
   LRegistry: TRegistry;
 begin
@@ -84,7 +84,7 @@ begin
   FReg := LRegistry;
 end;
 
-destructor TRegistrySettingsStorage.Destroy;
+destructor TRadIARegistrySettingsStorage.Destroy;
 begin
   if Assigned(FReg) then
     TRegistry(FReg).Free;
@@ -93,32 +93,32 @@ end;
 
 
 
-function TRegistrySettingsStorage.OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
+function TRadIARegistrySettingsStorage.OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
 begin
   Result := TRegistry(FReg).OpenKey(APath, ACanCreate);
 end;
 
-procedure TRegistrySettingsStorage.CloseKey;
+procedure TRadIARegistrySettingsStorage.CloseKey;
 begin
   TRegistry(FReg).CloseKey;
 end;
 
-function TRegistrySettingsStorage.KeyExists(const APath: string): Boolean;
+function TRadIARegistrySettingsStorage.KeyExists(const APath: string): Boolean;
 begin
   Result := TRegistry(FReg).KeyExists(APath);
 end;
 
-function TRegistrySettingsStorage.ValueExists(const AName: string): Boolean;
+function TRadIARegistrySettingsStorage.ValueExists(const AName: string): Boolean;
 begin
   Result := TRegistry(FReg).ValueExists(AName);
 end;
 
-procedure TRegistrySettingsStorage.GetKeyNames(AList: TStrings);
+procedure TRadIARegistrySettingsStorage.GetKeyNames(AList: TStrings);
 begin
   TRegistry(FReg).GetKeyNames(AList);
 end;
 
-function TRegistrySettingsStorage.ReadString(const AName, ADefault: string): string;
+function TRadIARegistrySettingsStorage.ReadString(const AName, ADefault: string): string;
 begin
   try
     if TRegistry(FReg).ValueExists(AName) then
@@ -130,12 +130,12 @@ begin
   end;
 end;
 
-procedure TRegistrySettingsStorage.WriteString(const AName, AValue: string);
+procedure TRadIARegistrySettingsStorage.WriteString(const AName, AValue: string);
 begin
   TRegistry(FReg).WriteString(AName, AValue);
 end;
 
-function TRegistrySettingsStorage.ReadInteger(const AName: string; ADefault: Integer): Integer;
+function TRadIARegistrySettingsStorage.ReadInteger(const AName: string; ADefault: Integer): Integer;
 begin
   try
     if TRegistry(FReg).ValueExists(AName) then
@@ -147,12 +147,12 @@ begin
   end;
 end;
 
-procedure TRegistrySettingsStorage.WriteInteger(const AName: string; AValue: Integer);
+procedure TRadIARegistrySettingsStorage.WriteInteger(const AName: string; AValue: Integer);
 begin
   TRegistry(FReg).WriteInteger(AName, AValue);
 end;
 
-function TRegistrySettingsStorage.ReadFloat(const AName: string; ADefault: Double): Double;
+function TRadIARegistrySettingsStorage.ReadFloat(const AName: string; ADefault: Double): Double;
 begin
   try
     if TRegistry(FReg).ValueExists(AName) then
@@ -164,22 +164,22 @@ begin
   end;
 end;
 
-procedure TRegistrySettingsStorage.WriteFloat(const AName: string; AValue: Double);
+procedure TRadIARegistrySettingsStorage.WriteFloat(const AName: string; AValue: Double);
 begin
   TRegistry(FReg).WriteFloat(AName, AValue);
 end;
 
 
-{ TMemorySettingsStorage }
+{ TRadIAMemorySettingsStorage }
 
-constructor TMemorySettingsStorage.Create;
+constructor TRadIAMemorySettingsStorage.Create;
 begin
   inherited Create;
   FData := TDictionary<string, TDictionary<string, string>>.Create;
   FCurrentPath := '';
 end;
 
-destructor TMemorySettingsStorage.Destroy;
+destructor TRadIAMemorySettingsStorage.Destroy;
 var
   LPair: TPair<string, TDictionary<string, string>>;
 begin
@@ -189,7 +189,7 @@ begin
   inherited Destroy;
 end;
 
-function TMemorySettingsStorage.GetOrCreatePathData(const APath: string): TDictionary<string, string>;
+function TRadIAMemorySettingsStorage.GetOrCreatePathData(const APath: string): TDictionary<string, string>;
 var
   LKey: string;
 begin
@@ -201,7 +201,7 @@ begin
   end;
 end;
 
-function TMemorySettingsStorage.OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
+function TRadIAMemorySettingsStorage.OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
 begin
   if ACanCreate then
   begin
@@ -215,18 +215,18 @@ begin
     FCurrentPath := APath;
 end;
 
-procedure TMemorySettingsStorage.CloseKey;
+procedure TRadIAMemorySettingsStorage.CloseKey;
 begin
   // In-memory doesn't lock handles, so just clear the current path
   FCurrentPath := '';
 end;
 
-function TMemorySettingsStorage.KeyExists(const APath: string): Boolean;
+function TRadIAMemorySettingsStorage.KeyExists(const APath: string): Boolean;
 begin
   Result := FData.ContainsKey(APath.ToLower);
 end;
 
-function TMemorySettingsStorage.ValueExists(const AName: string): Boolean;
+function TRadIAMemorySettingsStorage.ValueExists(const AName: string): Boolean;
 var
   LPathData: TDictionary<string, string>;
 begin
@@ -236,7 +236,7 @@ begin
   Result := LPathData.ContainsKey(AName.ToLower);
 end;
 
-procedure TMemorySettingsStorage.GetKeyNames(AList: TStrings);
+procedure TRadIAMemorySettingsStorage.GetKeyNames(AList: TStrings);
 var
   LKey: string;
   LSubKey: string;
@@ -258,7 +258,7 @@ begin
   end;
 end;
 
-function TMemorySettingsStorage.ReadString(const AName, ADefault: string): string;
+function TRadIAMemorySettingsStorage.ReadString(const AName, ADefault: string): string;
 var
   LPathData: TDictionary<string, string>;
 begin
@@ -269,7 +269,7 @@ begin
     Result := ADefault;
 end;
 
-procedure TMemorySettingsStorage.WriteString(const AName, AValue: string);
+procedure TRadIAMemorySettingsStorage.WriteString(const AName, AValue: string);
 var
   LPathData: TDictionary<string, string>;
 begin
@@ -279,7 +279,7 @@ begin
   LPathData.AddOrSetValue(AName.ToLower, AValue);
 end;
 
-function TMemorySettingsStorage.ReadInteger(const AName: string; ADefault: Integer): Integer;
+function TRadIAMemorySettingsStorage.ReadInteger(const AName: string; ADefault: Integer): Integer;
 var
   LValStr: string;
 begin
@@ -289,12 +289,12 @@ begin
   Result := StrToIntDef(LValStr, ADefault);
 end;
 
-procedure TMemorySettingsStorage.WriteInteger(const AName: string; AValue: Integer);
+procedure TRadIAMemorySettingsStorage.WriteInteger(const AName: string; AValue: Integer);
 begin
   WriteString(AName, IntToStr(AValue));
 end;
 
-function TMemorySettingsStorage.ReadFloat(const AName: string; ADefault: Double): Double;
+function TRadIAMemorySettingsStorage.ReadFloat(const AName: string; ADefault: Double): Double;
 var
   LValStr: string;
 begin
@@ -304,7 +304,7 @@ begin
   Result := StrToFloatDef(LValStr, ADefault, TFormatSettings.Invariant);
 end;
 
-procedure TMemorySettingsStorage.WriteFloat(const AName: string; AValue: Double);
+procedure TRadIAMemorySettingsStorage.WriteFloat(const AName: string; AValue: Double);
 begin
   WriteString(AName, FloatToStr(AValue, TFormatSettings.Invariant));
 end;

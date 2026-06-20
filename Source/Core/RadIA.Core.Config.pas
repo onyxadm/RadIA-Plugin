@@ -158,7 +158,7 @@ constructor TRadIAConfig.Create;
 begin
   inherited Create;
   if FStorage = nil then
-    FStorage := TRegistrySettingsStorage.Create;
+    FStorage := TRadIARegistrySettingsStorage.Create;
   
   LogDebug('TRadIAConfig.Create: Active path = ' + GetRegistryPath);
 
@@ -978,7 +978,7 @@ class procedure TRadIAConfig.SetStorage(const AStorage: IRadIASettingsStorage);
 begin
   FStorage := AStorage;
   if FStorage = nil then
-    FStorage := TRegistrySettingsStorage.Create;
+    FStorage := TRadIARegistrySettingsStorage.Create;
   if Assigned(FInstance) then
     FInstance.Load;
 end;

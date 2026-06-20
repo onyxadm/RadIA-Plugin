@@ -8,7 +8,7 @@ uses
   RadIA.UI.ConfigPresenter;
 
 type
-  TMockConfigView = class(TInterfacedObject, IConfigView)
+  TMockConfigView = class(TInterfacedObject, IRadIAConfigView)
   public
     ApiKeyMap: TDictionary<string, string>;
     CustomUrlMap: TDictionary<string, string>;
@@ -68,7 +68,7 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    { IConfigView }
+    { IRadIAConfigView }
     function GetApiKey(const AProviderId: string): string;
     procedure SetApiKey(const AProviderId: string; const AKey: string);
     function GetCustomUrl(const AProviderId: string): string;
@@ -139,7 +139,7 @@ type
   TTestConfigPresenter = class
   private
     FMockView: TMockConfigView;
-    FPresenter: TConfigPresenter;
+    FPresenter: TRadIAConfigPresenter;
     FConfig: IRadIAConfig;
   public
     [Setup]
@@ -390,13 +390,13 @@ procedure TTestConfigPresenter.Setup;
 var
   LMemoryStorage: IRadIASettingsStorage;
 begin
-  LMemoryStorage := TMemorySettingsStorage.Create;
+  LMemoryStorage := TRadIAMemorySettingsStorage.Create;
   TRadIAConfig.SetStorage(LMemoryStorage);
   FConfig := TRadIAConfig.GetInstance;
   FConfig.Load;
   
   FMockView := TMockConfigView.Create;
-  FPresenter := TConfigPresenter.Create(FMockView, FConfig);
+  FPresenter := TRadIAConfigPresenter.Create(FMockView, FConfig);
 end;
 
 procedure TTestConfigPresenter.TearDown;

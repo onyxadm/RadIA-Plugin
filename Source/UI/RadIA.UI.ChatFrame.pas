@@ -11,7 +11,7 @@ uses
   RadIA.Core.ProviderRegistry;
 
 type
-  TFrameAIChat = class(TFrame, IChatView)
+  TFrameAIChat = class(TFrame, IRadIAChatView)
     pnlToolbar: TPanel;
     lblTitle: TLabel;
     btnToggleSessions: TSpeedButton;
@@ -52,7 +52,7 @@ type
     procedure btnDeleteSessionClick(Sender: TObject);
     procedure lstSessionsClick(Sender: TObject);
   private
-    FPresenter: TChatPresenter;
+    FPresenter: TRadIAChatPresenter;
     FWebFilesDir: string;
     FBrowserInitialized: Boolean;
     FWebViewInitialized: Boolean;
@@ -92,7 +92,7 @@ type
     procedure SetTheme(const AThemeName: string);
     procedure EnsureVisibleContent;
 
-    { IChatView Implementation }
+    { IRadIAChatView Implementation }
     procedure SetRequestState(const AInProgress: Boolean);
     procedure UpdateTokensStats(const AStats: string);
     procedure PostMessageToWeb(const AJson: string);
@@ -220,7 +220,7 @@ begin
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   CopyWebFiles;
   
-  FPresenter := TChatPresenter.Create(Self);
+  FPresenter := TRadIAChatPresenter.Create(Self);
 
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -751,7 +751,7 @@ begin
   shpInputBg.Pen.Color := AColors.BorderColor;
 end;
 
-{ IChatView Implementation }
+{ IRadIAChatView Implementation }
 
 procedure TFrameAIChat.SetRequestState(const AInProgress: Boolean);
 var

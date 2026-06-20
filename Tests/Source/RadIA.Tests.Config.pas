@@ -50,7 +50,7 @@ uses
 procedure TTestRadIAConfig.Setup;
 begin
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAConfig');
-  FStorage := TMemorySettingsStorage.Create;
+  FStorage := TRadIAMemorySettingsStorage.Create;
   TRadIAConfig.SetStorage(FStorage);
   FConfig := TRadIAConfig.Create;
   FConfig.Load;
@@ -202,7 +202,7 @@ var
   LStorage: IRadIASettingsStorage;
   LConfig: IRadIAConfig;
 begin
-  LStorage := TMemorySettingsStorage.Create;
+  LStorage := TRadIAMemorySettingsStorage.Create;
   TRadIAConfig.SetBaseRegistryPath(TEST_ROOT);
   TRadIAConfig.SetStorage(LStorage);
   try

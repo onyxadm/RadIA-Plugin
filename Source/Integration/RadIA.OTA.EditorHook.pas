@@ -232,7 +232,7 @@ constructor TRadIAEditorHook.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   if not TRadIAContainer.TryResolve<IRadIAIDEAdapter>(FIDEAdapter) then
-    FIDEAdapter := TConcreteIDEAdapter.Create;
+    FIDEAdapter := TRadIAConcreteIDEAdapter.Create;
   FOldActiveFormChange := nil;
   FIDENotifierIndex := -1;
   FEditorNotifiers := TInterfaceList.Create;

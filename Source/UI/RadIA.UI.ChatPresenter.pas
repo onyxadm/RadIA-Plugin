@@ -8,7 +8,7 @@ uses
   RadIA.Core.TokenUsage, RadIA.Core.PromptHistory, RadIA.Core.Service;
 
 type
-  IChatView = interface
+  IRadIAChatView = interface
     ['{8A5FC9BC-0D5C-4F7F-9ED6-9D7CC5EF5E18}']
     procedure SetRequestState(const AInProgress: Boolean);
     procedure UpdateTokensStats(const AStats: string);
@@ -39,9 +39,9 @@ type
     procedure OpenSettingsDialog;
   end;
 
-  TChatPresenter = class
+  TRadIAChatPresenter = class
   private
-    FView: IChatView;
+    FView: IRadIAChatView;
     FConfig: IRadIAConfig;
     FAIService: IRadIAService;
     FSessionManager: TRadIASessionManager;
@@ -108,7 +108,7 @@ type
     procedure HandleClearChatMessage;
     procedure HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
   public
-    constructor Create(const AView: IChatView; const AConfig: IRadIAConfig = nil; const AService: IRadIAService = nil; const ADataDir: string = '');
+    constructor Create(const AView: IRadIAChatView; const AConfig: IRadIAConfig = nil; const AService: IRadIAService = nil; const ADataDir: string = '');
     destructor Destroy; override;
 
     procedure Initialize(const AWebFilesDir: string);
@@ -178,9 +178,9 @@ begin
   end;
 end;
 
-{ TChatPresenter }
+{ TRadIAChatPresenter }
 
-constructor TChatPresenter.Create(const AView: IChatView; const AConfig: IRadIAConfig; const AService: IRadIAService; const ADataDir: string);
+constructor TRadIAChatPresenter.Create(const AView: IRadIAChatView; const AConfig: IRadIAConfig; const AService: IRadIAService; const ADataDir: string);
 begin
   inherited Create;
   FView := AView;
@@ -234,7 +234,7 @@ begin
   FSessionManager.ActiveSessionId := FConfig.ActiveSessionId;
 end;
 
-destructor TChatPresenter.Destroy;
+destructor TRadIAChatPresenter.Destroy;
 begin
   if Assigned(FModelsProvider) then
   begin
@@ -266,7 +266,7 @@ begin
   inherited Destroy;
 end;
 
-procedure TChatPresenter.Initialize(const AWebFilesDir: string);
+procedure TRadIAChatPresenter.Initialize(const AWebFilesDir: string);
 var
   LTemplate: TPromptTemplate;
   LTemplateNames: TArray<string>;
@@ -285,7 +285,7 @@ begin
   LoadPromptHistory;
 end;
 
-function TChatPresenter.IsProviderConfigured(const AProviderId: string): Boolean;
+function TRadIAChatPresenter.IsProviderConfigured(const AProviderId: string): Boolean;
 var
   LMeta: TProviderMetadata;
 begin
@@ -305,7 +305,7 @@ begin
   end;
 end;
 
-function TChatPresenter.GetWebLoginUrl(const AProvider: string): string;
+function TRadIAChatPresenter.GetWebLoginUrl(const AProvider: string): string;
 begin
   if SameText(AProvider, 'Gemini') then
     Result := 'https://gemini.google.com'
@@ -315,14 +315,14 @@ begin
     Result := '';
 end;
 
-function TChatPresenter.CanChangeSession: Boolean;
+function TRadIAChatPresenter.CanChangeSession: Boolean;
 begin
   Result := not FRequestInProgress;
   if not Result then
     FView.ShowMessageDialog('Wait for the current response to finish, or cancel it before switching chats.');
 end;
 
-procedure TChatPresenter.LoadConfig;
+procedure TRadIAChatPresenter.LoadConfig;
 var
   LProviders: TArray<TProviderMetadata>;
   LActiveProvider: string;
@@ -354,7 +354,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.UpdateModelsCombo;
+procedure TRadIAChatPresenter.UpdateModelsCombo;
 var
   LProvider: IRadIAProvider;
   LGuard: IRadIALifecycleGuard;
@@ -418,7 +418,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.ChangeProvider(const AProviderName: string);
+procedure TRadIAChatPresenter.ChangeProvider(const AProviderName: string);
 var
   LUrl: string;
 begin
@@ -449,7 +449,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.ChangeModel(const AModelName: string);
+procedure TRadIAChatPresenter.ChangeModel(const AModelName: string);
 var
   LSelectedProvider: string;
 begin
@@ -461,7 +461,7 @@ begin
   FConfig.Save;
 end;
 
-procedure TChatPresenter.ClearChat;
+procedure TRadIAChatPresenter.ClearChat;
 begin
   if not CanChangeSession then
     Exit;
@@ -484,7 +484,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.ToggleSessions;
+procedure TRadIAChatPresenter.ToggleSessions;
 begin
   if not CanChangeSession then
     Exit;
@@ -492,7 +492,7 @@ begin
   FView.ToggleSessionsPanel;
 end;
 
-procedure TChatPresenter.CreateNewSession;
+procedure TRadIAChatPresenter.CreateNewSession;
 var
   LSession: TSessionInfo;
 begin
@@ -514,7 +514,7 @@ begin
   SendSessionsUpdateToWeb;
 end;
 
-procedure TChatPresenter.RenameSession(const ASessionId, ANewName: string);
+procedure TRadIAChatPresenter.RenameSession(const ASessionId, ANewName: string);
 begin
   if not CanChangeSession then
     Exit;
@@ -527,7 +527,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.DeleteSession(const ASessionId: string);
+procedure TRadIAChatPresenter.DeleteSession(const ASessionId: string);
 begin
   if not CanChangeSession then
     Exit;
@@ -552,7 +552,7 @@ begin
   SendSessionsUpdateToWeb;
 end;
 
-procedure TChatPresenter.SelectSession(const ASessionId: string);
+procedure TRadIAChatPresenter.SelectSession(const ASessionId: string);
 begin
   if not CanChangeSession then
     Exit;
@@ -576,7 +576,7 @@ begin
   SendSessionsUpdateToWeb;
 end;
 
-procedure TChatPresenter.ExportChat;
+procedure TRadIAChatPresenter.ExportChat;
 var
   LContent: string;
   LProviderName: string;
@@ -609,7 +609,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.OpenSettings;
+procedure TRadIAChatPresenter.OpenSettings;
 begin
   FView.OpenSettingsDialog;
   FConfig.Load;
@@ -619,7 +619,7 @@ begin
   Initialize(FWebFilesDir);
 end;
 
-procedure TChatPresenter.HandlePromptInputKeyDown(var Key: Word; const Shift: TShiftState);
+procedure TRadIAChatPresenter.HandlePromptInputKeyDown(var Key: Word; const Shift: TShiftState);
 var
   LPrompt: string;
 begin
@@ -647,7 +647,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.HandleTemplateSelected(const ATemplateName: string);
+procedure TRadIAChatPresenter.HandleTemplateSelected(const ATemplateName: string);
 var
   LActiveCode: string;
   LResolved: string;
@@ -664,7 +664,7 @@ begin
   FView.FocusPromptInput;
 end;
 
-procedure TChatPresenter.HandleGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
+procedure TRadIAChatPresenter.HandleGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
 var
   LProcessed: string;
 begin
@@ -673,7 +673,7 @@ begin
   SendPromptToAI(LProcessed);
 end;
 
-procedure TChatPresenter.SendPrompt;
+procedure TRadIAChatPresenter.SendPrompt;
 var
   LText: string;
   LProcessed: string;
@@ -700,7 +700,7 @@ begin
   SendPromptToAI(LProcessed);
 end;
 
-procedure TChatPresenter.SendPromptText(const APromptText: string);
+procedure TRadIAChatPresenter.SendPromptText(const APromptText: string);
 var
   LProcessed: string;
 begin
@@ -709,7 +709,7 @@ begin
   SendPromptToAI(LProcessed);
 end;
 
-procedure TChatPresenter.SendPromptToAI(const APromptText: string);
+procedure TRadIAChatPresenter.SendPromptToAI(const APromptText: string);
 var
   LUserMsg: IRadIAChatMessage;
   LFullResponse: string;
@@ -925,7 +925,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.CancelRequest;
+procedure TRadIAChatPresenter.CancelRequest;
 begin
   if FRequestInProgress then
   begin
@@ -936,7 +936,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.GenerateDTO(const AInput, AInputType, AOutputType: string);
+procedure TRadIAChatPresenter.GenerateDTO(const AInput, AInputType, AOutputType: string);
 var
   LPromptText: string;
   LGuard: IRadIALifecycleGuard;
@@ -1043,7 +1043,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.OnWebViewReady;
+procedure TRadIAChatPresenter.OnWebViewReady;
 var
   LActiveProvider: string;
 begin
@@ -1065,7 +1065,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.QueueOnUI(const AProcedure: TProc);
+procedure TRadIAChatPresenter.QueueOnUI(const AProcedure: TProc);
 begin
   if not Assigned(AProcedure) then
     Exit;
@@ -1078,7 +1078,7 @@ begin
     end));
 end;
 
-procedure TChatPresenter.HandleInsertCodeMessage(const ACode: string);
+procedure TRadIAChatPresenter.HandleInsertCodeMessage(const ACode: string);
 begin
   QueueOnUI(
     procedure
@@ -1087,7 +1087,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleReadyMessage;
+procedure TRadIAChatPresenter.HandleReadyMessage;
 begin
   QueueOnUI(
     procedure
@@ -1096,7 +1096,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleNewChatMessage;
+procedure TRadIAChatPresenter.HandleNewChatMessage;
 begin
   QueueOnUI(
     procedure
@@ -1105,7 +1105,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleLoadHistoryMessage;
+procedure TRadIAChatPresenter.HandleLoadHistoryMessage;
 begin
   QueueOnUI(
     procedure
@@ -1116,7 +1116,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleToggleHistoryMessage;
+procedure TRadIAChatPresenter.HandleToggleHistoryMessage;
 begin
   QueueOnUI(
     procedure
@@ -1125,7 +1125,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleOpenSettingsMessage;
+procedure TRadIAChatPresenter.HandleOpenSettingsMessage;
 begin
   QueueOnUI(
     procedure
@@ -1134,7 +1134,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleChangeProviderMessage(const AProvider: string);
+procedure TRadIAChatPresenter.HandleChangeProviderMessage(const AProvider: string);
 begin
   QueueOnUI(
     procedure
@@ -1143,7 +1143,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleChangeModelMessage(const AModel: string);
+procedure TRadIAChatPresenter.HandleChangeModelMessage(const AModel: string);
 begin
   QueueOnUI(
     procedure
@@ -1152,7 +1152,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleSelectSessionMessage(const ASessionId: string);
+procedure TRadIAChatPresenter.HandleSelectSessionMessage(const ASessionId: string);
 begin
   QueueOnUI(
     procedure
@@ -1161,7 +1161,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleRenameSessionMessage(const ASessionId, AName: string);
+procedure TRadIAChatPresenter.HandleRenameSessionMessage(const ASessionId, AName: string);
 begin
   QueueOnUI(
     procedure
@@ -1170,7 +1170,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleDeleteSessionMessage(const ASessionId: string);
+procedure TRadIAChatPresenter.HandleDeleteSessionMessage(const ASessionId: string);
 begin
   QueueOnUI(
     procedure
@@ -1179,7 +1179,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleWebLoginConnectMessage;
+procedure TRadIAChatPresenter.HandleWebLoginConnectMessage;
 begin
   QueueOnUI(
     procedure
@@ -1188,7 +1188,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleLoginCompleteMessage;
+procedure TRadIAChatPresenter.HandleLoginCompleteMessage;
 begin
   QueueOnUI(
     procedure
@@ -1198,7 +1198,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleErrorMessage(const AText: string);
+procedure TRadIAChatPresenter.HandleErrorMessage(const AText: string);
 begin
   QueueOnUI(
     procedure
@@ -1207,7 +1207,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleUpdateStreamMessage(const AText: string; const AIsDone: Boolean);
+procedure TRadIAChatPresenter.HandleUpdateStreamMessage(const AText: string; const AIsDone: Boolean);
 begin
   QueueOnUI(
     procedure
@@ -1227,7 +1227,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleSendPromptMessage(const AText: string);
+procedure TRadIAChatPresenter.HandleSendPromptMessage(const AText: string);
 begin
   QueueOnUI(
     procedure
@@ -1236,7 +1236,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleGenerateDTOMessage(const AInput, AInputType, AOutputType: string);
+procedure TRadIAChatPresenter.HandleGenerateDTOMessage(const AInput, AInputType, AOutputType: string);
 begin
   QueueOnUI(
     procedure
@@ -1245,7 +1245,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleCreateProjectMessage(const AFilesJson: string);
+procedure TRadIAChatPresenter.HandleCreateProjectMessage(const AFilesJson: string);
 begin
   QueueOnUI(
     procedure
@@ -1267,7 +1267,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleCancelRequestMessage;
+procedure TRadIAChatPresenter.HandleCancelRequestMessage;
 begin
   QueueOnUI(
     procedure
@@ -1276,7 +1276,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleClearChatMessage;
+procedure TRadIAChatPresenter.HandleClearChatMessage;
 begin
   QueueOnUI(
     procedure
@@ -1285,7 +1285,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
+procedure TRadIAChatPresenter.HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
 begin
   QueueOnUI(
     procedure
@@ -1294,7 +1294,7 @@ begin
     end);
 end;
 
-procedure TChatPresenter.DispatchWebMessage(const AAction: string; const AJson: TJSONObject);
+procedure TRadIAChatPresenter.DispatchWebMessage(const AAction: string; const AJson: TJSONObject);
 var
   LFiles: TJSONArray;
 begin
@@ -1358,7 +1358,7 @@ begin
       AJson.GetValue<string>('error', ''));
 end;
 
-procedure TChatPresenter.ProcessWebMessage(const AMessage: string);
+procedure TRadIAChatPresenter.ProcessWebMessage(const AMessage: string);
 var
   LParsed: TJSONValue;
   LNestedParsed: TJSONValue;
@@ -1394,7 +1394,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.OnWebViewBridgeSendPrompt(const APrompt: string);
+procedure TRadIAChatPresenter.OnWebViewBridgeSendPrompt(const APrompt: string);
 var
   LJson: TJSONObject;
   LActiveProvider: string;
@@ -1458,7 +1458,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.OnWebViewBridgeCancel;
+procedure TRadIAChatPresenter.OnWebViewBridgeCancel;
 var
   LJson: TJSONObject;
 begin
@@ -1475,12 +1475,12 @@ begin
   end;
 end;
 
-procedure TChatPresenter.OnBackgroundBrowserMessage(const AMessage: string);
+procedure TRadIAChatPresenter.OnBackgroundBrowserMessage(const AMessage: string);
 begin
   ProcessWebMessage(AMessage);
 end;
 
-procedure TChatPresenter.OnBackgroundBrowserInitialized;
+procedure TRadIAChatPresenter.OnBackgroundBrowserInitialized;
 var
   LActiveProvider: string;
   LUrl: string;
@@ -1496,7 +1496,7 @@ begin
   FView.NavigateBackgroundBrowser(LUrl);
 end;
 
-procedure TChatPresenter.HandleBackgroundLoginComplete;
+procedure TRadIAChatPresenter.HandleBackgroundLoginComplete;
 begin
   TLogger.Log('HandleBackgroundLoginComplete: Background browser is logged in and ready.', 'UI');
   if not FPendingPrompt.IsEmpty then
@@ -1506,7 +1506,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.OnBackgroundBrowserNavigation(const AUrl: string);
+procedure TRadIAChatPresenter.OnBackgroundBrowserNavigation(const AUrl: string);
 var
   LIsAuthPage: Boolean;
 begin
@@ -1527,7 +1527,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.HandleOnbtnWebLoginConnectClick;
+procedure TRadIAChatPresenter.HandleOnbtnWebLoginConnectClick;
 var
   LActiveProvider: string;
   LUrl: string;
@@ -1565,7 +1565,7 @@ begin
   end;
 end;
 
-function TChatPresenter.PreProcessPrompt(const APromptText: string): string;
+function TRadIAChatPresenter.PreProcessPrompt(const APromptText: string): string;
 var
   LActiveCode: string;
   LTemplate: TPromptTemplate;
@@ -1722,13 +1722,13 @@ begin
 end;
 
 {$IFDEF TESTS}
-function TChatPresenter.TestPreProcessPrompt(const APromptText: string): string;
+function TRadIAChatPresenter.TestPreProcessPrompt(const APromptText: string): string;
 begin
   Result := PreProcessPrompt(APromptText);
 end;
 {$ENDIF}
 
-procedure TChatPresenter.LoadChatHistory;
+procedure TRadIAChatPresenter.LoadChatHistory;
 var
   LMsg: IRadIAChatMessage;
 begin
@@ -1753,7 +1753,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.SaveChatHistory;
+procedure TRadIAChatPresenter.SaveChatHistory;
 begin
   if FSessionManager.ActiveSessionId.IsEmpty then
     Exit;
@@ -1767,7 +1767,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.LoadPromptHistory;
+procedure TRadIAChatPresenter.LoadPromptHistory;
 var
   LHistoryFile: string;
 begin
@@ -1775,7 +1775,7 @@ begin
   FPromptHistoryManager.LoadFromFile(LHistoryFile);
 end;
 
-procedure TChatPresenter.SavePromptHistory;
+procedure TRadIAChatPresenter.SavePromptHistory;
 var
   LHistoryFile: string;
 begin
@@ -1783,7 +1783,7 @@ begin
   FPromptHistoryManager.SaveToFile(LHistoryFile);
 end;
 
-procedure TChatPresenter.UpdateSessionsList;
+procedure TRadIAChatPresenter.UpdateSessionsList;
 var
   LSessionsArray: TArray<TSessionInfo>;
 begin
@@ -1804,7 +1804,7 @@ begin
   FView.UpdateSessions(GetVisibleSessions, FSessionManager.ActiveSessionId);
 end;
 
-function TChatPresenter.GetVisibleSessions: TArray<TSessionInfo>;
+function TRadIAChatPresenter.GetVisibleSessions: TArray<TSessionInfo>;
 var
   LSession: TSessionInfo;
 begin
@@ -1817,12 +1817,12 @@ begin
   end;
 end;
 
-procedure TChatPresenter.PostToWebView(const AAction, ARole, AText: string; const AProvider: string; const AModel: string);
+procedure TRadIAChatPresenter.PostToWebView(const AAction, ARole, AText: string; const AProvider: string; const AModel: string);
 begin
   PostToWebView(AAction, ARole, AText, False, AProvider, AModel);
 end;
 
-procedure TChatPresenter.PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean; const AProvider: string; const AModel: string);
+procedure TRadIAChatPresenter.PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean; const AProvider: string; const AModel: string);
 var
   LJson: TJSONObject;
   LDisplayModel: string;
@@ -1856,7 +1856,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.SendInitialConfigToWeb;
+procedure TRadIAChatPresenter.SendInitialConfigToWeb;
 var
   LJson: TJSONObject;
   LProvidersJson: TJSONArray;
@@ -1947,7 +1947,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.SendModelsUpdateToWeb(const AModels: TArray<string>; const AActiveModel: string);
+procedure TRadIAChatPresenter.SendModelsUpdateToWeb(const AModels: TArray<string>; const AActiveModel: string);
 var
   LJson: TJSONObject;
   LModels: TJSONArray;
@@ -1973,7 +1973,7 @@ begin
   end;
 end;
 
-procedure TChatPresenter.SendSessionsUpdateToWeb;
+procedure TRadIAChatPresenter.SendSessionsUpdateToWeb;
 var
   LJson: TJSONObject;
   LArr: TJSONArray;

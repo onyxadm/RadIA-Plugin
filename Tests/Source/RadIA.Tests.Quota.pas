@@ -36,7 +36,7 @@ uses
 procedure TTestRadIAQuota.Setup;
 begin
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAQuota');
-  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
+  TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FConfig.QuotaEnabled := False;
   FConfig.QuotaLimit := 1000;

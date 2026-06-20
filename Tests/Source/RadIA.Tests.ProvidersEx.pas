@@ -79,7 +79,7 @@ uses
 procedure TTestRadIAProvidersEx.Setup;
 begin
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAProvidersEx');
-  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
+  TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FConfig.SetActiveModel('DeepSeek', MODEL_DEEPSEEK_CHAT);
   FConfig.SetActiveModel('Groq', MODEL_GROQ_LLAMA33);

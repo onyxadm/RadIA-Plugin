@@ -48,7 +48,7 @@ end;
 procedure TTestRadIAOllama.Setup;
 begin
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAOllama');
-  TRadIAConfig.SetStorage(TMemorySettingsStorage.Create);
+  TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
   FProvider := TRadIAOllamaProvider.Create(FConfig);
 end;

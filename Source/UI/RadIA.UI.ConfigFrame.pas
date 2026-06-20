@@ -9,7 +9,7 @@ uses
   RadIA.Core.PromptTemplates, RadIA.UI.ConfigPresenter;
 
 type
-  TFrameAIConfig = class(TFrame, IConfigView)
+  TFrameAIConfig = class(TFrame, IRadIAConfigView)
   published
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
@@ -148,7 +148,7 @@ type
     procedure btnGeminiWebLoginClick(Sender: TObject);
     procedure btnOpenAIWebLoginClick(Sender: TObject);
   private
-    FPresenter: TConfigPresenter;
+    FPresenter: TRadIAConfigPresenter;
     FOnClose: TNotifyEvent;
     lblTemplateOrigin: TLabel;
     
@@ -195,7 +195,7 @@ type
     procedure btnSaveClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
     
-    { IConfigView Implementation }
+    { IRadIAConfigView Implementation }
     function GetApiKey(const AProviderId: string): string;
     procedure SetApiKey(const AProviderId: string; const AKey: string);
     function GetCustomUrl(const AProviderId: string): string;
@@ -392,7 +392,7 @@ var
   LUseIDETheme: Boolean;
 begin
   inherited Create(AOwner);
-  FPresenter := TConfigPresenter.Create(Self);
+  FPresenter := TRadIAConfigPresenter.Create(Self);
 
   CreateTemplateOriginLabel;
 
@@ -1172,7 +1172,7 @@ begin
   FPresenter.CancelConfig;
 end;
 
-{ IConfigView Implementation }
+{ IRadIAConfigView Implementation }
 
 function TFrameAIConfig.GetApiKey(const AProviderId: string): string;
 begin
