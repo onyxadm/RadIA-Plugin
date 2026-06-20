@@ -1,4 +1,4 @@
-﻿/* global postMessageToDelphi */
+/* global postMessageToDelphi */
 
 
 function looksLikePascalCode(code) {
@@ -148,6 +148,10 @@ const modelDropdownTrigger = document.getElementById('model-dropdown-trigger');
 const modelDropdownValue   = document.getElementById('model-dropdown-value');
 const modelSearchInput     = document.getElementById('model-search-input');
 const modelOptionsList     = document.getElementById('model-options-list');
+const providerDropdownWrapper = document.getElementById('provider-dropdown-wrapper');
+const providerDropdownTrigger = document.getElementById('provider-dropdown-trigger');
+const providerDropdownValue   = document.getElementById('provider-dropdown-value');
+const providerOptionsList     = document.getElementById('provider-options-list');
 const statusBar       = document.getElementById('status-bar');
 const statusText      = document.getElementById('status-text');
 const contextBar      = document.getElementById('context-bar');
@@ -388,6 +392,29 @@ const SENDER_INFO = {
     headerClass: 'ai-header'   
   }
 };
+
+const PROVIDER_ICONS = {
+  gemini: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C12 2 12.5 8.5 15.5 11.5C18.5 14.5 22 12 22 12C22 12 15.5 12.5 12.5 15.5C9.5 18.5 12 22 12 22C12 22 11.5 15.5 8.5 12.5C5.5 9.5 2 12 2 12C2 12 8.5 11.5 11.5 8.5C14.5 5.5 12 2 12 2Z" fill="url(#gemini-grad)"/><defs><linearGradient id="gemini-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#4285F4"/><stop offset="50%" stop-color="#9B51E0"/><stop offset="100%" stop-color="#E289F2"/></linearGradient></defs></svg>`,
+  openai: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#10A37F" xmlns="http://www.w3.org/2000/svg"><path d="M21.6 9.8c-.2-1.7-1.4-3.1-3-3.7-.4-.2-.9-.3-1.4-.3.1-.4.2-.9.2-1.3 0-1.8-1.1-3.4-2.8-4-1.7-.6-3.6-.1-4.7 1.2C9 1.2 8 .8 7 .8 5.2.8 3.6 1.9 3 3.6c-.6-.4-1.4-.6-2.1-.6C.3 3 .3 4 .3 4.5c0 1.8 1.1 3.4 2.8 4-.1.4-.2.9-.2 1.3 0 1.8 1.1 3.4 2.8 4 1.7.6 3.6.1 4.7-1.2.9.5 1.9.9 2.9.9 1.8 0 3.4-1.1 4-2.8.6.4 1.4.6 2.1.6 1.7 0 3.1-1.1 3.7-2.8l.3-1.7z"/></svg>`,
+  claude: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#D97706" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L3 22h4.5l2-5h5l2 5H21L12 2zm-1.5 12l1.5-3.8 1.5 3.8h-3z"/></svg>`,
+  deepseek: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#0D53FF" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="5" fill="#0D53FF"/><path d="M7 6h6a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H7V6zM9 8v4h3a2 2 0 0 0 2-2v0a2 2 0 0 0-2-2H9z" fill="#FFFFFF"/></svg>`,
+  groq: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#F97316" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 1 0 10 10h-5a5 5 0 1 1-5-5v-5z"/></svg>`,
+  ollama: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg"><path d="M9 18a3 3 0 0 0 6 0v-4a3 3 0 0 0-3-3H9v7zM6 8V6a2 2 0 0 1 4 0v2M14 8V6a2 2 0 0 1 4 0v2"/></svg>`,
+  githubcopilot: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#5856D6" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="5" fill="#5856D6"/><path d="M12 6a3 3 0 0 0-3 3v2a3 3 0 0 0 6 0V9a3 3 0 0 0-3-3zm-5 7v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1H7z" fill="#FFFFFF"/><circle cx="10" cy="9" r="1" fill="#5856D6"/><circle cx="14" cy="9" r="1" fill="#5856D6"/></svg>`,
+  azureopenai: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#0078D4" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 2L2.5 16h6.5l2.5-5.5L14 16h7.5L11.5 2z"/></svg>`,
+  qwen: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#8A2BE2" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>`,
+  mistral: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#FD5A24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4h4v16H4V4zm6 0h4v8l4-4h4v12h-4v-8l-4 4v8h-4V4z"/></svg>`,
+  bedrock: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#FF9900" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm8 14.5l-8 4-8-4V8.5l8-4 8 4v8z"/></svg>`,
+  openrouter: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><line x1="6" y1="6" x2="12" y2="18"/><line x1="18" y1="6" x2="12" y2="18"/></svg>`,
+  lmstudio: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#EC4899" xmlns="http://www.w3.org/2000/svg"><path d="M4 4h4v12h8v4H4V4z"/></svg>`,
+  generic: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`
+};
+
+function getProviderIcon(providerId) {
+  if (!providerId) return PROVIDER_ICONS.generic;
+  const key = String(providerId).toLowerCase().replace(/[^a-z0-9]/g, '');
+  return PROVIDER_ICONS[key] || PROVIDER_ICONS.generic;
+}
 
 let requestInProgress = false;
 const _promptHistory = [];
@@ -636,6 +663,7 @@ selectModel.addEventListener('change', () => {
 modelDropdownTrigger.addEventListener('click', (e) => {
   if (modelDropdownWrapper.classList.contains('disabled')) return;
   e.stopPropagation();
+  providerDropdownWrapper.classList.remove('open');
   modelDropdownWrapper.classList.toggle('open');
   if (modelDropdownWrapper.classList.contains('open')) {
     modelSearchInput.value = '';
@@ -664,8 +692,16 @@ function filterModels(query) {
   }
 }
 
+providerDropdownTrigger.addEventListener('click', (e) => {
+  if (providerDropdownWrapper.classList.contains('disabled')) return;
+  e.stopPropagation();
+  modelDropdownWrapper.classList.remove('open');
+  providerDropdownWrapper.classList.toggle('open');
+});
+
 document.addEventListener('click', () => {
   modelDropdownWrapper.classList.remove('open');
+  providerDropdownWrapper.classList.remove('open');
   hideSlashPopup();
 });
 
@@ -748,7 +784,12 @@ function addMessage(role, text, provider, model) {
 
   const avatar = document.createElement('div');
   avatar.classList.add('message-avatar', info.avatarClass);
-  avatar.innerHTML = info.icon;
+  if (role === 'assistant' && provider) {
+    avatar.innerHTML = getProviderIcon(provider);
+    avatar.classList.add('provider-avatar-badge');
+  } else {
+    avatar.innerHTML = info.icon;
+  }
 
   const body = document.createElement('div');
   body.classList.add('message-body');
@@ -959,7 +1000,12 @@ function appendMessage(text, isDone, provider, model) {
 
     const avatar = document.createElement('div');
     avatar.classList.add('message-avatar', info.avatarClass);
-    avatar.innerHTML = info.icon;
+    if (provider) {
+      avatar.innerHTML = getProviderIcon(provider);
+      avatar.classList.add('provider-avatar-badge');
+    } else {
+      avatar.innerHTML = info.icon;
+    }
 
     const body = document.createElement('div');
     body.classList.add('message-body');
@@ -1141,15 +1187,54 @@ function scrollToBlock(blockId) {
 
 function initializeConfig(data) {
   selectProvider.innerHTML = '';
+  providerOptionsList.innerHTML = '';
+
+  let activeText = 'Provider...';
+  let activeIcon = '';
+
   data.providers.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.value;
     opt.textContent = p.name;
     if (p.value === data.activeProvider) {
       opt.selected = true;
+      activeText = p.name;
+      activeIcon = getProviderIcon(p.value);
     }
     selectProvider.appendChild(opt);
+
+    const div = document.createElement('div');
+    div.classList.add('custom-dropdown-option');
+    if (p.value === data.activeProvider) {
+      div.classList.add('selected');
+    }
+
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'provider-opt-icon';
+    iconSpan.innerHTML = getProviderIcon(p.value);
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = p.name;
+
+    div.appendChild(iconSpan);
+    div.appendChild(textSpan);
+
+    div.addEventListener('click', () => {
+      const prevSelected = providerOptionsList.querySelector('.custom-dropdown-option.selected');
+      if (prevSelected) prevSelected.classList.remove('selected');
+
+      div.classList.add('selected');
+      selectProvider.value = p.value;
+      selectProvider.dispatchEvent(new Event('change'));
+
+      providerDropdownValue.innerHTML = `${getProviderIcon(p.value)}<span>${p.name}</span>`;
+      providerDropdownWrapper.classList.remove('open');
+    });
+
+    providerOptionsList.appendChild(div);
   });
+
+  providerDropdownValue.innerHTML = activeIcon ? `${activeIcon}<span>${activeText}</span>` : `<span>${activeText}</span>`;
 
   updateModelsList(data.models, data.activeModel);
 
@@ -1251,12 +1336,14 @@ function setRequestState(inProgress) {
     btnSendPrompt.classList.add('stop-btn');
     btnSendPrompt.title = 'Cancel request';
     selectProvider.disabled = true;
+    providerDropdownWrapper.classList.add('disabled');
     selectModel.disabled = true;
     modelDropdownWrapper.classList.add('disabled');
   } else {
     btnSendPrompt.classList.remove('stop-btn');
     btnSendPrompt.title = 'Send message';
     selectProvider.disabled = false;
+    providerDropdownWrapper.classList.remove('disabled');
     selectModel.disabled = false;
     modelDropdownWrapper.classList.remove('disabled');
   }
@@ -1424,7 +1511,12 @@ function updateMessage(text, isDone, provider, model) {
 
     const avatar = document.createElement('div');
     avatar.classList.add('message-avatar', info.avatarClass);
-    avatar.innerHTML = info.icon;
+    if (provider) {
+      avatar.innerHTML = getProviderIcon(provider);
+      avatar.classList.add('provider-avatar-badge');
+    } else {
+      avatar.innerHTML = info.icon;
+    }
 
     const body = document.createElement('div');
     body.classList.add('message-body');
