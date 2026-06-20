@@ -1,4 +1,4 @@
-program RadIATests;
+﻿program RadIATests;
 
 {$DEFINE TESTS}
 {$APPTYPE CONSOLE}
@@ -29,6 +29,9 @@ uses
   RadIA.Core.Sessions in '..\Source\Core\RadIA.Core.Sessions.pas',
   RadIA.Core.DTO.Generator in '..\Source\Core\RadIA.Core.DTO.Generator.pas',
   RadIA.Core.ProjectGenerator in '..\Source\Core\RadIA.Core.ProjectGenerator.pas',
+  RadIA.Core.HttpClient in '..\Source\Core\RadIA.Core.HttpClient.pas',
+  RadIA.Core.ErrorDecoder in '..\Source\Core\RadIA.Core.ErrorDecoder.pas',
+  RadIA.Core.Localizer in '..\Source\Core\RadIA.Core.Localizer.pas',
   RadIA.OTA.Adapter in '..\Source\Integration\RadIA.OTA.Adapter.pas',
   RadIA.OTA.Helper in '..\Source\Integration\RadIA.OTA.Helper.pas',
   RadIA.OTA.EditorHook in '..\Source\Integration\RadIA.OTA.EditorHook.pas',
@@ -79,7 +82,8 @@ uses
   RadIA.Tests.ChatPresenter in 'Source\RadIA.Tests.ChatPresenter.pas',
   RadIA.Tests.ConfigPresenter in 'Source\RadIA.Tests.ConfigPresenter.pas',
   RadIA.Tests.ProjectGenerator in 'Source\RadIA.Tests.ProjectGenerator.pas',
-  RadIA.Tests.Container in 'Source\RadIA.Tests.Container.pas';
+  RadIA.Tests.Container in 'Source\RadIA.Tests.Container.pas',
+  RadIA.Tests.Infrastructure in 'Source\RadIA.Tests.Infrastructure.pas';
 
 var
   Runner: ITestRunner;

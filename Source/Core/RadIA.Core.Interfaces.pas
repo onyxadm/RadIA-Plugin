@@ -3,7 +3,8 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Types, RadIA.Core.TokenUsage;
+  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient,
+  RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 type
   IRadIALifecycleGuard = interface
@@ -236,6 +237,37 @@ type
     function GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string; const ADestDir: string = ''): Boolean;
   end;
 
+  ERadIAHttpException = class(Exception)
+  private
+    FStatusCode: Integer;
+    FContent: string;
+  public
+    constructor Create(const AMessage: string; const AStatusCode: Integer; const AContent: string);
+    property StatusCode: Integer read FStatusCode;
+    property Content: string read FContent;
+  end;
+
+  IRadIAHttpClient = interface
+    ['{7468E6A2-0FBE-4BD2-BE1E-D7C6FBFA9A2E}']
+    function Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
+    function Post(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
+    procedure PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string; 
+      const AOnWrite: TProc<TBytes>; const ATimeoutMs: Integer = 0);
+    procedure Cancel;
+  end;
+
+  IRadIAErrorDecoder = interface
+    ['{E3FA7BCE-9FBA-4A2D-BE1E-D7C6FBFA9A2F}']
+    function DecodeError(const AStatusCode: Integer; const AResponseContent: string): string;
+  end;
+
+  IRadIALocalizer = interface
+    ['{F4EED9A6-6CBA-43B6-9E39-1E38AA2C7302}']
+    function GetText(const AKey: string; const ADefault: string = ''): string;
+    function GetLanguage: string;
+    procedure SetLanguage(const ALang: string);
+  end;
+
 implementation
 
 { TLifecycleGuard }
@@ -254,6 +286,15 @@ end;
 procedure TLifecycleGuard.Invalidate;
 begin
   FIsAlive := False;
+end;
+
+{ ERadIAHttpException }
+
+constructor ERadIAHttpException.Create(const AMessage: string; const AStatusCode: Integer; const AContent: string);
+begin
+  inherited Create(AMessage);
+  FStatusCode := AStatusCode;
+  FContent := AContent;
 end;
 
 end.

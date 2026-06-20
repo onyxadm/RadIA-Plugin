@@ -1,4 +1,4 @@
-unit RadIA.Provider.Base;
+﻿unit RadIA.Provider.Base;
 
 interface
 
@@ -16,11 +16,9 @@ type
   protected
     FConfig: IRadIAConfig;
     FProviderId: string;
-    FHTTPClient: THTTPClient;
+    FHTTPClient: IRadIAHttpClient;
+    FErrorDecoder: IRadIAErrorDecoder;
     FCancelled: Boolean;
-
-    procedure HTTPClientReceiveData(const Sender: TObject;
-      AContentLength, AReadCount: Int64; var AAbort: Boolean);
 
     function GetApiKey: string;
     function GetActiveModel: string;
@@ -86,7 +84,8 @@ type
 implementation
 
 uses
-  System.JSON, System.Generics.Collections, System.Math, RadIA.Core.Logger, System.SyncObjs;
+  System.JSON, System.Generics.Collections, System.Math, RadIA.Core.Logger, System.SyncObjs,
+  RadIA.Core.Container, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder;
 
 const
   CLogPreviewMaxLength = 320;
@@ -174,25 +173,21 @@ constructor TRadIAProviderBase.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create;
   FConfig := AConfig;
-  FHTTPClient := THTTPClient.Create;
-  FHTTPClient.OnReceiveData := HTTPClientReceiveData;
+  
+  if not TRadIAContainer.TryResolve<IRadIAHttpClient>(FHTTPClient) then
+    FHTTPClient := TRadIAConcreteHttpClient.Create;
+    
+  if not TRadIAContainer.TryResolve<IRadIAErrorDecoder>(FErrorDecoder) then
+    FErrorDecoder := TRadIAErrorDecoder.Create;
+    
   FProviderId := '';
 end;
 
 destructor TRadIAProviderBase.Destroy;
 begin
-  FHTTPClient.Free;
+  FHTTPClient := nil;
+  FErrorDecoder := nil;
   inherited Destroy;
-end;
-
-procedure TRadIAProviderBase.HTTPClientReceiveData(const Sender: TObject;
-  AContentLength, AReadCount: Int64; var AAbort: Boolean);
-begin
-  if FCancelled or GIsShuttingDown then
-  begin
-    TLogger.Log('HTTPClientReceiveData: Aborting request because FCancelled or GIsShuttingDown is True', 'Provider');
-    AAbort := True;
-  end;
 end;
 
 function TRadIAProviderBase.GetApiKey: string;
@@ -214,11 +209,11 @@ procedure TRadIAProviderBase.CancelCurrentRequest;
 begin
   TLogger.Log('CancelCurrentRequest: Requesting cancellation (FCancelled := True)', 'Provider');
   FCancelled := True;
+  FHTTPClient.Cancel;
 end;
 
 function TRadIAProviderBase.DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
 var
-  LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
 begin
   TLogger.Log(Format('DoGetRequest: URL=%s', [AUrl]), 'Provider');
@@ -233,26 +228,16 @@ begin
     if LTimeoutMs <= 0 then LTimeoutMs := 60000;
   end;
 
-  FHTTPClient.ConnectionTimeout := LTimeoutMs;
-  FHTTPClient.SendTimeout := LTimeoutMs;
-  FHTTPClient.ResponseTimeout := LTimeoutMs;
-  FHTTPClient.AcceptCharSet := 'utf-8';
-  FHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
-
   try
-    LResponse := FHTTPClient.Get(AUrl, nil, AHeaders);
-    TLogger.Log(Format('DoGetRequest: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
-    
-    if LResponse.StatusCode <> 200 then
-    begin
-      TLogger.Log(Format('DoGetRequest: Error Response content=%s', [LResponse.ContentAsString(TEncoding.UTF8)]), 'Provider');
-      raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
-        [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
-    end;
-
-    Result := LResponse.ContentAsString(TEncoding.UTF8);
+    Result := FHTTPClient.Get(AUrl, AHeaders, LTimeoutMs);
     TLogger.Log(Format('DoGetRequest: Response length=%d', [Length(Result)]), 'Provider');
   except
+    on E: ERadIAHttpException do
+    begin
+      var LDecodedError := FErrorDecoder.DecodeError(E.StatusCode, E.Content);
+      TLogger.Log(Format('DoGetRequest: HTTP Error: %s', [LDecodedError]), 'Provider');
+      raise Exception.Create(LDecodedError);
+    end;
     on E: Exception do
     begin
       TLogger.Log(Format('DoGetRequest: Exception occurred: %s', [E.Message]), 'Provider');
@@ -264,8 +249,6 @@ end;
 function TRadIAProviderBase.DoPostRequest(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string): string;
 var
-  LSourceStream: TStringStream;
-  LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
 begin
   TLogger.Log(Format('DoPostRequest: URL=%s', [AUrl]), 'Provider');
@@ -273,49 +256,30 @@ begin
   LogPayloadSummary('DoPostRequest', 'Request body', ARequestBody);
 
   FCancelled := False;
-  LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
+  LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000;
+  if LTimeoutMs <= 0 then LTimeoutMs := 60000;
+
   try
-    LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000;
-    if LTimeoutMs <= 0 then LTimeoutMs := 60000;
-
-    FHTTPClient.ConnectionTimeout := LTimeoutMs;
-    FHTTPClient.SendTimeout := LTimeoutMs;
-    FHTTPClient.ResponseTimeout := LTimeoutMs;
-    FHTTPClient.ContentType := 'application/json';
-    FHTTPClient.AcceptCharSet := 'utf-8';
-    FHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
-
-    try
-      LResponse := FHTTPClient.Post(AUrl, LSourceStream, nil, AHeaders);
-      TLogger.Log(Format('DoPostRequest: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
-      
-      if LResponse.StatusCode <> 200 then
-      begin
-        TLogger.Log(Format('DoPostRequest: Error Response content=%s', [LResponse.ContentAsString(TEncoding.UTF8)]), 'Provider');
-        raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s. Response: %s',
-          [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
-      end;
-
-      Result := LResponse.ContentAsString(TEncoding.UTF8);
-      LogPayloadSummary('DoPostRequest', 'Response body', Result);
-    except
-      on E: Exception do
-      begin
-        TLogger.Log(Format('DoPostRequest: Exception occurred: %s', [E.Message]), 'Provider');
-        raise;
-      end;
+    Result := FHTTPClient.Post(AUrl, AHeaders, ARequestBody, LTimeoutMs);
+    LogPayloadSummary('DoPostRequest', 'Response body', Result);
+  except
+    on E: ERadIAHttpException do
+    begin
+      var LDecodedError := FErrorDecoder.DecodeError(E.StatusCode, E.Content);
+      TLogger.Log(Format('DoPostRequest: HTTP Error: %s', [LDecodedError]), 'Provider');
+      raise Exception.Create(LDecodedError);
     end;
-  finally
-    LSourceStream.Free;
+    on E: Exception do
+    begin
+      TLogger.Log(Format('DoPostRequest: Exception occurred: %s', [E.Message]), 'Provider');
+      raise;
+    end;
   end;
 end;
 
 procedure TRadIAProviderBase.DoPostRequestStream(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string; const AOnWrite: TProc<TBytes>);
 var
-  LSourceStream: TStringStream;
-  LTargetStream: TRadIAStreamingTargetStream;
-  LResponse: IHTTPResponse;
   LTimeoutMs: Integer;
 begin
   TLogger.Log(Format('DoPostRequestStream: URL=%s', [AUrl]), 'Provider');
@@ -323,39 +287,23 @@ begin
   LogPayloadSummary('DoPostRequestStream', 'Request body', ARequestBody);
 
   FCancelled := False;
-  LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
-  LTargetStream := TRadIAStreamingTargetStream.Create(AOnWrite);
+  LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000;
+  if LTimeoutMs <= 0 then LTimeoutMs := 60000;
+
   try
-    LTimeoutMs := FConfig.GetTimeout(FProviderId) * 1000;
-    if LTimeoutMs <= 0 then LTimeoutMs := 60000;
-
-    FHTTPClient.ConnectionTimeout := LTimeoutMs;
-    FHTTPClient.SendTimeout := LTimeoutMs;
-    FHTTPClient.ResponseTimeout := LTimeoutMs;
-    FHTTPClient.ContentType := 'application/json';
-    FHTTPClient.AcceptCharSet := 'utf-8';
-    FHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
-
-    try
-      LResponse := FHTTPClient.Post(AUrl, LSourceStream, LTargetStream, AHeaders);
-      TLogger.Log(Format('DoPostRequestStream: Response Status=%d %s', [LResponse.StatusCode, LResponse.StatusText]), 'Provider');
-      
-      if LResponse.StatusCode <> 200 then
-      begin
-        TLogger.Log('DoPostRequestStream: Error occurred during streaming', 'Provider');
-        raise ENetHTTPClientException.CreateFmt('HTTP error %d: %s.',
-          [LResponse.StatusCode, LResponse.StatusText]);
-      end;
-    except
-      on E: Exception do
-      begin
-        TLogger.Log(Format('DoPostRequestStream: Exception occurred: %s', [E.Message]), 'Provider');
-        raise;
-      end;
+    FHTTPClient.PostStream(AUrl, AHeaders, ARequestBody, AOnWrite, LTimeoutMs);
+  except
+    on E: ERadIAHttpException do
+    begin
+      var LDecodedError := FErrorDecoder.DecodeError(E.StatusCode, E.Content);
+      TLogger.Log(Format('DoPostRequestStream: HTTP Error: %s', [LDecodedError]), 'Provider');
+      raise Exception.Create(LDecodedError);
     end;
-  finally
-    LTargetStream.Free;
-    LSourceStream.Free;
+    on E: Exception do
+    begin
+      TLogger.Log(Format('DoPostRequestStream: Exception occurred: %s', [E.Message]), 'Provider');
+      raise;
+    end;
   end;
 end;
 
