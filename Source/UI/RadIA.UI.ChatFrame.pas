@@ -6,9 +6,8 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Core.Service, Vcl.Menus, Vcl.Buttons, Winapi.WebView2, Winapi.ActiveX,
-  RadIA.Core.Sessions, RadIA.UI.Resources, RadIA.UI.ChatPresenter,
-  RadIA.Core.ProviderRegistry;
+  Vcl.Menus, Vcl.Buttons, RadIA.Core.Sessions, RadIA.UI.Resources,
+  RadIA.UI.ChatPresenter;
 
 type
   TRadIAFrameAIChat = class(TFrame, IRadIAChatView)
@@ -126,7 +125,8 @@ implementation
 
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
-  RadIA.Core.Mediator, RadIA.Core.Logger, Vcl.Themes, RadIA.UI.WebLoginForm, RadIA.Core.Container;
+  RadIA.Core.Mediator, RadIA.Core.Logger, Vcl.Themes, RadIA.UI.WebLoginForm, RadIA.Core.Container,
+  Winapi.WebView2, Winapi.ActiveX, RadIA.Core.ProviderRegistry;
 
 {$R *.dfm}
 

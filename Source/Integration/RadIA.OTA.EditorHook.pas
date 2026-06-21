@@ -3,7 +3,7 @@ unit RadIA.OTA.EditorHook;
 interface
 
 uses
-  System.Classes, System.SysUtils, Vcl.Controls, Vcl.Menus, Vcl.Dialogs, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI,
+  System.Classes, Vcl.Menus, Vcl.Forms, Vcl.ExtCtrls, ToolsAPI,
   RadIA.Core.Interfaces, RadIA.OTA.ContextParser;
 
 type
@@ -80,6 +80,9 @@ implementation
 
 uses
   System.Generics.Collections,
+  System.SysUtils,
+  Vcl.Controls,
+  Vcl.Dialogs,
   Winapi.Windows,
   RadIA.Core.Types,
   RadIA.Core.Mediator, RadIA.Core.Config, RadIA.Core.TokenUsage,

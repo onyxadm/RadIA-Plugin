@@ -3,8 +3,7 @@ unit RadIA.UI.ConfigPresenter;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, Vcl.Graphics,
-  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.PromptTemplates;
+  Vcl.Graphics, RadIA.Core.Interfaces, RadIA.Core.PromptTemplates;
 
 type
   IRadIAConfigView = interface
@@ -121,7 +120,7 @@ type
 implementation
 
 uses
-  System.JSON, System.IOUtils, RadIA.Core.Config, RadIA.Core.Container;
+  System.SysUtils, RadIA.Core.Config, RadIA.Core.Container;
 
 { TRadIAConfigPresenter }
 

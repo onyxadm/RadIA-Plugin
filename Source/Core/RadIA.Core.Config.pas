@@ -3,8 +3,8 @@ unit RadIA.Core.Config;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Core.SettingsStorage;
+  System.Classes, RadIA.Core.Interfaces, RadIA.Core.TokenUsage,
+  RadIA.Core.SettingsStorage;
 
 type
   TRadIAConfig = class(TInterfacedObject, IRadIAConfig)
@@ -144,8 +144,9 @@ type
 implementation
 
 uses
-  System.Math, System.IOUtils, ToolsAPI, RadIA.Core.Logger, RadIA.Core.ProviderRegistry,
-  RadIA.Core.ConfigDefaults, RadIA.Core.CredentialProtector;
+  System.SysUtils, System.Math, ToolsAPI, RadIA.Core.Logger,
+  RadIA.Core.ProviderRegistry, RadIA.Core.ConfigDefaults,
+  RadIA.Core.CredentialProtector;
 
 { TRadIAConfig }
 

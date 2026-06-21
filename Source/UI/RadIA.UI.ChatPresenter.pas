@@ -3,8 +3,8 @@ unit RadIA.UI.ChatPresenter;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.JSON, System.StrUtils, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Core.Sessions, RadIA.Core.PromptTemplates,
+  System.SysUtils, System.Classes, System.JSON, RadIA.Core.Interfaces,
+  RadIA.Core.Sessions, RadIA.Core.PromptTemplates,
   RadIA.Core.TokenUsage, RadIA.Core.PromptHistory, RadIA.Core.Service;
 
 type
@@ -161,7 +161,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON.Builders, RadIA.Core.Config, RadIA.Core.Logger,
+  System.IOUtils, System.StrUtils, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Logger,
   RadIA.Core.ProviderRegistry, RadIA.Core.ConversationExporter,
   RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge,
   System.SyncObjs, RadIA.Core.Container, RadIA.Core.ChatMessage;

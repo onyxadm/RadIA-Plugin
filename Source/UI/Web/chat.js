@@ -1492,7 +1492,7 @@ function appendGeneratorCode(text, isDone) {
   if (isDone) {
     try {
       Prism.highlightElement(generatorOutputCode);
-    } catch (e) {
+    } catch {
     }
     btnGenerateModel.disabled = false;
     btnGenerateModel.textContent = 'Generate Model';
@@ -1583,3 +1583,8 @@ if (globalThis.chrome && globalThis.chrome.webview) {
 
 bindChatScrollbar();
 showWelcomeScreen();
+
+// Expose handlers to globalThis for integration and template callbacks (resolves ESLint unused-vars and Sonar globals)
+globalThis.copyCode = copyCode;
+globalThis.applyCode = applyCode;
+globalThis.scrollToBlock = scrollToBlock;
