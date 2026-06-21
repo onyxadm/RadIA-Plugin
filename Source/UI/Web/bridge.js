@@ -210,8 +210,8 @@
   // --- Markdown and format reconstruction ---
   function trimOuterBlankLines(text) {
     return (text || '')
-      .replaceAll(/\r\n/g, '\n')
-      .replaceAll(/\r/g, '\n')
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
       .replace(/^\n+/, '')
       .replace(/\n+$/, '');
   }

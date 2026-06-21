@@ -266,14 +266,6 @@ var
   LStartOffset: Integer;
   LEndOffset: Integer;
   LUtf8Text: UTF8String;
-
-  {$WARN IMPLICIT_STRING_CAST OFF}
-  function ToUTF8(const AStr: string): UTF8String;
-  begin
-    Result := AStr;
-  end;
-  {$WARN IMPLICIT_STRING_CAST ON}
-
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
@@ -297,7 +289,7 @@ begin
     if LBufferSize > 0 then
       LEditWriter.DeleteTo(LBufferSize);
 
-    LUtf8Text := ToUTF8(NormalizeLineBreaks(ANewText));
+    LUtf8Text := UTF8Encode(NormalizeLineBreaks(ANewText));
     LEditWriter.Insert(PAnsiChar(LUtf8Text));
     Result := True;
     RefreshEditView(LView);
@@ -332,7 +324,7 @@ begin
     LEditWriter.CopyTo(LStartOffset);
     LEditWriter.DeleteTo(LEndOffset);
 
-    LUtf8Text := ToUTF8(NormalizeLineBreaks(ANewText));
+    LUtf8Text := UTF8Encode(NormalizeLineBreaks(ANewText));
     LEditWriter.Insert(PAnsiChar(LUtf8Text));
     Result := True;
     RefreshEditView(LView);
