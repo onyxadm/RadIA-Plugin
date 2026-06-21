@@ -286,11 +286,13 @@ end;
 
 procedure TMockConfig.Save;
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
 procedure TMockConfig.Load;
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
@@ -538,6 +540,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteEnabled(const AValue: Boolean);
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
@@ -548,6 +551,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteProvider(const AProvider: string);
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
@@ -558,6 +562,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteModel(const AModel: string);
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
@@ -568,6 +573,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteDelay(const AValue: Integer);
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
@@ -578,6 +584,7 @@ end;
 
 procedure TMockConfig.SetProviderAuthType(const AProviderName: string; const AValue: string);
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 

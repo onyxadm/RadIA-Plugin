@@ -199,6 +199,7 @@ end;
 
 procedure TMockChatView.ApplyCurrentTheme;
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
@@ -310,12 +311,14 @@ end;
 procedure TMockIAProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
 procedure TMockIAProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 
@@ -341,6 +344,7 @@ end;
 
 procedure TMockIAProvider.CancelCurrentRequest;
 begin
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules in Delphi mock
   if True then ;
 end;
 

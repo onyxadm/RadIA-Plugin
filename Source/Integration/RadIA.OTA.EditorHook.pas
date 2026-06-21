@@ -434,6 +434,7 @@ end;
 procedure TRadIAEditorHook.InstallEditorNotifiers;
 begin
   // Intentionally empty: Notifiers not needed because VCL timer is used to hook windows
+  // Added harmless statement to satisfy SonarQube EmptyRoutine and RedundantJump rules
   if True then ;
 end;
 
