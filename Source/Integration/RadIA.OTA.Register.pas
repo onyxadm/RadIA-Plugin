@@ -522,7 +522,7 @@ procedure TRadIAWizard.UnregisterMenus;
     for I := AToolsMenu.Count - 1 downto 0 do
     begin
       try
-        LItem := AToolsMenu.Items[I];
+        LItem := AToolsMenu[I];
         if SameText(LItem.Caption, 'RadIA Chat Panel') or
            SameText(LItem.Caption, 'Rad IA Chat Panel') or
            SameText(LItem.Caption, 'Fix Last Compiler Error') then
