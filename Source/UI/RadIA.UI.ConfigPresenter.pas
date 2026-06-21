@@ -370,6 +370,7 @@ end;
 procedure TRadIAConfigPresenter.RegisterProvider(const AProviderId: string);
 begin
   // Intentionally empty: provider configuration auto-registers dynamically
+  if AProviderId = '' then Exit;
 end;
 
 procedure TRadIAConfigPresenter.PopulateTemplatesList;
@@ -568,6 +569,7 @@ end;
 procedure TRadIAConfigPresenter.ImportTemplates;
 begin
   // Intentionally empty: import implementation handles templates merging in future releases
+  Exit;
 end;
 
 procedure TRadIAConfigPresenter.BrowseLogPath;

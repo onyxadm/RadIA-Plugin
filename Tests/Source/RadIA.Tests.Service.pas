@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Service;
+unit RadIA.Tests.Service;
 
 interface
 
@@ -286,10 +286,12 @@ end;
 
 procedure TMockConfig.Save;
 begin
+  Exit;
 end;
 
 procedure TMockConfig.Load;
 begin
+  Exit;
 end;
 
 // Os overloads obsoletos de GetTemperature, SetTemperature, GetMaxTokens, SetMaxTokens, GetTimeout e SetTimeout com enum foram removidos daqui
@@ -536,6 +538,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteEnabled(const AValue: Boolean);
 begin
+  Exit;
 end;
 
 function TMockConfig.GetAutocompleteProvider: string;
@@ -545,6 +548,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteProvider(const AProvider: string);
 begin
+  Exit;
 end;
 
 function TMockConfig.GetAutocompleteModel: string;
@@ -554,6 +558,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteModel(const AModel: string);
 begin
+  Exit;
 end;
 
 function TMockConfig.GetAutocompleteDelay: Integer;
@@ -563,6 +568,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteDelay(const AValue: Integer);
 begin
+  Exit;
 end;
 
 function TMockConfig.GetProviderAuthType(const AProviderName: string): string;
@@ -572,6 +578,7 @@ end;
 
 procedure TMockConfig.SetProviderAuthType(const AProviderName: string; const AValue: string);
 begin
+  Exit;
 end;
 
 function TMockConfig.IsWebLoginProvider(const AProviderName: string): Boolean;

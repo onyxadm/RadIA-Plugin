@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.EditorHook;
+unit RadIA.OTA.EditorHook;
 
 interface
 
@@ -433,10 +433,8 @@ end;
 
 procedure TRadIAEditorHook.InstallEditorNotifiers;
 begin
-  {$IFDEF TESTS}
-  Exit;
-  {$ENDIF}
   // Intentionally empty: Notifiers not needed because VCL timer is used to hook windows
+  Exit;
 end;
 
 procedure TRadIAEditorHook.RemoveEditorNotifiers;

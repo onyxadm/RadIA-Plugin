@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.ChatPresenter;
+unit RadIA.Tests.ChatPresenter;
 
 interface
 
@@ -199,6 +199,7 @@ end;
 
 procedure TMockChatView.ApplyCurrentTheme;
 begin
+  Exit;
 end;
 
 procedure TMockChatView.CreateBackgroundBrowser;
@@ -309,11 +310,13 @@ end;
 procedure TMockIAProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
+  Exit;
 end;
 
 procedure TMockIAProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
+  Exit;
 end;
 
 procedure TMockIAProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
@@ -338,6 +341,7 @@ end;
 
 procedure TMockIAProvider.CancelCurrentRequest;
 begin
+  Exit;
 end;
 
 { TTestChatPresenter }
