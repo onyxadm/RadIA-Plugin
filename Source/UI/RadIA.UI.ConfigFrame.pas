@@ -1298,40 +1298,160 @@ begin
   if FEdtTimeouts.TryGetValue(AProviderId, LEdit) then LEdit.Text := AValue;
 end;
 
-function TRadIAFrameAIConfig.GetAzureModel: string; begin Result := edtAzureModel.Text; end;
-procedure TRadIAFrameAIConfig.SetAzureModel(const AValue: string); begin edtAzureModel.Text := AValue; end;
-function TRadIAFrameAIConfig.GetAzureApiVersion: string; begin Result := edtAzureApiVersion.Text; end;
-procedure TRadIAFrameAIConfig.SetAzureApiVersion(const AValue: string); begin edtAzureApiVersion.Text := AValue; end;
+function TRadIAFrameAIConfig.GetAzureModel: string;
+begin
+  Result := edtAzureModel.Text;
+end;
 
-function TRadIAFrameAIConfig.GetAwsAccessKeyId: string; begin Result := edtAwsAccessKeyId.Text; end;
-procedure TRadIAFrameAIConfig.SetAwsAccessKeyId(const AValue: string); begin edtAwsAccessKeyId.Text := AValue; end;
-function TRadIAFrameAIConfig.GetAwsSecretAccessKey: string; begin Result := edtAwsSecretAccessKey.Text; end;
-procedure TRadIAFrameAIConfig.SetAwsSecretAccessKey(const AValue: string); begin edtAwsSecretAccessKey.Text := AValue; end;
-function TRadIAFrameAIConfig.GetAwsRegion: string; begin Result := edtAwsRegion.Text; end;
-procedure TRadIAFrameAIConfig.SetAwsRegion(const AValue: string); begin edtAwsRegion.Text := AValue; end;
-function TRadIAFrameAIConfig.GetAwsSessionToken: string; begin Result := edtAwsSessionToken.Text; end;
-procedure TRadIAFrameAIConfig.SetAwsSessionToken(const AValue: string); begin edtAwsSessionToken.Text := AValue; end;
+procedure TRadIAFrameAIConfig.SetAzureModel(const AValue: string);
+begin
+  edtAzureModel.Text := AValue;
+end;
 
-function TRadIAFrameAIConfig.GetSystemPrompt: string; begin Result := memSystemPrompt.Text; end;
-procedure TRadIAFrameAIConfig.SetSystemPrompt(const AValue: string); begin memSystemPrompt.Text := AValue; end;
-function TRadIAFrameAIConfig.GetSmartConfigEnabled: Boolean; begin Result := FChkSmartConfig.Checked; end;
-procedure TRadIAFrameAIConfig.SetSmartConfigEnabled(const AValue: Boolean); begin FChkSmartConfig.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetInjectDelphiVersion: Boolean; begin Result := FChkInjectDelphiVersion.Checked; end;
-procedure TRadIAFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean); begin FChkInjectDelphiVersion.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetConciseResponses: Boolean; begin Result := FChkConciseResponses.Checked; end;
-procedure TRadIAFrameAIConfig.SetConciseResponses(const AValue: Boolean); begin FChkConciseResponses.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetLogEnabled: Boolean; begin Result := FChkLogEnabled.Checked; end;
-procedure TRadIAFrameAIConfig.SetLogEnabled(const AValue: Boolean); begin FChkLogEnabled.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetLogPath: string; begin Result := FEdtLogPath.Text; end;
-procedure TRadIAFrameAIConfig.SetLogPath(const AValue: string); begin FEdtLogPath.Text := AValue; end;
-function TRadIAFrameAIConfig.GetLogMaxSize: string; begin Result := FEdtLogMaxSize.Text; end;
-procedure TRadIAFrameAIConfig.SetLogMaxSize(const AValue: string); begin FEdtLogMaxSize.Text := AValue; end;
+function TRadIAFrameAIConfig.GetAzureApiVersion: string;
+begin
+  Result := edtAzureApiVersion.Text;
+end;
 
-function TRadIAFrameAIConfig.GetQuotaEnabled: Boolean; begin Result := FChkQuotaEnabled.Checked; end;
-procedure TRadIAFrameAIConfig.SetQuotaEnabled(const AValue: Boolean); begin FChkQuotaEnabled.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetQuotaLimit: string; begin Result := FEdtQuotaLimit.Text; end;
-procedure TRadIAFrameAIConfig.SetQuotaLimit(const AValue: string); begin FEdtQuotaLimit.Text := AValue; end;
-procedure TRadIAFrameAIConfig.SetQuotaUsedText(const AText: string); begin FLblQuotaUsed.Caption := AText; end;
+procedure TRadIAFrameAIConfig.SetAzureApiVersion(const AValue: string);
+begin
+  edtAzureApiVersion.Text := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetAwsAccessKeyId: string;
+begin
+  Result := edtAwsAccessKeyId.Text;
+end;
+
+procedure TRadIAFrameAIConfig.SetAwsAccessKeyId(const AValue: string);
+begin
+  edtAwsAccessKeyId.Text := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetAwsSecretAccessKey: string;
+begin
+  Result := edtAwsSecretAccessKey.Text;
+end;
+
+procedure TRadIAFrameAIConfig.SetAwsSecretAccessKey(const AValue: string);
+begin
+  edtAwsSecretAccessKey.Text := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetAwsRegion: string;
+begin
+  Result := edtAwsRegion.Text;
+end;
+
+procedure TRadIAFrameAIConfig.SetAwsRegion(const AValue: string);
+begin
+  edtAwsRegion.Text := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetAwsSessionToken: string;
+begin
+  Result := edtAwsSessionToken.Text;
+end;
+
+procedure TRadIAFrameAIConfig.SetAwsSessionToken(const AValue: string);
+begin
+  edtAwsSessionToken.Text := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetSystemPrompt: string;
+begin
+  Result := memSystemPrompt.Text;
+end;
+
+procedure TRadIAFrameAIConfig.SetSystemPrompt(const AValue: string);
+begin
+  memSystemPrompt.Text := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetSmartConfigEnabled: Boolean;
+begin
+  Result := FChkSmartConfig.Checked;
+end;
+
+procedure TRadIAFrameAIConfig.SetSmartConfigEnabled(const AValue: Boolean);
+begin
+  FChkSmartConfig.Checked := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetInjectDelphiVersion: Boolean;
+begin
+  Result := FChkInjectDelphiVersion.Checked;
+end;
+
+procedure TRadIAFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean);
+begin
+  FChkInjectDelphiVersion.Checked := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetConciseResponses: Boolean;
+begin
+  Result := FChkConciseResponses.Checked;
+end;
+
+procedure TRadIAFrameAIConfig.SetConciseResponses(const AValue: Boolean);
+begin
+  FChkConciseResponses.Checked := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetLogEnabled: Boolean;
+begin
+  Result := FChkLogEnabled.Checked;
+end;
+
+procedure TRadIAFrameAIConfig.SetLogEnabled(const AValue: Boolean);
+begin
+  FChkLogEnabled.Checked := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetLogPath: string;
+begin
+  Result := FEdtLogPath.Text;
+end;
+
+procedure TRadIAFrameAIConfig.SetLogPath(const AValue: string);
+begin
+  FEdtLogPath.Text := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetLogMaxSize: string;
+begin
+  Result := FEdtLogMaxSize.Text;
+end;
+
+procedure TRadIAFrameAIConfig.SetLogMaxSize(const AValue: string);
+begin
+  FEdtLogMaxSize.Text := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetQuotaEnabled: Boolean;
+begin
+  Result := FChkQuotaEnabled.Checked;
+end;
+
+procedure TRadIAFrameAIConfig.SetQuotaEnabled(const AValue: Boolean);
+begin
+  FChkQuotaEnabled.Checked := AValue;
+end;
+
+function TRadIAFrameAIConfig.GetQuotaLimit: string;
+begin
+  Result := FEdtQuotaLimit.Text;
+end;
+
+procedure TRadIAFrameAIConfig.SetQuotaLimit(const AValue: string);
+begin
+  FEdtQuotaLimit.Text := AValue;
+end;
+
+procedure TRadIAFrameAIConfig.SetQuotaUsedText(const AText: string);
+begin
+  FLblQuotaUsed.Caption := AText;
+end;
 
 procedure TRadIAFrameAIConfig.ShowMessageDialog(const AMessage: string);
 begin
