@@ -1,4 +1,4 @@
-unit RadIA.UI.ChatFrame;
+﻿unit RadIA.UI.ChatFrame;
 
 interface
 
@@ -124,9 +124,18 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
-  RadIA.Core.Mediator, RadIA.Core.Logger, Vcl.Themes, RadIA.UI.WebLoginForm, RadIA.Core.Container,
-  Winapi.WebView2, Winapi.ActiveX, RadIA.Core.ProviderRegistry;
+  System.IOUtils,
+  System.JSON,
+  ToolsAPI,
+  RadIA.OTA.Helper,
+  RadIA.UI.ConfigForm,
+  RadIA.Core.Mediator,
+  RadIA.Core.Logger,
+  RadIA.UI.WebLoginForm,
+  RadIA.Core.Container,
+  Winapi.WebView2,
+  Winapi.ActiveX,
+  RadIA.Core.ProviderRegistry;
 
 {$R *.dfm}
 
