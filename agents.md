@@ -97,6 +97,11 @@ Siga o padrão clássico de estilo Pascal do Delphi:
         *   **UI (Telas, Frames, Presenters):** `RadIA.UI.<NomeDaTela>.pas` (ex: `RadIA.UI.ChatPresenter.pas`)
 *   Nenhum arquivo físico de código fonte ou de layout deve ser criado sem obedecer a esse formato prefixado por `RadIA.`.
 
+### 3.3 Prevenção contra Espaços em Branco Finais (Trailing Whitespaces)
+
+*   **A Regra:** Nenhum arquivo editado ou criado por Agente de IA deve conter espaços em branco adicionais ao final de qualquer linha (trailing whitespaces).
+*   **Procedimento de Prevenção:** Antes de finalizar e commitar qualquer alteração, o Agente de IA deve inspecionar e limpar proativamente espaços em branco no final de linhas nos arquivos modificados. Se houver um script utilitário de limpeza (como `scratch/trim-whitespaces.ps1`), ele deve ser executado para garantir conformidade completa antes da build final.
+
 ---
 
 ## 4. Segurança em Threads (Thread Safety na IDE)
