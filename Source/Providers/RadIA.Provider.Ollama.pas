@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Ollama;
+unit RadIA.Provider.Ollama;
 
 interface
 
@@ -184,7 +184,8 @@ begin
                    LModelsList := TList<string>.Create;
                    try
                      try
-                       LResponseText := DoGetRequest(LUrl, nil, 5000); // Timeout rÃ¡pido de 5 segundos para busca de modelos
+                       // Timeout rapido de 5 segundos para busca de modelos
+                       LResponseText := DoGetRequest(LUrl, nil, 5000);
                        LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
                        if Assigned(LJson) then
                        begin

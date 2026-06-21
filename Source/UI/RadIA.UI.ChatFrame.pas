@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ChatFrame;
+unit RadIA.UI.ChatFrame;
 
 interface
 
@@ -529,7 +529,8 @@ end;
 
 procedure TRadIAFrameAIChat.btnDeleteSessionClick(Sender: TObject);
 begin
-  if MessageDlg('Deseja realmente excluir esta conversa e todo o seu histÃ³rico?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  if MessageDlg('Deseja realmente excluir esta conversa e todo o seu histÃ³rico?',
+    mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
     FPresenter.DeleteSession(FPresenter.SessionManager.ActiveSessionId);
   end;
