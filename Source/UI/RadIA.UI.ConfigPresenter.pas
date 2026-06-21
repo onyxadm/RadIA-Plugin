@@ -100,9 +100,6 @@ type
     procedure SaveConfig;
     procedure CancelConfig;
 
-    // Advanced Inputs Registry
-    procedure RegisterProvider(const AProviderId: string);
-
     // Templates Actions
     procedure HandleTemplateSelected;
     procedure CreateNewTemplate;
@@ -367,11 +364,7 @@ begin
   FView.CloseView(2); // mrCancel
 end;
 
-procedure TRadIAConfigPresenter.RegisterProvider(const AProviderId: string);
-begin
-  // Intentionally empty: provider configuration auto-registers dynamically
-  if AProviderId = '' then Exit;
-end;
+
 
 procedure TRadIAConfigPresenter.PopulateTemplatesList;
 var
@@ -569,7 +562,7 @@ end;
 procedure TRadIAConfigPresenter.ImportTemplates;
 begin
   // Intentionally empty: import implementation handles templates merging in future releases
-  Exit;
+  if True then ;
 end;
 
 procedure TRadIAConfigPresenter.BrowseLogPath;

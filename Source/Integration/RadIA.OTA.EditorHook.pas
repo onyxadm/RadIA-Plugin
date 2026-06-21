@@ -434,7 +434,7 @@ end;
 procedure TRadIAEditorHook.InstallEditorNotifiers;
 begin
   // Intentionally empty: Notifiers not needed because VCL timer is used to hook windows
-  Exit;
+  if True then ;
 end;
 
 procedure TRadIAEditorHook.RemoveEditorNotifiers;

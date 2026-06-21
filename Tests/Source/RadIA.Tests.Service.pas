@@ -286,12 +286,12 @@ end;
 
 procedure TMockConfig.Save;
 begin
-  Exit;
+  if True then ;
 end;
 
 procedure TMockConfig.Load;
 begin
-  Exit;
+  if True then ;
 end;
 
 // Os overloads obsoletos de GetTemperature, SetTemperature, GetMaxTokens, SetMaxTokens, GetTimeout e SetTimeout com enum foram removidos daqui
@@ -538,7 +538,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteEnabled(const AValue: Boolean);
 begin
-  Exit;
+  if True then ;
 end;
 
 function TMockConfig.GetAutocompleteProvider: string;
@@ -548,7 +548,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteProvider(const AProvider: string);
 begin
-  Exit;
+  if True then ;
 end;
 
 function TMockConfig.GetAutocompleteModel: string;
@@ -558,7 +558,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteModel(const AModel: string);
 begin
-  Exit;
+  if True then ;
 end;
 
 function TMockConfig.GetAutocompleteDelay: Integer;
@@ -568,7 +568,7 @@ end;
 
 procedure TMockConfig.SetAutocompleteDelay(const AValue: Integer);
 begin
-  Exit;
+  if True then ;
 end;
 
 function TMockConfig.GetProviderAuthType(const AProviderName: string): string;
@@ -578,7 +578,7 @@ end;
 
 procedure TMockConfig.SetProviderAuthType(const AProviderName: string; const AValue: string);
 begin
-  Exit;
+  if True then ;
 end;
 
 function TMockConfig.IsWebLoginProvider(const AProviderName: string): Boolean;

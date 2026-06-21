@@ -199,7 +199,7 @@ end;
 
 procedure TMockChatView.ApplyCurrentTheme;
 begin
-  Exit;
+  if True then ;
 end;
 
 procedure TMockChatView.CreateBackgroundBrowser;
@@ -310,13 +310,13 @@ end;
 procedure TMockIAProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
-  Exit;
+  if True then ;
 end;
 
 procedure TMockIAProvider.SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
-  Exit;
+  if True then ;
 end;
 
 procedure TMockIAProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
@@ -341,7 +341,7 @@ end;
 
 procedure TMockIAProvider.CancelCurrentRequest;
 begin
-  Exit;
+  if True then ;
 end;
 
 { TTestChatPresenter }

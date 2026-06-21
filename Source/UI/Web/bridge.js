@@ -156,10 +156,13 @@
 
 
   // --- Inbound communication (Delphi -> WebView) ---
-  if (window.chrome && window.chrome.webview) {
-    // window.chrome.webview.addEventListener is a secure host-to-web channel.
+  if (globalThis.chrome && globalThis.chrome.webview) {
+    // globalThis.chrome.webview.addEventListener is a secure host-to-web channel.
     // event.origin is not present here as messages originate directly from the host Delphi process (bds.exe).
-    window.chrome.webview.addEventListener('message', event => { // nosonar
+    globalThis.chrome.webview.addEventListener('message', event => {
+      if (event.origin && event.origin !== '' && !event.origin.startsWith('file://')) {
+        return;
+      }
       const msg = event.data;
       log('Message received from Delphi:', msg);
 

@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Cache;
+unit RadIA.Core.Cache;
 
 interface
 
@@ -112,7 +112,7 @@ var
   LConcat: string;
 begin
   LConcat := AProvider + '||' + AModel + '||' + ASystemPrompt + '||' + APrompt + '||' + AHistory;
-  Result := THashSHA1.GetHashString(LConcat);
+  Result := THashSHA2.GetHashString(LConcat);
 end;
 
 function TRadIACacheManager.Get(const AHash: string; out AResponse: string): Boolean;

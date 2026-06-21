@@ -100,8 +100,11 @@
     }
 
     // Listen for messages from WebView2
-    if (window.chrome && window.chrome.webview) {
-      window.chrome.webview.addEventListener('message', event => {
+    if (globalThis.chrome && globalThis.chrome.webview) {
+      globalThis.chrome.webview.addEventListener('message', event => {
+        if (event.origin && event.origin !== '' && !event.origin.startsWith('file://')) {
+          return;
+        }
         const data = event.data;
         if (data.action === 'render') {
           renderDiff(data.fileName, data.original, data.modified);
