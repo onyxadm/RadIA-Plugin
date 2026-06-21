@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.DockableForm;
+unit RadIA.OTA.DockableForm;
 
 interface
 
@@ -65,8 +65,7 @@ procedure UnregisterDockableForm;
 begin
   if @UnRegisterFieldAddress <> nil then
     UnRegisterFieldAddress(@FormRadIADockable);
-  if Assigned(FormRadIADockable) then
-    FreeAndNil(FormRadIADockable);
+  FreeAndNil(FormRadIADockable);
 end;
 
 { TFormRadIADockable }

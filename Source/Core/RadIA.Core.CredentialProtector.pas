@@ -25,15 +25,15 @@ type
   end;
   PDataBlob = ^TDataBlob;
 
-function CryptProtectData(pDataIn: PDataBlob; szDataDescr: LPCWSTR;
-  pOptionalEntropy: PDataBlob; pvReserved: Pointer;
-  pPromptStruct: Pointer; dwFlags: DWORD;
-  pDataOut: PDataBlob): BOOL; stdcall; external 'crypt32.dll';
+function CryptProtectData(APDataIn: PDataBlob; ASzDataDescr: LPCWSTR;
+  APOptionalEntropy: PDataBlob; APvReserved: Pointer;
+  APPromptStruct: Pointer; ADwFlags: DWORD;
+  APDataOut: PDataBlob): BOOL; stdcall; external 'crypt32.dll';
 
-function CryptUnprotectData(pDataIn: PDataBlob; ppszDataDescr: Pointer;
-  pOptionalEntropy: PDataBlob; pvReserved: Pointer;
-  pPromptStruct: Pointer; dwFlags: DWORD;
-  pDataOut: PDataBlob): BOOL; stdcall; external 'crypt32.dll';
+function CryptUnprotectData(APDataIn: PDataBlob; APpszDataDescr: Pointer;
+  APOptionalEntropy: PDataBlob; APvReserved: Pointer;
+  APPromptStruct: Pointer; ADwFlags: DWORD;
+  APDataOut: PDataBlob): BOOL; stdcall; external 'crypt32.dll';
 
 procedure LogDebug(const AMsg: string);
 begin

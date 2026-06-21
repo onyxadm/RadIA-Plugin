@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.WebLoginForm;
+unit RadIA.UI.WebLoginForm;
 
 interface
 
@@ -61,8 +61,8 @@ uses
 type
   ICoreWebView2Settings2_Local = interface(IUnknown)
     ['{ee9a0f68-f96c-4e24-9c00-fd6c778988b4}']
-    function Get_UserAgent(out userAgent: PWideChar): HResult; stdcall;
-    function Put_UserAgent(userAgent: PWideChar): HResult; stdcall;
+    function Get_UserAgent(out AUserAgent: PWideChar): HRESULT; stdcall;
+    function Put_UserAgent(AUserAgent: PWideChar): HRESULT; stdcall;
   end;
 
 const

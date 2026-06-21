@@ -340,7 +340,7 @@ begin
         for LMenu in FInterceptedMenus.Keys do
         begin
           try
-            LOldOnPopup := FInterceptedMenus.Items[LMenu];
+            LOldOnPopup := FInterceptedMenus[LMenu];
             LMenu.OnPopup := LOldOnPopup;
             RemoveMenuFromPopupMenu(LMenu);
           except

@@ -11,8 +11,8 @@ type
     FOnWrite: TProc<TBytes>;
   public
     constructor Create(const AOnWrite: TProc<TBytes>);
-    function Write(const Buffer; Count: Longint): Longint; override;
-    function Read(var Buffer; Count: Longint): Longint; override;
+    function Write(const Buffer; Count: LongInt): LongInt; override;
+    function Read(var Buffer; Count: LongInt): LongInt; override;
     function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
   end;
 
@@ -33,7 +33,7 @@ begin
   FOnWrite := AOnWrite;
 end;
 
-function TRadIAStreamingTargetStream.Write(const Buffer; Count: Longint): Longint;
+function TRadIAStreamingTargetStream.Write(const Buffer; Count: LongInt): LongInt;
 var
   LBytes: TBytes;
 begin
@@ -48,7 +48,7 @@ begin
     FOnWrite(LBytes);
 end;
 
-function TRadIAStreamingTargetStream.Read(var Buffer; Count: Longint): Longint;
+function TRadIAStreamingTargetStream.Read(var Buffer; Count: LongInt): LongInt;
 begin
   Result := 0;
 end;

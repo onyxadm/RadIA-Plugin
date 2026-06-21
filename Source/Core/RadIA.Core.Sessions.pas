@@ -1,9 +1,9 @@
-﻿unit RadIA.Core.Sessions;
+unit RadIA.Core.Sessions;
 
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces;
+  System.Generics.Collections, RadIA.Core.Interfaces;
 
 type
   TSessionInfo = record
@@ -47,8 +47,8 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, System.DateUtils, System.Generics.Defaults,
-  RadIA.Core.Types, RadIA.Core.Service, RadIA.Core.Logger, RadIA.Core.ChatMessage;
+  System.SysUtils, System.Classes, System.IOUtils, System.JSON, System.DateUtils, System.Generics.Defaults,
+  RadIA.Core.Types, RadIA.Core.Logger, RadIA.Core.ChatMessage;
 
 procedure LogSession(const AMsg: string);
 begin

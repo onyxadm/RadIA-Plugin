@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Service;
+unit RadIA.Core.Service;
 
 interface
 
@@ -475,7 +475,7 @@ begin
     TMonitor.Exit(Self);
   end;
 
-  if LProvider <> nil then
+  if Assigned(LProvider) then
   begin
     LogService('CancelCurrentRequest: Cancelling active provider request.');
     LProvider.CancelCurrentRequest;

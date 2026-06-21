@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ConfigForm;
+unit RadIA.UI.ConfigForm;
 
 interface
 
@@ -9,6 +9,14 @@ uses
 
 type
   TRadIAFormAIConfig = class(TForm)
+  private
+    FFrameConfig: TRadIAFrameAIConfig;
+    procedure UpdateVCLColors(const AThemeName: string);
+  protected
+    procedure CreateWnd; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    procedure LoadConfig;
   published
     pnlSidebar: TPanel;
     tvCategories: TTreeView;
@@ -19,14 +27,6 @@ type
     procedure tvCategoriesChange(Sender: TObject; Node: TTreeNode);
     procedure btnSaveClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
-  protected
-    procedure CreateWnd; override;
-  private
-    FFrameConfig: TRadIAFrameAIConfig;
-    procedure UpdateVCLColors(const AThemeName: string);
-  public
-    constructor Create(AOwner: TComponent); override;
-    procedure LoadConfig;
   end;
 
 implementation
@@ -119,20 +119,20 @@ end;
 
 procedure TRadIAFormAIConfig.btnSaveClick(Sender: TObject);
 begin
-  FFrameConfig.btnSaveClick(Sender);
+  FFrameConfig.BtnSaveClick(Sender);
   if Self.ModalResult = mrOk then
     ShowMessage('Settings saved successfully.');
 end;
 
 procedure TRadIAFormAIConfig.btnCancelClick(Sender: TObject);
 begin
-  FFrameConfig.btnCancelClick(Sender);
+  FFrameConfig.BtnCancelClick(Sender);
 end;
 
 procedure TRadIAFormAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
 begin
-  if Node = nil then Exit;
-  FFrameConfig.tvCategoriesChange(Sender, Node);
+  if not Assigned(Node) then Exit;
+  FFrameConfig.TvCategoriesChange(Sender, Node);
 end;
 
 procedure TRadIAFormAIConfig.UpdateVCLColors(const AThemeName: string);

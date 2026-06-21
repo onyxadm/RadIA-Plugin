@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.Options;
+unit RadIA.OTA.Options;
 
 interface
 
@@ -104,9 +104,9 @@ begin
   if Assigned(FFrame) then
   begin
     if Accepted then
-      FFrame.btnSaveClick(nil)
+      FFrame.BtnSaveClick(nil)
     else
-      FFrame.btnCancelClick(nil);
+      FFrame.BtnCancelClick(nil);
     FFrame := nil;
   end;
 end;

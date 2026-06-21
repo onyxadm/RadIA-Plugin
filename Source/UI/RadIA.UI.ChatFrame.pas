@@ -1,11 +1,11 @@
-﻿unit RadIA.UI.ChatFrame;
+unit RadIA.UI.ChatFrame;
 
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
+  Vcl.Edge, RadIA.Core.Interfaces,
   Vcl.Menus, Vcl.Buttons, RadIA.Core.Sessions, RadIA.UI.Resources,
   RadIA.UI.ChatPresenter;
 
@@ -57,9 +57,9 @@ type
     FWebViewInitialized: Boolean;
     FPopupMenuTemplates: TPopupMenu;
     FLifecycleGuard: IInterface;
-    EdgeBrowser: TEdgeBrowser;
+    FEdgeBrowser: TEdgeBrowser;
     FEdgeBrowserWeb: TEdgeBrowser;
-    FpnlBrowserWeb: TPanel;
+    FPnlBrowserWeb: TPanel;
     FBrowserWebInitialized: Boolean;
 
     procedure CreateEdgeBrowserWeb;
@@ -124,26 +124,17 @@ type
 implementation
 
 uses
-  System.IOUtils,
-  System.JSON,
-  ToolsAPI,
-  RadIA.OTA.Helper,
-  RadIA.UI.ConfigForm,
-  RadIA.Core.Mediator,
-  RadIA.Core.Logger,
-  RadIA.UI.WebLoginForm,
-  RadIA.Core.Container,
-  Winapi.WebView2,
-  Winapi.ActiveX,
-  RadIA.Core.ProviderRegistry;
+  System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
+  RadIA.Core.Mediator, RadIA.Core.Logger, RadIA.UI.WebLoginForm, RadIA.Core.Container,
+  Winapi.WebView2, Winapi.ActiveX, RadIA.Core.ProviderRegistry, RadIA.Core.Types;
 
 {$R *.dfm}
 
 type
   ICoreWebView2Settings2_Local = interface(IUnknown)
     ['{ee9a0f68-f96c-4e24-9c00-fd6c778988b4}']
-    function Get_UserAgent(out userAgent: PWideChar): HResult; stdcall;
-    function Put_UserAgent(userAgent: PWideChar): HResult; stdcall;
+    function Get_UserAgent(out AUserAgent: PWideChar): HRESULT; stdcall;
+    function Put_UserAgent(AUserAgent: PWideChar): HRESULT; stdcall;
   end;
 
 const
@@ -279,8 +270,7 @@ begin
   if Assigned(cbProvider) then
   begin
     for I := 0 to cbProvider.Items.Count - 1 do
-      if Assigned(cbProvider.Items.Objects[I]) then
-        cbProvider.Items.Objects[I].Free;
+      cbProvider.Items.Objects[I].Free;
   end;
 
   FPresenter.Free;
@@ -288,23 +278,20 @@ begin
   if not GIsShuttingDown then
   begin
     if Assigned(FEdgeBrowserWeb) then
-    begin
       FEdgeBrowserWeb.Parent := nil;
-      FreeAndNil(FEdgeBrowserWeb);
-    end;
-    FreeAndNil(FpnlBrowserWeb);
-    if Assigned(EdgeBrowser) then
-    begin
-      EdgeBrowser.Parent := nil;
-      FreeAndNil(EdgeBrowser);
-    end;
+    FreeAndNil(FEdgeBrowserWeb);
+    FreeAndNil(FPnlBrowserWeb);
+    if Assigned(FEdgeBrowser) then
+      FEdgeBrowser.Parent := nil;
+    FreeAndNil(FEdgeBrowser);
+    FreeAndNil(pnlBrowser);
   end
   else
   begin
     if Assigned(FEdgeBrowserWeb) then
       FEdgeBrowserWeb.Parent := nil;
-    if Assigned(EdgeBrowser) then
-      EdgeBrowser.Parent := nil;
+    if Assigned(FEdgeBrowser) then
+      FEdgeBrowser.Parent := nil;
   end;
 
   inherited Destroy;
@@ -319,14 +306,14 @@ end;
 
 procedure TRadIAFrameAIChat.CreateEdgeBrowser;
 begin
-  if not Assigned(EdgeBrowser) then
+  if not Assigned(FEdgeBrowser) then
   begin
-    EdgeBrowser := TEdgeBrowser.Create(nil);
-    EdgeBrowser.Parent := pnlBrowser;
-    EdgeBrowser.Align := alClient;
-    EdgeBrowser.AlignWithMargins := True;
-    EdgeBrowser.OnCreateWebViewCompleted := EdgeBrowserCreateWebViewCompleted;
-    EdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
+    FEdgeBrowser := TEdgeBrowser.Create(nil);
+    FEdgeBrowser.Parent := pnlBrowser;
+    FEdgeBrowser.Align := alClient;
+    FEdgeBrowser.AlignWithMargins := True;
+    FEdgeBrowser.OnCreateWebViewCompleted := EdgeBrowserCreateWebViewCompleted;
+    FEdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
   end;
 end;
 
@@ -349,7 +336,7 @@ begin
       TThreadProcedure(
       procedure
       begin
-        if Assigned(EdgeBrowser) then
+        if Assigned(FEdgeBrowser) then
           InitializeWebView;
       end));
   end
@@ -368,10 +355,10 @@ var
 begin
   FBrowserInitialized := False;
   FWebViewInitialized := False;
-  if Assigned(EdgeBrowser) then
+  if Assigned(FEdgeBrowser) then
   begin
-    LEdgeToFree := EdgeBrowser;
-    EdgeBrowser := nil;
+    LEdgeToFree := FEdgeBrowser;
+    FEdgeBrowser := nil;
     LEdgeToFree.Parent := nil;
     if not GIsShuttingDown then
     begin
@@ -444,8 +431,8 @@ end;
 
 procedure TRadIAFrameAIChat.InitializeWebView;
 begin
-  EdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
-  EdgeBrowser.CreateWebView;
+  FEdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2');
+  FEdgeBrowser.CreateWebView;
 end;
 
 procedure TRadIAFrameAIChat.UpdateWebViewNavigation;
@@ -462,7 +449,7 @@ begin
     LTargetUrl := 'file:///' + TPath.Combine(FWebFilesDir, 'chat.html').Replace('\', '/') +
       '?theme=' + GetWebThemeName(GetCurrentIDEThemeName);
     TLogger.Log('UpdateWebViewNavigation: Navigating to local chat: ' + LTargetUrl, 'UI');
-    EdgeBrowser.Navigate(LTargetUrl);
+    FEdgeBrowser.Navigate(LTargetUrl);
   end;
 end;
 
@@ -557,14 +544,14 @@ begin
   if Succeeded(AResult) then
   begin
     FBrowserInitialized := True;
-    if Assigned(EdgeBrowser.DefaultInterface) then
+    if Assigned(FEdgeBrowser.DefaultInterface) then
     begin
-      if Succeeded(EdgeBrowser.DefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
+      if Succeeded(FEdgeBrowser.DefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
       begin
         LSettings.Set_AreDevToolsEnabled(1);
         LSettings.Set_AreDefaultContextMenusEnabled(1);
       end;
-      InjectWebViewScrollbarStyle(EdgeBrowser, 'main chat WebView');
+      InjectWebViewScrollbarStyle(FEdgeBrowser, 'main chat WebView');
     end;
     UpdateWebViewNavigation;
   end;
@@ -689,7 +676,7 @@ end;
 
 function TRadIAFrameAIChat.ColorToHex(AColor: TColor): string;
 var
-  LColorRGB: Longint;
+  LColorRGB: LongInt;
   R, G, B: Byte;
 begin
   LColorRGB := ColorToRGB(AColor);
@@ -792,9 +779,9 @@ end;
 
 procedure TRadIAFrameAIChat.PostMessageToWeb(const AJson: string);
 begin
-  if FBrowserInitialized and Assigned(EdgeBrowser) and Assigned(EdgeBrowser.DefaultInterface) then
+  if FBrowserInitialized and Assigned(FEdgeBrowser) and Assigned(FEdgeBrowser.DefaultInterface) then
   begin
-    EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(AJson));
+    FEdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(AJson));
   end;
 end;
 
@@ -885,8 +872,7 @@ begin
   lstSessions.OnClick := nil;
   try
     for I := 0 to lstSessions.Items.Count - 1 do
-      if Assigned(lstSessions.Items.Objects[I]) then
-        lstSessions.Items.Objects[I].Free;
+      lstSessions.Items.Objects[I].Free;
     lstSessions.Items.Clear;
 
     for LSession in ASessions do
@@ -1015,23 +1001,23 @@ end;
 
 procedure TRadIAFrameAIChat.CreateEdgeBrowserWeb;
 begin
-  if not Assigned(FpnlBrowserWeb) then
+  if not Assigned(FPnlBrowserWeb) then
   begin
-    FpnlBrowserWeb := TPanel.Create(Self);
-    FpnlBrowserWeb.Parent := Self;
-    FpnlBrowserWeb.BevelOuter := bvNone;
-    FpnlBrowserWeb.Caption := '';
-    FpnlBrowserWeb.Left := -5000;
-    FpnlBrowserWeb.Top := 0;
-    FpnlBrowserWeb.Width := 10;
-    FpnlBrowserWeb.Height := 10;
-    FpnlBrowserWeb.Visible := True;
+    FPnlBrowserWeb := TPanel.Create(Self);
+    FPnlBrowserWeb.Parent := Self;
+    FPnlBrowserWeb.BevelOuter := bvNone;
+    FPnlBrowserWeb.Caption := '';
+    FPnlBrowserWeb.Left := -5000;
+    FPnlBrowserWeb.Top := 0;
+    FPnlBrowserWeb.Width := 10;
+    FPnlBrowserWeb.Height := 10;
+    FPnlBrowserWeb.Visible := True;
   end;
 
   if not Assigned(FEdgeBrowserWeb) then
   begin
     FEdgeBrowserWeb := TEdgeBrowser.Create(nil);
-    FEdgeBrowserWeb.Parent := FpnlBrowserWeb;
+    FEdgeBrowserWeb.Parent := FPnlBrowserWeb;
     FEdgeBrowserWeb.Align := alClient;
     FEdgeBrowserWeb.OnCreateWebViewCompleted := EdgeBrowserWebCreateWebViewCompleted;
     FEdgeBrowserWeb.OnSourceChanged := EdgeBrowserWebSourceChanged;

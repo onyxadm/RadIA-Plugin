@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Base;
+unit RadIA.Provider.Base;
 
 interface
 
@@ -628,7 +628,7 @@ begin
     LChoices := LJsonObj.GetValue('choices') as TJSONArray;
     if Assigned(LChoices) and (LChoices.Count > 0) then
     begin
-      LChoice := LChoices.Items[0] as TJSONObject;
+      LChoice := LChoices[0] as TJSONObject;
       LMessage := LChoice.GetValue('message') as TJSONObject;
       if Assigned(LMessage) then
         Result := LMessage.GetValue<string>('content', '');
@@ -710,7 +710,7 @@ begin
               LChoices := LJson.GetValue('choices') as TJSONArray;
               if Assigned(LChoices) and (LChoices.Count > 0) then
               begin
-                LChoice := LChoices.Items[0] as TJSONObject;
+                LChoice := LChoices[0] as TJSONObject;
                 LDelta := LChoice.GetValue('delta') as TJSONObject;
                 if Assigned(LDelta) then
                 begin
@@ -835,7 +835,7 @@ begin
                 begin
                   for I := 0 to LData.Count - 1 do
                   begin
-                    LVal := LData.Items[I];
+                    LVal := LData[I];
                     if LVal.TryGetValue<string>('id', LId) then
                     begin
                       if FilterModelId(LId) then

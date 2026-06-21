@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Generic;
+unit RadIA.Provider.Generic;
 
 interface
 
@@ -19,7 +19,6 @@ type
   public
     constructor Create(const AConfig: IRadIAConfig; const AProviderId, ADisplayName, ADefaultBaseUrl: string; const ADefaultModels: TArray<string>; const AApiKey: string = ''); reintroduce;
 
-    procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -76,10 +75,6 @@ begin
   Result := FDisplayName;
 end;
 
-procedure TRadIAGenericOpenAIProvider.FetchAvailableModelsAsync(
-  const ACallback: TProc<TArray<string>, string>);
-begin
-  inherited FetchAvailableModelsAsync(ACallback);
-end;
+
 
 end.

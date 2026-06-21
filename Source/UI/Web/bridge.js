@@ -78,7 +78,7 @@
 
   // Identifica o site ativo
   let currentSite = null;
-  const host = window.location.hostname;
+  const host = globalThis.location.hostname;
   if (host.includes('chatgpt.com')) {
     currentSite = CONFIGS.chatgpt;
   } else if (host.includes('gemini.google.com')) {
@@ -104,7 +104,7 @@
   function isVisibleElement(el) {
     if (!el) return false;
     const rect = el.getBoundingClientRect();
-    const style = window.getComputedStyle(el);
+    const style = globalThis.getComputedStyle(el);
     return rect.width > 0 &&
       rect.height > 0 &&
       style.visibility !== 'hidden' &&
@@ -203,8 +203,8 @@
 
   // Envia mensagem de volta para o Delphi
   function sendToDelphi(data) {
-    if (window.chrome && window.chrome.webview) {
-      window.chrome.webview.postMessage(data);
+    if (globalThis.chrome && globalThis.chrome.webview) {
+      globalThis.chrome.webview.postMessage(data);
     } else {
       log('PostMessage simulation:', data);
     }
@@ -252,7 +252,7 @@
     const isBlock =
       ['DIV', 'P', 'LI', 'TR'].includes(tagName) ||
       hasLineRole ||
-      window.getComputedStyle(node).display === 'block';
+      globalThis.getComputedStyle(node).display === 'block';
 
     return isBlock ? appendLineBreak(text) : text;
   }
@@ -468,7 +468,7 @@
         const code = pre.querySelector('code');
         if (!code) return;
 
-        const computedStyle = window.getComputedStyle(pre);
+        const computedStyle = globalThis.getComputedStyle(pre);
         if (computedStyle.position === 'static') {
           pre.style.position = 'relative';
         }

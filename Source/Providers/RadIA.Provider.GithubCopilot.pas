@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.GithubCopilot;
+unit RadIA.Provider.GithubCopilot;
 
 interface
 
@@ -202,7 +202,7 @@ begin
         LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
         LHeaders[2] := TNetHeader.Create('Editor-Version', 'vscode/1.80.0');
         LHeaders[3] := TNetHeader.Create('Editor-Plugin-Version', 'copilot-chat/0.4.1');
-        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGuid.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
+        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGUID.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
 
         try
           LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
@@ -269,7 +269,7 @@ begin
         LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
         LHeaders[2] := TNetHeader.Create('Editor-Version', 'vscode/1.80.0');
         LHeaders[3] := TNetHeader.Create('Editor-Plugin-Version', 'copilot-chat/0.4.1');
-        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGuid.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
+        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGUID.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
 
         try
           LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);

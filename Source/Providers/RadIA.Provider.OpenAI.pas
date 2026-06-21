@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.OpenAI;
+unit RadIA.Provider.OpenAI;
 
 interface
 
@@ -16,7 +16,6 @@ type
   public
     constructor Create(const AConfig: IRadIAConfig); override;
 
-    procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -64,11 +63,7 @@ begin
     (AId.StartsWith('gpt-') or AId.StartsWith('o1-') or AId.StartsWith('o3-'));
 end;
 
-procedure TRadIAOpenAIProvider.FetchAvailableModelsAsync(
-  const ACallback: TProc<TArray<string>, string>);
-begin
-  inherited FetchAvailableModelsAsync(ACallback);
-end;
+
 
 initialization
   TProviderRegistry.RegisterProvider(

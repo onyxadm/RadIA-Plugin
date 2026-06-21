@@ -10,6 +10,121 @@ uses
 
 type
   TRadIAFrameAIConfig = class(TFrame, IRadIAConfigView)
+  private
+    FPresenter: TRadIAConfigPresenter;
+    FOnClose: TNotifyEvent;
+    FLblTemplateOrigin: TLabel;
+
+    FEdtTemperatures: TDictionary<string, TEdit>;
+    FEdtMaxTokens: TDictionary<string, TEdit>;
+    FEdtTimeouts: TDictionary<string, TEdit>;
+    FChkSmartConfig: TCheckBox;
+    FChkConciseResponses: TCheckBox;
+
+    FTsGeneral: TTabSheet;
+    FPnlGeneral: TPanel;
+    FChkInjectDelphiVersion: TCheckBox;
+    FChkLogEnabled: TCheckBox;
+    FLblLogPath: TLabel;
+    FEdtLogPath: TEdit;
+    FBtnBrowseLogPath: TButton;
+    FLblLogMaxSize: TLabel;
+    FEdtLogMaxSize: TEdit;
+
+    FGrpQuota: TGroupBox;
+    FChkQuotaEnabled: TCheckBox;
+    FLblQuotaLimit: TLabel;
+    FEdtQuotaLimit: TEdit;
+    FLblQuotaUsed: TLabel;
+    FBtnResetQuota: TButton;
+
+    procedure BtnBrowseLogPathClick(Sender: TObject);
+    procedure BtnResetQuotaClick(Sender: TObject);
+
+    function CreateCheckBox(AParent: TWinControl; const ACaption: string; const ALeft, ATop, AWidth: Integer): TCheckBox;
+    function CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer; const ANumbersOnly: Boolean = False): TEdit;
+    function CreateLabel(AParent: TWinControl; const ACaption: string; const ALeft, ATop: Integer): TLabel;
+    procedure CreateGeneralTab;
+    procedure CreateTemplateOriginLabel;
+    procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
+    procedure OpenUrl(const AUrl: string);
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure LoadConfig;
+    procedure UpdateVCLColors(const AThemeName: string);
+    procedure TvCategoriesChange(Sender: TObject; Node: TTreeNode);
+    procedure SelectCategoryByName(const ACategoryName: string);
+    procedure BtnSaveClick(Sender: TObject);
+    procedure BtnCancelClick(Sender: TObject);
+
+    { IRadIAConfigView Implementation }
+    function GetApiKey(const AProviderId: string): string;
+    procedure SetApiKey(const AProviderId: string; const AKey: string);
+    function GetCustomUrl(const AProviderId: string): string;
+    procedure SetCustomUrl(const AProviderId: string; const AUrl: string);
+    function GetAuthTypeIndex(const AProviderId: string): Integer;
+    procedure SetAuthTypeIndex(const AProviderId: string; const AIndex: Integer);
+
+    function GetTemperatureInput(const AProviderId: string): string;
+    procedure SetTemperatureInput(const AProviderId: string; const AValue: string);
+    function GetMaxTokensInput(const AProviderId: string): string;
+    procedure SetMaxTokensInput(const AProviderId: string; const AValue: string);
+    function GetTimeoutInput(const AProviderId: string): string;
+    procedure SetTimeoutInput(const AProviderId: string; const AValue: string);
+
+    function GetAzureModel: string;
+    procedure SetAzureModel(const AValue: string);
+    function GetAzureApiVersion: string;
+    procedure SetAzureApiVersion(const AValue: string);
+
+    function GetAwsAccessKeyId: string;
+    procedure SetAwsAccessKeyId(const AValue: string);
+    function GetAwsSecretAccessKey: string;
+    procedure SetAwsSecretAccessKey(const AValue: string);
+    function GetAwsRegion: string;
+    procedure SetAwsRegion(const AValue: string);
+    function GetAwsSessionToken: string;
+    procedure SetAwsSessionToken(const AValue: string);
+
+    function GetSystemPrompt: string;
+    procedure SetSystemPrompt(const AValue: string);
+    function GetSmartConfigEnabled: Boolean;
+    procedure SetSmartConfigEnabled(const AValue: Boolean);
+    function GetInjectDelphiVersion: Boolean;
+    procedure SetInjectDelphiVersion(const AValue: Boolean);
+    function GetConciseResponses: Boolean;
+    procedure SetConciseResponses(const AValue: Boolean);
+    function GetLogEnabled: Boolean;
+    procedure SetLogEnabled(const AValue: Boolean);
+    function GetLogPath: string;
+    procedure SetLogPath(const AValue: string);
+    function GetLogMaxSize: string;
+    procedure SetLogMaxSize(const AValue: string);
+
+    function GetQuotaEnabled: Boolean;
+    procedure SetQuotaEnabled(const AValue: Boolean);
+    function GetQuotaLimit: string;
+    procedure SetQuotaLimit(const AValue: string);
+    procedure SetQuotaUsedText(const AText: string);
+
+    procedure ShowMessageDialog(const AMessage: string);
+    function SaveDialogExecute(out AFileName: string): Boolean;
+    function OpenDialogExecute(out AFileName: string): Boolean;
+    function FolderDialogExecute(out AFolderName: string): Boolean;
+    procedure CloseView(const AModalResult: Integer);
+
+    procedure UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
+    procedure GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
+    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+    procedure ClearTemplateFields;
+    procedure FocusTemplateName;
+    function GetSelectedTemplateIndex: Integer;
+    procedure SetSelectedTemplateIndex(const AIndex: Integer);
+    procedure SetDeleteTemplateButtonState(const ACaption: string; const AEnabled: Boolean);
+    procedure SetTemplateOriginLabel(const AText: string; const AColor: TColor);
+
+    property OnClose: TNotifyEvent read FOnClose write FOnClose;
   published
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;
@@ -147,121 +262,6 @@ type
     procedure btnImportVSCodeClick(Sender: TObject);
     procedure btnGeminiWebLoginClick(Sender: TObject);
     procedure btnOpenAIWebLoginClick(Sender: TObject);
-  private
-    FPresenter: TRadIAConfigPresenter;
-    FOnClose: TNotifyEvent;
-    lblTemplateOrigin: TLabel;
-
-    FEdtTemperatures: TDictionary<string, TEdit>;
-    FEdtMaxTokens: TDictionary<string, TEdit>;
-    FEdtTimeouts: TDictionary<string, TEdit>;
-    FChkSmartConfig: TCheckBox;
-    chkConciseResponses: TCheckBox;
-
-    tsGeneral: TTabSheet;
-    pnlGeneral: TPanel;
-    chkInjectDelphiVersion: TCheckBox;
-    chkLogEnabled: TCheckBox;
-    lblLogPath: TLabel;
-    edtLogPath: TEdit;
-    btnBrowseLogPath: TButton;
-    lblLogMaxSize: TLabel;
-    edtLogMaxSize: TEdit;
-
-    grpQuota: TGroupBox;
-    chkQuotaEnabled: TCheckBox;
-    lblQuotaLimit: TLabel;
-    edtQuotaLimit: TEdit;
-    lblQuotaUsed: TLabel;
-    btnResetQuota: TButton;
-
-    procedure btnBrowseLogPathClick(Sender: TObject);
-    procedure btnResetQuotaClick(Sender: TObject);
-
-    function CreateCheckBox(AParent: TWinControl; const ACaption: string; const ALeft, ATop, AWidth: Integer): TCheckBox;
-    function CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer; const ANumbersOnly: Boolean = False): TEdit;
-    function CreateLabel(AParent: TWinControl; const ACaption: string; const ALeft, ATop: Integer): TLabel;
-    procedure CreateGeneralTab;
-    procedure CreateTemplateOriginLabel;
-    procedure CreateProviderAdvancedControls(ATabSheet: TTabSheet; const AProviderId: string);
-    procedure OpenUrl(const AUrl: string);
-  public
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
-    procedure LoadConfig;
-    procedure UpdateVCLColors(const AThemeName: string);
-    procedure tvCategoriesChange(Sender: TObject; Node: TTreeNode);
-    procedure SelectCategoryByName(const ACategoryName: string);
-    procedure btnSaveClick(Sender: TObject);
-    procedure btnCancelClick(Sender: TObject);
-
-    { IRadIAConfigView Implementation }
-    function GetApiKey(const AProviderId: string): string;
-    procedure SetApiKey(const AProviderId: string; const AKey: string);
-    function GetCustomUrl(const AProviderId: string): string;
-    procedure SetCustomUrl(const AProviderId: string; const AUrl: string);
-    function GetAuthTypeIndex(const AProviderId: string): Integer;
-    procedure SetAuthTypeIndex(const AProviderId: string; const AIndex: Integer);
-
-    function GetTemperatureInput(const AProviderId: string): string;
-    procedure SetTemperatureInput(const AProviderId: string; const AValue: string);
-    function GetMaxTokensInput(const AProviderId: string): string;
-    procedure SetMaxTokensInput(const AProviderId: string; const AValue: string);
-    function GetTimeoutInput(const AProviderId: string): string;
-    procedure SetTimeoutInput(const AProviderId: string; const AValue: string);
-
-    function GetAzureModel: string;
-    procedure SetAzureModel(const AValue: string);
-    function GetAzureApiVersion: string;
-    procedure SetAzureApiVersion(const AValue: string);
-
-    function GetAwsAccessKeyId: string;
-    procedure SetAwsAccessKeyId(const AValue: string);
-    function GetAwsSecretAccessKey: string;
-    procedure SetAwsSecretAccessKey(const AValue: string);
-    function GetAwsRegion: string;
-    procedure SetAwsRegion(const AValue: string);
-    function GetAwsSessionToken: string;
-    procedure SetAwsSessionToken(const AValue: string);
-
-    function GetSystemPrompt: string;
-    procedure SetSystemPrompt(const AValue: string);
-    function GetSmartConfigEnabled: Boolean;
-    procedure SetSmartConfigEnabled(const AValue: Boolean);
-    function GetInjectDelphiVersion: Boolean;
-    procedure SetInjectDelphiVersion(const AValue: Boolean);
-    function GetConciseResponses: Boolean;
-    procedure SetConciseResponses(const AValue: Boolean);
-    function GetLogEnabled: Boolean;
-    procedure SetLogEnabled(const AValue: Boolean);
-    function GetLogPath: string;
-    procedure SetLogPath(const AValue: string);
-    function GetLogMaxSize: string;
-    procedure SetLogMaxSize(const AValue: string);
-
-    function GetQuotaEnabled: Boolean;
-    procedure SetQuotaEnabled(const AValue: Boolean);
-    function GetQuotaLimit: string;
-    procedure SetQuotaLimit(const AValue: string);
-    procedure SetQuotaUsedText(const AText: string);
-
-    procedure ShowMessageDialog(const AMessage: string);
-    function SaveDialogExecute(out AFileName: string): Boolean;
-    function OpenDialogExecute(out AFileName: string): Boolean;
-    function FolderDialogExecute(out AFolderName: string): Boolean;
-    procedure CloseView(const AModalResult: Integer);
-
-    procedure UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
-    procedure GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
-    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
-    procedure ClearTemplateFields;
-    procedure FocusTemplateName;
-    function GetSelectedTemplateIndex: Integer;
-    procedure SetSelectedTemplateIndex(const AIndex: Integer);
-    procedure SetDeleteTemplateButtonState(const ACaption: string; const AEnabled: Boolean);
-    procedure SetTemplateOriginLabel(const AText: string; const AColor: TColor);
-
-    property OnClose: TNotifyEvent read FOnClose write FOnClose;
   end;
 
 implementation
@@ -326,78 +326,78 @@ end;
 
 procedure TRadIAFrameAIConfig.CreateTemplateOriginLabel;
 begin
-  lblTemplateOrigin := TLabel.Create(Self);
-  lblTemplateOrigin.Parent := pnlTemplatesClient;
-  lblTemplateOrigin.Left := 14;
-  lblTemplateOrigin.Top := btnSaveTemplate.Top + btnSaveTemplate.Height + 12;
-  lblTemplateOrigin.Font.Assign(lblTemplateName.Font);
-  lblTemplateOrigin.Font.Style := [fsItalic];
-  lblTemplateOrigin.Caption := '';
+  FLblTemplateOrigin := TLabel.Create(Self);
+  FLblTemplateOrigin.Parent := pnlTemplatesClient;
+  FLblTemplateOrigin.Left := 14;
+  FLblTemplateOrigin.Top := btnSaveTemplate.Top + btnSaveTemplate.Height + 12;
+  FLblTemplateOrigin.Font.Assign(lblTemplateName.Font);
+  FLblTemplateOrigin.Font.Style := [fsItalic];
+  FLblTemplateOrigin.Caption := '';
 end;
 
 procedure TRadIAFrameAIConfig.CreateGeneralTab;
 begin
-  tsGeneral := TTabSheet.Create(Self);
-  tsGeneral.PageControl := pgcSettings;
-  tsGeneral.Caption := 'General / Logs';
-  tsGeneral.TabVisible := False;
+  FTsGeneral := TTabSheet.Create(Self);
+  FTsGeneral.PageControl := pgcSettings;
+  FTsGeneral.Caption := 'General / Logs';
+  FTsGeneral.TabVisible := False;
 
-  pnlGeneral := TPanel.Create(Self);
-  pnlGeneral.Parent := tsGeneral;
-  pnlGeneral.Align := alClient;
-  pnlGeneral.BevelOuter := bvNone;
-  pnlGeneral.ShowCaption := False;
+  FPnlGeneral := TPanel.Create(Self);
+  FPnlGeneral.Parent := FTsGeneral;
+  FPnlGeneral.Align := alClient;
+  FPnlGeneral.BevelOuter := bvNone;
+  FPnlGeneral.ShowCaption := False;
 
-  FChkSmartConfig := CreateCheckBox(pnlGeneral, 'Auto (Smart Parameters)', 16, 16, 300);
-  chkInjectDelphiVersion := CreateCheckBox(
-    pnlGeneral,
+  FChkSmartConfig := CreateCheckBox(FPnlGeneral, 'Auto (Smart Parameters)', 16, 16, 300);
+  FChkInjectDelphiVersion := CreateCheckBox(
+    FPnlGeneral,
     'Inject Delphi version in prompt',
     16,
     48,
     300);
-  chkConciseResponses := CreateCheckBox(
-    pnlGeneral,
+  FChkConciseResponses := CreateCheckBox(
+    FPnlGeneral,
     'Prefer concise AI responses',
     16,
     80,
     300);
-  chkLogEnabled := CreateCheckBox(pnlGeneral, 'Enable logging', 16, 112, 200);
-  lblLogPath := CreateLabel(pnlGeneral, 'Log Folder Path:', 16, 144);
-  edtLogPath := CreateEdit(pnlGeneral, 16, 162, 320);
+  FChkLogEnabled := CreateCheckBox(FPnlGeneral, 'Enable logging', 16, 112, 200);
+  FLblLogPath := CreateLabel(FPnlGeneral, 'Log Folder Path:', 16, 144);
+  FEdtLogPath := CreateEdit(FPnlGeneral, 16, 162, 320);
 
-  btnBrowseLogPath := TButton.Create(Self);
-  btnBrowseLogPath.Parent := pnlGeneral;
-  btnBrowseLogPath.Left := 342;
-  btnBrowseLogPath.Top := 160;
-  btnBrowseLogPath.Width := 30;
-  btnBrowseLogPath.Height := 23;
-  btnBrowseLogPath.Caption := '...';
-  btnBrowseLogPath.OnClick := btnBrowseLogPathClick;
+  FBtnBrowseLogPath := TButton.Create(Self);
+  FBtnBrowseLogPath.Parent := FPnlGeneral;
+  FBtnBrowseLogPath.Left := 342;
+  FBtnBrowseLogPath.Top := 160;
+  FBtnBrowseLogPath.Width := 30;
+  FBtnBrowseLogPath.Height := 23;
+  FBtnBrowseLogPath.Caption := '...';
+  FBtnBrowseLogPath.OnClick := BtnBrowseLogPathClick;
 
-  lblLogMaxSize := CreateLabel(pnlGeneral, 'Max Log File Size (KB):', 16, 200);
-  edtLogMaxSize := CreateEdit(pnlGeneral, 16, 218, 100, True);
+  FLblLogMaxSize := CreateLabel(FPnlGeneral, 'Max Log File Size (KB):', 16, 200);
+  FEdtLogMaxSize := CreateEdit(FPnlGeneral, 16, 218, 100, True);
 
-  grpQuota := TGroupBox.Create(Self);
-  grpQuota.Parent := pnlGeneral;
-  grpQuota.Left := 16;
-  grpQuota.Top := 256;
-  grpQuota.Width := 356;
-  grpQuota.Height := 140;
-  grpQuota.Caption := ' Local Token Quota ';
+  FGrpQuota := TGroupBox.Create(Self);
+  FGrpQuota.Parent := FPnlGeneral;
+  FGrpQuota.Left := 16;
+  FGrpQuota.Top := 256;
+  FGrpQuota.Width := 356;
+  FGrpQuota.Height := 140;
+  FGrpQuota.Caption := ' Local Token Quota ';
 
-  chkQuotaEnabled := CreateCheckBox(grpQuota, 'Enable local token quota', 16, 24, 200);
-  lblQuotaLimit := CreateLabel(grpQuota, 'Monthly Token Limit:', 16, 54);
-  edtQuotaLimit := CreateEdit(grpQuota, 16, 72, 150, True);
-  lblQuotaUsed := CreateLabel(grpQuota, 'Monthly Used Tokens: 0', 16, 110);
+  FChkQuotaEnabled := CreateCheckBox(FGrpQuota, 'Enable local token quota', 16, 24, 200);
+  FLblQuotaLimit := CreateLabel(FGrpQuota, 'Monthly Token Limit:', 16, 54);
+  FEdtQuotaLimit := CreateEdit(FGrpQuota, 16, 72, 150, True);
+  FLblQuotaUsed := CreateLabel(FGrpQuota, 'Monthly Used Tokens: 0', 16, 110);
 
-  btnResetQuota := TButton.Create(Self);
-  btnResetQuota.Parent := grpQuota;
-  btnResetQuota.Left := 240;
-  btnResetQuota.Top := 68;
-  btnResetQuota.Width := 100;
-  btnResetQuota.Height := 25;
-  btnResetQuota.Caption := 'Reset Usage';
-  btnResetQuota.OnClick := btnResetQuotaClick;
+  FBtnResetQuota := TButton.Create(Self);
+  FBtnResetQuota.Parent := FGrpQuota;
+  FBtnResetQuota.Left := 240;
+  FBtnResetQuota.Top := 68;
+  FBtnResetQuota.Width := 100;
+  FBtnResetQuota.Height := 25;
+  FBtnResetQuota.Caption := 'Reset Usage';
+  FBtnResetQuota.OnClick := BtnResetQuotaClick;
 end;
 
 constructor TRadIAFrameAIConfig.Create(AOwner: TComponent);
@@ -592,11 +592,11 @@ begin
   pnlSystemPrompt.Color := LColors.BgBase;
   pnlSystemPrompt.ParentBackground := False;
 
-  if Assigned(pnlGeneral) then
+  if Assigned(FPnlGeneral) then
   begin
-    pnlGeneral.StyleElements := pnlGeneral.StyleElements - [seClient, seBorder];
-    pnlGeneral.Color := LColors.BgBase;
-    pnlGeneral.ParentBackground := False;
+    FPnlGeneral.StyleElements := FPnlGeneral.StyleElements - [seClient, seBorder];
+    FPnlGeneral.Color := LColors.BgBase;
+    FPnlGeneral.ParentBackground := False;
   end;
 
   for var LEdit in FEdtTemperatures.Values do
@@ -801,8 +801,8 @@ begin
   lblTemplateSlash.Font.Color := LColors.TextColor;
   lblTemplateBody.StyleElements := lblTemplateBody.StyleElements - [seClient, seBorder];
   lblTemplateBody.Font.Color := LColors.TextColor;
-  lblTemplateOrigin.StyleElements := lblTemplateOrigin.StyleElements - [seClient, seBorder];
-  lblTemplateOrigin.Font.Color := LColors.TextColor;
+  FLblTemplateOrigin.StyleElements := FLblTemplateOrigin.StyleElements - [seClient, seBorder];
+  FLblTemplateOrigin.Font.Color := LColors.TextColor;
 
   if Assigned(FChkSmartConfig) then
   begin
@@ -810,58 +810,58 @@ begin
     FChkSmartConfig.Font.Color := LColors.TextColor;
   end;
 
-  if Assigned(tsGeneral) then
+  if Assigned(FTsGeneral) then
   begin
-    tsGeneral.StyleElements := tsGeneral.StyleElements - [seClient, seBorder];
-    tsGeneral.SetParentBackground(False);
-    tsGeneral.SetColor(LColors.BgBase);
+    FTsGeneral.StyleElements := FTsGeneral.StyleElements - [seClient, seBorder];
+    FTsGeneral.SetParentBackground(False);
+    FTsGeneral.SetColor(LColors.BgBase);
   end;
-  if Assigned(chkInjectDelphiVersion) then
+  if Assigned(FChkInjectDelphiVersion) then
   begin
-    chkInjectDelphiVersion.StyleElements := chkInjectDelphiVersion.StyleElements - [seClient, seBorder];
-    chkInjectDelphiVersion.Font.Color := LColors.TextColor;
+    FChkInjectDelphiVersion.StyleElements := FChkInjectDelphiVersion.StyleElements - [seClient, seBorder];
+    FChkInjectDelphiVersion.Font.Color := LColors.TextColor;
   end;
-  if Assigned(chkConciseResponses) then
+  if Assigned(FChkConciseResponses) then
   begin
-    chkConciseResponses.StyleElements := chkConciseResponses.StyleElements - [seClient, seBorder];
-    chkConciseResponses.Font.Color := LColors.TextColor;
+    FChkConciseResponses.StyleElements := FChkConciseResponses.StyleElements - [seClient, seBorder];
+    FChkConciseResponses.Font.Color := LColors.TextColor;
   end;
-  if Assigned(chkLogEnabled) then
+  if Assigned(FChkLogEnabled) then
   begin
-    chkLogEnabled.StyleElements := chkLogEnabled.StyleElements - [seClient, seBorder];
-    chkLogEnabled.Font.Color := LColors.TextColor;
+    FChkLogEnabled.StyleElements := FChkLogEnabled.StyleElements - [seClient, seBorder];
+    FChkLogEnabled.Font.Color := LColors.TextColor;
   end;
-  if Assigned(lblLogPath) then
+  if Assigned(FLblLogPath) then
   begin
-    lblLogPath.StyleElements := lblLogPath.StyleElements - [seClient, seBorder];
-    lblLogPath.Font.Color := LColors.TextColor;
+    FLblLogPath.StyleElements := FLblLogPath.StyleElements - [seClient, seBorder];
+    FLblLogPath.Font.Color := LColors.TextColor;
   end;
-  if Assigned(edtLogPath) then
+  if Assigned(FEdtLogPath) then
   begin
-    edtLogPath.StyleElements := edtLogPath.StyleElements - [seClient, seBorder];
-    edtLogPath.Color := LColors.InputBgColor;
-    edtLogPath.Font.Color := LColors.TextColor;
+    FEdtLogPath.StyleElements := FEdtLogPath.StyleElements - [seClient, seBorder];
+    FEdtLogPath.Color := LColors.InputBgColor;
+    FEdtLogPath.Font.Color := LColors.TextColor;
   end;
-  if Assigned(edtLogMaxSize) then
+  if Assigned(FEdtLogMaxSize) then
   begin
-    edtLogMaxSize.StyleElements := edtLogMaxSize.StyleElements - [seClient, seBorder];
-    edtLogMaxSize.Color := LColors.InputBgColor;
-    edtLogMaxSize.Font.Color := LColors.TextColor;
+    FEdtLogMaxSize.StyleElements := FEdtLogMaxSize.StyleElements - [seClient, seBorder];
+    FEdtLogMaxSize.Color := LColors.InputBgColor;
+    FEdtLogMaxSize.Font.Color := LColors.TextColor;
   end;
 
-  if Assigned(grpQuota) then
+  if Assigned(FGrpQuota) then
   begin
-    grpQuota.StyleElements := grpQuota.StyleElements - [seClient, seBorder];
-    grpQuota.Font.Color := LColors.TextColor;
-    chkQuotaEnabled.StyleElements := chkQuotaEnabled.StyleElements - [seClient, seBorder];
-    chkQuotaEnabled.Font.Color := LColors.TextColor;
-    lblQuotaLimit.StyleElements := lblQuotaLimit.StyleElements - [seClient, seBorder];
-    lblQuotaLimit.Font.Color := LColors.TextColor;
-    edtQuotaLimit.StyleElements := edtQuotaLimit.StyleElements - [seClient, seBorder];
-    edtQuotaLimit.Color := LColors.InputBgColor;
-    edtQuotaLimit.Font.Color := LColors.TextColor;
-    lblQuotaUsed.StyleElements := lblQuotaUsed.StyleElements - [seClient, seBorder];
-    lblQuotaUsed.Font.Color := LColors.TextColor;
+    FGrpQuota.StyleElements := FGrpQuota.StyleElements - [seClient, seBorder];
+    FGrpQuota.Font.Color := LColors.TextColor;
+    FChkQuotaEnabled.StyleElements := FChkQuotaEnabled.StyleElements - [seClient, seBorder];
+    FChkQuotaEnabled.Font.Color := LColors.TextColor;
+    FLblQuotaLimit.StyleElements := FLblQuotaLimit.StyleElements - [seClient, seBorder];
+    FLblQuotaLimit.Font.Color := LColors.TextColor;
+    FEdtQuotaLimit.StyleElements := FEdtQuotaLimit.StyleElements - [seClient, seBorder];
+    FEdtQuotaLimit.Color := LColors.InputBgColor;
+    FEdtQuotaLimit.Font.Color := LColors.TextColor;
+    FLblQuotaUsed.StyleElements := FLblQuotaUsed.StyleElements - [seClient, seBorder];
+    FLblQuotaUsed.Font.Color := LColors.TextColor;
   end;
 end;
 
@@ -949,26 +949,26 @@ begin
   end;
 end;
 
-procedure TRadIAFrameAIConfig.btnBrowseLogPathClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.BtnBrowseLogPathClick(Sender: TObject);
 begin
   FPresenter.BrowseLogPath;
 end;
 
-procedure TRadIAFrameAIConfig.btnResetQuotaClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.BtnResetQuotaClick(Sender: TObject);
 begin
   FPresenter.ResetQuota;
 end;
 
-procedure TRadIAFrameAIConfig.tvCategoriesChange(Sender: TObject; Node: TTreeNode);
+procedure TRadIAFrameAIConfig.TvCategoriesChange(Sender: TObject; Node: TTreeNode);
 begin
-  if Node <> nil then
+  if Assigned(Node) then
     SelectCategoryByName(Node.Text);
 end;
 
 procedure TRadIAFrameAIConfig.SelectCategoryByName(const ACategoryName: string);
 begin
   if SameText(ACategoryName, 'General / Logs') then
-    pgcSettings.ActivePage := tsGeneral
+    pgcSettings.ActivePage := FTsGeneral
   else if SameText(ACategoryName, 'System Prompt') then
     pgcSettings.ActivePage := tsSystemPrompt
   else if SameText(ACategoryName, 'Templates') then
@@ -1177,12 +1177,12 @@ begin
     end);
 end;
 
-procedure TRadIAFrameAIConfig.btnSaveClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.BtnSaveClick(Sender: TObject);
 begin
   FPresenter.SaveConfig;
 end;
 
-procedure TRadIAFrameAIConfig.btnCancelClick(Sender: TObject);
+procedure TRadIAFrameAIConfig.BtnCancelClick(Sender: TObject);
 begin
   FPresenter.CancelConfig;
 end;
@@ -1316,22 +1316,22 @@ function TRadIAFrameAIConfig.GetSystemPrompt: string; begin Result := memSystemP
 procedure TRadIAFrameAIConfig.SetSystemPrompt(const AValue: string); begin memSystemPrompt.Text := AValue; end;
 function TRadIAFrameAIConfig.GetSmartConfigEnabled: Boolean; begin Result := FChkSmartConfig.Checked; end;
 procedure TRadIAFrameAIConfig.SetSmartConfigEnabled(const AValue: Boolean); begin FChkSmartConfig.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetInjectDelphiVersion: Boolean; begin Result := chkInjectDelphiVersion.Checked; end;
-procedure TRadIAFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean); begin chkInjectDelphiVersion.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetConciseResponses: Boolean; begin Result := chkConciseResponses.Checked; end;
-procedure TRadIAFrameAIConfig.SetConciseResponses(const AValue: Boolean); begin chkConciseResponses.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetLogEnabled: Boolean; begin Result := chkLogEnabled.Checked; end;
-procedure TRadIAFrameAIConfig.SetLogEnabled(const AValue: Boolean); begin chkLogEnabled.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetLogPath: string; begin Result := edtLogPath.Text; end;
-procedure TRadIAFrameAIConfig.SetLogPath(const AValue: string); begin edtLogPath.Text := AValue; end;
-function TRadIAFrameAIConfig.GetLogMaxSize: string; begin Result := edtLogMaxSize.Text; end;
-procedure TRadIAFrameAIConfig.SetLogMaxSize(const AValue: string); begin edtLogMaxSize.Text := AValue; end;
+function TRadIAFrameAIConfig.GetInjectDelphiVersion: Boolean; begin Result := FChkInjectDelphiVersion.Checked; end;
+procedure TRadIAFrameAIConfig.SetInjectDelphiVersion(const AValue: Boolean); begin FChkInjectDelphiVersion.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetConciseResponses: Boolean; begin Result := FChkConciseResponses.Checked; end;
+procedure TRadIAFrameAIConfig.SetConciseResponses(const AValue: Boolean); begin FChkConciseResponses.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetLogEnabled: Boolean; begin Result := FChkLogEnabled.Checked; end;
+procedure TRadIAFrameAIConfig.SetLogEnabled(const AValue: Boolean); begin FChkLogEnabled.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetLogPath: string; begin Result := FEdtLogPath.Text; end;
+procedure TRadIAFrameAIConfig.SetLogPath(const AValue: string); begin FEdtLogPath.Text := AValue; end;
+function TRadIAFrameAIConfig.GetLogMaxSize: string; begin Result := FEdtLogMaxSize.Text; end;
+procedure TRadIAFrameAIConfig.SetLogMaxSize(const AValue: string); begin FEdtLogMaxSize.Text := AValue; end;
 
-function TRadIAFrameAIConfig.GetQuotaEnabled: Boolean; begin Result := chkQuotaEnabled.Checked; end;
-procedure TRadIAFrameAIConfig.SetQuotaEnabled(const AValue: Boolean); begin chkQuotaEnabled.Checked := AValue; end;
-function TRadIAFrameAIConfig.GetQuotaLimit: string; begin Result := edtQuotaLimit.Text; end;
-procedure TRadIAFrameAIConfig.SetQuotaLimit(const AValue: string); begin edtQuotaLimit.Text := AValue; end;
-procedure TRadIAFrameAIConfig.SetQuotaUsedText(const AText: string); begin lblQuotaUsed.Caption := AText; end;
+function TRadIAFrameAIConfig.GetQuotaEnabled: Boolean; begin Result := FChkQuotaEnabled.Checked; end;
+procedure TRadIAFrameAIConfig.SetQuotaEnabled(const AValue: Boolean); begin FChkQuotaEnabled.Checked := AValue; end;
+function TRadIAFrameAIConfig.GetQuotaLimit: string; begin Result := FEdtQuotaLimit.Text; end;
+procedure TRadIAFrameAIConfig.SetQuotaLimit(const AValue: string); begin FEdtQuotaLimit.Text := AValue; end;
+procedure TRadIAFrameAIConfig.SetQuotaUsedText(const AText: string); begin FLblQuotaUsed.Caption := AText; end;
 
 procedure TRadIAFrameAIConfig.ShowMessageDialog(const AMessage: string);
 begin
@@ -1431,8 +1431,8 @@ end;
 
 procedure TRadIAFrameAIConfig.SetTemplateOriginLabel(const AText: string; const AColor: TColor);
 begin
-  lblTemplateOrigin.Caption := AText;
-  lblTemplateOrigin.Font.Color := AColor;
+  FLblTemplateOrigin.Caption := AText;
+  FLblTemplateOrigin.Font.Color := AColor;
 end;
 
 end.

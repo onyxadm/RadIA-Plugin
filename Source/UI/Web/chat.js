@@ -50,7 +50,7 @@ function getCodeHeaderTitle(language, highlightLanguage) {
   return normalized.toUpperCase();
 }
 
-if (window.Prism && Prism.languages && Prism.languages.pascal) {
+if (globalThis.Prism && Prism.languages && Prism.languages.pascal) {
   Prism.languages.delphi = Prism.languages.pascal;
   Prism.languages.pas = Prism.languages.pascal;
   Prism.languages['object-pascal'] = Prism.languages.pascal;
@@ -251,7 +251,7 @@ function bindChatScrollbar() {
   if (!chatContainer || !chatScrollbar || !chatScrollbarThumb) return;
 
   chatContainer.addEventListener('scroll', updateChatScrollbar);
-  window.addEventListener('resize', updateChatScrollbar);
+  globalThis.addEventListener('resize', updateChatScrollbar);
 
   chatScrollbarThumb.addEventListener('mousedown', (event) => {
     isChatScrollbarDragging = true;
@@ -293,15 +293,15 @@ function bindChatScrollbar() {
     chatScrollbar.classList.remove('dragging');
   });
 
-  if (window.ResizeObserver) {
-    const resizeObserver = new window.ResizeObserver(updateChatScrollbar);
+  if (globalThis.ResizeObserver) {
+    const resizeObserver = new globalThis.ResizeObserver(updateChatScrollbar);
     resizeObserver.observe(chatContainer);
     resizeObserver.observe(chatWrapper);
   }
 
-  const mutationObserver = new MutationObserver(() => window.requestAnimationFrame(updateChatScrollbar));
+  const mutationObserver = new MutationObserver(() => globalThis.requestAnimationFrame(updateChatScrollbar));
   mutationObserver.observe(chatContainer, { childList: true, subtree: true, characterData: true });
-  window.requestAnimationFrame(updateChatScrollbar);
+  globalThis.requestAnimationFrame(updateChatScrollbar);
 }
 
 function setPromptText(text) {
@@ -934,8 +934,8 @@ function updateTokens(text) {
 function showTransientStatus(text) {
   statusText.textContent = text;
   statusBar.classList.remove('hidden');
-  window.clearTimeout(showTransientStatus._timer);
-  showTransientStatus._timer = window.setTimeout(() => {
+  globalThis.clearTimeout(showTransientStatus._timer);
+  showTransientStatus._timer = globalThis.setTimeout(() => {
     if (statusText.textContent === text) {
       statusBar.classList.add('hidden');
     }

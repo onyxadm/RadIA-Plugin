@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.DeepSeek;
+unit RadIA.Provider.DeepSeek;
 
 interface
 
@@ -15,7 +15,6 @@ type
   public
     constructor Create(const AConfig: IRadIAConfig); override;
 
-    procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -53,11 +52,7 @@ begin
   Result := GetBaseUrl.TrimRight(['/']) + '/models';
 end;
 
-procedure TRadIADeepSeekProvider.FetchAvailableModelsAsync(
-  const ACallback: TProc<TArray<string>, string>);
-begin
-  inherited FetchAvailableModelsAsync(ACallback);
-end;
+
 
 initialization
   TProviderRegistry.RegisterProvider(

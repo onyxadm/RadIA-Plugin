@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Groq;
+unit RadIA.Provider.Groq;
 
 interface
 
@@ -16,7 +16,6 @@ type
   public
     constructor Create(const AConfig: IRadIAConfig); override;
 
-    procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -61,11 +60,7 @@ begin
     (AId.Contains('llama') or AId.Contains('mixtral') or AId.Contains('gemma'));
 end;
 
-procedure TRadIAGroqProvider.FetchAvailableModelsAsync(
-  const ACallback: TProc<TArray<string>, string>);
-begin
-  inherited FetchAvailableModelsAsync(ACallback);
-end;
+
 
 initialization
   TProviderRegistry.RegisterProvider(

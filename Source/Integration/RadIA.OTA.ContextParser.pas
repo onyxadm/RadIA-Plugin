@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.ContextParser;
+unit RadIA.OTA.ContextParser;
 
 interface
 
@@ -342,13 +342,13 @@ begin
   LBufLen := ASourceCode.Length;
 
   LInterfacePtr := SearchBuf(LBuf, LBufLen, 0, 0, 'interface', [soDown]);
-  if LInterfacePtr = nil then
+  if not Assigned(LInterfacePtr) then
     Exit;
 
   LInterfacePos := LInterfacePtr - LBuf;
 
   LImplementationPtr := SearchBuf(LBuf, LBufLen, LInterfacePos, 0, 'implementation', [soDown]);
-  if LImplementationPtr = nil then
+  if not Assigned(LImplementationPtr) then
     LImplementationPos := LBufLen
   else
     LImplementationPos := LImplementationPtr - LBuf;

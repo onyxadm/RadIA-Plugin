@@ -3,7 +3,7 @@ unit RadIA.Core.ConversationExporter;
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types;
+  RadIA.Core.Interfaces;
 
 type
   { Core class responsible for formatting conversation history to Markdown and HTML }
@@ -21,6 +21,9 @@ type
   end;
 
 implementation
+
+uses
+  System.SysUtils, System.Classes, RadIA.Core.Types;
 
 { TConversationExporter }
 

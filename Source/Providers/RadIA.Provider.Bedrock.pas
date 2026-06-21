@@ -1,10 +1,9 @@
-﻿unit RadIA.Provider.Bedrock;
+unit RadIA.Provider.Bedrock;
 
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient,
-  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
+  System.SysUtils, RadIA.Core.Interfaces, RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
   { Event callback for event stream parsing }
@@ -48,6 +47,7 @@ type
 implementation
 
 uses
+  System.Classes, System.Net.HttpClient, System.Net.URLClient, RadIA.Core.Types,
   System.JSON, System.Threading, System.NetEncoding, System.Math,
   RadIA.Core.AwsSigner, RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs;
 
@@ -299,7 +299,7 @@ begin
     LContent := LObj.GetValue('content') as TJSONArray;
     if Assigned(LContent) and (LContent.Count > 0) then
     begin
-      LContentObj := LContent.Items[0] as TJSONObject;
+       LContentObj := LContent[0] as TJSONObject;
       if Assigned(LContentObj) then
         Result := LContentObj.GetValue<string>('text', '');
     end;

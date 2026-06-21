@@ -3,8 +3,7 @@ unit RadIA.Provider.Gemini;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
+  System.SysUtils, RadIA.Core.Interfaces, RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
@@ -29,8 +28,9 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections, System.Net.URLClient, System.NetEncoding,
-  System.SyncObjs, System.Math, RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
+  System.Classes, System.Net.HttpClient, RadIA.Core.Types, System.JSON, System.Threading,
+  System.Generics.Collections, System.NetEncoding, System.SyncObjs, System.Math,
+  RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
 
 { TRadIAGeminiProvider }
 
@@ -166,14 +166,14 @@ begin
     LCandidates := LJsonObj.GetValue('candidates') as TJSONArray;
     if Assigned(LCandidates) and (LCandidates.Count > 0) then
     begin
-      LCandidate := LCandidates.Items[0] as TJSONObject;
+      LCandidate := LCandidates[0] as TJSONObject;
       LContent := LCandidate.GetValue('content') as TJSONObject;
       if Assigned(LContent) then
       begin
         LParts := LContent.GetValue('parts') as TJSONArray;
         if Assigned(LParts) and (LParts.Count > 0) then
         begin
-          LPart := LParts.Items[0] as TJSONObject;
+          LPart := LParts[0] as TJSONObject;
           if Assigned(LPart) then
             Result := LPart.GetValue<string>('text', '');
         end;
@@ -451,14 +451,14 @@ begin
                     LCandidates := LJson.GetValue('candidates') as TJSONArray;
                     if Assigned(LCandidates) and (LCandidates.Count > 0) then
                     begin
-                      LCandidate := LCandidates.Items[0] as TJSONObject;
+                      LCandidate := LCandidates[0] as TJSONObject;
                       LContent := LCandidate.GetValue('content') as TJSONObject;
                       if Assigned(LContent) then
                       begin
                         LParts := LContent.GetValue('parts') as TJSONArray;
                         if Assigned(LParts) and (LParts.Count > 0) then
                         begin
-                          LPart := LParts.Items[0] as TJSONObject;
+                          LPart := LParts[0] as TJSONObject;
                           if Assigned(LPart) then
                             LText := LPart.GetValue<string>('text', '');
                         end;

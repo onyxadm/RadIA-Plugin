@@ -1,9 +1,9 @@
-﻿unit RadIA.Core.ProviderRegistry;
+unit RadIA.Core.ProviderRegistry;
 
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces, RadIA.Core.Types;
+  System.Generics.Collections, RadIA.Core.Interfaces;
 
 type
   TProviderFactoryFunc = reference to function(const AConfig: IRadIAConfig): IRadIAProvider;
@@ -40,7 +40,8 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, System.Generics.Defaults, RadIA.Provider.Generic, RadIA.Core.Logger;
+  System.SysUtils, System.Classes, RadIA.Core.Types, System.IOUtils, System.JSON,
+  System.Generics.Defaults, RadIA.Provider.Generic, RadIA.Core.Logger;
 
 { TProviderMetadata }
 
@@ -145,7 +146,7 @@ begin
             if Assigned(LModelsArray) then
             begin
               for I := 0 to LModelsArray.Count - 1 do
-                LModelsList.Add(LModelsArray.Items[I].Value);
+                LModelsList.Add(LModelsArray[I].Value);
             end;
             LDefaultModels := LModelsList.ToArray;
           finally

@@ -40,7 +40,7 @@ class procedure TRadIAContainer.Register<T>(const AInstance: T);
 var
   LGuid: TGUID;
 begin
-  LGuid := GetTypeData(TypeInfo(T))^.Guid;
+  LGuid := GetTypeData(TypeInfo(T))^.GUID;
   TMonitor.Enter(FServices);
   try
     FServices.AddOrSetValue(LGuid, AInstance);
@@ -54,7 +54,7 @@ var
   LGuid: TGUID;
   LIntf: IInterface;
 begin
-  LGuid := GetTypeData(TypeInfo(T))^.Guid;
+  LGuid := GetTypeData(TypeInfo(T))^.GUID;
   TMonitor.Enter(FServices);
   try
     if FServices.TryGetValue(LGuid, LIntf) then
@@ -74,7 +74,7 @@ var
   LIntf: IInterface;
 begin
   Result := False;
-  LGuid := GetTypeData(TypeInfo(T))^.Guid;
+  LGuid := GetTypeData(TypeInfo(T))^.GUID;
   TMonitor.Enter(FServices);
   try
     if FServices.TryGetValue(LGuid, LIntf) then

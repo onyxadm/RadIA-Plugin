@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Claude;
+unit RadIA.Provider.Claude;
 
 interface
 
@@ -125,7 +125,7 @@ begin
       LContentArr := LJsonObj.GetValue('content') as TJSONArray;
       if Assigned(LContentArr) and (LContentArr.Count > 0) then
       begin
-        LContentObj := LContentArr.Items[0] as TJSONObject;
+        LContentObj := LContentArr[0] as TJSONObject;
         if Assigned(LContentObj) then
         begin
           Result := LContentObj.GetValue<string>('text', '');

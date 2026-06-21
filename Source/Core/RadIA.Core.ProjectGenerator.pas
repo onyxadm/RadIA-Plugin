@@ -1,9 +1,9 @@
-﻿unit RadIA.Core.ProjectGenerator;
+unit RadIA.Core.ProjectGenerator;
 
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces;
+  RadIA.Core.Interfaces;
 
 type
   { Specialist service for generating complete Delphi projects on disk }
@@ -18,7 +18,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, Vcl.Dialogs, Vcl.Forms, Winapi.Windows,
+  System.SysUtils, System.Classes, System.IOUtils, System.JSON, Vcl.Dialogs,
   RadIA.Core.Logger, RadIA.Core.Container;
 
 { TRadIAProjectGenerator }
@@ -121,7 +121,7 @@ begin
       try
         for I := 0 to LJsonArr.Count - 1 do
         begin
-          LVal := LJsonArr.Items[I];
+          LVal := LJsonArr[I];
           if LVal is TJSONObject then
           begin
             LObj := LVal as TJSONObject;

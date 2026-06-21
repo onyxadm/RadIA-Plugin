@@ -3,8 +3,7 @@ unit RadIA.Provider.Ollama;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
+  System.SysUtils, RadIA.Core.Interfaces, RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
@@ -29,8 +28,9 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Generics.Collections, System.Math, RadIA.Core.ProviderRegistry,
-  System.SyncObjs, RadIA.Core.Logger;
+  System.Classes, System.Net.HttpClient, RadIA.Core.Types, System.JSON, System.Threading,
+  System.Generics.Collections, System.Math, RadIA.Core.ProviderRegistry, System.SyncObjs,
+  RadIA.Core.Logger;
 
 { TRadIAOllamaProvider }
 

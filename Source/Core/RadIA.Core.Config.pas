@@ -997,7 +997,6 @@ end;
 initialization
 
 finalization
-  if Assigned(TRadIAConfig.FInstance) then
-    FreeAndNil(TRadIAConfig.FInstance);
+  FreeAndNil(TRadIAConfig.FInstance);
 
 end.

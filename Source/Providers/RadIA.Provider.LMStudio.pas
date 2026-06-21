@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.LMStudio;
+unit RadIA.Provider.LMStudio;
 
 interface
 
@@ -19,7 +19,6 @@ type
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-    procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
   end;
@@ -59,11 +58,7 @@ begin
   Result := GetBaseUrl.TrimRight(['/']) + '/models';
 end;
 
-procedure TRadIALMStudioProvider.FetchAvailableModelsAsync(
-  const ACallback: TProc<TArray<string>, string>);
-begin
-  inherited FetchAvailableModelsAsync(ACallback);
-end;
+
 
 procedure TRadIALMStudioProvider.SendPromptAsync(const APrompt: string;
   const AHistory: TArray<IRadIAChatMessage>; const ACallback: TCompletionCallback;

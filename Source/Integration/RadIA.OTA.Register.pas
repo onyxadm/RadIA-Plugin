@@ -1,9 +1,9 @@
-﻿unit RadIA.OTA.Register;
+unit RadIA.OTA.Register;
 
 interface
 
 uses
-  System.SysUtils, System.Classes, ToolsAPI, Vcl.ExtCtrls;
+  System.Classes, ToolsAPI, Vcl.ExtCtrls;
 
 type
   { Wizard implementing IOTAWizard to register RadIA into Delphi IDE }
@@ -41,7 +41,7 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm,
+  System.SysUtils, Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm,
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
   RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options, RadIA.Providers.Link, RadIA.Core.Container,
   RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer,
@@ -51,7 +51,7 @@ uses
 const
   GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;
 
-function GetModuleHandleEx(dwFlags: DWORD; lpModuleName: PChar; var phModule: HMODULE): BOOL; stdcall;
+function GetModuleHandleEx(ADwFlags: DWORD; ALpModuleName: PChar; var APhModule: HMODULE): BOOL; stdcall;
   external 'kernel32.dll' name 'GetModuleHandleExW';
 
 var
@@ -447,9 +447,9 @@ begin
     begin
       for I := 0 to LToolsMenu.Count - 1 do
       begin
-        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
-           SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or
-           SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
+        if SameText(LToolsMenu[I].Caption, 'RadIA Chat Panel') or
+           SameText(LToolsMenu[I].Caption, 'Rad IA Chat Panel') or
+           SameText(LToolsMenu[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsAlreadyPopulated := True;
           Break;
@@ -489,9 +489,9 @@ begin
     begin
       for I := 0 to LToolsMenu.Count - 1 do
       begin
-        if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
-           SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or
-           SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
+        if SameText(LToolsMenu[I].Caption, 'RadIA Chat Panel') or
+           SameText(LToolsMenu[I].Caption, 'Rad IA Chat Panel') or
+           SameText(LToolsMenu[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsPopulated := True;
           Break;
