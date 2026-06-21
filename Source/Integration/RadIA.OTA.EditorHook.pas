@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.EditorHook;
+unit RadIA.OTA.EditorHook;
 
 interface
 
@@ -142,6 +142,7 @@ end;
 
 procedure TRadIAIDEEditorNotifier.AfterCompile(Succeeded: Boolean);
 begin
+  // Intentionally empty: IOTAIDENotifier implementation
 end;
 
 procedure TRadIAIDEEditorNotifier.BeforeCompile(const Project: IOTAProject; var Cancel: Boolean);
@@ -435,9 +436,7 @@ begin
   {$IFDEF TESTS}
   Exit;
   {$ENDIF}
-
-  // OTA editor notifications may fire while Delphi is still creating source
-  // views and rebuilding elision blocks. The VCL timer hook is enough here.
+  // Intentionally empty: Notifiers not needed because VCL timer is used to hook windows
 end;
 
 procedure TRadIAEditorHook.RemoveEditorNotifiers;

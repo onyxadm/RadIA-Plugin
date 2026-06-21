@@ -301,18 +301,22 @@ end;
 
 procedure TRadIAWizard.AfterSave;
 begin
+  // Intentionally empty: IOTANotifier implementation
 end;
 
 procedure TRadIAWizard.BeforeSave;
 begin
+  // Intentionally empty: IOTANotifier implementation
 end;
 
 procedure TRadIAWizard.Destroyed;
 begin
+  // Intentionally empty: IOTANotifier implementation
 end;
 
 procedure TRadIAWizard.Modified;
 begin
+  // Intentionally empty: IOTANotifier implementation
 end;
 
 function TRadIAWizard.GetIDString: string;

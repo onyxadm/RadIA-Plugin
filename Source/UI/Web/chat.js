@@ -412,7 +412,7 @@ const PROVIDER_ICONS = {
 
 function getProviderIcon(providerId) {
   if (!providerId) return PROVIDER_ICONS.generic;
-  const key = String(providerId).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const key = String(providerId).toLowerCase().replaceAll(/[^a-z0-9]/g, '');
   return PROVIDER_ICONS[key] || PROVIDER_ICONS.generic;
 }
 

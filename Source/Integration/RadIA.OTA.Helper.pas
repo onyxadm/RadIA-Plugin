@@ -266,6 +266,14 @@ var
   LStartOffset: Integer;
   LEndOffset: Integer;
   LUtf8Text: UTF8String;
+
+  {$WARN IMPLICIT_STRING_CAST OFF}
+  function ToUTF8(const AStr: string): UTF8String;
+  begin
+    Result := AStr;
+  end;
+  {$WARN IMPLICIT_STRING_CAST ON}
+
 begin
   Result := False;
   LEditBuffer := GetCurrentEditBuffer;
@@ -277,7 +285,7 @@ begin
   begin
     LBufferText := '';
     if ReadBufferText(LEditBuffer, LBufferText) then
-      LBufferSize := Length(UTF8String(LBufferText))
+      LBufferSize := System.SysUtils.TEncoding.UTF8.GetByteCount(LBufferText)
     else
       LBufferSize := 0;
 
@@ -289,7 +297,7 @@ begin
     if LBufferSize > 0 then
       LEditWriter.DeleteTo(LBufferSize);
 
-    LUtf8Text := UTF8String(NormalizeLineBreaks(ANewText));
+    LUtf8Text := ToUTF8(NormalizeLineBreaks(ANewText));
     LEditWriter.Insert(PAnsiChar(LUtf8Text));
     Result := True;
     RefreshEditView(LView);
@@ -318,13 +326,13 @@ begin
     if not Assigned(LEditWriter) then
       Exit;
 
-    LStartOffset := Length(UTF8String(Copy(LBufferText, 1, LMatchPos - 1)));
-    LEndOffset := LStartOffset + Length(UTF8String(AOriginalText));
+    LStartOffset := System.SysUtils.TEncoding.UTF8.GetByteCount(Copy(LBufferText, 1, LMatchPos - 1));
+    LEndOffset := LStartOffset + System.SysUtils.TEncoding.UTF8.GetByteCount(AOriginalText);
 
     LEditWriter.CopyTo(LStartOffset);
     LEditWriter.DeleteTo(LEndOffset);
 
-    LUtf8Text := UTF8String(NormalizeLineBreaks(ANewText));
+    LUtf8Text := ToUTF8(NormalizeLineBreaks(ANewText));
     LEditWriter.Insert(PAnsiChar(LUtf8Text));
     Result := True;
     RefreshEditView(LView);

@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ChatFrame;
+unit RadIA.UI.ChatFrame;
 
 interface
 
@@ -780,6 +780,7 @@ end;
 
 procedure TRadIAFrameAIChat.UpdateTokensStats(const AStats: string);
 begin
+  // Intentionally empty: token statistics not rendered on VCL frame directly
 end;
 
 procedure TRadIAFrameAIChat.PostMessageToWeb(const AJson: string);

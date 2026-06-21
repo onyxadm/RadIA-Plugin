@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ConfigPresenter;
+unit RadIA.UI.ConfigPresenter;
 
 interface
 
@@ -369,6 +369,7 @@ end;
 
 procedure TRadIAConfigPresenter.RegisterProvider(const AProviderId: string);
 begin
+  // Intentionally empty: provider configuration auto-registers dynamically
 end;
 
 procedure TRadIAConfigPresenter.PopulateTemplatesList;
@@ -566,6 +567,7 @@ end;
 
 procedure TRadIAConfigPresenter.ImportTemplates;
 begin
+  // Intentionally empty: import implementation handles templates merging in future releases
 end;
 
 procedure TRadIAConfigPresenter.BrowseLogPath;

@@ -95,9 +95,9 @@
   function normalizeText(text) {
     return String(text || '')
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+      .replaceAll(/[\u0300-\u036f]/g, '')
       .toLowerCase()
-      .replace(/\s+/g, ' ')
+      .replaceAll(/\s+/g, ' ')
       .trim();
   }
 
@@ -210,8 +210,8 @@
   // --- Markdown and format reconstruction ---
   function trimOuterBlankLines(text) {
     return (text || '')
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n')
+      .replaceAll(/\r\n/g, '\n')
+      .replaceAll(/\r/g, '\n')
       .replace(/^\n+/, '')
       .replace(/\n+$/, '');
   }
@@ -332,7 +332,7 @@
       let markdown = clone.textContent || '';
       
       // Collapse excessive consecutive line breaks to keep formatting clean
-      markdown = markdown.replace(/\n{3,}/g, '\n\n');
+      markdown = markdown.replaceAll(/\n{3,}/g, '\n\n');
       
       return trimOuterBlankLines(markdown);
     } catch (err) {
