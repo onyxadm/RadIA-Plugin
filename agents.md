@@ -167,3 +167,10 @@ O Rad IA roda acoplado ao processo da IDE (`bds.exe`). A integração com a WebV
 *   **Regra:** O plugin incrementa a contagem de referência do módulo BPL no construtor do Wizard (`TRadIAWizard.Create`) via `GetModuleHandleEx` e decrementa no `Destroy` apenas se `not GIsShuttingDown`.
 *   **Por que:** Isso garante que o código executável da BPL permaneça mapeado na memória física do Delphi mesmo se a IDE fechar enquanto houver threads assíncronas de background finalizando suas operações de rede, evitando Access Violations por endereços de memória inválidos.
 
+---
+
+## 7. Integração e Validação do SonarQube
+
+*   **A Regra:** NUNCA use subagentes de navegador, ferramentas de visualização de páginas web ou leitores de HTML para interagir com o SonarQube local ou para verificar o status de qualidade do código.
+*   **A Abordagem:** Qualquer consulta a relatórios, métricas ou issues do SonarQube deve ser executada exclusivamente por meio de chamadas à **API REST local do SonarQube** (usando PowerShell ou requisições HTTP). Utilize as chaves/tokens de autenticação definidos com segurança no arquivo `.env` ou na pasta de rascunhos (scratch).
+
