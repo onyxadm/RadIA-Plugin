@@ -162,7 +162,8 @@ begin
                 TFile.Delete(LRelPath);
             except
               on E: Exception do
-                TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON rollback: Failed to delete ' + LRelPath + ': ' + E.Message, 'Core');
+                TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON rollback: Failed to delete ' +
+                  LRelPath + ': ' + E.Message, 'Core');
             end;
           end;
           

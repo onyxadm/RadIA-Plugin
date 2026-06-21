@@ -144,7 +144,8 @@ begin
                   end;
                 except
                   on E: Exception do
-                    TLogger.Log(Format('LoadContext: Failed to read context file "%s": %s', [LFileRelPath, E.Message]), 'Context');
+                    TLogger.Log(Format('LoadContext: Failed to read context file "%s": %s',
+                      [LFileRelPath, E.Message]), 'Context');
                 end;
               end;
             end;

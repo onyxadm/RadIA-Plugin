@@ -427,7 +427,8 @@ begin
               AProcessBufferFunc(LBufferText);
             except
               on E: Exception do
-                TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer: ' + E.Message, 'Provider');
+                TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer: ' +
+                  E.Message, 'Provider');
             end;
           end;
 
@@ -454,7 +455,8 @@ begin
                 AProcessBufferFunc(LBufferText);
               except
                 on EBuffer: Exception do
-                  TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer in error handler: ' + EBuffer.Message, 'Provider');
+                  TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer in error handler: ' +
+                    EBuffer.Message, 'Provider');
               end;
             end;
 
