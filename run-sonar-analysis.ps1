@@ -15,7 +15,9 @@
 #>
 param(
     [string]$Token = "",
-    [string]$HostUrl = "http://localhost:9000"
+    [string]$HostUrl = "http://localhost:9000",
+    [switch]$Test,
+    [string]$DelphiVersion = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -37,7 +39,7 @@ if ([string]::IsNullOrWhiteSpace($ResolvedToken)) {
                 # Strip wrapping single/double quotes
                 $Value = $Value -replace '^["'']|["'']$'
                 if ($Key -eq "SONAR_TOKEN") {
-                    $ResolvedToken = $Value
+                    $script:ResolvedToken = $Value
                 }
             }
         }
@@ -58,6 +60,21 @@ if ([string]::IsNullOrWhiteSpace($ResolvedToken)) {
                 "  2. Define the 'SONAR_TOKEN' environment variable in your system.`n" +
                 "  3. Pass it directly via CLI: .\run-sonar-analysis.ps1 -Token `"your-token`""
     Exit 1
+}
+
+if ($Test) {
+    Write-Host "Executando suite de testes de cobertura..." -ForegroundColor Cyan
+    $buildParams = @("-Test")
+    if ($DelphiVersion) {
+        $buildParams += @("-DelphiVersion", $DelphiVersion)
+    }
+    
+    # Executar build.ps1 com testes e cobertura
+    powershell.exe -ExecutionPolicy Bypass -File build.ps1 $buildParams
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "A execucao de testes e cobertura falhou. Abortando analise do SonarQube."
+        Exit $LASTEXITCODE
+    }
 }
 
 Write-Host "Checking for sonar-scanner executable..." -ForegroundColor Cyan

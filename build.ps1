@@ -279,7 +279,7 @@ if ($runTests) {
         $testsBinPath = "..\Output\$delphiVer\bin\Win32\$configName"
         New-Item -ItemType Directory -Force -Path $testsDcuPath, $testsBinPath | Out-Null
         
-        $dccParamsTests = @("-Q", "-LUdesignide", "-LUvclie", "-NU$testsDcuPath", "-E$testsBinPath", "-DTESTS")
+        $dccParamsTests = @("-Q", "-LUdesignide", "-LUvclie", "-NU$testsDcuPath", "-E$testsBinPath", "-DTESTS", "-GD")
         if ($Release) {
             $dccParamsTests += @('-$D-', '-$L-', '-O+', '-DRELEASE')
         } else {
@@ -312,14 +312,77 @@ if ($runTests) {
         Pop-Location
     }
 
-    # 8. Executar os Testes Unitarios automaticamente
-    Write-Host "Executando suite de testes..." -ForegroundColor Yellow
+    # 8. Executar os Testes Unitarios e Cobertura de Codigo
     $testsExe = ".\Output\$delphiVer\bin\Win32\$configName\RadIATests.exe"
+    $testsMap = ".\Output\$delphiVer\bin\Win32\$configName\RadIATests.map"
     if (Test-Path $testsExe) {
-        & $testsExe
-        Write-Host "=============================================" -ForegroundColor Green
-        Write-Host "    Build e Testes Concluidos com Sucesso!   " -ForegroundColor Green
-        Write-Host "=============================================" -ForegroundColor Green
+        # Tentar localizar o CodeCoverage.exe dinamicamente
+        $docsPath = [Environment]::GetFolderPath('MyDocuments')
+        $studioDocsPath = Join-Path $docsPath "Embarcadero\Studio"
+        $codeCoverageExe = $null
+        
+        if (Test-Path $studioDocsPath) {
+            $codeCoverageExe = Get-ChildItem -Path $studioDocsPath -Filter "CodeCoverage.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName -First 1
+        }
+        
+        if ($codeCoverageExe -and (Test-Path $codeCoverageExe)) {
+            Write-Host "Ferramenta de cobertura de codigo detectada em: $codeCoverageExe" -ForegroundColor Green
+            Write-Host "Executando testes unitarios com instrumentacao de cobertura de codigo..." -ForegroundColor Yellow
+            
+            $coverageOutputDir = ".\Output\Coverage"
+            if (-not (Test-Path $coverageOutputDir)) {
+                New-Item -ItemType Directory -Force -Path $coverageOutputDir | Out-Null
+            }
+            
+            # Gerar lista de paths de busca para o CodeCoverage (Source e subdiretorios)
+            $sourcePaths = @()
+            $sourcePaths += (Get-Item -Path "Source").FullName
+            $sourcePaths += Get-ChildItem -Path "Source" -Recurse -Directory | Select-Object -ExpandProperty FullName
+            $sourcePaths | Out-File -FilePath "$coverageOutputDir\paths.lst" -Encoding utf8
+            
+            # Gerar lista de units do projeto com a extensao .pas
+            $units = Get-ChildItem -Path "Source" -Filter "*.pas" -Recurse | Select-Object -ExpandProperty Name
+            $units | Out-File -FilePath "$coverageOutputDir\units.lst" -Encoding utf8
+            
+            # Executar DelphiCodeCoverage
+            $ccArgs = @(
+                "-e", $testsExe,
+                "-m", $testsMap,
+                "-spf", "$coverageOutputDir\paths.lst",
+                "-uf", "$coverageOutputDir\units.lst",
+                "-od", $coverageOutputDir,
+                "-xml",
+                "-xmllines",
+                "-xmlgenerics",
+                "-html"
+            )
+            
+            & $codeCoverageExe $ccArgs
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "=============================================" -ForegroundColor Green
+                Write-Host "    Build, Testes e Cobertura Concluidos!    " -ForegroundColor Green
+                Write-Host " Relatorios salvos em: $coverageOutputDir" -ForegroundColor Green
+                Write-Host "=============================================" -ForegroundColor Green
+            } else {
+                Write-Warning "A execucao do CodeCoverage.exe retornou erro (codigo $LASTEXITCODE)."
+            }
+        } else {
+            Write-Host "=========================================================================" -ForegroundColor Yellow
+            Write-Host "AVISO: A ferramenta 'CodeCoverage.exe' nao foi encontrada no seu sistema." -ForegroundColor Yellow
+            Write-Host "       A cobertura de testes nao sera gerada." -ForegroundColor Yellow
+            Write-Host "       Para gerar relatorios de cobertura, instale o 'Delphi Code Coverage' via GetIt" -ForegroundColor Yellow
+            Write-Host "       ou baixe manualmente a partir do link oficial:" -ForegroundColor Yellow
+            Write-Host "       https://github.com/DelphiCodeCoverage/DelphiCodeCoverage" -ForegroundColor Cyan
+            Write-Host "=========================================================================" -ForegroundColor Yellow
+            
+            Write-Host "Executando suite de testes de forma direta..." -ForegroundColor Yellow
+            & $testsExe
+            
+            Write-Host "=============================================" -ForegroundColor Green
+            Write-Host "    Build e Testes Concluidos com Sucesso!   " -ForegroundColor Green
+            Write-Host "=============================================" -ForegroundColor Green
+        }
     } else {
         Write-Error "O executavel de testes nao foi gerado em: $testsExe"
     }
