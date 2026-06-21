@@ -1407,7 +1407,7 @@ function updateSessions(sessions, activeSessionId) {
         showSessionLockedStatus();
         return;
       }
-      if (confirm(`Excluir conversa "${session.name}"?`)) {
+      if (confirm(`Delete conversation "${session.name}"?`)) {
         postMessageToDelphi({ action: 'delete_session', id: session.id });
       }
     });

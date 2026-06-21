@@ -520,7 +520,7 @@ begin
   if lstSessions.ItemIndex <> -1 then
     LCurrentName := lstSessions.Items[lstSessions.ItemIndex];
 
-  LNewName := InputBox('Renomear Conversa', 'Digite o novo tÃ­tulo da conversa:', LCurrentName);
+  LNewName := InputBox('Rename Conversation', 'Enter the new title of the conversation:', LCurrentName);
   if not LNewName.Trim.IsEmpty then
   begin
     FPresenter.RenameSession(FPresenter.SessionManager.ActiveSessionId, LNewName);
@@ -529,7 +529,7 @@ end;
 
 procedure TRadIAFrameAIChat.btnDeleteSessionClick(Sender: TObject);
 begin
-  if MessageDlg('Deseja realmente excluir esta conversa e todo o seu histÃ³rico?',
+  if MessageDlg('Do you really want to delete this conversation and all its history?',
     mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
     FPresenter.DeleteSession(FPresenter.SessionManager.ActiveSessionId);

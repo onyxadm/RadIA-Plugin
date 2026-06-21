@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Exporter;
+unit RadIA.Tests.Exporter;
 
 interface
 
@@ -56,8 +56,8 @@ begin
   Assert.IsNotEmpty(LMarkdown);
   Assert.IsTrue(LMarkdown.Contains('Como criar uma classe em Delphi?'));
   Assert.IsTrue(LMarkdown.Contains('Use a sintaxe `type TMyClass = class`.'));
-  Assert.IsTrue(LMarkdown.Contains('👤 Usuário'));
-  Assert.IsTrue(LMarkdown.Contains('🤖 Assistente (Rad IA)'));
+  Assert.IsTrue(LMarkdown.Contains('👤 User'));
+  Assert.IsTrue(LMarkdown.Contains('🤖 Assistant (Rad IA)'));
 end;
 
 procedure TTestRadIAExporter.TestExportMarkdown_ContainsHeader;
@@ -66,9 +66,9 @@ var
 begin
   LMarkdown := TConversationExporter.ExportToMarkdown(FHistory, 'Google Gemini', 'gemini-1.5-flash');
 
-  Assert.IsTrue(LMarkdown.Contains('# Histórico de Conversa - Rad IA'));
-  Assert.IsTrue(LMarkdown.Contains('**Provedor**: Google Gemini'));
-  Assert.IsTrue(LMarkdown.Contains('**Modelo**: gemini-1.5-flash'));
+  Assert.IsTrue(LMarkdown.Contains('# Conversation History - Rad IA'));
+  Assert.IsTrue(LMarkdown.Contains('**Provider**: Google Gemini'));
+  Assert.IsTrue(LMarkdown.Contains('**Model**: gemini-1.5-flash'));
 end;
 
 procedure TTestRadIAExporter.TestExportMarkdown_EmptyHistory;
@@ -79,8 +79,8 @@ begin
   LEmptyHistory := [];
   LMarkdown := TConversationExporter.ExportToMarkdown(LEmptyHistory, 'OpenAI', 'gpt-4o');
 
-  Assert.IsTrue(LMarkdown.Contains('# Histórico de Conversa - Rad IA'));
-  Assert.IsFalse(LMarkdown.Contains('👤 Usuário'));
+  Assert.IsTrue(LMarkdown.Contains('# Conversation History - Rad IA'));
+  Assert.IsFalse(LMarkdown.Contains('👤 User'));
 end;
 
 procedure TTestRadIAExporter.TestExportHTML_ContainsStylesAndContent;

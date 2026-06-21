@@ -33,7 +33,7 @@ object FrameAIChat: TRadIAFrameAIChat
       Top = 3
       Width = 32
       Height = 38
-      Hint = 'Configura'#231#245'es'
+      Hint = 'Settings'
       Align = alRight
       Caption = #9881
       Flat = True
@@ -53,7 +53,7 @@ object FrameAIChat: TRadIAFrameAIChat
       Top = 3
       Width = 32
       Height = 38
-      Hint = 'Hist'#243'rico'
+      Hint = 'History'
       Align = alRight
       Caption = #128340
       Flat = True
@@ -73,7 +73,7 @@ object FrameAIChat: TRadIAFrameAIChat
       Top = 3
       Width = 32
       Height = 38
-      Hint = 'Nova Conversa'
+      Hint = 'New Conversation'
       Align = alRight
       Caption = '+'
       Flat = True
@@ -93,7 +93,7 @@ object FrameAIChat: TRadIAFrameAIChat
       Top = 3
       Width = 32
       Height = 38
-      Hint = 'Limpar Hist'#243'rico'
+      Hint = 'Clear History'
       Align = alRight
       Caption = #9851
       Flat = True
@@ -113,7 +113,7 @@ object FrameAIChat: TRadIAFrameAIChat
       Top = 3
       Width = 32
       Height = 38
-      Hint = 'Exportar Conversa'
+      Hint = 'Export Conversation'
       Align = alRight
       Caption = #10515
       Flat = True
@@ -133,7 +133,7 @@ object FrameAIChat: TRadIAFrameAIChat
       Top = 3
       Width = 32
       Height = 38
-      Hint = 'Templates de Prompt'
+      Hint = 'Prompt Templates'
       Align = alRight
       Caption = #9889
       Flat = True
@@ -278,7 +278,7 @@ object FrameAIChat: TRadIAFrameAIChat
         Top = 3
         Width = 24
         Height = 24
-        Hint = 'Renomear Conversa'
+        Hint = 'Rename Conversation'
         Align = alLeft
         Caption = #9998
         Flat = True
@@ -298,7 +298,7 @@ object FrameAIChat: TRadIAFrameAIChat
         Top = 3
         Width = 24
         Height = 24
-        Hint = 'Excluir Conversa'
+        Hint = 'Delete Conversation'
         Align = alLeft
         Caption = #57607
         Flat = True

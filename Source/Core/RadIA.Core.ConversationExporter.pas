@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.ConversationExporter;
+unit RadIA.Core.ConversationExporter;
 
 interface
 
@@ -92,10 +92,10 @@ var
 begin
   LSb := TStringBuilder.Create;
   try
-    LSb.AppendLine('# Histórico de Conversa - Rad IA');
-    LSb.AppendLine(Format('- **Data**: %s', [DateTimeToStr(Now)]));
-    LSb.AppendLine(Format('- **Provedor**: %s', [AProviderName]));
-    LSb.AppendLine(Format('- **Modelo**: %s', [AModelName]));
+    LSb.AppendLine('# Conversation History - Rad IA');
+    LSb.AppendLine(Format('- **Date**: %s', [DateTimeToStr(Now)]));
+    LSb.AppendLine(Format('- **Provider**: %s', [AProviderName]));
+    LSb.AppendLine(Format('- **Model**: %s', [AModelName]));
     LSb.AppendLine;
     LSb.AppendLine('---');
     LSb.AppendLine;
@@ -107,12 +107,12 @@ begin
 
       if LMsg.Role = mrUser then
       begin
-        LSb.AppendLine('### 👤 Usuário');
+        LSb.AppendLine('### 👤 User');
         LSb.AppendLine(LMsg.Content);
       end
       else
       begin
-        LSb.AppendLine('### 🤖 Assistente (Rad IA)');
+        LSb.AppendLine('### 🤖 Assistant (Rad IA)');
         LSb.AppendLine(LMsg.Content);
       end;
       LSb.AppendLine;
@@ -140,7 +140,7 @@ begin
     LSb.AppendLine('<html>');
     LSb.AppendLine('<head>');
     LSb.AppendLine('  <meta charset="utf-8">');
-    LSb.AppendLine('  <title>Histórico de Conversa - Rad IA</title>');
+    LSb.AppendLine('  <title>Conversation History - Rad IA</title>');
     LSb.AppendLine('  <style>');
     LSb.AppendLine('    body {');
     LSb.AppendLine('      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;');
@@ -167,11 +167,11 @@ begin
     LSb.AppendLine('  </style>');
     LSb.AppendLine('</head>');
     LSb.AppendLine('<body>');
-    LSb.AppendLine('  <h1>Histórico de Conversa - Rad IA</h1>');
+    LSb.AppendLine('  <h1>Conversation History - Rad IA</h1>');
     LSb.AppendLine('  <div class="meta">');
-    LSb.AppendLine(Format('    <p><strong>Data:</strong> %s</p>', [DateTimeToStr(Now)]));
-    LSb.AppendLine(Format('    <p><strong>Provedor:</strong> %s</p>', [AProviderName]));
-    LSb.AppendLine(Format('    <p><strong>Modelo:</strong> %s</p>', [AModelName]));
+    LSb.AppendLine(Format('    <p><strong>Date:</strong> %s</p>', [DateTimeToStr(Now)]));
+    LSb.AppendLine(Format('    <p><strong>Provider:</strong> %s</p>', [AProviderName]));
+    LSb.AppendLine(Format('    <p><strong>Model:</strong> %s</p>', [AModelName]));
     LSb.AppendLine('  </div>');
 
     for LMsg in AHistory do
@@ -181,12 +181,12 @@ begin
 
       if LMsg.Role = mrUser then
       begin
-        LRoleName := 'Usuário';
+        LRoleName := 'User';
         LRoleClass := 'user';
       end
       else
       begin
-        LRoleName := 'Assistente (Rad IA)';
+        LRoleName := 'Assistant (Rad IA)';
         LRoleClass := 'assistant';
       end;
 

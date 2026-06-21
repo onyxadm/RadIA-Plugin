@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ConfigPresenter;
+unit RadIA.UI.ConfigPresenter;
 
 interface
 
@@ -591,16 +591,16 @@ end;
 procedure TRadIAConfigPresenter.ConnectGithub(const AToken: string);
 begin
   FView.SetApiKey('GithubCopilot', AToken);
-  FView.ShowMessageDialog('Autenticado com sucesso no GitHub Copilot!');
+  FView.ShowMessageDialog('Successfully authenticated on GitHub Copilot!');
 end;
 
 procedure TRadIAConfigPresenter.ImportVSCodeCopilotToken(const AToken: string; const AUser: string);
 begin
   FView.SetApiKey('GithubCopilot', AToken);
   if not AUser.IsEmpty then
-    FView.ShowMessageDialog(Format('Token importado com sucesso da conta do GitHub "%s" do VS Code!', [AUser]))
+    FView.ShowMessageDialog(Format('Token successfully imported from GitHub account "%s" of VS Code!', [AUser]))
   else
-    FView.ShowMessageDialog('Token importado com sucesso do VS Code!');
+    FView.ShowMessageDialog('Token successfully imported from VS Code!');
 end;
 
 end.

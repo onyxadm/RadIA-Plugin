@@ -1,4 +1,4 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{F70494A3-D19C-4EB9-A059-86E42CE3BD00}</ProjectGuid>
         <MainSource>RadIA.dpk</MainSource>
@@ -94,6 +94,9 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
+        <DCC_MapFile>3</DCC_MapFile>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -111,7 +114,14 @@
         <DCCReference Include="designide.dcp"/>
         <DCCReference Include="Source\Core\RadIA.Core.Types.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Interfaces.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.ChatMessage.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.Container.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.Logger.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.ConfigDefaults.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.CredentialProtector.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Config.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.SettingsStorage.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.ProviderRegistry.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Cache.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Service.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.PromptHistory.pas"/>
@@ -119,7 +129,16 @@
         <DCCReference Include="Source\Core\RadIA.Core.ConversationExporter.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.PromptTemplates.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.ProjectContext.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.AwsSigner.pas"/>
         <DCCReference Include="Source\Core\RadIA.Core.Mediator.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.Sessions.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.DTO.Generator.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.ProjectGenerator.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.TextNormalizer.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.HttpClient.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.ErrorDecoder.pas"/>
+        <DCCReference Include="Source\Core\RadIA.Core.Localizer.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.Streaming.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Base.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Gemini.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.OpenAI.pas"/>
@@ -127,6 +146,17 @@
         <DCCReference Include="Source\Providers\RadIA.Provider.Ollama.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.DeepSeek.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Groq.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.OpenRouter.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.Generic.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.LMStudio.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.WebViewBridge.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.GithubCopilot.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.AzureOpenAI.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.Qwen.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.Mistral.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Provider.Bedrock.pas"/>
+        <DCCReference Include="Source\Providers\RadIA.Providers.Link.pas"/>
+        <DCCReference Include="Source\Integration\RadIA.OTA.Adapter.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Register.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Helper.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.EditorHook.pas"/>
@@ -134,11 +164,13 @@
         <DCCReference Include="Source\Integration\RadIA.OTA.ContextParser.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.DockableForm.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Options.pas"/>
+        <DCCReference Include="Source\UI\RadIA.UI.ChatPresenter.pas"/>
         <DCCReference Include="Source\UI\RadIA.UI.ChatFrame.pas">
             <Form>FrameAIChat</Form>
             <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
+        <DCCReference Include="Source\UI\RadIA.UI.ConfigPresenter.pas"/>
         <DCCReference Include="Source\UI\RadIA.UI.ConfigFrame.pas">
             <Form>FrameAIConfig</Form>
             <FormType>dfm</FormType>
@@ -151,6 +183,12 @@
         <DCCReference Include="Source\UI\RadIA.UI.DiffForm.pas">
             <Form>FormAIDiff</Form>
             <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\UI\RadIA.UI.WebLoginForm.pas">
+            <Form>FormWebLogin</Form>
+        </DCCReference>
+        <DCCReference Include="Source\UI\RadIA.UI.GithubAuthForm.pas">
+            <Form>FormGithubAuth</Form>
         </DCCReference>
         <DCCReference Include="Source\UI\RadIA.UI.Resources.pas"/>
         <BuildConfiguration Include="Base">
@@ -173,6 +211,10 @@
                 <Source>
                     <Source Name="MainSource">RadIA.dpk</Source>
                 </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k370.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp370.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
                 <Platform value="Win32">True</Platform>
