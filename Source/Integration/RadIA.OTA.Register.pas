@@ -514,10 +514,31 @@ begin
 end;
 
 procedure TRadIAWizard.UnregisterMenus;
+  procedure RemoveRadIAMenuItems(const AToolsMenu: TMenuItem);
+  var
+    I: Integer;
+    LItem: TMenuItem;
+  begin
+    for I := AToolsMenu.Count - 1 downto 0 do
+    begin
+      try
+        LItem := AToolsMenu.Items[I];
+        if SameText(LItem.Caption, 'RadIA Chat Panel') or
+           SameText(LItem.Caption, 'Rad IA Chat Panel') or
+           SameText(LItem.Caption, 'Fix Last Compiler Error') then
+        begin
+          LItem.Free;
+        end;
+      except
+        on E: Exception do
+          OutputDebugString(PChar('RadIA.Register.UnregisterMenus Item Error: ' + E.Message));
+      end;
+    end;
+  end;
+
 var
   LNTAServices: INTAServices;
   LToolsMenu: TMenuItem;
-  I: Integer;
 begin
   LogDebug('UnregisterMenus called');
   if not Assigned(FEditorHook) then
@@ -529,20 +550,7 @@ begin
       LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
       if Assigned(LToolsMenu) then
       begin
-        for I := LToolsMenu.Count - 1 downto 0 do
-        begin
-          try
-            if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
-               SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or
-               SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
-            begin
-              LToolsMenu.Items[I].Free;
-            end;
-          except
-            on E: Exception do
-              OutputDebugString(PChar('RadIA.Register.UnregisterMenus Item Error: ' + E.Message));
-          end;
-        end;
+        RemoveRadIAMenuItems(LToolsMenu);
       end;
     end;
   except
