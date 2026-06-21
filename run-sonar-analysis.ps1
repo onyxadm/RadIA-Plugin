@@ -1,0 +1,85 @@
+<#
+.SYNOPSIS
+    Script to run SonarQube analysis for the Rad IA Plugin project.
+.DESCRIPTION
+    This script executes the sonar-scanner CLI tool to analyze the project codebase,
+    resolving the SonarQube token securely from parameters, local .env file, or environment variables.
+.PARAMETER Token
+    The SonarQube access token. If not provided, the script attempts to load it from the .env file or the SONAR_TOKEN environment variable.
+.PARAMETER HostUrl
+    The URL of the SonarQube server. Defaults to http://localhost:9000.
+.EXAMPLE
+    .\run-sonar-analysis.ps1
+.EXAMPLE
+    .\run-sonar-analysis.ps1 -Token "your-custom-token" -HostUrl "https://sonarqube.mycompany.com"
+#>
+param(
+    [string]$Token = "",
+    [string]$HostUrl = "http://localhost:9000"
+)
+
+$ErrorActionPreference = "Stop"
+
+# 1. Resolve Token from environment configurations if not supplied via parameters
+$ResolvedToken = $Token
+$EnvFile = Join-Path $PSScriptRoot ".env"
+
+if ([string]::IsNullOrWhiteSpace($ResolvedToken)) {
+    # Check if local .env file exists and parse it
+    if (Test-Path $EnvFile) {
+        Write-Host "Loading credentials from local .env file..." -ForegroundColor Gray
+        Get-Content $EnvFile | ForEach-Object {
+            $Line = $_.Trim()
+            if ($Line -and -not $Line.StartsWith("#") -and $Line.Contains("=")) {
+                $Key, $Value = $Line.Split("=", 2)
+                $Key = $Key.Trim()
+                $Value = $Value.Trim()
+                # Strip wrapping single/double quotes
+                $Value = $Value -replace '^["'']|["'']$'
+                if ($Key -eq "SONAR_TOKEN") {
+                    $ResolvedToken = $Value
+                }
+            }
+        }
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($ResolvedToken)) {
+    # Fallback to system environment variable
+    if ($env:SONAR_TOKEN) {
+        Write-Host "Using SONAR_TOKEN from system environment variables..." -ForegroundColor Gray
+        $ResolvedToken = $env:SONAR_TOKEN
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($ResolvedToken)) {
+    Write-Error "SonarQube access token is missing. Please set it using one of the following methods:`n" +
+                "  1. Define 'SONAR_TOKEN' in a local '.env' file in the project root (ignored by Git).`n" +
+                "  2. Define the 'SONAR_TOKEN' environment variable in your system.`n" +
+                "  3. Pass it directly via CLI: .\run-sonar-analysis.ps1 -Token `"your-token`""
+    Exit 1
+}
+
+Write-Host "Checking for sonar-scanner executable..." -ForegroundColor Cyan
+
+# Check if sonar-scanner is available in PATH
+$ScannerCmd = Get-Command "sonar-scanner" -ErrorAction SilentlyContinue
+
+if ($null -eq $ScannerCmd) {
+    Write-Error "The 'sonar-scanner' executable was not found in your PATH. Please install SonarQube Scanner CLI and make sure it is added to the system environment variables."
+    Exit 1
+}
+
+Write-Host "Starting SonarQube analysis..." -ForegroundColor Cyan
+Write-Host "Host URL: $HostUrl" -ForegroundColor Gray
+Write-Host "Project Key: radia" -ForegroundColor Gray
+
+# Run the scanner
+& sonar-scanner -D"sonar.token=$ResolvedToken" -D"sonar.host.url=$HostUrl"
+
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "SonarQube analysis completed successfully!" -ForegroundColor Green
+} else {
+    Write-Error "SonarQube analysis failed with exit code $LASTEXITCODE."
+    Exit $LASTEXITCODE
+}

@@ -44,3 +44,9 @@ test-results.xml
 RadIA.RES
 RadIA.res
 Tests/*.res
+
+# SonarQube temporary files
+.scannerwork/
+
+# Local environment variables (sensitive data)
+.env
