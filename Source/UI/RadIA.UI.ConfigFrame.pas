@@ -273,8 +273,23 @@ uses
 {$R *.dfm}
 
 type
-  TTabSheetColorHack = class(TTabSheet);
-  TWinControlHack = class(TWinControl);
+  TWinControlHelper = class helper for TWinControl
+  public
+    procedure SetColor(const AColor: TColor); inline;
+    procedure SetParentBackground(const AValue: Boolean); inline;
+  end;
+
+{ TWinControlHelper }
+
+procedure TWinControlHelper.SetColor(const AColor: TColor);
+begin
+  Self.Color := AColor;
+end;
+
+procedure TWinControlHelper.SetParentBackground(const AValue: Boolean);
+begin
+  Self.ParentBackground := AValue;
+end;
 
 function TRadIAFrameAIConfig.CreateCheckBox(AParent: TWinControl; const ACaption: string;
   const ALeft, ATop, AWidth: Integer): TCheckBox;
@@ -521,17 +536,17 @@ begin
   LColors := TRadIAThemeColors.GetColorsForTheme(AThemeName);
 
   Self.StyleElements := Self.StyleElements - [seClient, seBorder];
-  TWinControlHack(Self).Color := LColors.BgBase;
+  Self.SetColor(LColors.BgBase);
   pgcSettings.StyleElements := pgcSettings.StyleElements - [seClient, seBorder];
-  TWinControlHack(pgcSettings).Color := LColors.BgBase;
+  pgcSettings.SetColor(LColors.BgBase);
 
-  TWinControlHack(Self).ParentBackground := False;
-  TWinControlHack(pgcSettings).ParentBackground := False;
+  Self.SetParentBackground(False);
+  pgcSettings.SetParentBackground(False);
   for I := 0 to pgcSettings.PageCount - 1 do
   begin
     pgcSettings.Pages[I].StyleElements := pgcSettings.Pages[I].StyleElements - [seClient, seBorder];
-    TTabSheetColorHack(pgcSettings.Pages[I]).ParentBackground := False;
-    TTabSheetColorHack(pgcSettings.Pages[I]).Color := LColors.BgBase;
+    pgcSettings.Pages[I].SetParentBackground(False);
+    pgcSettings.Pages[I].SetColor(LColors.BgBase);
   end;
 
   pnlGemini.StyleElements := pnlGemini.StyleElements - [seClient, seBorder];
@@ -798,8 +813,8 @@ begin
   if Assigned(tsGeneral) then
   begin
     tsGeneral.StyleElements := tsGeneral.StyleElements - [seClient, seBorder];
-    TTabSheetColorHack(tsGeneral).ParentBackground := False;
-    TTabSheetColorHack(tsGeneral).Color := LColors.BgBase;
+    tsGeneral.SetParentBackground(False);
+    tsGeneral.SetColor(LColors.BgBase);
   end;
   if Assigned(chkInjectDelphiVersion) then
   begin

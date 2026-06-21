@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.Helper;
+unit RadIA.OTA.Helper;
 
 interface
 
@@ -35,7 +35,7 @@ type
 implementation
 
 uses
-  Winapi.Windows, RadIA.Core.Container, RadIA.Core.Interfaces;
+  Winapi.Windows, RadIA.Core.Container, RadIA.Core.Interfaces, RadIA.Core.Logger;
 
 { TRadIAOTAHelper }
 
@@ -156,7 +156,8 @@ begin
     AView.MoveViewToCursor;
     AView.Paint;
   except
-    { Editor refresh is best-effort; the text operation has already succeeded. }
+    on E: Exception do
+      TLogger.Log('RefreshEditView: Error refreshing edit view: ' + E.Message, 'Integration');
   end;
 end;
 

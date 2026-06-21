@@ -161,7 +161,8 @@ begin
               if TFile.Exists(LRelPath) then
                 TFile.Delete(LRelPath);
             except
-              // Ignore rollback errors to prevent secondary exceptions
+              on E: Exception do
+                TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON rollback: Failed to delete ' + LRelPath + ': ' + E.Message, 'Core');
             end;
           end;
           

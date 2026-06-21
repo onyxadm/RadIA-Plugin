@@ -30,7 +30,7 @@ implementation
 
 uses
   System.JSON, System.Threading, System.Generics.Collections, System.Math, RadIA.Core.ProviderRegistry,
-  System.SyncObjs;
+  System.SyncObjs, RadIA.Core.Logger;
 
 { TRadIAOllamaProvider }
 
@@ -301,7 +301,8 @@ begin
           end;
         end;
       except
-        { Ignore parse errors }
+        on E: Exception do
+          TLogger.Log('ProcessStreamBuffer (Ollama): Error parsing chunk JSON: ' + E.Message, 'Provider');
       end;
     end);
 end;

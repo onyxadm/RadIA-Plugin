@@ -286,13 +286,13 @@ begin
       begin
         try
           LOptionsServices.UnregisterAddInOptions(FOptionsPages[I] as INTAAddInOptions);
-        except
+        except // nosonar
           // Silenciosamente ignora qualquer erro de desregistro no encerramento da IDE
         end;
       end;
       FOptionsPages.Clear;
     end;
-  except
+  except // nosonar
     // Protege contra exceções de acesso a BorlandIDEServices/LOptionsServices
   end;
 end;
@@ -536,13 +536,13 @@ begin
             begin
               LToolsMenu.Items[I].Free;
             end;
-          except
+          except // nosonar
             // Ignora erro ao liberar item individual
           end;
         end;
       end;
     end;
-  except
+  except // nosonar
     // Protege contra exceções ao acessar serviços de menu
   end;
 end;

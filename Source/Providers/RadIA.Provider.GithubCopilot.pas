@@ -488,6 +488,7 @@ begin
           on E: Exception do
           begin
             { Network issues, wait and retry }
+            TLogger.Log('PollForAccessToken: Network error, retrying: ' + E.Message, 'Provider');
           end;
         end;
       finally

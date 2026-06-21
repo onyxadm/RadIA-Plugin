@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Cache;
+unit RadIA.Core.Cache;
 
 interface
 
@@ -46,7 +46,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, System.Hash, System.DateUtils;
+  System.IOUtils, System.JSON, System.Hash, System.DateUtils, RadIA.Core.Logger;
 
 { TRadIACacheManager }
 
@@ -74,7 +74,8 @@ begin
     try
       SaveCache;
     except
-      // Ignore save errors during destruction
+      on E: Exception do
+        TLogger.Log('~TRadIACacheManager: Failed to save cache on destroy: ' + E.Message, 'Cache');
     end;
   end;
   FEntries.Free;
@@ -94,7 +95,8 @@ begin
       try
         TFile.Delete(FFilePath);
       except
-        // Ignore delete errors
+        on E: Exception do
+          TLogger.Log('TRadIACacheManager.Clear: Failed to delete cache file: ' + E.Message, 'Cache');
       end;
     end;
     FIsDirty := False;

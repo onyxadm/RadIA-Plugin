@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Base;
+unit RadIA.Provider.Base;
 
 interface
 
@@ -165,7 +165,8 @@ begin
       end;
     end;
   except
-    // Ignore parse errors
+    on E: Exception do
+      TLogger.Log('ExtractErrorMessageFromJson: Failed to parse JSON error response: ' + E.Message, 'Provider');
   end;
 end;
 
@@ -425,7 +426,8 @@ begin
             try
               AProcessBufferFunc(LBufferText);
             except
-              // Mute buffer processing exception on teardown
+              on E: Exception do
+                TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer: ' + E.Message, 'Provider');
             end;
           end;
 
@@ -451,6 +453,8 @@ begin
               try
                 AProcessBufferFunc(LBufferText);
               except
+                on EBuffer: Exception do
+                  TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer in error handler: ' + EBuffer.Message, 'Provider');
               end;
             end;
 
@@ -718,7 +722,8 @@ begin
             end;
           end;
         except
-          { Ignore JSON parse errors in stream chunks }
+          on E: Exception do
+            TLogger.Log('ProcessOpenAICompatibleStreamBuffer: Error parsing chunk JSON: ' + E.Message, 'Provider');
         end;
       end;
     end;

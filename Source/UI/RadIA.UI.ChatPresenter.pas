@@ -486,7 +486,8 @@ begin
     try
       FSessionManager.SaveSessionHistory(FSessionManager.ActiveSessionId, []);
     except
-      // Ignore write errors
+      on E: Exception do
+        TLogger.Log('ClearChat: Error saving cleared session: ' + E.Message, 'UI');
     end;
   end;
 end;
@@ -808,6 +809,8 @@ begin
                         LOrigHistory := LOrigHistory + [LAssistantMsg];
                         Self.FSessionManager.SaveSessionHistory(LSessionId, LOrigHistory);
                       except
+                        on E: Exception do
+                          TLogger.Log('SendPromptToAI background thread: Error saving history: ' + E.Message, 'UI');
                       end;
                     finally
                       TInterlocked.Decrement(GActiveThreadCount);

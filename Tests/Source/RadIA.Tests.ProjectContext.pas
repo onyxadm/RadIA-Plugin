@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.ProjectContext;
+unit RadIA.Tests.ProjectContext;
 
 interface
 
@@ -161,7 +161,7 @@ begin
   Assert.IsTrue(LSuccess);
   Assert.IsTrue(LContextPrompt.Contains('Projeto A.'));
   Assert.IsTrue(LContextPrompt.Contains('[Arquivo: large_file.txt]'));
-  Assert.IsTrue(LContextPrompt.Contains('[Aviso: Conteúdo do arquivo "large_file.txt" foi truncado pois excede o limite de 50KB]'));
+  Assert.IsTrue(LContextPrompt.Contains('[Aviso: Conteudo do arquivo "large_file.txt" foi truncado pois excede o limite de 50KB]'));
   // Ensure it was truncated at 51200 bytes
   Assert.IsTrue(LContextPrompt.Length < 60000, 'Context prompt should be significantly shorter than full large file');
 end;

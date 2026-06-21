@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Logger;
+unit RadIA.Core.Logger;
 
 interface
 
@@ -83,7 +83,7 @@ begin
         
       LReg.CloseKey;
     end;
-  except
+  except // nosonar
     // Fallback silently
   end;
 end;
@@ -132,7 +132,7 @@ begin
 
   try
     TFile.Move(AActiveFile, LRotatedFile);
-  except
+  except // nosonar
     // Suppress file lock errors
   end;
 end;
@@ -178,7 +178,7 @@ begin
         LFileDateStr := FormatDateTime('yyyy-mm-dd', LFileDate);
         if LTodayStr <> LFileDateStr then
           LNeedRotation := True;
-      except
+      except // nosonar
         // Skip rotation on error
       end;
 
@@ -189,7 +189,7 @@ begin
           LSize := TFile.GetSize(LActiveFile);
           if LSize >= (Int64(FLogMaxSizeKB) * 1024) then
             LNeedRotation := True;
-        except
+        except // nosonar
           // Skip rotation on error
         end;
       end;
@@ -217,7 +217,7 @@ begin
       finally
         LStream.Free;
       end;
-    except
+    except // nosonar
       // Suppress write errors
     end;
   finally

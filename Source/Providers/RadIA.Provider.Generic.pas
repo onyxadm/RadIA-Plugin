@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Generic;
+unit RadIA.Provider.Generic;
 
 interface
 
@@ -27,7 +27,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Math;
+  System.JSON, System.Threading, System.Math, RadIA.Core.Logger;
 
 { TRadIAGenericOpenAIProvider }
 
@@ -48,7 +48,8 @@ begin
     try
       AConfig.Save;
     except
-      // Silenciar erros de gravação em modo de testes / mock
+      on E: Exception do
+        TLogger.Log('TRadIAGenericOpenAIProvider.Create: Failed to save config: ' + E.Message, 'Provider');
     end;
   end;
 end;

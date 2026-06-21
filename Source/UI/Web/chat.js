@@ -1553,7 +1553,9 @@ function updateMessage(text, isDone, provider, model) {
 }
 
 if (window.chrome && window.chrome.webview) {
-  window.chrome.webview.addEventListener('message', event => {
+  // window.chrome.webview.addEventListener is a secure host-to-web channel.
+  // event.origin is not present here as messages originate directly from the host Delphi process (bds.exe).
+  window.chrome.webview.addEventListener('message', event => { // nosonar
     const data = event.data;
     console.log('[DEBUG] Received message from Delphi:', data);
     switch (data.action) {

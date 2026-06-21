@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.Claude;
+unit RadIA.Provider.Claude;
 
 interface
 
@@ -28,7 +28,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Math, RadIA.Core.ProviderRegistry;
+  System.JSON, System.Threading, System.Math, RadIA.Core.ProviderRegistry, RadIA.Core.Logger;
 
 { TRadIAClaudeProvider }
 
@@ -237,7 +237,8 @@ begin
             end;
           end;
         except
-          { Ignore parse errors }
+          on E: Exception do
+            TLogger.Log('ProcessStreamBuffer (Claude): Error parsing chunk JSON: ' + E.Message, 'Provider');
         end;
       end;
     end);

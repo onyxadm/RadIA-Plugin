@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.ErrorDecoder;
+unit RadIA.Core.ErrorDecoder;
 
 interface
 
@@ -16,7 +16,7 @@ type
 implementation
 
 uses
-  System.JSON;
+  System.JSON, RadIA.Core.Logger;
 
 { TRadIAErrorDecoder }
 
@@ -55,7 +55,8 @@ begin
       end;
     end;
   except
-    // Ignore parse errors
+    on E: Exception do
+      TLogger.Log('Failed to parse error JSON: ' + E.Message, 'ErrorDecoder');
   end;
 end;
 

@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.ProjectContext;
+unit RadIA.Core.ProjectContext;
 
 interface
 
@@ -17,7 +17,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON;
+  System.IOUtils, System.JSON, RadIA.Core.Logger;
 
 { TProjectContextLoader }
 
@@ -129,7 +129,7 @@ begin
                       
                       LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
                       LSb.AppendLine(LFileContent.Trim);
-                      LSb.AppendLine(Format('[Aviso: Conteúdo do arquivo "%s" foi truncado pois excede o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
+                      LSb.AppendLine(Format('[Aviso: Conteudo do arquivo "%s" foi truncado pois excede o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
                       LSb.AppendLine;
                     end
                     else
@@ -143,7 +143,8 @@ begin
                     LStream.Free;
                   end;
                 except
-                  { Ignore read error for specific file and continue }
+                  on E: Exception do
+                    TLogger.Log(Format('LoadContext: Failed to read context file "%s": %s', [LFileRelPath, E.Message]), 'Context');
                 end;
               end;
             end;
@@ -153,8 +154,11 @@ begin
         end;
       end;
     except
-      { JSON is invalid or file error - return False but do not crash }
-      Result := False;
+      on E: Exception do
+      begin
+        TLogger.Log('LoadContext: Failed to load project context from .radia: ' + E.Message, 'Context');
+        Result := False;
+      end;
     end;
     
     AContextPrompt := LSb.ToString.Trim;

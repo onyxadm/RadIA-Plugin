@@ -51,7 +51,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON;
+  System.IOUtils, System.JSON, RadIA.Core.Logger;
 
 { TPromptTemplateManager }
 
@@ -438,7 +438,8 @@ begin
       end;
     end;
   except
-    { Fallback to defaults on corrupt file }
+    on E: Exception do
+      TLogger.Log('TPromptTemplateManager.Load: Failed to load templates: ' + E.Message, 'Core');
   end;
   
   CleanRedundantUserTemplates;
