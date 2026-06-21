@@ -83,8 +83,9 @@ begin
         
       LReg.CloseKey;
     end;
-  except // nosonar
-    // Fallback silently
+  except
+    on E: Exception do
+      OutputDebugString(PChar('RadIA.Logger.Create Registry Error: ' + E.Message));
   end;
 end;
 
@@ -132,8 +133,9 @@ begin
 
   try
     TFile.Move(AActiveFile, LRotatedFile);
-  except // nosonar
-    // Suppress file lock errors
+  except
+    on E: Exception do
+      OutputDebugString(PChar('RadIA.Logger.Rotate Error: ' + E.Message));
   end;
 end;
 
@@ -178,8 +180,9 @@ begin
         LFileDateStr := FormatDateTime('yyyy-mm-dd', LFileDate);
         if LTodayStr <> LFileDateStr then
           LNeedRotation := True;
-      except // nosonar
-        // Skip rotation on error
+      except
+        on E: Exception do
+          OutputDebugString(PChar('RadIA.Logger.CheckRotation Date Error: ' + E.Message));
       end;
 
       // 2. Check Size Rotation (only if date rotation didn't trigger)
@@ -189,8 +192,9 @@ begin
           LSize := TFile.GetSize(LActiveFile);
           if LSize >= (Int64(FLogMaxSizeKB) * 1024) then
             LNeedRotation := True;
-        except // nosonar
-          // Skip rotation on error
+        except
+          on E: Exception do
+            OutputDebugString(PChar('RadIA.Logger.CheckRotation Size Error: ' + E.Message));
         end;
       end;
 
@@ -217,8 +221,9 @@ begin
       finally
         LStream.Free;
       end;
-    except // nosonar
-      // Suppress write errors
+    except
+      on E: Exception do
+        OutputDebugString(PChar('RadIA.Logger.Write Error: ' + E.Message));
     end;
   finally
     TMonitor.Exit(FLock);

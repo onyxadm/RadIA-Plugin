@@ -286,14 +286,16 @@ begin
       begin
         try
           LOptionsServices.UnregisterAddInOptions(FOptionsPages[I] as INTAAddInOptions);
-        except // nosonar
-          // Silenciosamente ignora qualquer erro de desregistro no encerramento da IDE
+        except
+          on E: Exception do
+            OutputDebugString(PChar('RadIA.Register.UnregisterOptions Error: ' + E.Message));
         end;
       end;
       FOptionsPages.Clear;
     end;
-  except // nosonar
-    // Protege contra exceções de acesso a BorlandIDEServices/LOptionsServices
+  except
+    on E: Exception do
+      OutputDebugString(PChar('RadIA.Register.UnregisterOptions Main Error: ' + E.Message));
   end;
 end;
 
@@ -536,14 +538,16 @@ begin
             begin
               LToolsMenu.Items[I].Free;
             end;
-          except // nosonar
-            // Ignora erro ao liberar item individual
+          except
+            on E: Exception do
+              OutputDebugString(PChar('RadIA.Register.UnregisterMenus Item Error: ' + E.Message));
           end;
         end;
       end;
     end;
-  except // nosonar
-    // Protege contra exceções ao acessar serviços de menu
+  except
+    on E: Exception do
+      OutputDebugString(PChar('RadIA.Register.UnregisterMenus Main Error: ' + E.Message));
   end;
 end;
 
