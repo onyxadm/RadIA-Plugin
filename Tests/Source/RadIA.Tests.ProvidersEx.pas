@@ -21,8 +21,8 @@ type
     FQwenProv: TRadIAQwenProvider;
     FMistralProv: TRadIAMistralProvider;
     FBedrockProv: TRadIABedrockProvider;
-    
-    function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
+
+    function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string;
       const AHistory: TArray<IRadIAChatMessage>; const AStream: Boolean = False): string;
     function InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
     procedure InvokeProcessStreamBuffer(AProvider: TObject; var ABuffer: string; const ACallback: TStreamChunkCallback);
@@ -37,7 +37,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestDeepSeek_PayloadAndParsing;
     [Test]
@@ -118,7 +118,7 @@ begin
   TRadIAConfig.SetBaseRegistryPath('');
 end;
 
-function TTestRadIAProvidersEx.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
+function TTestRadIAProvidersEx.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string;
   const AHistory: TArray<IRadIAChatMessage>; const AStream: Boolean): string;
 var
   LContext: TRttiContext;
@@ -217,18 +217,18 @@ var
 begin
   LHistory := [TRadIAChatMessage.CreateMessage(mrUser, AHistoryQuery)];
   LPayload := InvokeBuildRequestBody(AProvider, APrompt, LHistory, AStream);
-  
+
   Assert.IsNotEmpty(LPayload);
   LJsonObj := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
   try
     Assert.IsNotNull(LJsonObj);
     Assert.AreEqual(AExpectedModel, LJsonObj.GetValue('model').Value);
-    
+
     if AStream then
       Assert.IsTrue(LJsonObj.GetValue<Boolean>('stream'))
     else
       Assert.IsNull(LJsonObj.GetValue('stream'));
-      
+
     LMessages := LJsonObj.GetValue('messages') as TJSONArray;
     Assert.IsNotNull(LMessages);
     Assert.AreEqual(2, LMessages.Count);
@@ -275,7 +275,7 @@ end;
 
 procedure TTestRadIAProvidersEx.TestDeepSeek_PayloadAndParsing;
 const
-  MOCK_DEEPSEEK_RESPONSE = 
+  MOCK_DEEPSEEK_RESPONSE =
     '{"choices": [{"message": {"role": "assistant", "content": "DeepSeek response text"}}], ' +
     '"usage": {"prompt_tokens": 15, "completion_tokens": 25, "total_tokens": 40}}';
 begin
@@ -292,7 +292,7 @@ end;
 
 procedure TTestRadIAProvidersEx.TestGroq_PayloadAndParsing;
 const
-  MOCK_GROQ_RESPONSE = 
+  MOCK_GROQ_RESPONSE =
     '{"choices": [{"message": {"role": "assistant", "content": "Groq response text"}}], ' +
     '"usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}}';
 begin
@@ -309,7 +309,7 @@ end;
 
 procedure TTestRadIAProvidersEx.TestOpenRouter_PayloadAndParsing;
 const
-  MOCK_OPENROUTER_RESPONSE = 
+  MOCK_OPENROUTER_RESPONSE =
     '{"choices": [{"message": {"role": "assistant", "content": "OpenRouter response text"}}], ' +
     '"usage": {"prompt_tokens": 8, "completion_tokens": 12, "total_tokens": 20}}';
 begin
@@ -326,7 +326,7 @@ end;
 
 procedure TTestRadIAProvidersEx.TestLMStudio_PayloadAndParsing;
 const
-  MOCK_LMSTUDIO_RESPONSE = 
+  MOCK_LMSTUDIO_RESPONSE =
     '{"choices": [{"message": {"role": "assistant", "content": "LM Studio response text"}}], ' +
     '"usage": {"prompt_tokens": 12, "completion_tokens": 16, "total_tokens": 28}}';
 begin
@@ -343,7 +343,7 @@ end;
 
 procedure TTestRadIAProvidersEx.TestAzureOpenAI_PayloadAndParsing;
 const
-  MOCK_AZURE_RESPONSE = 
+  MOCK_AZURE_RESPONSE =
     '{"choices": [{"message": {"role": "assistant", "content": "Azure response text"}}], ' +
     '"usage": {"prompt_tokens": 5, "completion_tokens": 10, "total_tokens": 15}}';
 begin
@@ -361,7 +361,7 @@ end;
 
 procedure TTestRadIAProvidersEx.TestQwen_PayloadAndParsing;
 const
-  MOCK_QWEN_RESPONSE = 
+  MOCK_QWEN_RESPONSE =
     '{"choices": [{"message": {"role": "assistant", "content": "Qwen response text"}}], ' +
     '"usage": {"prompt_tokens": 12, "completion_tokens": 18, "total_tokens": 30}}';
 begin
@@ -378,7 +378,7 @@ end;
 
 procedure TTestRadIAProvidersEx.TestMistral_PayloadAndParsing;
 const
-  MOCK_MISTRAL_RESPONSE = 
+  MOCK_MISTRAL_RESPONSE =
     '{"choices": [{"message": {"role": "assistant", "content": "Mistral response text"}}], ' +
     '"usage": {"prompt_tokens": 20, "completion_tokens": 15, "total_tokens": 35}}';
 begin

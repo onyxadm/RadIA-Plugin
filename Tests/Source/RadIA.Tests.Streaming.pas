@@ -93,7 +93,7 @@ begin
     LParams[0] := ABuffer;
     LParams[1] := TValue.From<TStreamChunkCallback>(ACallback);
     LMethod.Invoke(AProvider, LParams);
-    
+
     // Update the var parameter value back
     ABuffer := LParams[0].AsString;
   end

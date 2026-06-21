@@ -28,14 +28,14 @@ begin
   AErrorMessage := '';
   AFileName := '';
   ALine := 0;
-  
+
   if not Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
     Exit;
-    
+
   LModule := LModuleServices.CurrentModule;
   if not Assigned(LModule) then
     Exit;
-    
+
   if Supports(LModule, IOTAModuleErrors, LModuleErrors) then
   begin
     AFileName := LModule.FileName;

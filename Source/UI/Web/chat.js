@@ -26,10 +26,10 @@ function normalizeCodeLanguage(language, code) {
     '',
     'code',
     'codigo',
-    'código',
+    'cÃ³digo',
     'snippet',
     'snippet de codigo',
-    'snippet de código'
+    'snippet de cÃ³digo'
   ];
 
   if (pascalAliases.includes(normalized) ||
@@ -373,23 +373,23 @@ function showWelcomeScreen() {
 }
 
 const SENDER_INFO = {
-  user: { 
-    name: 'User', 
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4E4E52"/><path d="M12 11C13.6569 11 15 9.65685 15 8C15 6.34315 13.6569 5 12 5C10.3431 5 9 6.34315 9 8C9 9.65685 10.3431 11 12 11Z" fill="#F1F1F1"/><path d="M12 12.5C9.33 12.5 4 13.84 4 16.5V18H20V16.5C20 13.84 14.67 12.5 12 12.5Z" fill="#F1F1F1"/></svg>`, 
-    avatarClass: 'user-avatar', 
-    headerClass: 'user-header' 
+  user: {
+    name: 'User',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#4E4E52"/><path d="M12 11C13.6569 11 15 9.65685 15 8C15 6.34315 13.6569 5 12 5C10.3431 5 9 6.34315 9 8C9 9.65685 10.3431 11 12 11Z" fill="#F1F1F1"/><path d="M12 12.5C9.33 12.5 4 13.84 4 16.5V18H20V16.5C20 13.84 14.67 12.5 12 12.5Z" fill="#F1F1F1"/></svg>`,
+    avatarClass: 'user-avatar',
+    headerClass: 'user-header'
   },
-  assistant: { 
-    name: 'Rad IA', 
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, 
-    avatarClass: 'ai-avatar',   
-    headerClass: 'ai-header'   
+  assistant: {
+    name: 'Rad IA',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`,
+    avatarClass: 'ai-avatar',
+    headerClass: 'ai-header'
   },
-  system: { 
-    name: 'System',   
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`, 
-    avatarClass: 'ai-avatar',   
-    headerClass: 'ai-header'   
+  system: {
+    name: 'System',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="var(--accent)"/><path d="M12 6L13.8 10.2L18 12L13.8 13.8L12 18L10.2 13.8L6 12L10.2 10.2L12 6Z" fill="#FFFFFF"/></svg>`,
+    avatarClass: 'ai-avatar',
+    headerClass: 'ai-header'
   }
 };
 
@@ -706,15 +706,15 @@ document.addEventListener('click', () => {
 });
 
 function showSlashPopup(filterText) {
-  filteredSlashCommands = SLASH_COMMANDS.filter(cmd => 
+  filteredSlashCommands = SLASH_COMMANDS.filter(cmd =>
     cmd.name.toLowerCase().startsWith(filterText.toLowerCase())
   );
-  
+
   if (filteredSlashCommands.length === 0) {
     hideSlashPopup();
     return;
   }
-  
+
   const popup = document.getElementById('slash-commands-popup');
   popup.classList.remove('hidden');
   slashPopupVisible = true;
@@ -732,18 +732,18 @@ function hideSlashPopup() {
 function renderSlashCommands() {
   const popup = document.getElementById('slash-commands-popup');
   popup.innerHTML = '';
-  
+
   if (slashPopupSelectedIndex >= filteredSlashCommands.length) {
     slashPopupSelectedIndex = 0;
   }
-  
+
   filteredSlashCommands.forEach((cmd, idx) => {
     const item = document.createElement('div');
     item.classList.add('slash-command-item');
     if (idx === slashPopupSelectedIndex) {
       item.classList.add('selected');
     }
-    
+
     item.innerHTML = `
       <div class="slash-command-info">
         <span class="slash-command-name">${cmd.name}</span>
@@ -751,13 +751,13 @@ function renderSlashCommands() {
       </div>
       ${cmd.shortcut ? `<span class="slash-command-shortcut">${cmd.shortcut}</span>` : ''}
     `;
-    
+
     item.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       insertSlashCommand(cmd.name);
     });
-    
+
     popup.appendChild(item);
   });
 }
@@ -820,7 +820,7 @@ function addMessage(role, text, provider, model) {
   wrapper.appendChild(body);
 
   chatContainer.appendChild(wrapper);
-  
+
   setTimeout(() => {
     Prism.highlightAllUnder(wrapper);
   }, 10);
@@ -884,7 +884,7 @@ function applyCode(id) {
 
 function renderTokenStats(text) {
   const parts = String(text || '')
-    .split('·')
+    .split('Â·')
     .map(part => part.trim())
     .filter(Boolean);
 
@@ -913,7 +913,7 @@ function renderTokenStats(text) {
     if (index > 0) {
       const separator = document.createElement('span');
       separator.className = 'token-stat-separator';
-      separator.textContent = '·';
+      separator.textContent = 'Â·';
       statusText.appendChild(separator);
     }
 
@@ -1030,7 +1030,7 @@ function appendMessage(text, isDone, provider, model) {
 
   currentAssistantText += text;
   currentAssistantContent.innerHTML = marked.parse(currentAssistantText);
-  
+
   Prism.highlightAllUnder(currentAssistantContent);
 
   chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -1075,7 +1075,7 @@ function processProjectFiles(contentElement) {
     const onclickAttr = copyBtn.getAttribute('onclick') || '';
     const onclickMatch = onclickAttr.match(/'([^']+)'/);
     const blockId = onclickMatch ? onclickMatch[1] : '';
-    
+
     let iconColor = 'var(--fg-secondary)';
     let fileIconSvg = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1275,20 +1275,20 @@ function initializeConfig(data) {
 
 function updateModelsList(models, activeModel) {
   selectModel.innerHTML = '';
-  
+
   if (!models || models.length === 0) {
     const opt = document.createElement('option');
     opt.value = '';
     opt.textContent = 'No models available';
     selectModel.appendChild(opt);
-    
+
     modelDropdownValue.textContent = 'No models available';
     modelOptionsList.innerHTML = '<div class="no-sessions">No models available</div>';
     return;
   }
 
   modelOptionsList.innerHTML = '';
-  
+
   models.forEach(m => {
     const opt = document.createElement('option');
     opt.value = m;
@@ -1305,18 +1305,18 @@ function updateModelsList(models, activeModel) {
       modelDropdownValue.textContent = m;
     }
     div.textContent = m;
-    
+
     div.addEventListener('click', (e) => {
       e.stopPropagation();
-      
+
       const selectedOpt = modelOptionsList.querySelector('.custom-dropdown-option.selected');
       if (selectedOpt) selectedOpt.classList.remove('selected');
       div.classList.add('selected');
-      
+
       modelDropdownValue.textContent = m;
       selectModel.value = m;
       modelDropdownWrapper.classList.remove('open');
-      
+
       selectModel.dispatchEvent(new Event('change'));
     });
 
@@ -1376,7 +1376,7 @@ function updateSessions(sessions, activeSessionId) {
     const nameEl = document.createElement('span');
     nameEl.classList.add('session-name');
     nameEl.textContent = session.name;
-    
+
     nameEl.addEventListener('dblclick', () => startRename(item, session.id, nameEl));
 
     const actions = document.createElement('div');
@@ -1442,12 +1442,12 @@ function startRename(item, sessionId, nameEl) {
 
   item.classList.add('renaming');
   const currentName = nameEl.textContent;
-  
+
   const input = document.createElement('input');
   input.type = 'text';
   input.classList.add('session-rename-input');
   input.value = currentName;
-  
+
   nameEl.style.display = 'none';
   item.insertBefore(input, nameEl);
   input.focus();
@@ -1480,15 +1480,15 @@ function startRename(item, sessionId, nameEl) {
 
 function appendGeneratorCode(text, isDone) {
   if (text === undefined || text === null) text = '';
-  
+
   if (generatorAccumulatedCode === '' && text !== '') {
     generatorPreviewCard.classList.remove('hidden');
     generatorOutputCode.textContent = '';
   }
-  
+
   generatorAccumulatedCode += text;
   generatorOutputCode.textContent = generatorAccumulatedCode;
-  
+
   if (isDone) {
     try {
       Prism.highlightElement(generatorOutputCode);
@@ -1503,7 +1503,7 @@ function updateMessage(text, isDone, provider, model) {
   hideTypingIndicator();
   hideWelcomeScreen();
   if (text === undefined || text === null) text = '';
-  
+
   if (!currentAssistantWrapper) {
     const info = SENDER_INFO.assistant;
     currentAssistantWrapper = document.createElement('div');
@@ -1538,12 +1538,12 @@ function updateMessage(text, isDone, provider, model) {
     currentAssistantWrapper.appendChild(body);
     chatContainer.appendChild(currentAssistantWrapper);
   }
-  
+
   currentAssistantText = text;
   currentAssistantContent.innerHTML = marked.parse(currentAssistantText);
   Prism.highlightAllUnder(currentAssistantContent);
   chatContainer.scrollTop = chatContainer.scrollHeight;
-  
+
   if (isDone) {
     processProjectFiles(currentAssistantContent);
     currentAssistantWrapper = null;

@@ -3,7 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Service, 
+  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Service,
   RadIA.Core.ConversationExporter;
 
 type
@@ -16,7 +16,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestExportMarkdown_ContainsAllMessages;
     [Test]
@@ -52,7 +52,7 @@ var
   LMarkdown: string;
 begin
   LMarkdown := TConversationExporter.ExportToMarkdown(FHistory, 'OpenAI', 'gpt-4o');
-  
+
   Assert.IsNotEmpty(LMarkdown);
   Assert.IsTrue(LMarkdown.Contains('Como criar uma classe em Delphi?'));
   Assert.IsTrue(LMarkdown.Contains('Use a sintaxe `type TMyClass = class`.'));
@@ -65,7 +65,7 @@ var
   LMarkdown: string;
 begin
   LMarkdown := TConversationExporter.ExportToMarkdown(FHistory, 'Google Gemini', 'gemini-1.5-flash');
-  
+
   Assert.IsTrue(LMarkdown.Contains('# Histórico de Conversa - Rad IA'));
   Assert.IsTrue(LMarkdown.Contains('**Provedor**: Google Gemini'));
   Assert.IsTrue(LMarkdown.Contains('**Modelo**: gemini-1.5-flash'));
@@ -78,7 +78,7 @@ var
 begin
   LEmptyHistory := [];
   LMarkdown := TConversationExporter.ExportToMarkdown(LEmptyHistory, 'OpenAI', 'gpt-4o');
-  
+
   Assert.IsTrue(LMarkdown.Contains('# Histórico de Conversa - Rad IA'));
   Assert.IsFalse(LMarkdown.Contains('👤 Usuário'));
 end;
@@ -88,7 +88,7 @@ var
   LHtml: string;
 begin
   LHtml := TConversationExporter.ExportToHTML(FHistory, 'Anthropic Claude', 'claude-3-5-sonnet');
-  
+
   Assert.IsNotEmpty(LHtml);
   Assert.IsTrue(LHtml.Contains('<!DOCTYPE html>'));
   Assert.IsTrue(LHtml.Contains('<html>'));

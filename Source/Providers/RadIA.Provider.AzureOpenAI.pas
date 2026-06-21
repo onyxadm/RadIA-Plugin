@@ -1,4 +1,4 @@
-unit RadIA.Provider.AzureOpenAI;
+﻿unit RadIA.Provider.AzureOpenAI;
 
 interface
 
@@ -52,7 +52,7 @@ end;
 
 function TRadIAAzureOpenAIProvider.GetAvailableModels: TArray<string>;
 begin
-  { Azure uses Deployment Names mapped by the administrator. 
+  { Azure uses Deployment Names mapped by the administrator.
     We return standard default identifiers, but the user will write or select
     their own Deployment Name in the settings/combobox. }
   Result := TArray<string>.Create('gpt-4o', 'gpt-4', 'gpt-35-turbo');

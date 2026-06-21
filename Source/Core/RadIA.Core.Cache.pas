@@ -1,4 +1,4 @@
-unit RadIA.Core.Cache;
+﻿unit RadIA.Core.Cache;
 
 interface
 
@@ -27,19 +27,19 @@ type
     FLimit: Integer;
     FCriticalSection: TCriticalSection;
     FIsDirty: Boolean;
-    
+
     procedure LoadCache;
     procedure SaveCache;
   public
     constructor Create(const AFilePath: string = ''; ALimit: Integer = 500);
     destructor Destroy; override;
-    
+
     function Get(const AHash: string; out AResponse: string): Boolean;
     procedure Put(const AHash: string; const AResponse: string);
     procedure Clear;
-    
-    class function GenerateHash(const AProvider: string; const AModel: string; 
-      const ASystemPrompt: string; const APrompt: string; 
+
+    class function GenerateHash(const AProvider: string; const AModel: string;
+      const ASystemPrompt: string; const APrompt: string;
       const AHistory: string): string;
   end;
 
@@ -58,12 +58,12 @@ begin
   FIsDirty := False;
   FEntries := TObjectList<TRadIACacheEntry>.Create(True);
   FDictionary := TDictionary<string, TRadIACacheEntry>.Create;
-  
+
   if AFilePath.IsEmpty then
     FFilePath := TPath.Combine(TPath.GetHomePath, 'RadIA\cache.json')
   else
     FFilePath := AFilePath;
-    
+
   LoadCache;
 end;
 
@@ -105,8 +105,8 @@ begin
   end;
 end;
 
-class function TRadIACacheManager.GenerateHash(const AProvider: string; const AModel: string; 
-  const ASystemPrompt: string; const APrompt: string; 
+class function TRadIACacheManager.GenerateHash(const AProvider: string; const AModel: string;
+  const ASystemPrompt: string; const APrompt: string;
   const AHistory: string): string;
 var
   LConcat: string;
@@ -128,7 +128,7 @@ begin
       { Check expiration (24 hours) }
       if HoursBetween(Now, LEntry.Timestamp) >= 24 then
       begin
-        { Expired entry — remove it and flag for persistence }
+        { Expired entry â€” remove it and flag for persistence }
         FDictionary.Remove(AHash);
         FEntries.Remove(LEntry);
         FIsDirty := True;
@@ -139,7 +139,7 @@ begin
       LEntry.LastAccessed := Now;
       AResponse := LEntry.Response;
       Result := True;
-      { NOTE: Not marking FIsDirty here — LastAccessed is best-effort metadata.
+      { NOTE: Not marking FIsDirty here â€” LastAccessed is best-effort metadata.
         It will be persisted on the next Put or on destruction. }
     end;
   finally
@@ -158,10 +158,10 @@ var
 begin
   FEntries.Clear;
   FDictionary.Clear;
-  
+
   { Ensure directory exists }
   ForceDirectories(TPath.GetDirectoryName(FFilePath));
-  
+
   if not TFile.Exists(FFilePath) then
     Exit;
 
@@ -181,26 +181,26 @@ begin
             LEntryObj := LVal as TJSONObject;
             LHash := LEntryObj.GetValue<string>('hash', '');
             LResponse := LEntryObj.GetValue<string>('response', '');
-            
+
             if LHash.IsEmpty then
               Continue;
-              
+
             LEntry := TRadIACacheEntry.Create;
             LEntry.Hash := LHash;
             LEntry.Response := LResponse;
-            
+
             try
               LEntry.Timestamp := ISO8601ToDate(LEntryObj.GetValue<string>('timestamp', ''));
             except
               LEntry.Timestamp := Now;
             end;
-            
+
             try
               LEntry.LastAccessed := ISO8601ToDate(LEntryObj.GetValue<string>('last_accessed', ''));
             except
               LEntry.LastAccessed := Now;
             end;
-            
+
             FEntries.Add(LEntry);
             FDictionary.Add(LEntry.Hash, LEntry);
           end;
@@ -294,7 +294,7 @@ begin
       LEntryObj.AddPair('last_accessed', DateToISO8601(LEntry.LastAccessed));
       LJsonArr.AddElement(LEntryObj);
     end;
-    
+
     TFile.WriteAllText(FFilePath, LJsonArr.ToJSON, TEncoding.UTF8);
   finally
     LJsonArr.Free;

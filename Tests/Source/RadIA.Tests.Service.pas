@@ -731,22 +731,22 @@ begin
   try
     { 1. Com Smart Config Enabled (Padrão) }
     LConfig.SmartConfigEnabled := True;
-    
+
     // Refatorar
     LService.ResolveParameters('Gemini', rpRefactorCode, LTemp, LMaxTokens);
     Assert.AreEqual(0.1, LTemp, 0.01);
     Assert.AreEqual(16384, LMaxTokens);
-    
+
     // Chat Geral
     LService.ResolveParameters('Gemini', rpGeneralChat, LTemp, LMaxTokens);
     Assert.AreEqual(0.7, LTemp, 0.01);
     Assert.AreEqual(8192, LMaxTokens);
-    
+
     { 2. Com Smart Config Disabled (Usa valores da config) }
     LConfig.SmartConfigEnabled := False;
     LConfig.SetTemperature('Gemini', 0.4);
     LConfig.SetMaxTokens('Gemini', 1024);
-    
+
     LService.ResolveParameters('Gemini', rpRefactorCode, LTemp, LMaxTokens);
     Assert.AreEqual(0.4, LTemp, 0.01);
     Assert.AreEqual(1024, LMaxTokens);

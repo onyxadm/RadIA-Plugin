@@ -1,4 +1,4 @@
-unit RadIA.UI.GithubAuthForm;
+﻿unit RadIA.UI.GithubAuthForm;
 
 interface
 
@@ -28,7 +28,7 @@ type
     FVerificationUri: string;
     FInterval: Integer;
     FExpiresIn: Integer;
-    
+
     procedure StartPolling;
   protected
     procedure CreateWnd; override;
@@ -52,7 +52,7 @@ var
   LErrorMsg: string;
 begin
   AAccessToken := '';
-  
+
   { Request authorization code from GitHub }
   if not TRadIAGithubCopilotProvider.RequestDeviceCode(LDeviceCode, LUserCode,
     LVerificationUri, LInterval, LExpiresIn, LErrorMsg) then
@@ -69,7 +69,7 @@ begin
     LForm.FVerificationUri := LVerificationUri;
     LForm.FInterval := LInterval;
     LForm.FExpiresIn := LExpiresIn;
-    
+
     LForm.lblPIN.Caption := LUserCode;
 
     if LForm.ShowModal = mrOk then
@@ -95,7 +95,7 @@ begin
   inherited Create(AOwner);
   FCancelled := False;
   FAccessToken := '';
-  
+
   { Apply IDE Theming if available }
   LActiveTheme := 'light';
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
@@ -111,19 +111,19 @@ begin
   LColors := TRadIAThemeColors.GetColorsForTheme(LActiveTheme);
   Self.StyleElements := Self.StyleElements - [seClient, seBorder];
   Self.Color := LColors.BgBase;
-  
+
   pnlClient.StyleElements := pnlClient.StyleElements - [seClient, seBorder];
   pnlClient.Color := LColors.BgBase;
   pnlClient.ParentBackground := False;
-  
+
   lblTitle.StyleElements := lblTitle.StyleElements - [seClient, seBorder];
   lblTitle.Font.Color := LColors.TextColor;
   lblInstructions.StyleElements := lblInstructions.StyleElements - [seClient, seBorder];
   lblInstructions.Font.Color := LColors.TextColor;
-  
+
   lblPIN.StyleElements := lblPIN.StyleElements - [seClient, seBorder];
   lblPIN.Font.Color := clHighlight; { Stand out PIN code }
-  
+
   lblStatus.StyleElements := lblStatus.StyleElements - [seClient, seBorder];
   lblStatus.Font.Color := LColors.TextColor;
 end;
@@ -140,7 +140,7 @@ begin
     if LThemingServices.IDEThemingEnabled then
       LActiveTheme := LThemingServices.ActiveTheme;
   end;
-  
+
   if SameText(LActiveTheme, 'dark') then
     TRadIAUIHelper.ApplyDarkTitleBar(Self, True);
 end;

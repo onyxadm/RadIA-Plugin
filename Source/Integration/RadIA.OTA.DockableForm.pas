@@ -42,7 +42,7 @@ begin
   begin
     FormRadIADockable := TFormRadIADockable.Create(nil);
   end;
-  
+
   ShowDockableForm(FormRadIADockable);
 end;
 
@@ -82,16 +82,16 @@ begin
   DeskSection := 'FormRadIADockable';
   AutoSave := True;
   SaveStateNecessary := True;
-  
+
   { Default dimensions for the first run or when floating }
   Width := 990;
   Height := 650;
   LoadWindowSize;
-  
+
   FChatFrame := TRadIAFrameAIChat.Create(Self);
   FChatFrame.Parent := Self;
   FChatFrame.Align := alClient;
-  
+
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
@@ -99,7 +99,7 @@ begin
       LThemingServices.ApplyTheme(Self);
     end;
   end;
-  
+
   ApplyIDETheme;
 
   if Assigned(FChatFrame) then
@@ -205,7 +205,7 @@ var
 begin
   inherited DoShow;
   SaveVisibilityState(True);
-  
+
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
@@ -214,7 +214,7 @@ begin
       LThemingServices.ApplyTheme(FChatFrame);
     end;
   end;
-  
+
   ApplyIDETheme;
 end;
 

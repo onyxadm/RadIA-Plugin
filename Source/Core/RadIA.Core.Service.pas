@@ -139,7 +139,7 @@ begin
     else
       LSystemPrompt := LSystemPrompt + sLineBreak + sLineBreak + LConcisePrompt;
   end;
-  
+
   LDelphiVersionName := 'Delphi';
   LPreferredLanguage := '';
   LProjectFolder := '';
@@ -158,7 +158,7 @@ begin
                             'in this version. Avoid newer language features that are not supported in ' + LDelphiVersionName + '. ';
     if not LPreferredLanguage.IsEmpty then
       LDelphiVersionPrompt := LDelphiVersionPrompt + LPreferredLanguage;
-    
+
     if LSystemPrompt.IsEmpty then
       LSystemPrompt := LDelphiVersionPrompt
     else
@@ -413,7 +413,7 @@ begin
           LProvider.SendPromptStreamAsync(APrompt, LHistory,
             procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
             begin
-              LogService(Format('SendPromptStream Callback: ChunkLen=%d IsDone=%s Error="%s"', 
+              LogService(Format('SendPromptStream Callback: ChunkLen=%d IsDone=%s Error="%s"',
                 [Length(AChunk), BoolToStr(AIsDone, True), AError]));
               if AError.IsEmpty then
               begin

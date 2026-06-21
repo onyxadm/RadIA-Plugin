@@ -1,4 +1,4 @@
-unit RadIA.Provider.Claude;
+﻿unit RadIA.Provider.Claude;
 
 interface
 
@@ -15,8 +15,8 @@ type
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IRadIAConfig); override;
-    
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
+
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
@@ -69,10 +69,10 @@ begin
       LRootObj.AddPair('temperature', TJSONNumber.Create(ATemperature));
     if AStream then
       LRootObj.AddPair('stream', TJSONBool.Create(True));
-    
+
     LMessagesArr := TJSONArray.Create;
     LRootObj.AddPair('messages', LMessagesArr);
-    
+
     LSystemPrompt := '';
 
     { Add History }
@@ -89,7 +89,7 @@ begin
       LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
       LMsgObj.AddPair('content', LMsg.Content);
     end;
-    
+
     { Add Current Prompt }
     LMsgObj := TJSONObject.Create;
     LMessagesArr.AddElement(LMsgObj);
@@ -101,7 +101,7 @@ begin
     begin
       LRootObj.AddPair('system', LSystemPrompt.Trim);
     end;
-    
+
     Result := LRootObj.ToJSON;
   finally
     LRootObj.Free;
@@ -117,7 +117,7 @@ var
 begin
   Result := '';
   AUsage := TTokenUsage.Empty;
-  
+
   LJsonObj := TJSONObject.ParseJSONValue(AResponseJson) as TJSONObject;
   if Assigned(LJsonObj) then
   begin
@@ -131,7 +131,7 @@ begin
           Result := LContentObj.GetValue<string>('text', '');
         end;
       end;
-      
+
       if Result.IsEmpty then
       begin
         if LJsonObj.GetValue('error') <> nil then
@@ -152,7 +152,7 @@ begin
   end;
 end;
 
-procedure TRadIAClaudeProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
+procedure TRadIAClaudeProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LApiKey, LRequestBody: string;
@@ -166,7 +166,7 @@ begin
   end;
 
   LUrl := 'https://api.anthropic.com/v1/messages';
-  
+
   SetLength(LHeaders, 2);
   LHeaders[0] := TNetHeader.Create('x-api-key', LApiKey);
   LHeaders[1] := TNetHeader.Create('anthropic-version', '2023-06-01');
@@ -258,7 +258,7 @@ begin
   end;
 
   LUrl := 'https://api.anthropic.com/v1/messages';
-  
+
   SetLength(LHeaders, 2);
   LHeaders[0] := TNetHeader.Create('x-api-key', LApiKey);
   LHeaders[1] := TNetHeader.Create('anthropic-version', '2023-06-01');

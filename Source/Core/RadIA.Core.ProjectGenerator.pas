@@ -1,4 +1,4 @@
-unit RadIA.Core.ProjectGenerator;
+﻿unit RadIA.Core.ProjectGenerator;
 
 interface
 
@@ -153,7 +153,7 @@ begin
         begin
           AErrorMsg := 'Error writing files: ' + E.Message;
           TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: Exception writing files. Rollback initiated.', 'Core');
-          
+
           // Rollback: delete any files written in this execution
           for LRelPath in LWrittenFiles do
           begin
@@ -166,7 +166,7 @@ begin
                   LRelPath + ': ' + E.Message, 'Core');
             end;
           end;
-          
+
           Exit;
         end;
       end;

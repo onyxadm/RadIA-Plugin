@@ -1,4 +1,4 @@
-unit RadIA.Core.Logger;
+﻿unit RadIA.Core.Logger;
 
 interface
 
@@ -51,7 +51,7 @@ var
 begin
   inherited Create;
   FLock := TObject.Create;
-  
+
   // Default values
   FLogEnabled := True;
   FLogPath := GetDefaultLogPath;
@@ -61,26 +61,26 @@ begin
   LReg := TRegistry.Create;
   try
     LReg.RootKey := HKEY_CURRENT_USER;
-    
+
     LSettings := TFormatSettings.Create('en-US');
     if CompilerVersion >= 37.0 then
       LBdsVersion := CompilerVersion
     else
       LBdsVersion := CompilerVersion - 13.0;
-      
+
     LPath := Format('Software\Embarcadero\BDS\%0.1f\RadIA', [LBdsVersion], LSettings);
 
     if LReg.OpenKeyReadOnly(LPath) then
     begin
       if LReg.ValueExists('LogEnabled') then
         FLogEnabled := LReg.ReadInteger('LogEnabled') <> 0;
-        
+
       if LReg.ValueExists('LogPath') then
         FLogPath := LReg.ReadString('LogPath');
-        
+
       if LReg.ValueExists('LogMaxSizeKB') then
         FLogMaxSizeKB := LReg.ReadInteger('LogMaxSizeKB');
-        
+
       LReg.CloseKey;
     end;
   except

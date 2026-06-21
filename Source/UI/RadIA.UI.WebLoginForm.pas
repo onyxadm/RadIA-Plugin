@@ -199,7 +199,7 @@ begin
   FEdgeBrowser.OnCreateWebViewCompleted := EdgeBrowserCreateWebViewCompleted;
   FEdgeBrowser.OnNavigationCompleted := EdgeBrowserNavigationCompleted;
   FEdgeBrowser.OnWebMessageReceived := EdgeBrowserWebMessageReceived;
-  
+
   // Share the same data folder used by the background browser session.
   FEdgeBrowser.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2Web');
   NavigateToProvider;
@@ -325,7 +325,7 @@ begin
       begin
         LSettings.Set_AreDevToolsEnabled(1);
         LSettings.Set_AreDefaultContextMenusEnabled(1);
-        
+
         if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
         begin
           LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
@@ -426,7 +426,7 @@ begin
 
     LJson := LParsed as TJSONObject;
     LAction := LJson.GetValue<string>('action', '');
-    
+
     if SameText(LAction, 'login_complete') then
     begin
       TLogger.Log('TRadIAFormWebLogin: Existing signed-in provider session detected.', 'UI');

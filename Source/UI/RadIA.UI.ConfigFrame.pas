@@ -1,4 +1,4 @@
-unit RadIA.UI.ConfigFrame;
+﻿unit RadIA.UI.ConfigFrame;
 
 interface
 
@@ -30,7 +30,7 @@ type
     pnlLMStudio: TPanel;
     lblLMStudioUrl: TLabel;
     edtLMStudioUrl: TEdit;
-    
+
     tsGithubCopilot: TTabSheet;
     pnlGithubCopilot: TPanel;
     lblGithubCopilotKey: TLabel;
@@ -81,7 +81,7 @@ type
     lnkDeepSeekGetKey: TLabel;
     lnkGroqGetKey: TLabel;
     lnkOpenRouterGetKey: TLabel;
-    
+
     tsSystemPrompt: TTabSheet;
     pnlSystemPrompt: TPanel;
     lblGeminiKey: TLabel;
@@ -151,13 +151,13 @@ type
     FPresenter: TRadIAConfigPresenter;
     FOnClose: TNotifyEvent;
     lblTemplateOrigin: TLabel;
-    
+
     FEdtTemperatures: TDictionary<string, TEdit>;
     FEdtMaxTokens: TDictionary<string, TEdit>;
     FEdtTimeouts: TDictionary<string, TEdit>;
     FChkSmartConfig: TCheckBox;
     chkConciseResponses: TCheckBox;
-    
+
     tsGeneral: TTabSheet;
     pnlGeneral: TPanel;
     chkInjectDelphiVersion: TCheckBox;
@@ -167,7 +167,7 @@ type
     btnBrowseLogPath: TButton;
     lblLogMaxSize: TLabel;
     edtLogMaxSize: TEdit;
-    
+
     grpQuota: TGroupBox;
     chkQuotaEnabled: TCheckBox;
     lblQuotaLimit: TLabel;
@@ -177,7 +177,7 @@ type
 
     procedure btnBrowseLogPathClick(Sender: TObject);
     procedure btnResetQuotaClick(Sender: TObject);
-    
+
     function CreateCheckBox(AParent: TWinControl; const ACaption: string; const ALeft, ATop, AWidth: Integer): TCheckBox;
     function CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer; const ANumbersOnly: Boolean = False): TEdit;
     function CreateLabel(AParent: TWinControl; const ACaption: string; const ALeft, ATop: Integer): TLabel;
@@ -194,7 +194,7 @@ type
     procedure SelectCategoryByName(const ACategoryName: string);
     procedure btnSaveClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
-    
+
     { IRadIAConfigView Implementation }
     function GetApiKey(const AProviderId: string): string;
     procedure SetApiKey(const AProviderId: string; const AKey: string);
@@ -238,7 +238,7 @@ type
     procedure SetLogPath(const AValue: string);
     function GetLogMaxSize: string;
     procedure SetLogMaxSize(const AValue: string);
-    
+
     function GetQuotaEnabled: Boolean;
     procedure SetQuotaEnabled(const AValue: Boolean);
     function GetQuotaLimit: string;
@@ -428,7 +428,7 @@ begin
   CreateProviderAdvancedControls(tsQwen, 'Qwen');
   CreateProviderAdvancedControls(tsMistral, 'Mistral');
   CreateProviderAdvancedControls(tsBedrock, 'Bedrock');
- 
+
   CreateGeneralTab;
 
   LActiveTheme := 'light';
@@ -632,30 +632,30 @@ begin
   edtGeminiKey.StyleElements := edtGeminiKey.StyleElements - [seClient, seBorder];
   edtGeminiKey.Color := LColors.InputBgColor;
   edtGeminiKey.Font.Color := LColors.TextColor;
-  
+
   edtOpenAIKey.StyleElements := edtOpenAIKey.StyleElements - [seClient, seBorder];
   edtOpenAIKey.Color := LColors.InputBgColor;
   edtOpenAIKey.Font.Color := LColors.TextColor;
   edtOpenAICustomUrl.StyleElements := edtOpenAICustomUrl.StyleElements - [seClient, seBorder];
   edtOpenAICustomUrl.Color := LColors.InputBgColor;
   edtOpenAICustomUrl.Font.Color := LColors.TextColor;
-  
+
   edtClaudeKey.StyleElements := edtClaudeKey.StyleElements - [seClient, seBorder];
   edtClaudeKey.Color := LColors.InputBgColor;
   edtClaudeKey.Font.Color := LColors.TextColor;
-  
+
   edtDeepSeekKey.StyleElements := edtDeepSeekKey.StyleElements - [seClient, seBorder];
   edtDeepSeekKey.Color := LColors.InputBgColor;
   edtDeepSeekKey.Font.Color := LColors.TextColor;
-  
+
   edtGroqKey.StyleElements := edtGroqKey.StyleElements - [seClient, seBorder];
   edtGroqKey.Color := LColors.InputBgColor;
   edtGroqKey.Font.Color := LColors.TextColor;
-  
+
   edtOllamaUrl.StyleElements := edtOllamaUrl.StyleElements - [seClient, seBorder];
   edtOllamaUrl.Color := LColors.InputBgColor;
   edtOllamaUrl.Font.Color := LColors.TextColor;
-  
+
   edtOpenRouterKey.StyleElements := edtOpenRouterKey.StyleElements - [seClient, seBorder];
   edtOpenRouterKey.Color := LColors.InputBgColor;
   edtOpenRouterKey.Font.Color := LColors.TextColor;
@@ -665,7 +665,7 @@ begin
   edtGithubCopilotKey.StyleElements := edtGithubCopilotKey.StyleElements - [seClient, seBorder];
   edtGithubCopilotKey.Color := LColors.InputBgColor;
   edtGithubCopilotKey.Font.Color := LColors.TextColor;
-  
+
   edtAzureKey.StyleElements := edtAzureKey.StyleElements - [seClient, seBorder];
   edtAzureKey.Color := LColors.InputBgColor;
   edtAzureKey.Font.Color := LColors.TextColor;
@@ -686,7 +686,7 @@ begin
   edtMistralKey.StyleElements := edtMistralKey.StyleElements - [seClient, seBorder];
   edtMistralKey.Color := LColors.InputBgColor;
   edtMistralKey.Font.Color := LColors.TextColor;
-  
+
   edtAwsAccessKeyId.StyleElements := edtAwsAccessKeyId.StyleElements - [seClient, seBorder];
   edtAwsAccessKeyId.Color := LColors.InputBgColor;
   edtAwsAccessKeyId.Font.Color := LColors.TextColor;
@@ -712,12 +712,12 @@ begin
   lnkGroqGetKey.Font.Color := LColors.AccentColor;
   lnkOpenRouterGetKey.StyleElements := lnkOpenRouterGetKey.StyleElements - [seClient, seBorder];
   lnkOpenRouterGetKey.Font.Color := LColors.AccentColor;
-  
+
   lnkQwenGetKey.StyleElements := lnkQwenGetKey.StyleElements - [seClient, seBorder];
   lnkQwenGetKey.Font.Color := LColors.AccentColor;
   lnkMistralGetKey.StyleElements := lnkMistralGetKey.StyleElements - [seClient, seBorder];
   lnkMistralGetKey.Font.Color := LColors.AccentColor;
-  
+
   lnkBedrockGetKey.StyleElements := lnkBedrockGetKey.StyleElements - [seClient, seBorder];
   lnkBedrockGetKey.Font.Color := LColors.AccentColor;
 
@@ -739,7 +739,7 @@ begin
   lblOpenRouterKey.Font.Color := LColors.TextColor;
   lblLMStudioUrl.StyleElements := lblLMStudioUrl.StyleElements - [seClient, seBorder];
   lblLMStudioUrl.Font.Color := LColors.TextColor;
-  
+
   lblAzureKey.StyleElements := lblAzureKey.StyleElements - [seClient, seBorder];
   lblAzureKey.Font.Color := LColors.TextColor;
   lblAzureUrl.StyleElements := lblAzureUrl.StyleElements - [seClient, seBorder];
@@ -753,7 +753,7 @@ begin
   lblQwenKey.Font.Color := LColors.TextColor;
   lblMistralKey.StyleElements := lblMistralKey.StyleElements - [seClient, seBorder];
   lblMistralKey.Font.Color := LColors.TextColor;
-  
+
   lblAwsAccessKeyId.StyleElements := lblAwsAccessKeyId.StyleElements - [seClient, seBorder];
   lblAwsAccessKeyId.Font.Color := LColors.TextColor;
   lblAwsSecretAccessKey.StyleElements := lblAwsSecretAccessKey.StyleElements - [seClient, seBorder];
@@ -772,7 +772,7 @@ begin
   pnlTemplatesClient.StyleElements := pnlTemplatesClient.StyleElements - [seClient, seBorder];
   pnlTemplatesClient.Color := LColors.BgBase;
   pnlTemplatesClient.ParentBackground := False;
-  
+
   lstTemplates.StyleElements := lstTemplates.StyleElements - [seClient, seBorder];
   lstTemplates.Color := LColors.InputBgColor;
   lstTemplates.Font.Color := LColors.TextColor;
@@ -785,14 +785,14 @@ begin
   edtTemplateSlash.StyleElements := edtTemplateSlash.StyleElements - [seClient, seBorder];
   edtTemplateSlash.Color := LColors.InputBgColor;
   edtTemplateSlash.Font.Color := LColors.TextColor;
-  
+
   chkIsProjectGenerator.StyleElements := chkIsProjectGenerator.StyleElements - [seClient, seBorder];
   chkIsProjectGenerator.Font.Color := LColors.TextColor;
-  
+
   memTemplateBody.StyleElements := memTemplateBody.StyleElements - [seClient, seBorder];
   memTemplateBody.Color := LColors.InputBgColor;
   memTemplateBody.Font.Color := LColors.TextColor;
-  
+
   lblTemplateName.StyleElements := lblTemplateName.StyleElements - [seClient, seBorder];
   lblTemplateName.Font.Color := LColors.TextColor;
   lblTemplateDesc.StyleElements := lblTemplateDesc.StyleElements - [seClient, seBorder];
@@ -848,7 +848,7 @@ begin
     edtLogMaxSize.Color := LColors.InputBgColor;
     edtLogMaxSize.Font.Color := LColors.TextColor;
   end;
-  
+
   if Assigned(grpQuota) then
   begin
     grpQuota.StyleElements := grpQuota.StyleElements - [seClient, seBorder];
@@ -931,12 +931,12 @@ begin
     LConfirm := MessageDlg('Do you want to merge imported templates with the current ones?' + sLineBreak +
       'Choose "Yes" to merge or "No" to delete current templates and use only the imported ones.',
       mtConfirmation, [mbYes, mbNo, mbCancel], 0);
-      
+
     if LConfirm = mrCancel then
       Exit;
-      
+
     LMerge := LConfirm = mrYes;
-    
+
     if FPresenter.TemplateManager.ImportFromFile(dlgsTemplatesOpen.FileName, LMerge, LErrorMsg) then
     begin
       FPresenter.LoadConfig;
@@ -1101,7 +1101,7 @@ var
 begin
   LPath := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) +
     'Code\User\globalStorage\github.copilot\hosts.json';
-    
+
   if not TFile.Exists(LPath) then
   begin
     LPath := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) +
@@ -1128,7 +1128,7 @@ begin
             LToken := LValue.Value
           else
             LToken := '';
-            
+
           LValue := LGitHubNode.GetValue('user');
           if Assigned(LValue) then
             LUser := LValue.Value
@@ -1141,7 +1141,7 @@ begin
             Exit;
           end;
         end;
-        
+
         ShowMessage('The VS Code credentials file was found, but it did not contain a valid token.');
       finally
         LJson.Free;

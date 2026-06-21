@@ -1,4 +1,4 @@
-unit RadIA.Core.SettingsStorage;
+﻿unit RadIA.Core.SettingsStorage;
 
 interface
 
@@ -13,7 +13,7 @@ type
     function KeyExists(const APath: string): Boolean;
     function ValueExists(const AName: string): Boolean;
     procedure GetKeyNames(AList: TStrings);
-    
+
     function ReadString(const AName, ADefault: string): string;
     procedure WriteString(const AName, AValue: string);
     function ReadInteger(const AName: string; ADefault: Integer): Integer;
@@ -28,13 +28,13 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    
+
     function OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
     procedure CloseKey;
     function KeyExists(const APath: string): Boolean;
     function ValueExists(const AName: string): Boolean;
     procedure GetKeyNames(AList: TStrings);
-    
+
     function ReadString(const AName, ADefault: string): string;
     procedure WriteString(const AName, AValue: string);
     function ReadInteger(const AName: string; ADefault: Integer): Integer;
@@ -51,13 +51,13 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    
+
     function OpenKey(const APath: string; ACanCreate: Boolean): Boolean;
     procedure CloseKey;
     function KeyExists(const APath: string): Boolean;
     function ValueExists(const AName: string): Boolean;
     procedure GetKeyNames(AList: TStrings);
-    
+
     // In-memory CRUD methods
     function ReadString(const AName, ADefault: string): string;
     procedure WriteString(const AName, AValue: string);
@@ -209,7 +209,7 @@ begin
     FCurrentPath := APath;
     Exit(True);
   end;
-  
+
   Result := FData.ContainsKey(APath.ToLower);
   if Result then
     FCurrentPath := APath;
@@ -245,7 +245,7 @@ begin
   AList.Clear;
   if FCurrentPath.IsEmpty then
     Exit;
-  
+
   LPrefix := FCurrentPath.ToLower + '\';
   for LKey in FData.Keys do
   begin

@@ -12,11 +12,11 @@ type
     class function MarkdownToSimpleHTML(const AMarkdownText: string): string; static;
   public
     { Formats the history as a Markdown document }
-    class function ExportToMarkdown(const AHistory: TArray<IRadIAChatMessage>; 
+    class function ExportToMarkdown(const AHistory: TArray<IRadIAChatMessage>;
       const AProviderName, AModelName: string): string; static;
 
     { Formats the history as a standalone HTML document }
-    class function ExportToHTML(const AHistory: TArray<IRadIAChatMessage>; 
+    class function ExportToHTML(const AHistory: TArray<IRadIAChatMessage>;
       const AProviderName, AModelName: string): string; static;
   end;
 
@@ -40,7 +40,7 @@ begin
     for I := 0 to High(LInputLines) do
     begin
       LLine := LInputLines[I];
-      
+
       { Handle Code Blocks }
       if LLine.StartsWith('```') then
       begin
@@ -74,7 +74,7 @@ begin
           LSb.AppendLine('<p>' + LLine + '</p>');
       end;
     end;
-    
+
     if LInCodeBlock then
       LSb.AppendLine('</code></pre>');
 
@@ -84,7 +84,7 @@ begin
   end;
 end;
 
-class function TConversationExporter.ExportToMarkdown(const AHistory: TArray<IRadIAChatMessage>; 
+class function TConversationExporter.ExportToMarkdown(const AHistory: TArray<IRadIAChatMessage>;
   const AProviderName, AModelName: string): string;
 var
   LSb: TStringBuilder;
@@ -126,7 +126,7 @@ begin
   end;
 end;
 
-class function TConversationExporter.ExportToHTML(const AHistory: TArray<IRadIAChatMessage>; 
+class function TConversationExporter.ExportToHTML(const AHistory: TArray<IRadIAChatMessage>;
   const AProviderName, AModelName: string): string;
 var
   LSb: TStringBuilder;

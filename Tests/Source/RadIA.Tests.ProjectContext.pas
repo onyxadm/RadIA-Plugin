@@ -1,4 +1,4 @@
-unit RadIA.Tests.ProjectContext;
+﻿unit RadIA.Tests.ProjectContext;
 
 interface
 
@@ -10,14 +10,14 @@ type
   TTestRadIAProjectContext = class
   private
     FTempFolder: string;
-    
+
     procedure CreateFile(const AFileName, AContent: string);
   public
     [Setup]
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestParseRadiaFile_ValidJSON;
     [Test]
@@ -69,25 +69,25 @@ var
   LContextPrompt: string;
   LSuccess: Boolean;
 const
-  RADIA_JSON = 
+  RADIA_JSON =
     '{' +
-    '  "system_prompt": "Prompt do sistema específico do projeto.",' +
+    '  "system_prompt": "Prompt do sistema especÃ­fico do projeto.",' +
     '  "context_files": [' +
     '    "docs/architecture.md"' +
     '  ]' +
     '}';
-  ARCH_MD = 'Esta unit usa padrão Singleton.';
+  ARCH_MD = 'Esta unit usa padrÃ£o Singleton.';
 begin
   CreateFile('.radia', RADIA_JSON);
   CreateFile('docs/architecture.md', ARCH_MD);
-  
+
   LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
-  
+
   Assert.IsTrue(LSuccess, 'Should parse valid JSON successfully');
   Assert.IsTrue(LContextPrompt.Contains('[Contexto do Projeto (.radia)]'));
-  Assert.IsTrue(LContextPrompt.Contains('Prompt do sistema específico do projeto.'));
+  Assert.IsTrue(LContextPrompt.Contains('Prompt do sistema especÃ­fico do projeto.'));
   Assert.IsTrue(LContextPrompt.Contains('[Arquivo: docs/architecture.md]'));
-  Assert.IsTrue(LContextPrompt.Contains('Esta unit usa padrão Singleton.'));
+  Assert.IsTrue(LContextPrompt.Contains('Esta unit usa padrÃ£o Singleton.'));
 end;
 
 procedure TTestRadIAProjectContext.TestParseRadiaFile_InvalidJSON_UsesDefaults;
@@ -98,9 +98,9 @@ const
   RADIA_CORRUPT_JSON = '{ "system_prompt": "invalid json because of missing brackets';
 begin
   CreateFile('.radia', RADIA_CORRUPT_JSON);
-  
+
   LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
-  
+
   Assert.IsFalse(LSuccess, 'Should fail to parse invalid JSON');
   Assert.IsEmpty(LContextPrompt, 'Context prompt should be empty on failure');
 end;
@@ -110,14 +110,14 @@ var
   LContextPrompt: string;
   LSuccess: Boolean;
 const
-  RADIA_JSON = 
+  RADIA_JSON =
     '{' +
     '  "system_prompt": "Projeto A."' +
     '}';
 begin
   CreateFile('.radia', RADIA_JSON);
   LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
-  
+
   Assert.IsTrue(LSuccess);
   Assert.IsTrue(LContextPrompt.Contains('Projeto A.'));
 end;
@@ -129,7 +129,7 @@ var
 begin
   { Load from folder without .radia file }
   LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
-  
+
   Assert.IsFalse(LSuccess, 'Should return False if .radia file does not exist');
   Assert.IsEmpty(LContextPrompt, 'Prompt should be empty');
 end;
@@ -141,7 +141,7 @@ var
   LLargeContent: string;
   I: Integer;
 const
-  RADIA_JSON = 
+  RADIA_JSON =
     '{' +
     '  "system_prompt": "Projeto A.",' +
     '  "context_files": [' +
@@ -155,9 +155,9 @@ begin
 
   CreateFile('.radia', RADIA_JSON);
   CreateFile('large_file.txt', LLargeContent);
-  
+
   LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
-  
+
   Assert.IsTrue(LSuccess);
   Assert.IsTrue(LContextPrompt.Contains('Projeto A.'));
   Assert.IsTrue(LContextPrompt.Contains('[Arquivo: large_file.txt]'));

@@ -1,9 +1,9 @@
-unit RadIA.Provider.Bedrock;
+﻿unit RadIA.Provider.Bedrock;
 
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, 
+  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient,
   RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
@@ -34,12 +34,12 @@ type
       out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IRadIAConfig); override;
-    
+
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-      
+
     procedure FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>); override;
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;

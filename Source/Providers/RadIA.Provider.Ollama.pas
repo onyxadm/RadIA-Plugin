@@ -1,4 +1,4 @@
-unit RadIA.Provider.Ollama;
+﻿unit RadIA.Provider.Ollama;
 
 interface
 
@@ -15,8 +15,8 @@ type
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
   public
     constructor Create(const AConfig: IRadIAConfig); override;
-    
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
+
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
@@ -74,10 +74,10 @@ begin
       LRootObj.AddPair('options', LOptionsObj)
     else
       LOptionsObj.Free;
-    
+
     LMessagesArr := TJSONArray.Create;
     LRootObj.AddPair('messages', LMessagesArr);
-    
+
     { Add History }
     for LMsg in AHistory do
     begin
@@ -86,13 +86,13 @@ begin
       LMsgObj.AddPair('role', MessageRoleToString(LMsg.Role));
       LMsgObj.AddPair('content', LMsg.Content);
     end;
-    
+
     { Add Current Prompt }
     LMsgObj := TJSONObject.Create;
     LMessagesArr.AddElement(LMsgObj);
     LMsgObj.AddPair('role', 'user');
     LMsgObj.AddPair('content', APrompt);
-    
+
     Result := LRootObj.ToJSON;
   finally
     LRootObj.Free;
@@ -106,7 +106,7 @@ var
 begin
   Result := '';
   AUsage := TTokenUsage.Empty;
-  
+
   LJsonObj := TJSONObject.ParseJSONValue(AResponseJson) as TJSONObject;
   if Assigned(LJsonObj) then
   begin
@@ -116,7 +116,7 @@ begin
       begin
         Result := LMsgObj.GetValue<string>('content', '');
       end;
-      
+
       if Result.IsEmpty then
       begin
         if LJsonObj.GetValue('error') <> nil then
@@ -133,7 +133,7 @@ begin
   end;
 end;
 
-procedure TRadIAOllamaProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
+procedure TRadIAOllamaProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 var
   LUrl, LRequestBody: string;
@@ -184,7 +184,7 @@ begin
                    LModelsList := TList<string>.Create;
                    try
                      try
-                       LResponseText := DoGetRequest(LUrl, nil, 5000); // Timeout rápido de 5 segundos para busca de modelos
+                       LResponseText := DoGetRequest(LUrl, nil, 5000); // Timeout rÃ¡pido de 5 segundos para busca de modelos
                        LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
                        if Assigned(LJson) then
                        begin
@@ -207,14 +207,14 @@ begin
                            LJson.Free;
                          end;
                        end;
-                       
+
                        LModelsList.Sort;
-                       
+
                        if LModelsList.Count = 0 then
                          LModelsArray := GetAvailableModels
                        else
                          LModelsArray := LModelsList.ToArray;
-                         
+
                        if not GIsShuttingDown then
                        begin
                          TThread.Queue(nil,

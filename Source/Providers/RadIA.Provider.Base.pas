@@ -1,4 +1,4 @@
-unit RadIA.Provider.Base;
+﻿unit RadIA.Provider.Base;
 
 interface
 
@@ -174,13 +174,13 @@ constructor TRadIAProviderBase.Create(const AConfig: IRadIAConfig);
 begin
   inherited Create;
   FConfig := AConfig;
-  
+
   if not TRadIAContainer.TryResolve<IRadIAHttpClient>(FHTTPClient) then
     FHTTPClient := TRadIAConcreteHttpClient.Create;
-    
+
   if not TRadIAContainer.TryResolve<IRadIAErrorDecoder>(FErrorDecoder) then
     FErrorDecoder := TRadIAErrorDecoder.Create;
-    
+
   FProviderId := '';
 end;
 
@@ -219,7 +219,7 @@ var
 begin
   TLogger.Log(Format('DoGetRequest: URL=%s', [AUrl]), 'Provider');
   TLogger.Log(Format('DoGetRequest: Headers=[%s]', [MaskHeaders(AHeaders)]), 'Provider');
-  
+
   FCancelled := False;
   if ATimeoutMs > 0 then
     LTimeoutMs := ATimeoutMs
@@ -470,7 +470,7 @@ begin
                 LErrorMsg := LErrorMsg + ' Response: ' + LBufferText.Trim;
             end;
             LErrorMsg := E.ClassName + ': ' + LErrorMsg;
-            
+
             if not GIsShuttingDown then
             begin
               TThread.Queue(nil,

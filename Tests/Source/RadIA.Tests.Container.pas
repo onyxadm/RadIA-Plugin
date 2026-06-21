@@ -1,4 +1,4 @@
-unit RadIA.Tests.Container;
+﻿unit RadIA.Tests.Container;
 
 interface
 
@@ -121,7 +121,7 @@ var
 begin
   LServiceA := TMockServiceA.Create;
   LServiceB := TMockServiceB.Create;
-  
+
   TRadIAContainer.Register<IMockServiceA>(LServiceA);
   TRadIAContainer.Register<IMockServiceB>(LServiceB);
 
@@ -145,10 +145,10 @@ begin
             LInstanceA := TMockServiceA.Create;
             TRadIAContainer.Register<IMockServiceA>(LInstanceA);
           end;
-          
+
           TRadIAContainer.Resolve<IMockServiceA>;
           TRadIAContainer.Resolve<IMockServiceB>;
-          
+
           TRadIAContainer.TryResolve<IMockServiceA>(LResolvedA);
           TRadIAContainer.TryResolve<IMockServiceB>(LResolvedB);
         end;
@@ -159,7 +159,7 @@ begin
 
   // Wait for all tasks to complete
   TTask.WaitForAll(LTasks);
-  
+
   // Re-verify that container is still valid and responsive
   Assert.IsNotNull(TRadIAContainer.Resolve<IMockServiceB>);
 end;

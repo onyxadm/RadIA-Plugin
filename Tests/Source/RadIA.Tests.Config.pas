@@ -17,7 +17,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestActiveProviderPersistence;
     [Test]
@@ -68,7 +68,7 @@ procedure TTestRadIAConfig.TestActiveProviderPersistence;
 begin
   FConfig.SetActiveProvider('Gemini');
   Assert.AreEqual('Gemini', FConfig.GetActiveProvider);
-  
+
   FConfig.SetActiveProvider('Claude');
   Assert.AreEqual('Claude', FConfig.GetActiveProvider);
 end;
@@ -81,7 +81,7 @@ var
 begin
   FConfig.SetApiKey('Gemini', TEST_KEY);
   FConfig.Save;
-  
+
   FConfig.Load;
   Assert.AreEqual(TEST_KEY, FConfig.GetApiKey('Gemini'));
 
@@ -101,7 +101,7 @@ const
 begin
   FConfig.SetApiKey('Gemini', TEST_KEY);
   FConfig.Save;
-  
+
   FConfig.Load;
   Assert.AreEqual(TEST_KEY, FConfig.GetApiKey('Gemini'));
 end;
@@ -112,7 +112,7 @@ const
 begin
   FConfig.SetActiveModel('Gemini', TEST_MODEL);
   FConfig.Save;
-  
+
   FConfig.Load;
   Assert.AreEqual(TEST_MODEL, FConfig.GetActiveModel('Gemini'));
 end;
@@ -123,7 +123,7 @@ const
 begin
   FConfig.SystemPrompt := TEST_PROMPT;
   FConfig.Save;
-  
+
   FConfig.Load;
   Assert.AreEqual(TEST_PROMPT, FConfig.SystemPrompt);
 end;
@@ -145,7 +145,7 @@ const
 begin
   FConfig.OllamaBaseUrl := TEST_URL;
   FConfig.Save;
-  
+
   FConfig.Load;
   Assert.AreEqual(TEST_URL, FConfig.OllamaBaseUrl);
 end;
@@ -164,7 +164,7 @@ begin
     Assert.IsTrue(LParsed is TJSONObject);
     LJson := LParsed as TJSONObject;
     LCode := LJson.GetValue<string>('code', '');
-    
+
     Assert.AreEqual(11, LCode.Length);
     Assert.AreEqual(Char(#10), LCode[6]);
   finally

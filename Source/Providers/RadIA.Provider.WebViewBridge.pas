@@ -1,4 +1,4 @@
-unit RadIA.Provider.WebViewBridge;
+﻿unit RadIA.Provider.WebViewBridge;
 
 interface
 
@@ -20,19 +20,19 @@ type
   public
     constructor Create(const AConfig: IRadIAConfig); override;
     destructor Destroy; override;
-    
+
     procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer); override;
-      
+
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;
     procedure CancelCurrentRequest; override;
 
     class property OnSendPrompt: TWebViewBridgeSendPromptEvent read FOnSendPrompt write FOnSendPrompt;
     class property OnCancel: TWebViewBridgeCancelEvent read FOnCancel write FOnCancel;
-    
+
     class procedure ReceiveChunk(const AChunk: string; const AIsDone: Boolean; const AError: string);
   end;
 
@@ -75,10 +75,10 @@ begin
           ACallback('', AError, False, TTokenUsage.Empty);
         Exit;
       end;
-      
+
       if not AChunk.IsEmpty then
         LAccumulator.Append(AChunk);
-        
+
       if AIsDone then
       begin
         var LFullText := LAccumulator.ToString;
@@ -98,7 +98,7 @@ begin
   TLogger.Log('WebViewBridge.SendPromptStreamAsync started.', 'Provider');
   FCancelled := False;
   FActiveCallback := ACallback;
-  
+
   LOnSendPrompt := FOnSendPrompt;
   if Assigned(LOnSendPrompt) then
   begin
@@ -152,15 +152,15 @@ end;
 class procedure TRadIAWebViewBridgeProvider.ReceiveChunk(const AChunk: string;
   const AIsDone: Boolean; const AError: string);
 begin
-  TLogger.Log(Format('WebViewBridge.ReceiveChunk: ChunkLen=%d, IsDone=%s, HasError=%s', 
+  TLogger.Log(Format('WebViewBridge.ReceiveChunk: ChunkLen=%d, IsDone=%s, HasError=%s',
     [Length(AChunk), BoolToStr(AIsDone, True), BoolToStr(not AError.IsEmpty, True)]), 'Provider');
-    
+
   if Assigned(FActiveInstance) and Assigned(FActiveInstance.FActiveCallback) then
   begin
     var LCallback := FActiveInstance.FActiveCallback;
     if AIsDone or not AError.IsEmpty then
       FActiveInstance.FActiveCallback := nil;
-      
+
     LCallback(AChunk, AIsDone, AError);
   end
   else

@@ -1,4 +1,4 @@
-unit RadIA.Provider.GithubCopilot;
+﻿unit RadIA.Provider.GithubCopilot;
 
 interface
 
@@ -13,7 +13,7 @@ type
     class var FSessionLock: TCriticalSection;
     class var FSessionToken: string;
     class var FTokenExpiryTime: TDateTime;
-    
+
     class constructor Create;
     class destructor Destroy;
   protected
@@ -121,7 +121,7 @@ begin
 
       LResponse := LClient.Get('https://api.github.com/copilot_internal/v2/token', nil, LHeaders);
       if LResponse.StatusCode <> 200 then
-        raise Exception.CreateFmt('HTTP error %d: %s. Response: %s', 
+        raise Exception.CreateFmt('HTTP error %d: %s. Response: %s',
           [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
 
       LJson := TJSONObject.ParseJSONValue(LResponse.ContentAsString(TEncoding.UTF8)) as TJSONObject;
@@ -146,7 +146,7 @@ begin
 
         FSessionToken := LToken;
         FTokenExpiryTime := IncSecond(Now, LRefreshIn);
-        
+
         TLogger.Log('GitHub Copilot session token retrieved successfully. Valid for ' + LRefreshIn.ToString + ' seconds.', 'Provider');
         Result := FSessionToken;
       finally
@@ -196,7 +196,7 @@ begin
         end;
 
         LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
-        
+
         SetLength(LHeaders, 5);
         LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LSessionToken);
         LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
@@ -263,7 +263,7 @@ begin
         end;
 
         LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
-        
+
         SetLength(LHeaders, 5);
         LHeaders[0] := TNetHeader.Create('Authorization', 'Bearer ' + LSessionToken);
         LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
@@ -328,7 +328,7 @@ begin
     LClient.SendTimeout := 10000;
     LClient.ResponseTimeout := 10000;
     LClient.AcceptCharSet := 'utf-8';
-    
+
     SetLength(LHeaders, 2);
     LHeaders[0] := TNetHeader.Create('Accept', 'application/json');
     LHeaders[1] := TNetHeader.Create('Content-Type', 'application/x-www-form-urlencoded');
@@ -354,16 +354,16 @@ begin
         try
           LVal := LJson.GetValue('device_code');
           if Assigned(LVal) then ADeviceCode := LVal.Value;
-          
+
           LVal := LJson.GetValue('user_code');
           if Assigned(LVal) then AUserCode := LVal.Value;
-          
+
           LVal := LJson.GetValue('verification_uri');
           if Assigned(LVal) then AVerificationUri := LVal.Value;
-          
+
           LVal := LJson.GetValue('interval');
           if Assigned(LVal) then AInterval := StrToIntDef(LVal.Value, 5);
-          
+
           LVal := LJson.GetValue('expires_in');
           if Assigned(LVal) then AExpiresIn := StrToIntDef(LVal.Value, 900);
 
@@ -414,7 +414,7 @@ begin
     LClient.SendTimeout := 10000;
     LClient.ResponseTimeout := 10000;
     LClient.AcceptCharSet := 'utf-8';
-    
+
     SetLength(LHeaders, 2);
     LHeaders[0] := TNetHeader.Create('Accept', 'application/json');
     LHeaders[1] := TNetHeader.Create('Content-Type', 'application/x-www-form-urlencoded');
@@ -513,7 +513,7 @@ initialization
       'GitHub Copilot',
       'https://api.githubcopilot.com',
       True,  { Requer API Key (ghu_... / gho_...) }
-      False, { Não permite URL customizada }
+      False, { NÃ£o permite URL customizada }
       ['gpt-4', 'gpt-3.5-turbo'],
       function(const ACfg: IRadIAConfig): IRadIAProvider
       begin

@@ -15,7 +15,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestAnalysisTemplates_ArePresent;
     [Test]
@@ -88,7 +88,7 @@ const
 begin
   Assert.IsTrue(FManager.FindTemplate('Analyze Stack Trace', LTemplate));
   LResolved := LTemplate.Template.Replace('{stacktrace}', STACK).Replace('{code}', CODE);
-  
+
   Assert.IsTrue(LResolved.Contains(STACK), 'Should contain the stack trace content');
   Assert.IsTrue(LResolved.Contains(CODE), 'Should contain the active code context');
 end;

@@ -23,7 +23,7 @@
     #diff-output {
       padding: 5px;
     }
-    
+
     /* Dark mode styling overrides for diff2html */
     body.dark-theme .d2h-wrapper {
       background-color: #1e1e1e;
@@ -74,31 +74,31 @@
 </head>
 <body class="dark-theme">
   <div id="diff-output">Generating code comparison... Please wait.</div>
-  
+
   <script>
     function renderDiff(fileName, originalCode, modifiedCode) {
       try {
         // Generate patch via jsdiff
         const patch = Diff.createPatch(fileName, originalCode, modifiedCode, 'Original', 'Suggested Refactoring');
-        
+
         // Render side-by-side comparison using diff2html
         const diffHtml = Diff2Html.html(patch, {
           drawFileList: false,
           matching: 'lines',
           outputFormat: 'side-by-side'
         });
-        
+
         document.getElementById('diff-output').innerHTML = diffHtml;
       } catch (err) {
         document.getElementById('diff-output').innerHTML = '<div style="color: red; padding: 10px;">Error generating diff: ' + err.message + '</div>';
       }
     }
-    
+
     function setTheme(theme) {
       document.body.className = '';
       document.body.classList.add(theme + '-theme');
     }
-    
+
     // Listen for messages from WebView2
     if (window.chrome && window.chrome.webview) {
       window.chrome.webview.addEventListener('message', event => {

@@ -1,4 +1,4 @@
-unit RadIA.Core.ProviderRegistry;
+﻿unit RadIA.Core.ProviderRegistry;
 
 interface
 
@@ -17,7 +17,7 @@ type
     DefaultModels: TArray<string>;
     FactoryFunc: TProviderFactoryFunc;
     IsDynamic: Boolean;
-    
+
     class function Create(const AId, ADisplayName, ADefaultBaseUrl: string;
       AHasApiKey, AHasCustomUrl: Boolean; const ADefaultModels: TArray<string>;
       const AFactory: TProviderFactoryFunc): TProviderMetadata; static;

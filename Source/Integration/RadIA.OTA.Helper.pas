@@ -1,4 +1,4 @@
-unit RadIA.OTA.Helper;
+﻿unit RadIA.OTA.Helper;
 
 interface
 
@@ -168,11 +168,11 @@ var
 begin
   Result := False;
   AText := '';
-  
+
   LEditBuffer := GetCurrentEditBuffer;
   if ASelectedOnly and (not Assigned(LEditBuffer)) then
     Exit;
-    
+
   if ASelectedOnly then
   begin
     LEditBlock := LEditBuffer.EditBlock;
@@ -536,7 +536,7 @@ var
 begin
   LLangID := GetUserDefaultUILanguage;
   LPrimaryLang := LLangID and $3FF;
-  
+
   case LPrimaryLang of
     $16: Result := 'Please reply in Brazilian Portuguese.'; // LANG_PORTUGUESE
     $0A: Result := 'Please reply in Spanish.';              // LANG_SPANISH

@@ -1,4 +1,4 @@
-unit RadIA.UI.DiffForm;
+﻿unit RadIA.UI.DiffForm;
 
 interface
 
@@ -41,7 +41,7 @@ type
     FCanApply: Boolean;
     FRequestTimeoutTimer: TTimer;
     FLifecycleGuard: IInterface;
-    
+
     procedure FormShow(Sender: TObject);
     procedure LoadWindowPlacement;
     procedure RequestRefactoring;
@@ -53,7 +53,7 @@ type
     procedure PostToWebView(const AAction, AText: string);
   public
     procedure InitializeDiff(const AUnitName, AOriginalCode: string; const AWebFilesDir: string = '');
-    
+
     property OriginalCode: string read FOriginalCode;
     property SuggestedCode: string read FSuggestedCode;
   end;
@@ -76,7 +76,7 @@ var
   LActiveTheme: string;
 begin
   inherited CreateWnd;
-  
+
   LActiveTheme := 'light';
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -85,7 +85,7 @@ begin
       LActiveTheme := LThemingServices.ActiveTheme;
     end;
   end;
-  
+
   if SameText(LActiveTheme, 'dark') then
   begin
     TRadIAUIHelper.ApplyDarkTitleBar(Self, True);
@@ -120,7 +120,7 @@ begin
   FRequestTimeoutTimer.OnTimer := RequestTimeoutElapsed;
   btnApply.Enabled := False;
   LoadWindowPlacement;
-  
+
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
@@ -128,7 +128,7 @@ begin
       LThemingServices.ApplyTheme(Self);
     end;
   end;
-  
+
   OnShow := FormShow;
 end;
 
@@ -279,13 +279,13 @@ var
 begin
   if not FBrowserInitialized then
     Exit;
-    
+
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', AAction);
     if not AText.IsEmpty then
       LJson.AddPair('theme', AText);
-      
+
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
   finally
@@ -302,14 +302,14 @@ begin
     FPendingRender := True;
     Exit;
   end;
-    
+
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'render');
     LJson.AddPair('fileName', FUnitName);
     LJson.AddPair('original', FOriginalCode);
     LJson.AddPair('modified', FSuggestedCode);
-    
+
     if Assigned(EdgeBrowser.DefaultInterface) then
       EdgeBrowser.DefaultInterface.PostWebMessageAsJson(PChar(LJson.ToJSON));
     FPendingRender := False;
@@ -405,11 +405,11 @@ begin
              'the language. Do not place any text before or after the fenced code block. ' +
              'Do not split the source into multiple code blocks or explanations.' +
              #13#10'Here is the code:'#13#10 + FOriginalCode;
-             
+
   LGuard := FLifecycleGuard as IRadIALifecycleGuard;
 
   FRequestTimeoutTimer.Enabled := True;
-             
+
   FAIService.SendPrompt(LPrompt, [],
     procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
     var
@@ -432,11 +432,11 @@ begin
       else
       begin
         LCleanedResponse := CleanSuggestedCode(AResponse);
-          
+
         FCanApply := not LCleanedResponse.Trim.IsEmpty;
         FSuggestedCode := LCleanedResponse.Trim;
       end;
-      
+
       TThread.Queue(nil,
         procedure
         begin

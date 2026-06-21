@@ -39,7 +39,7 @@ begin
   LUsage.PromptTokens := 1250;
   LUsage.CompletionTokens := 450;
   LUsage.TotalTokens := 1700;
-  
+
   LStats := LUsage.FormatStats;
   { Stats should contain arrow characters: ↑ 1,250 · ↓ 450 }
   Assert.IsFalse(LUsage.IsEmpty);

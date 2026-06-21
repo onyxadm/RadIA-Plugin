@@ -1,4 +1,4 @@
-unit RadIA.UI.ChatFrame;
+﻿unit RadIA.UI.ChatFrame;
 
 interface
 
@@ -88,7 +88,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    
+
     procedure SetTheme(const AThemeName: string);
     procedure EnsureVisibleContent;
 
@@ -98,24 +98,24 @@ type
     procedure PostMessageToWeb(const AJson: string);
     procedure PostMessageToBackgroundWeb(const AJson: string);
     procedure ApplyCurrentTheme;
-    
+
     procedure CreateBackgroundBrowser;
     function IsBackgroundBrowserInitialized: Boolean;
     procedure NavigateBackgroundBrowser(const AUrl: string);
     procedure ShowLoginWindow(const AUrl: string; AOnLoginSuccess: TProc);
-    
+
     procedure UpdateProviders(const AProviders: TArray<string>; const AActiveProvider: string);
     procedure UpdateModels(const AModels: TArray<string>; const AActiveModel: string; const AEnabled: Boolean);
     procedure UpdateSessions(const ASessions: TArray<TSessionInfo>; const AActiveSessionId: string);
     procedure UpdateTemplates(const ATemplates: TArray<string>);
-    
+
     function GetPromptInput: string;
     procedure SetPromptInput(const APrompt: string);
     procedure FocusPromptInput;
-    
+
     function GetActiveEditorText(out ACode: string; const AOnlySelected: Boolean): Boolean;
     procedure ReplaceActiveEditorText(const ACode: string);
-    
+
     procedure ShowMessageDialog(const AMessage: string);
     function SaveDialogExecute(out AFileName: string): Boolean;
     procedure ToggleSessionsPanel;
@@ -206,7 +206,7 @@ begin
   inherited Create(AOwner);
   FBrowserInitialized := False;
   FWebViewInitialized := False;
-  
+
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
     if LThemingServices.IDEThemingEnabled then
@@ -214,12 +214,12 @@ begin
       LThemingServices.ApplyTheme(Self);
     end;
   end;
-  
+
   FLifecycleGuard := TLifecycleGuard.Create;
   FPopupMenuTemplates := TPopupMenu.Create(Self);
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   CopyWebFiles;
-  
+
   FPresenter := TRadIAChatPresenter.Create(Self);
 
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
@@ -253,13 +253,13 @@ begin
     LMediator.UnregisterPromptHandler
   else
     TRadIAMediator.Instance.UnregisterPromptHandler;
-  
+
   if Assigned(FPopupMenuTemplates) then
   begin
     for I := 0 to FPopupMenuTemplates.Items.Count - 1 do
       FPopupMenuTemplates.Items[I].OnClick := nil;
   end;
-  
+
   if Assigned(lstSessions) then
   begin
     for I := 0 to lstSessions.Items.Count - 1 do
@@ -275,7 +275,7 @@ begin
   end;
 
   FPresenter.Free;
-  
+
   if not GIsShuttingDown then
   begin
     if Assigned(FEdgeBrowserWeb) then
@@ -411,28 +411,28 @@ var
   LModuleDir: string;
 begin
   ForceDirectories(FWebFilesDir);
-  
+
   LModuleDir := ExtractFilePath(GetModuleName(HInstance));
   LSourceDir := TPath.Combine(LModuleDir, 'Web');
-  
+
   if not TDirectory.Exists(LSourceDir) then
   begin
     LSourceDir := TPath.GetFullPath(TPath.Combine(LModuleDir, '..\Web'));
   end;
-  
+
   if not TDirectory.Exists(LSourceDir) then
   begin
     LSourceDir := TPath.GetFullPath(TPath.Combine(LModuleDir, '..\..\..\Source\UI\Web'));
   end;
-  
+
   if not TDirectory.Exists(LSourceDir) then
   begin
     LSourceDir := 'D:\Projetos\PluginDelphiIA\Source\UI\Web';
   end;
-  
+
   if not TDirectory.Exists(LSourceDir) then
     Exit;
-    
+
   CopyDirectory(LSourceDir, FWebFilesDir);
 end;
 
@@ -519,8 +519,8 @@ begin
   LCurrentName := '';
   if lstSessions.ItemIndex <> -1 then
     LCurrentName := lstSessions.Items[lstSessions.ItemIndex];
-    
-  LNewName := InputBox('Renomear Conversa', 'Digite o novo título da conversa:', LCurrentName);
+
+  LNewName := InputBox('Renomear Conversa', 'Digite o novo tÃ­tulo da conversa:', LCurrentName);
   if not LNewName.Trim.IsEmpty then
   begin
     FPresenter.RenameSession(FPresenter.SessionManager.ActiveSessionId, LNewName);
@@ -529,7 +529,7 @@ end;
 
 procedure TRadIAFrameAIChat.btnDeleteSessionClick(Sender: TObject);
 begin
-  if MessageDlg('Deseja realmente excluir esta conversa e todo o seu histórico?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  if MessageDlg('Deseja realmente excluir esta conversa e todo o seu histÃ³rico?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
     FPresenter.DeleteSession(FPresenter.SessionManager.ActiveSessionId);
   end;
@@ -632,7 +632,7 @@ begin
   try
     LJson.AddPair('action', 'set_theme');
     LJson.AddPair('theme', GetWebThemeName(AThemeName));
-    
+
     LJson.AddPair('bgBase', ColorToHex(LColors.BgBase));
     LJson.AddPair('bgPanel', ColorToHex(LColors.BgBase));
     LJson.AddPair('bgInput', ColorToHex(LColors.InputBgColor));
@@ -643,7 +643,7 @@ begin
     LJson.AddPair('codeHeader', ColorToHex(LColors.CodeHeader));
     LJson.AddPair('greenApply', LColors.GreenApply);
     LJson.AddPair('border', ColorToHex(LColors.BorderColor));
-    
+
     if LColors.IsDark then
       LJson.AddPair('accent', '#007acc')
     else
@@ -745,16 +745,16 @@ begin
   pnlSessions.Color := AColors.BgBase;
   pnlSessionsHeader.Color := AColors.BgBase;
   pnlBrowser.Color := AColors.BgBase;
-  
+
   lblTitle.Font.Color := AColors.TextColor;
   lblContext.Font.Color := AColors.TextColor;
-  
+
   memPrompt.Color := AColors.InputBgColor;
   memPrompt.Font.Color := AColors.TextColor;
-  
+
   lstSessions.Color := AColors.InputBgColor;
   lstSessions.Font.Color := AColors.TextColor;
-  
+
   shpInputBg.Brush.Color := AColors.InputBgColor;
   shpInputBg.Pen.Color := AColors.BorderColor;
 end;
@@ -989,7 +989,7 @@ begin
     end;
 
     LForm.LoadConfig;
-    
+
     if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
     begin
       if LThemingServices.IDEThemingEnabled then
@@ -997,7 +997,7 @@ begin
         LThemingServices.ApplyTheme(LForm);
       end;
     end;
-    
+
     if LForm.ShowModal = mrOk then
     begin
       FPresenter.LoadConfig;
@@ -1030,7 +1030,7 @@ begin
     FEdgeBrowserWeb.OnCreateWebViewCompleted := EdgeBrowserWebCreateWebViewCompleted;
     FEdgeBrowserWeb.OnSourceChanged := EdgeBrowserWebSourceChanged;
     FEdgeBrowserWeb.OnWebMessageReceived := EdgeBrowserWebWebMessageReceived;
-    
+
     FEdgeBrowserWeb.UserDataFolder := TPath.Combine(TPath.GetHomePath, 'RadIA\WebView2Web');
     FEdgeBrowserWeb.CreateWebView;
   end;
@@ -1052,7 +1052,7 @@ begin
       begin
         LSettings.Set_AreDevToolsEnabled(1);
         LSettings.Set_AreDefaultContextMenusEnabled(1);
-        
+
         if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
         begin
           LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');

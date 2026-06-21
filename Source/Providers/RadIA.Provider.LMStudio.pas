@@ -74,7 +74,7 @@ var
   LApiKey: string;
 begin
   LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
-  
+
   LApiKey := FConfig.GetApiKey(FProviderId);
   if LApiKey.IsEmpty then
     LApiKey := 'lm-studio'; { Dummy API Key since LM Studio is local and doesn't require auth }
@@ -108,7 +108,7 @@ var
   LApiKey: string;
 begin
   LUrl := GetBaseUrl.TrimRight(['/']) + '/chat/completions';
-  
+
   LApiKey := FConfig.GetApiKey(FProviderId);
   if LApiKey.IsEmpty then
     LApiKey := 'lm-studio'; { Dummy API Key }

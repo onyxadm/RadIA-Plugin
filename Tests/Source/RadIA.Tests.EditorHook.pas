@@ -1,4 +1,4 @@
-unit RadIA.Tests.EditorHook;
+﻿unit RadIA.Tests.EditorHook;
 
 interface
 
@@ -21,7 +21,7 @@ type
     procedure SetUp;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestInitialHooking;
     [Test]
@@ -88,9 +88,9 @@ var
 begin
   LEventDummy := DummyOnPopup;
   FPopupMenu.OnPopup := LEventDummy;
-  
+
   FHook.HookMenuDirectly(FPopupMenu);
-  
+
   // The OnPopup handler should have been changed to the hook handler
   Assert.AreNotEqual(TMethod(FPopupMenu.OnPopup).Code, TMethod(LEventDummy).Code);
 end;
@@ -102,24 +102,24 @@ var
 begin
   LEventDummy := DummyOnPopup;
   FPopupMenu.OnPopup := LEventDummy;
-  
+
   FHook.HookMenuDirectly(FPopupMenu);
-  
+
   // Override the handler (simulating the IDE re-creating the menu)
   FOnPopup2Called := False;
   LNewDummy := DummyOnPopup2;
   FPopupMenu.OnPopup := LNewDummy;
-  
+
   // Execute the hooker again (e.g. triggered by the 1s timer)
   FHook.HookMenuDirectly(FPopupMenu);
-  
+
   // The active OnPopup handler should still point to the hook handler
   Assert.AreNotEqual(TMethod(FPopupMenu.OnPopup).Code, TMethod(LNewDummy).Code);
-  
+
   // When the event fires, the overridden IDE handler should still be invoked
   if Assigned(FPopupMenu.OnPopup) then
     FPopupMenu.OnPopup(FPopupMenu);
-    
+
   Assert.IsTrue(FOnPopup2Called, 'The overridden IDE handler should have been chained and executed by the hooker');
 end;
 
@@ -145,10 +145,10 @@ var
 begin
   LEventDummy := DummyOnPopup;
   FPopupMenu.OnPopup := LEventDummy;
-  
+
   FHook.HookMenuDirectly(FPopupMenu);
   FHook.UnhookMenuDirectly(FPopupMenu);
-  
+
   // The original OnPopup handler should be perfectly restored
   Assert.AreEqual(TMethod(FPopupMenu.OnPopup).Code, TMethod(LEventDummy).Code);
 end;

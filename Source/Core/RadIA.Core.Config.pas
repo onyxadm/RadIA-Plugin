@@ -1,9 +1,9 @@
-unit RadIA.Core.Config;
+﻿unit RadIA.Core.Config;
 
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces, 
+  System.SysUtils, System.Classes, System.Generics.Collections, RadIA.Core.Interfaces,
   RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Core.SettingsStorage;
 
 type
@@ -159,7 +159,7 @@ begin
   inherited Create;
   if FStorage = nil then
     FStorage := TRadIARegistrySettingsStorage.Create;
-  
+
   LogDebug('TRadIAConfig.Create: Active path = ' + GetRegistryPath);
 
   FApiKeysList := TStringList.Create;
@@ -180,7 +180,7 @@ begin
   FAwsSecretAccessKey := '';
   FAwsRegion := TConfigDefaults.AwsRegion;
   FAwsSessionToken := '';
-  
+
   FSmartConfigEnabled := True;
   FLogEnabled := True;
   FLogPath := TConfigDefaults.LogPath;
@@ -191,14 +191,14 @@ begin
   FQuotaUsed := 0;
   FQuotaCycleStart := Now;
   FActiveSessionId := '';
-  
+
   FAutocompleteEnabled := True;
   FAutocompleteProvider := TConfigDefaults.AutocompleteProvider;
   FAutocompleteModel := TConfigDefaults.AutocompleteModel;
   FAutocompleteDelay := TConfigDefaults.AutocompleteDelay;
   FInjectDelphiVersion := True;
   FConciseResponses := True;
-  
+
   Load;
 end;
 
@@ -229,7 +229,7 @@ begin
   Result := FSystemPrompt;
 end;
 
-{ Registry read helpers — encapsulate the try/except boilerplate }
+{ Registry read helpers â€” encapsulate the try/except boilerplate }
 
 function TRadIAConfig.ReadRegString(const AKey: string; const ADefault: string): string;
 begin
@@ -290,13 +290,13 @@ var
   LMeta: TProviderMetadata;
 begin
   LogDebug('TRadIAConfig.Load starting. Path = ' + APath);
-  
+
   { If the new key does not exist, try to migrate legacy keys. }
   if not FStorage.KeyExists(APath) then
   begin
     LogDebug('TRadIAConfig.Load: Path does not exist, checking for migration path...');
     LMigratedPath := '';
-    
+
     { 1. If the path contains a backslash, try IDE-relative legacy paths. }
     if Pos('\', APath) > 0 then
     begin
@@ -306,7 +306,7 @@ begin
       else if FStorage.KeyExists(LParentPath + 'RadIA') then
         LMigratedPath := LParentPath + 'RadIA';
     end;
-    
+
     { 2. Global fallbacks. }
     if LMigratedPath.IsEmpty then
     begin
@@ -345,14 +345,14 @@ begin
     FQuotaUsed := StrToInt64Def(ReadRegString('QuotaUsed', '0'), 0);
     FQuotaCycleStart := ReadRegDouble('QuotaCycleStart', Now);
     FActiveSessionId := ReadRegString('ActiveSessionId', '');
-    
+
     FAutocompleteEnabled := ReadRegInt('AutocompleteEnabled', 1) <> 0;
     FAutocompleteProvider := FStorage.ReadString('AutocompleteProvider', TConfigDefaults.AutocompleteProvider);
     FAutocompleteModel := ReadRegString('AutocompleteModel', TConfigDefaults.AutocompleteModel);
     FAutocompleteDelay := ReadRegInt('AutocompleteDelay', TConfigDefaults.AutocompleteDelay);
     FInjectDelphiVersion := ReadRegInt('InjectDelphiVersion', 1) <> 0;
     FConciseResponses := ReadRegInt('ConciseResponses', 1) <> 0;
-    
+
     FStorage.CloseKey;
 
     CheckAndResetQuotaCycle;
@@ -491,7 +491,7 @@ var
   LMeta: TProviderMetadata;
 begin
   LogDebug('TRadIAConfig.Save starting. Path = ' + APath);
-  
+
   { 1. Salvar chaves globais na raiz }
   if FStorage.OpenKey(APath, True) then
   begin
@@ -507,7 +507,7 @@ begin
     FStorage.WriteString('QuotaUsed', FQuotaUsed.ToString);
     FStorage.WriteFloat('QuotaCycleStart', FQuotaCycleStart);
     FStorage.WriteString('ActiveSessionId', FActiveSessionId);
-    
+
     FStorage.WriteInteger('AutocompleteEnabled', IfThen(FAutocompleteEnabled, 1, 0));
     FStorage.WriteString('AutocompleteProvider', FAutocompleteProvider);
     FStorage.WriteString('AutocompleteModel', FAutocompleteModel);
@@ -933,7 +933,7 @@ procedure TRadIAConfig.AddToQuotaUsage(const AUsage: TTokenUsage);
 begin
   if not FQuotaEnabled then
     Exit;
-    
+
   CheckAndResetQuotaCycle;
   FQuotaUsed := FQuotaUsed + AUsage.TotalTokens;
   Save;
@@ -946,7 +946,7 @@ var
 begin
   DecodeDate(Now, LYear, LMonth, LDay);
   DecodeDate(FQuotaCycleStart, LCycleYear, LCycleMonth, LCycleDay);
-  
+
   if (LYear <> LCycleYear) or (LMonth <> LCycleMonth) then
   begin
     FQuotaUsed := 0;

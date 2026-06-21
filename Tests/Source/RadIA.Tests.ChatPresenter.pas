@@ -1,4 +1,4 @@
-unit RadIA.Tests.ChatPresenter;
+﻿unit RadIA.Tests.ChatPresenter;
 
 interface
 
@@ -21,9 +21,9 @@ type
     LoginWindowShown: Boolean;
     LoginWindowUrl: string;
     LoginSuccessCallback: TProc;
-    
+
     PostedMessages: TStringList;
-    
+
     ProvidersList: TArray<string>;
     ActiveProviderId: string;
     ModelsList: TArray<string>;
@@ -32,14 +32,14 @@ type
     SessionsList: TArray<TSessionInfo>;
     ActiveSessionId: string;
     TemplatesList: TArray<string>;
-    
+
     PromptInputText: string;
     PromptFocused: Boolean;
     ActiveEditorText: string;
     ActiveEditorTextSelectionOnly: Boolean;
     EditorTextReplaced: Boolean;
     ReplacedEditorTextValue: string;
-    
+
     LastMessageDialogText: string;
     SaveDialogResult: Boolean;
     SaveDialogSelectedFileName: string;
@@ -81,7 +81,7 @@ type
     FModels: TArray<string>;
   public
     constructor Create(const AId, AName: string; const AModels: TArray<string>);
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
@@ -110,7 +110,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestInitialization;
     [Test]
@@ -306,7 +306,7 @@ begin
   FModels := AModels;
 end;
 
-procedure TMockIAProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
+procedure TMockIAProvider.SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
 begin
 end;
@@ -365,10 +365,10 @@ begin
   FConfig.Load;
   FConfig.SetProviderAuthType('Gemini', 'api_key');
   FConfig.SetProviderAuthType('OpenAI', 'api_key');
-  
+
   FHasOriginalGemini := TProviderRegistry.GetProvider('Gemini', FGeminiOriginalMeta);
   FHasOriginalOpenAI := TProviderRegistry.GetProvider('OpenAI', FOpenAIOriginalMeta);
-  
+
   TProviderRegistry.RegisterProvider(
     TProviderMetadata.Create('Gemini', 'Gemini Mock', '', True, False, TArray<string>.Create('gemini-1.5-flash', 'gemini-1.5-pro'),
       function(const ACfg: IRadIAConfig): IRadIAProvider
@@ -396,7 +396,7 @@ begin
   FPresenter.Free;
   FConfig := nil;
   TRadIAConfig.SetStorage(nil);
-  
+
   if FHasOriginalGemini then
     TProviderRegistry.RegisterProvider(FGeminiOriginalMeta);
   if FHasOriginalOpenAI then
@@ -414,7 +414,7 @@ end;
 procedure TTestChatPresenter.TestInitialization;
 begin
   FPresenter.Initialize('C:\mock\web');
-  
+
   Assert.IsTrue(Length(FMockView.ProvidersList) > 0);
   Assert.AreEqual('Gemini', FMockView.ActiveProviderId);
   Assert.AreEqual('Loading...', FMockView.ActiveModelName);
@@ -427,13 +427,13 @@ var
 begin
   FPresenter.Initialize('C:\mock\web');
   FPresenter.WebViewReady := True;
-  
+
   FMockView.PromptInputText := 'Hello Assistant';
-  
+
   FPresenter.SendPrompt;
-  
+
   Assert.AreEqual('', FMockView.PromptInputText);
-  
+
   LFound := False;
   for LMsg in FMockView.PostedMessages do
   begin
@@ -503,9 +503,9 @@ var
 begin
   FPresenter.Initialize('C:\mock\web');
   FPresenter.WebViewReady := True;
-  
+
   FPresenter.ClearChat;
-  
+
   LFound := False;
   for LMsg in FMockView.PostedMessages do
   begin
@@ -522,9 +522,9 @@ procedure TTestChatPresenter.TestSelectSessionLoadsHistory;
 begin
   FPresenter.Initialize('C:\mock\web');
   FPresenter.WebViewReady := True;
-  
+
   FPresenter.SelectSession('session-xyz');
-  
+
   Assert.AreEqual('session-xyz', FPresenter.SessionManager.ActiveSessionId);
   Assert.AreEqual('session-xyz', FConfig.ActiveSessionId);
 end;
@@ -535,10 +535,10 @@ var
 begin
   FPresenter.Initialize('C:\mock\web');
   FPresenter.WebViewReady := True;
-  
+
   LPreviousSessionId := FPresenter.SessionManager.ActiveSessionId;
   FPresenter.CreateNewSession;
-  
+
   Assert.IsFalse(FPresenter.SessionManager.ActiveSessionId.IsEmpty);
   Assert.AreNotEqual(LPreviousSessionId, FPresenter.SessionManager.ActiveSessionId);
   Assert.AreEqual(FPresenter.SessionManager.ActiveSessionId, FMockView.ActiveSessionId);
@@ -549,7 +549,7 @@ procedure TTestChatPresenter.TestHandleTemplateSelectedLoadsInInput;
 begin
   FPresenter.Initialize('C:\mock\web');
   FPresenter.HandleTemplateSelected('Review Leaks and SOLID');
-  
+
   Assert.IsFalse(FMockView.PromptInputText.IsEmpty);
   Assert.IsTrue(FMockView.PromptFocused);
 end;
@@ -558,7 +558,7 @@ procedure TTestChatPresenter.TestChangeProviderUpdatesModels;
 begin
   FPresenter.Initialize('C:\mock\web');
   FPresenter.ChangeProvider('OpenAI');
-  
+
   Assert.AreEqual('OpenAI', FConfig.GetActiveProvider);
   Assert.AreEqual('Loading...', FMockView.ActiveModelName);
 end;

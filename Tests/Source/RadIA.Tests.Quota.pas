@@ -16,7 +16,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestQuotaIncrement;
     [Test]
@@ -43,7 +43,7 @@ begin
   FConfig.QuotaUsed := 0;
   FConfig.QuotaCycleStart := Now;
   FConfig.Save;
-  
+
   FService := TRadIAService.Create(FConfig);
 end;
 
@@ -64,13 +64,13 @@ begin
   FConfig.QuotaUsed := 0;
   FConfig.QuotaLimit := 1000;
   FConfig.Save;
-  
+
   LUsage.PromptTokens := 100;
   LUsage.CompletionTokens := 150;
   LUsage.TotalTokens := 250;
-  
+
   FConfig.AddToQuotaUsage(LUsage);
-  
+
   Assert.AreEqual(Int64(250), FConfig.QuotaUsed);
 end;
 
@@ -81,15 +81,15 @@ begin
   FConfig.QuotaEnabled := True;
   FConfig.QuotaLimit := 1000;
   FConfig.QuotaUsed := 500;
-  
+
   // Set start of cycle to 2 months ago to force reset
   LPrevMonth := IncMonth(Now, -2);
   FConfig.QuotaCycleStart := LPrevMonth;
   FConfig.Save;
-  
+
   // Reloading config should check and trigger the reset cycle
   FConfig.Load;
-  
+
   Assert.AreEqual(Int64(0), FConfig.QuotaUsed);
   Assert.AreNotEqual(LPrevMonth, FConfig.QuotaCycleStart);
 end;
@@ -107,12 +107,12 @@ begin
   FConfig.QuotaLimit := 100;
   FConfig.QuotaUsed := 100; // Limit reached
   FConfig.Save;
-  
+
   LHistory := [];
   LDoneEvent := TSimpleEvent.Create;
   try
     LErrorMsg := '';
-    
+
     // 1. Test SendPrompt (Blocking)
     FService.SendPrompt('Hello AI', LHistory,
       procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
@@ -120,13 +120,13 @@ begin
         LErrorMsg := AError;
         LDoneEvent.SetEvent;
       end);
-      
+
     LDoneEvent.WaitFor(5000);
     Assert.Contains(LErrorMsg, 'Local monthly token quota exceeded');
-    
+
     LDoneEvent.ResetEvent;
     LErrorMsg := '';
-    
+
     // 2. Test SendPromptStream (Blocking)
     FService.SendPromptStream('Hello AI', LHistory,
       procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
@@ -137,7 +137,7 @@ begin
           LDoneEvent.SetEvent;
         end;
       end);
-      
+
     LDoneEvent.WaitFor(5000);
     Assert.Contains(LErrorMsg, 'Local monthly token quota exceeded');
   finally

@@ -1,4 +1,4 @@
-unit RadIA.Tests.Templates;
+﻿unit RadIA.Tests.Templates;
 
 interface
 
@@ -16,7 +16,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestDefaultTemplates_ArePresent;
     [Test]
@@ -93,7 +93,7 @@ const
   TEMP_CONTENT = 'Refactor: {code}';
 begin
   FManager.AddTemplate(TEMP_NAME, TEMP_DESC, TEMP_CONTENT);
-  
+
   Assert.IsTrue(FManager.FindTemplate(TEMP_NAME, LTemplate));
   Assert.AreEqual(TEMP_DESC, LTemplate.Description);
   Assert.AreEqual(TEMP_CONTENT, LTemplate.Template);
@@ -142,7 +142,7 @@ const
 begin
   FManager.AddTemplate('Custom Temp', 'Desc', 'Optimise this: {code}');
   LResolved := FManager.ResolveTemplate('Custom Temp', CODE_SNIPPET);
-  
+
   Assert.AreEqual('Optimise this: var I: Integer;', LResolved);
 end;
 
@@ -153,7 +153,7 @@ var
 begin
   LTemplates := FManager.GetTemplates;
   Assert.IsTrue(Length(LTemplates) >= 8, 'Should contain all default templates');
-  
+
   for LTemp in LTemplates do
   begin
     Assert.IsTrue(LTemp.IsSystem, 'Defaults should be marked as system templates');
@@ -171,12 +171,12 @@ const
 begin
   FManager.AddTemplate(SYS_NAME, 'Custom Desc', CUSTOM_PROMPT, False, '/review');
   FManager.Save;
-  
+
   Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
   Assert.IsTrue(LTemplate.IsSystem, 'Should still be marked as system template');
   Assert.IsTrue(LTemplate.IsCustomized, 'Should be marked as customized');
   Assert.AreEqual(CUSTOM_PROMPT, LTemplate.Template);
-  
+
   LTempFile := TPath.Combine(FTempDir, 'templates.json');
   if TFile.Exists(LTempFile) then
     TFile.Delete(LTempFile);
@@ -192,17 +192,17 @@ const
 begin
   Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
   LOriginalTemplate := LTemplate.Template;
-  
+
   FManager.AddTemplate(SYS_NAME, LTemplate.Description, 'Modified body {code}', LTemplate.IsProjectGenerator, LTemplate.SlashCommand);
   Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
   Assert.IsTrue(LTemplate.IsCustomized);
-  
+
   FManager.RestoreDefaultTemplate(SYS_NAME);
-  
+
   Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
   Assert.IsFalse(LTemplate.IsCustomized);
   Assert.AreEqual(LOriginalTemplate, LTemplate.Template);
-  
+
   LTempFile := TPath.Combine(FTempDir, 'templates.json');
   if TFile.Exists(LTempFile) then
     TFile.Delete(LTempFile);
@@ -224,14 +224,14 @@ begin
   LTempFile := TPath.Combine(FTempDir, 'templates.json');
   ForceDirectories(TPath.GetDirectoryName(LTempFile));
   TFile.WriteAllText(LTempFile, LEGACY_JSON, TEncoding.UTF8);
-  
+
   FManager.Load;
-  
+
   Assert.IsTrue(FManager.FindTemplate('Review Clean Code Delphi', LTemplate));
   Assert.IsTrue(LTemplate.IsSystem);
   Assert.IsFalse(LTemplate.IsCustomized, 'Redundant overlay should have been removed and reverted to raw system template');
   Assert.AreEqual('/review', LTemplate.SlashCommand);
-  
+
   if TFile.Exists(LTempFile) then
   begin
     LJSON := TFile.ReadAllText(LTempFile, TEncoding.UTF8);
@@ -250,14 +250,14 @@ begin
   LTempFile := TPath.Combine(FTempDir, 'templates.json');
   ForceDirectories(TPath.GetDirectoryName(LTempFile));
   TFile.WriteAllText(LTempFile, LEGACY_JSON_NO_USES, TEncoding.UTF8);
-  
+
   FManager.Load;
-  
+
   Assert.IsTrue(FManager.FindTemplate('Create Project Delphi', LTemplate));
   Assert.IsTrue(LTemplate.IsSystem);
   Assert.IsFalse(LTemplate.IsCustomized, 'Legacy templates missing uses should have been discarded on load and reverted to code system default');
   Assert.IsTrue(LTemplate.Template.Contains('uses'), 'Active template must contain the newly updated uses rule');
-  
+
   if TFile.Exists(LTempFile) then
     TFile.Delete(LTempFile);
 end;

@@ -1,4 +1,4 @@
-unit RadIA.Core.PromptTemplates;
+﻿unit RadIA.Core.PromptTemplates;
 
 interface
 
@@ -24,14 +24,14 @@ type
     FDefaultTemplates: TList<TPromptTemplate>; // Hardcoded system defaults
     FUserTemplates: TList<TPromptTemplate>;    // User overrides and custom templates loaded from json
     FFilePath: string;
-    
+
     procedure CreateDefaultTemplates;
     procedure BuildActiveTemplates;
     procedure CleanRedundantUserTemplates;
   public
     constructor Create(const ABaseDir: string = '');
     destructor Destroy; override;
-    
+
     procedure Load;
     procedure Save;
     procedure AddTemplate(const AName, ADescription, ATemplate: string; const AIsProjectGenerator: Boolean = False; const ASlashCommand: string = '');
@@ -42,7 +42,7 @@ type
     function GetTemplates: TArray<TPromptTemplate>;
     function FindTemplate(const AName: string; out ATemplate: TPromptTemplate): Boolean;
     function ResolveTemplate(const AName: string; const AActiveCode: string): string;
-    
+
     { Backup / Restore }
     procedure ExportToFile(const AFileName: string);
     function ImportFromFile(const AFileName: string; const AMerge: Boolean; out AErrorMsg: string): Boolean;
@@ -256,7 +256,7 @@ var
   LFound: Boolean;
 begin
   FTemplates.Clear;
-  
+
   // 1. Process default system templates and apply user overrides (overlays)
   for LDefaultTemp in FDefaultTemplates do
   begin
@@ -273,7 +273,7 @@ begin
         Break;
       end;
     end;
-    
+
     if not LFound then
     begin
       LTemp := LDefaultTemp;
@@ -282,7 +282,7 @@ begin
       FTemplates.Add(LTemp);
     end;
   end;
-  
+
   // 2. Process custom templates created purely by the user
   for LUserTemp in FUserTemplates do
   begin
@@ -295,7 +295,7 @@ begin
         Break;
       end;
     end;
-    
+
     if not LFound then
     begin
       LTemp := LUserTemp;
@@ -343,7 +343,7 @@ begin
       LChanged := True;
       Continue;
     end;
-    
+
     // Force upgrade of legacy templates missing 'uses' or 'Generics' rules
     if SameText(LUser.Name, 'Create Project Delphi') or SameText(LUser.Name, 'Create Project Delphi Architecture') then
     begin
@@ -373,7 +373,7 @@ begin
       end;
     end;
   end;
-  
+
   if LChanged then
   begin
     Save;
@@ -390,10 +390,10 @@ var
   LParsedVal: TJSONValue;
 begin
   FUserTemplates.Clear;
-  
+
   // Always reload fresh default templates
   CreateDefaultTemplates;
-  
+
   if not TFile.Exists(FFilePath) then
   begin
     BuildActiveTemplates;
@@ -407,7 +407,7 @@ begin
       BuildActiveTemplates;
       Exit;
     end;
-    
+
     LParsedVal := TJSONObject.ParseJSONValue(LJsonContent);
     if Assigned(LParsedVal) then
     begin
@@ -427,7 +427,7 @@ begin
               LTemplate.SlashCommand := LObj.GetValue<string>('slashCommand', '');
               LTemplate.IsSystem := False;     // Set in BuildActiveTemplates
               LTemplate.IsCustomized := False; // Set in BuildActiveTemplates
-              
+
               if not LTemplate.Name.IsEmpty then
                 FUserTemplates.Add(LTemplate);
             end;
@@ -441,7 +441,7 @@ begin
     on E: Exception do
       TLogger.Log('TPromptTemplateManager.Load: Failed to load templates: ' + E.Message, 'Core');
   end;
-  
+
   CleanRedundantUserTemplates;
   BuildActiveTemplates;
 end;
@@ -453,7 +453,7 @@ var
   LTemplate: TPromptTemplate;
 begin
   ForceDirectories(TPath.GetDirectoryName(FFilePath));
-  
+
   LJsonArr := TJSONArray.Create;
   try
     // Save only user modifications and user templates (avoid saving raw default system templates)
@@ -467,7 +467,7 @@ begin
       LObj.AddPair('slashCommand', LTemplate.SlashCommand);
       LJsonArr.AddElement(LObj);
     end;
-    
+
     TFile.WriteAllText(FFilePath, LJsonArr.ToJSON, TEncoding.UTF8);
   finally
     LJsonArr.Free;
@@ -504,7 +504,7 @@ begin
       LTemplate.IsSystem := LIsDefault;
       LTemplate.IsCustomized := LIsDefault;
       FUserTemplates[I] := LTemplate;
-      
+
       BuildActiveTemplates;
       Exit;
     end;
@@ -518,7 +518,7 @@ begin
   LTemplate.IsSystem := LIsDefault;
   LTemplate.IsCustomized := LIsDefault;
   FUserTemplates.Add(LTemplate);
-  
+
   BuildActiveTemplates;
 end;
 
@@ -534,7 +534,7 @@ begin
       Break;
     end;
   end;
-  
+
   BuildActiveTemplates;
 end;
 
@@ -551,7 +551,7 @@ begin
       Break;
     end;
   end;
-  
+
   BuildActiveTemplates;
   Save;
 end;
@@ -637,7 +637,7 @@ var
 begin
   Result := False;
   AErrorMsg := '';
-  
+
   if not TFile.Exists(AFileName) then
   begin
     AErrorMsg := 'File not found.';

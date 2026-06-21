@@ -1,4 +1,4 @@
-unit RadIA.OTA.EditorHook;
+﻿unit RadIA.OTA.EditorHook;
 
 interface
 
@@ -23,7 +23,7 @@ type
     FHookPending: Boolean;
     FHookRequestedAt: UInt64;
     {$ENDIF}
-    
+
     procedure ActiveFormChange(Sender: TObject);
     procedure QueueHookActiveEditor;
     {$IFNDEF TESTS}
@@ -66,11 +66,11 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    
+
     procedure Install;
     procedure Uninstall;
     procedure PopulateToolsMenu(const AMenuItem: TMenuItem);
-    
+
     procedure HookMenuDirectly(APopupMenu: TPopupMenu);
     procedure UnhookMenuDirectly(APopupMenu: TPopupMenu);
     class function CleanCreateExampleResponse(const AResponse: string; const AIndent: string): string; static;
@@ -264,7 +264,7 @@ begin
     Exit;
 
   TLogger.Log('Installing editor local menu hooks via VCL injection', 'EditorHook');
-  
+
   if not Assigned(FInterceptedMenus) then
     FInterceptedMenus := TDictionary<TPopupMenu, TNotifyEvent>.Create;
 
@@ -311,10 +311,10 @@ begin
         TLogger.Log('Uninstall: Error restoring Screen.OnActiveFormChange: ' + E.Message, 'EditorHook');
     end;
   end;
-  
+
   FInstalled := False;
   RemoveEditorNotifiers;
-    
+
   if Assigned(Screen) and (not GIsShuttingDown) then
   begin
     for I := 0 to Screen.FormCount - 1 do
@@ -602,7 +602,7 @@ begin
       TLogger.Log('Hooking OnPopup of EditorLocalMenu', 'EditorHook');
       FInterceptedMenus.Add(APopupMenu, LEventCurrent);
     end;
-    
+
     APopupMenu.OnPopup := LEventHook;
   end;
 end;
@@ -811,12 +811,12 @@ var
 begin
   if not Assigned(AMenuItem) then
     Exit;
-    
+
   LItem := TMenuItem.Create(AMenuItem);
   LItem.Caption := 'Rad IA Chat Panel';
   LItem.OnClick := OnShowChatExecute;
   AMenuItem.Add(LItem);
-  
+
   LItem := TMenuItem.Create(AMenuItem);
   LItem.Caption := 'Fix Last Compiler Error';
   LItem.OnClick := OnFixErrorExecute;
@@ -1214,9 +1214,9 @@ begin
     ShowMessage('No compiler errors found in the Messages View.');
     Exit;
   end;
-  
+
   TLogger.Log(Format('OnFixErrorExecute: Compiler Error found. File=%s, Line=%d, Msg=%s', [LFileName, LLine, LErrorMsg]), 'EditorHook');
-  
+
   { Extract source code context if line is valid }
   LSourceCode := '';
   if LLine > 0 then
@@ -1226,12 +1226,12 @@ begin
 
     if LHasText then
     begin
-      LSourceCode := 'Source Code Context around the error line:'#13#10'```pascal'#13#10 + 
-                     TRadIAContextParser.GetClassContextAtLine(LSourceCode, LLine) + 
+      LSourceCode := 'Source Code Context around the error line:'#13#10'```pascal'#13#10 +
+                     TRadIAContextParser.GetClassContextAtLine(LSourceCode, LLine) +
                      #13#10'```';
     end;
   end;
-  
+
   LPrompt := Format('/fix'#13#10'Compiler Error: %s'#13#10'File: %s (Line %d)'#13#10#13#10'%s',
     [LErrorMsg, ExtractFileName(LFileName), LLine, LSourceCode]);
 

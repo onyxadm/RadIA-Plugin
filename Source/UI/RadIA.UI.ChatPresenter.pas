@@ -1,4 +1,4 @@
-unit RadIA.UI.ChatPresenter;
+﻿unit RadIA.UI.ChatPresenter;
 
 interface
 
@@ -15,24 +15,24 @@ type
     procedure PostMessageToWeb(const AJson: string);
     procedure PostMessageToBackgroundWeb(const AJson: string);
     procedure ApplyCurrentTheme;
-    
+
     procedure CreateBackgroundBrowser;
     function IsBackgroundBrowserInitialized: Boolean;
     procedure NavigateBackgroundBrowser(const AUrl: string);
     procedure ShowLoginWindow(const AUrl: string; AOnLoginSuccess: TProc);
-    
+
     procedure UpdateProviders(const AProviders: TArray<string>; const AActiveProvider: string);
     procedure UpdateModels(const AModels: TArray<string>; const AActiveModel: string; const AEnabled: Boolean);
     procedure UpdateSessions(const ASessions: TArray<TSessionInfo>; const AActiveSessionId: string);
     procedure UpdateTemplates(const ATemplates: TArray<string>);
-    
+
     function GetPromptInput: string;
     procedure SetPromptInput(const APrompt: string);
     procedure FocusPromptInput;
-    
+
     function GetActiveEditorText(out ACode: string; const AOnlySelected: Boolean): Boolean;
     procedure ReplaceActiveEditorText(const ACode: string);
-    
+
     procedure ShowMessageDialog(const AMessage: string);
     function SaveDialogExecute(out AFileName: string): Boolean;
     procedure ToggleSessionsPanel;
@@ -84,7 +84,7 @@ type
     procedure SendSessionsUpdateToWeb;
     procedure PostToWebView(const AAction, ARole, AText: string; const AProvider: string = ''; const AModel: string = ''); overload;
     procedure PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean; const AProvider: string = ''; const AModel: string = ''); overload;
-    
+
     procedure HandleOnbtnWebLoginConnectClick;
     procedure QueueOnUI(const AProcedure: TProc);
     procedure DispatchWebMessage(const AAction: string; const AJson: TJSONObject);
@@ -117,29 +117,29 @@ type
     procedure LoadConfig;
     procedure ProcessWebMessage(const AMessage: string);
     procedure OnWebViewReady;
-    
+
     procedure SendPrompt;
     procedure SendPromptText(const APromptText: string);
     procedure SendPromptToAI(const APromptText: string);
     procedure CancelRequest;
     procedure ClearChat;
-    
+
     procedure ChangeProvider(const AProviderName: string);
     procedure ChangeModel(const AModelName: string);
-    
+
     procedure ToggleSessions;
     procedure CreateNewSession;
     procedure RenameSession(const ASessionId, ANewName: string);
     procedure DeleteSession(const ASessionId: string);
     procedure SelectSession(const ASessionId: string);
-    
+
     procedure ExportChat;
     procedure OpenSettings;
-    
+
     procedure HandlePromptInputKeyDown(var Key: Word; const Shift: TShiftState);
     procedure HandleTemplateSelected(const ATemplateName: string);
     procedure HandleGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
-    
+
     procedure GenerateDTO(const AInput, AInputType, AOutputType: string);
 
     procedure OnWebViewBridgeSendPrompt(const APrompt: string);
@@ -233,10 +233,10 @@ begin
 
   FPromptHistoryManager := TPromptHistoryManager.Create;
   FAccumulatedUsage := TTokenUsage.Empty;
-  
+
   FTemplateManager := TPromptTemplateManager.Create(FDataDir);
   FTemplateManager.Load;
-  
+
   FSessionManager := TRadIASessionManager.Create(TPath.Combine(FDataDir, 'sessions'));
   FSessionManager.ActiveSessionId := FConfig.ActiveSessionId;
 end;
@@ -266,7 +266,7 @@ begin
   FPromptHistoryManager.Free;
   FTemplateManager.Free;
   FSessionManager.Free;
-  
+
   if FOwnsService and Assigned(FAIService) then
     FAIService := nil;
 
@@ -279,7 +279,7 @@ var
   LTemplateNames: TArray<string>;
 begin
   FWebFilesDir := AWebFilesDir;
-  
+
   LTemplateNames := [];
   for LTemplate in FTemplateManager.GetTemplates do
   begin
@@ -368,7 +368,7 @@ var
 begin
   FView.UpdateModels(['Loading...'], 'Loading...', False);
   LGuard := FLifecycleGuard as IRadIALifecycleGuard;
- 
+
   try
     if Assigned(FModelsProvider) then
     begin
@@ -380,7 +380,7 @@ begin
       end;
       FModelsProvider := nil;
     end;
- 
+
     FModelsProvider := FAIService.CreateActiveProvider;
     LProvider := FModelsProvider;
     LProvider.FetchAvailableModelsAsync(
@@ -394,23 +394,23 @@ begin
           begin
             if not LGuard.IsAlive then
               Exit;
-              
+
             if FModelsProvider = LProvider then
               FModelsProvider := nil;
- 
+
             if Assigned(LProvider) then
             begin
               Self.FActiveModels := AModels;
               LProvId := LProvider.GetProviderId;
               LActiveModel := Self.FConfig.GetActiveModel(LProvId);
-              
+
               if (Length(AModels) > 0) and (LActiveModel.IsEmpty or (IndexOfString(AModels, LActiveModel) = -1)) then
               begin
                 LActiveModel := AModels[0];
                 Self.FConfig.SetActiveModel(LProvId, LActiveModel);
                 Self.FConfig.Save;
               end;
-              
+
               Self.FView.UpdateModels(AModels, LActiveModel, True);
               Self.SendModelsUpdateToWeb(AModels, LActiveModel);
             end;
@@ -477,10 +477,10 @@ begin
   FAccumulatedUsage := TTokenUsage.Empty;
   PostToWebView('clear_chat', '', '');
   PostToWebView('update_tokens', '', '');
-  
+
   if Assigned(FAIService) then
     FAIService.ClearCache;
-  
+
   if not FSessionManager.ActiveSessionId.IsEmpty then
   begin
     try
@@ -541,21 +541,21 @@ begin
     Exit;
 
   FSessionManager.DeleteSession(ASessionId);
-  
+
   if SameText(FSessionManager.ActiveSessionId, ASessionId) then
   begin
     FSessionManager.ActiveSessionId := '';
     FConfig.ActiveSessionId := '';
     FConfig.Save;
   end;
-  
+
   UpdateSessionsList;
-  
+
   FHistory := [];
   FAccumulatedUsage := TTokenUsage.Empty;
   PostToWebView('clear_chat', '', '');
   PostToWebView('update_tokens', '', '');
-  
+
   LoadChatHistory;
   SendSessionsUpdateToWeb;
 end;
@@ -564,22 +564,22 @@ procedure TRadIAChatPresenter.SelectSession(const ASessionId: string);
 begin
   if not CanChangeSession then
     Exit;
-  
+
   if not FSessionManager.ActiveSessionId.IsEmpty and not SameText(FSessionManager.ActiveSessionId, ASessionId) then
     SaveChatHistory;
-    
+
   FSessionManager.ActiveSessionId := ASessionId;
   FSessionManager.UpdateSessionActivity(ASessionId);
   FConfig.ActiveSessionId := ASessionId;
   FConfig.Save;
-  
+
   UpdateSessionsList;
-  
+
   FHistory := [];
   FAccumulatedUsage := TTokenUsage.Empty;
   PostToWebView('clear_chat', '', '');
   PostToWebView('update_tokens', '', '');
-  
+
   LoadChatHistory;
   SendSessionsUpdateToWeb;
 end;
@@ -601,12 +601,12 @@ begin
   begin
     LProviderName := FConfig.GetActiveProvider;
     LModelName := FConfig.GetActiveModel(LProviderName);
-    
+
     if SameText(ExtractFileExt(LFileName), '.html') then
       LContent := TConversationExporter.ExportToHTML(FHistory, LProviderName, LModelName)
     else
       LContent := TConversationExporter.ExportToMarkdown(FHistory, LProviderName, LModelName);
-      
+
     try
       TFile.WriteAllText(LFileName, LContent, TEncoding.UTF8);
       FView.ShowMessageDialog('Conversation exported successfully!');
@@ -622,7 +622,7 @@ begin
   FView.OpenSettingsDialog;
   FConfig.Load;
   LoadConfig;
-  
+
   FTemplateManager.Load;
   Initialize(FWebFilesDir);
 end;
@@ -662,12 +662,12 @@ var
 begin
   if not Assigned(FTemplateManager) then
     Exit;
-    
+
   if not FView.GetActiveEditorText(LActiveCode, True) or LActiveCode.IsEmpty then
     FView.GetActiveEditorText(LActiveCode, False);
 
   LResolved := FTemplateManager.ResolveTemplate(ATemplateName, LActiveCode);
-  
+
   FView.SetPromptInput(LResolved);
   FView.FocusPromptInput;
 end;
@@ -762,16 +762,16 @@ begin
     LProfile := rpGenerateTests
   else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) or APromptText.StartsWith('Analyze the following Delphi stack trace', True) then
     LProfile := rpExplainCode;
-  
+
   LUserMsg := TRadIAChatMessage.CreateMessage(mrUser, APromptText, LActiveProvider, LActiveModel);
   FHistory := FHistory + [LUserMsg];
   SaveChatHistory;
 
   LFullResponse := '';
   LGuard := FLifecycleGuard as IRadIALifecycleGuard;
-  
+
   PostToWebView('show_typing', '', '');
-  
+
   try
     FAIService.SendPromptStream(APromptText, FHistory,
       procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
@@ -826,14 +826,14 @@ begin
               Self.FRequestInProgress := False;
               Self.FView.SetRequestState(False);
               TLogger.Log('SendPromptToAI: Handling user cancellation in UI callback.', 'UI');
-              
+
               if not LFullResponse.IsEmpty then
               begin
                 LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse + ' [Cancelled by user]', LActiveProvider, LActiveModel);
                 Self.FHistory := Self.FHistory + [LAssistantMsg];
                 Self.SaveChatHistory;
               end;
-              
+
               Self.PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*', False, LActiveProvider, LActiveModel);
               Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
               Exit;
@@ -845,12 +845,12 @@ begin
               Self.FRequestInProgress := False;
               Self.FView.SetRequestState(False);
               TLogger.Log(Format('SendPromptToAI error callback: %s', [AError]), 'UI');
-              
+
               if not LFullResponse.IsEmpty then
               begin
                 LFullResponse := LFullResponse + #13#10#13#10 + '**Error:** ' + AError;
                 Self.PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + AError, True, LActiveProvider, LActiveModel);
-                
+
                 LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
                 Self.FHistory := Self.FHistory + [LAssistantMsg];
                 Self.SaveChatHistory;
@@ -914,7 +914,7 @@ begin
                 LStats := Self.FAccumulatedUsage.FormatStats;
                 if Self.FConfig.QuotaEnabled and (not Self.FConfig.IsWebLoginProvider(LActiveProvider)) then
                 begin
-                  LStats := LStats + Format(' · Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
+                  LStats := LStats + Format(' Â· Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 end;
 
                 Self.PostToWebView('update_tokens', '', LStats);
@@ -1035,7 +1035,7 @@ begin
                   Self.FConfig.AddToQuotaUsage(LUsage);
                 LStats := Self.FAccumulatedUsage.FormatStats;
                 if Self.FConfig.QuotaEnabled and (not Self.FConfig.IsWebLoginProvider(LActiveProvider)) then
-                  LStats := LStats + Format(' · Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
+                  LStats := LStats + Format(' Â· Quota %d%%', [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
                 Self.PostToWebView('update_tokens', '', LStats);
               end;
 
@@ -1060,7 +1060,7 @@ begin
   FWebViewReady := True;
   FView.ApplyCurrentTheme;
   SendInitialConfigToWeb;
-  
+
   if FRequestInProgress then
   begin
     FView.SetRequestState(True);
@@ -1449,7 +1449,7 @@ begin
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', 'send_prompt');
-    
+
     var LFinalPrompt := APrompt;
     if not LFinalPrompt.Trim.IsEmpty then
     begin
@@ -1460,7 +1460,7 @@ begin
       if not LInstruction.IsEmpty then
         LFinalPrompt := LFinalPrompt + sLineBreak + sLineBreak + LInstruction;
     end;
-    
+
     LJson.AddPair('text', LFinalPrompt);
     FView.PostMessageToBackgroundWeb(LJson.ToJSON);
   finally
@@ -1520,12 +1520,12 @@ procedure TRadIAChatPresenter.OnBackgroundBrowserNavigation(const AUrl: string);
 var
   LIsAuthPage: Boolean;
 begin
-  LIsAuthPage := AUrl.Contains('accounts.google.com') or 
-                 AUrl.Contains('auth.openai.com') or 
-                 AUrl.Contains('accounts.openai.com') or 
-                 AUrl.Contains('/auth/login') or 
+  LIsAuthPage := AUrl.Contains('accounts.google.com') or
+                 AUrl.Contains('auth.openai.com') or
+                 AUrl.Contains('accounts.openai.com') or
+                 AUrl.Contains('/auth/login') or
                  AUrl.Contains('ServiceLogin');
-                 
+
   if LIsAuthPage then
   begin
     TLogger.Log('OnBackgroundBrowserNavigation: Auth page redirect detected. URL: ' + AUrl, 'UI');
@@ -1554,7 +1554,7 @@ begin
     Exit;
 
   TLogger.Log('HandleOnbtnWebLoginConnectClick: Opening popup form for ' + LActiveProvider, 'UI');
-  
+
   FLoginPopupOpen := True;
   try
     FView.ShowLoginWindow(LUrl,
@@ -1801,16 +1801,16 @@ begin
   begin
     FSessionManager.CreateSession('Initial Chat');
   end;
-  
+
   LSessionsArray := FSessionManager.Sessions.ToArray;
-  
+
   if FSessionManager.ActiveSessionId.IsEmpty and (Length(LSessionsArray) > 0) then
   begin
     FSessionManager.ActiveSessionId := LSessionsArray[0].Id;
     FConfig.ActiveSessionId := FSessionManager.ActiveSessionId;
     FConfig.Save;
   end;
-  
+
   FView.UpdateSessions(GetVisibleSessions, FSessionManager.ActiveSessionId);
 end;
 
@@ -1846,7 +1846,7 @@ begin
 
   TLogger.Log(Format('PostToWebView: Action=%s, Role=%s, TextLen=%d, IsDone=%s, Provider=%s, Model=%s',
     [AAction, ARole, Length(AText), BoolToStr(AIsDone, True), AProvider, LDisplayModel]), 'UI');
-    
+
   LJson := TJSONObject.Create;
   try
     LJson.AddPair('action', AAction);
@@ -1859,7 +1859,7 @@ begin
       LJson.AddPair('provider', AProvider);
     if not LDisplayModel.IsEmpty then
       LJson.AddPair('model', LDisplayModel);
-      
+
     FView.PostMessageToWeb(LJson.ToJSON);
   finally
     LJson.Free;
@@ -1924,7 +1924,7 @@ begin
       else
         LDefaultModels := [];
     end;
-      
+
     for LModel in LDefaultModels do
     begin
       LModelsJson.Add(LModel);

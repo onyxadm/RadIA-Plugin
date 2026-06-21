@@ -11,7 +11,7 @@ type
     Name: string;
     CreatedAt: TDateTime;
     LastActive: TDateTime;
-    
+
     class function CreateNew(const AId, AName: string): TSessionInfo; static;
   end;
 
@@ -21,23 +21,23 @@ type
     FIndexFile: string;
     FSessions: TList<TSessionInfo>;
     FActiveSessionId: string;
-    
+
     procedure LoadIndex;
     procedure SaveIndex;
     function FindSessionIndex(const AId: string): Integer;
   public
     constructor Create(const ASessionsDir: string = '');
     destructor Destroy; override;
-    
+
     property Sessions: TList<TSessionInfo> read FSessions;
     property ActiveSessionId: string read FActiveSessionId write FActiveSessionId;
     property SessionsDir: string read FSessionsDir;
-    
+
     function CreateSession(const AName: string = ''): TSessionInfo;
     procedure DeleteSession(const AId: string);
     procedure RenameSession(const AId: string; const ANewName: string);
     procedure UpdateSessionActivity(const AId: string);
-    
+
     function GetSessionFilePath(const AId: string): string;
     function SessionHasHistory(const AId: string): Boolean;
     function LoadSessionHistory(const AId: string): TArray<IRadIAChatMessage>;
@@ -132,7 +132,7 @@ begin
           if LVal is TJSONObject then
           begin
             LObj := LVal as TJSONObject;
-            
+
             if LObj.GetValue('id') <> nil then
               LInfo.Id := LObj.GetValue('id').Value
             else
@@ -142,7 +142,7 @@ begin
               LInfo.Name := LObj.GetValue('name').Value
             else
               LInfo.Name := '';
-            
+
             if LObj.GetValue('createdAt') <> nil then
             begin
               try
@@ -172,7 +172,7 @@ begin
       end;
       LVal.Free;
     end;
-    
+
     { Sort by LastActive descending to show recent first }
     FSessions.Sort(TComparer<TSessionInfo>.Construct(
       function(const L, R: TSessionInfo): Integer
@@ -184,7 +184,7 @@ begin
         else
           Result := 0;
       end));
-      
+
     LogSession(Format('LoadIndex: Loaded %d sessions.', [FSessions.Count]));
   except
     on E: Exception do
@@ -209,7 +209,7 @@ begin
       LObj.AddPair('lastActive', DateToISO8601(LInfo.LastActive));
       LArr.AddElement(LObj);
     end;
-    
+
     TFile.WriteAllText(FIndexFile, LArr.ToJSON, TEncoding.UTF8);
   finally
     LArr.Free;
@@ -230,7 +230,7 @@ begin
   Result := TSessionInfo.CreateNew(LGuid.ToString.Replace('{', '').Replace('}', ''), LSessionName);
   FSessions.Insert(0, Result);
   SaveIndex;
-  
+
   LogSession('CreateSession: Created ' + Result.Id);
 end;
 
@@ -244,7 +244,7 @@ begin
   begin
     FSessions.Delete(LIndex);
     SaveIndex;
-    
+
     LFile := GetSessionFilePath(AId);
     if TFile.Exists(LFile) then
     begin
@@ -255,10 +255,10 @@ begin
           LogSession('DeleteSession: Error deleting file ' + LFile + ': ' + E.Message);
       end;
     end;
-    
+
     if SameText(FActiveSessionId, AId) then
       FActiveSessionId := '';
-      
+
     LogSession('DeleteSession: Deleted ' + AId);
   end;
 end;
@@ -353,7 +353,7 @@ begin
           if LVal is TJSONObject then
           begin
             LMsgObj := LVal as TJSONObject;
-            
+
             if LMsgObj.GetValue('role') <> nil then
               LRoleStr := LMsgObj.GetValue('role').Value
             else
@@ -373,7 +373,7 @@ begin
               LModelStr := LMsgObj.GetValue('model').Value
             else
               LModelStr := '';
-            
+
             if not LContentStr.IsEmpty then
             begin
               LRole := StringToMessageRole(LRoleStr);
@@ -417,7 +417,7 @@ begin
         LMsgObj.AddPair('model', LMsg.Model);
       LJsonArr.AddElement(LMsgObj);
     end;
-    
+
     TFile.WriteAllText(LFile, LJsonArr.ToJSON, TEncoding.UTF8);
   finally
     LJsonArr.Free;

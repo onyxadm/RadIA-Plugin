@@ -73,7 +73,7 @@ begin
   FHTTPClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
 
   LResponse := FHTTPClient.Get(AUrl, nil, AHeaders);
-  
+
   if LResponse.StatusCode <> 200 then
   begin
     raise ERadIAHttpException.Create(
@@ -106,7 +106,7 @@ begin
   LSourceStream := TStringStream.Create(ARequestBody, TEncoding.UTF8);
   try
     LResponse := FHTTPClient.Post(AUrl, LSourceStream, nil, AHeaders);
-    
+
     if LResponse.StatusCode <> 200 then
     begin
       raise ERadIAHttpException.Create(
@@ -144,7 +144,7 @@ begin
   LTargetStream := TRadIAStreamingTargetStream.Create(AOnWrite);
   try
     LResponse := FHTTPClient.Post(AUrl, LSourceStream, LTargetStream, AHeaders);
-    
+
     if LResponse.StatusCode <> 200 then
     begin
       raise ERadIAHttpException.Create(

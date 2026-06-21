@@ -65,7 +65,7 @@ type
   { Interface representing an AI Provider }
   IRadIAProvider = interface
     ['{A2833F50-9A0B-432D-8B8D-20DFF15FF25D}']
-    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; 
+    procedure SendPromptAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TCompletionCallback; const ATemperature: Double; const AMaxTokens: Integer);
     procedure SendPromptStreamAsync(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ACallback: TStreamChunkCallback; const ATemperature: Double; const AMaxTokens: Integer);
@@ -251,7 +251,7 @@ type
     ['{7468E6A2-0FBE-4BD2-BE1E-D7C6FBFA9A2E}']
     function Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
     function Post(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
-    procedure PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string; 
+    procedure PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
       const AOnWrite: TProc<TBytes>; const ATimeoutMs: Integer = 0);
     procedure Cancel;
   end;

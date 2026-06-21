@@ -1,9 +1,9 @@
-unit RadIA.Provider.Generic;
+﻿unit RadIA.Provider.Generic;
 
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types, 
+  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types,
   RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type

@@ -1,4 +1,4 @@
-unit RadIA.UI.ConfigPresenter;
+﻿unit RadIA.UI.ConfigPresenter;
 
 interface
 
@@ -56,7 +56,7 @@ type
     procedure SetLogPath(const AValue: string);
     function GetLogMaxSize: string;
     procedure SetLogMaxSize(const AValue: string);
-    
+
     function GetQuotaEnabled: Boolean;
     procedure SetQuotaEnabled(const AValue: Boolean);
     function GetQuotaLimit: string;
@@ -202,7 +202,7 @@ begin
   FView.SetApiKey('OpenRouter', FConfig.GetApiKey('OpenRouter'));
   FView.SetSystemPrompt(FConfig.SystemPrompt);
   FView.SetCustomUrl('Ollama', FConfig.OllamaBaseUrl);
-  
+
   FView.SetCustomUrl('LMStudio', FConfig.GetProviderBaseUrl('LMStudio'));
   FView.SetApiKey('GithubCopilot', FConfig.GetApiKey('GithubCopilot'));
 
@@ -260,13 +260,13 @@ begin
   LLMStudioUrl := Trim(FView.GetCustomUrl('LMStudio'));
   LAzureUrl := Trim(FView.GetCustomUrl('AzureOpenAI'));
 
-  // Validações de URL
+  // ValidaÃ§Ãµes de URL
   if not ValidateUrl(LOllamaUrl, 'Ollama URL') then Exit;
   if not ValidateUrl(LOpenAIUrl, 'OpenAI Custom Base URL') then Exit;
   if not ValidateUrl(LLMStudioUrl, 'LM Studio URL') then Exit;
   if not ValidateUrl(LAzureUrl, 'Azure OpenAI Endpoint URL') then Exit;
 
-  // Validações de Temperaturas, Max Tokens e Timeouts preventivas
+  // ValidaÃ§Ãµes de Temperaturas, Max Tokens e Timeouts preventivas
   for LProviderId in FProvidersList do
   begin
     if not TryStrToFloat(FView.GetTemperatureInput(LProviderId), LTemp, LFormatSettings) or (LTemp < 0.0) or (LTemp > 2.0) then
@@ -297,7 +297,7 @@ begin
     end;
   end;
 
-  // Persistir as configurações
+  // Persistir as configuraÃ§Ãµes
   if FView.GetAuthTypeIndex('Gemini') = 1 then
     FConfig.SetProviderAuthType('Gemini', 'web_login')
   else
@@ -316,7 +316,7 @@ begin
   FConfig.SetApiKey('Groq', Trim(FView.GetApiKey('Groq')));
   FConfig.SetApiKey('OpenRouter', Trim(FView.GetApiKey('OpenRouter')));
   FConfig.SetApiKey('GithubCopilot', Trim(FView.GetApiKey('GithubCopilot')));
-  
+
   FConfig.SetApiKey('AzureOpenAI', Trim(FView.GetApiKey('AzureOpenAI')));
   FConfig.SetProviderBaseUrl('AzureOpenAI', LAzureUrl);
   FConfig.SetActiveModel('AzureOpenAI', Trim(FView.GetAzureModel));
@@ -328,7 +328,7 @@ begin
   FConfig.AwsSecretAccessKey := Trim(FView.GetAwsSecretAccessKey);
   FConfig.AwsRegion := Trim(FView.GetAwsRegion);
   FConfig.AwsSessionToken := Trim(FView.GetAwsSessionToken);
- 
+
   FConfig.SystemPrompt := FView.GetSystemPrompt;
   FConfig.OllamaBaseUrl := LOllamaUrl;
   FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
@@ -384,7 +384,7 @@ begin
   begin
     LNames := LNames + [LTemplate.Name];
   end;
-  
+
   if (LSelectedIndex < 0) and (Length(LNames) > 0) then
     LSelectedIndex := 0;
 
@@ -507,7 +507,7 @@ var
   I: Integer;
 begin
   FView.GetTemplateEditorFields(LName, LDesc, LBody, LSlash, LIsProjGen);
-  
+
   if LName.Trim.IsEmpty then
   begin
     FView.ShowMessageDialog('Template Name cannot be empty.');
@@ -521,7 +521,7 @@ begin
   LNames := [];
   for LTemplate in FTemplateManager.GetTemplates do
     LNames := LNames + [LTemplate.Name];
-    
+
   LIndex := -1;
   for I := Low(LNames) to High(LNames) do
   begin
@@ -583,7 +583,7 @@ begin
   FConfig.QuotaUsed := 0;
   FConfig.QuotaCycleStart := Now;
   FConfig.Save;
-  
+
   FView.SetQuotaUsedText('Monthly Used Tokens: 0');
   FView.ShowMessageDialog('Token usage counter reset successfully.');
 end;

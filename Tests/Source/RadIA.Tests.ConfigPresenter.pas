@@ -1,4 +1,4 @@
-unit RadIA.Tests.ConfigPresenter;
+﻿unit RadIA.Tests.ConfigPresenter;
 
 interface
 
@@ -32,7 +32,7 @@ type
     LogEnabled: Boolean;
     LogPath: string;
     LogMaxSize: string;
-    
+
     QuotaEnabled: Boolean;
     QuotaLimit: string;
     QuotaUsedText: string;
@@ -49,20 +49,20 @@ type
 
     TemplatesList: TArray<string>;
     SelectedTemplateIndex: Integer;
-    
+
     TemplateName: string;
     TemplateDesc: string;
     TemplateBody: string;
     TemplateSlash: string;
     TemplateIsProjGen: Boolean;
-    
+
     TemplateIsSystem: Boolean;
     TemplateIsCustomized: Boolean;
     DeleteTemplateButtonCaption: string;
     DeleteTemplateButtonEnabled: Boolean;
     TemplateOriginLabelText: string;
     TemplateOriginLabelColor: TColor;
-    
+
     FocusTemplateNameCalled: Boolean;
 
     constructor Create;
@@ -111,7 +111,7 @@ type
     procedure SetLogPath(const AValue: string);
     function GetLogMaxSize: string;
     procedure SetLogMaxSize(const AValue: string);
-    
+
     function GetQuotaEnabled: Boolean;
     procedure SetQuotaEnabled(const AValue: Boolean);
     function GetQuotaLimit: string;
@@ -146,7 +146,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestLoadConfigLoadsToView;
     [Test]
@@ -177,7 +177,7 @@ begin
   TempMap := TDictionary<string, string>.Create;
   MaxTokensMap := TDictionary<string, string>.Create;
   TimeoutMap := TDictionary<string, string>.Create;
-  
+
   SaveDialogResult := True;
   OpenDialogResult := True;
   FolderDialogResult := True;
@@ -394,7 +394,7 @@ begin
   TRadIAConfig.SetStorage(LMemoryStorage);
   FConfig := TRadIAConfig.GetInstance;
   FConfig.Load;
-  
+
   FMockView := TMockConfigView.Create;
   FPresenter := TRadIAConfigPresenter.Create(FMockView, FConfig);
 end;
@@ -410,9 +410,9 @@ procedure TTestConfigPresenter.TestLoadConfigLoadsToView;
 begin
   FConfig.SetApiKey('Gemini', 'gemini-key-123');
   FConfig.OllamaBaseUrl := 'http://localhost:11434';
-  
+
   FPresenter.LoadConfig;
-  
+
   Assert.AreEqual('gemini-key-123', FMockView.GetApiKey('Gemini'));
   Assert.AreEqual('http://localhost:11434', FMockView.GetCustomUrl('Ollama'));
 end;
@@ -420,13 +420,13 @@ end;
 procedure TTestConfigPresenter.TestSaveConfigValidatesUrlGeminiAndAzure;
 begin
   FPresenter.LoadConfig;
-  
-  // URL inválida (sem http:// ou https://)
+
+  // URL invÃ¡lida (sem http:// ou https://)
   FMockView.SetCustomUrl('Ollama', 'localhost:11434');
-  
+
   FPresenter.SaveConfig;
-  
-  // Deve exibir diálogo de erro e não deve fechar a View com mrOk (1)
+
+  // Deve exibir diÃ¡logo de erro e nÃ£o deve fechar a View com mrOk (1)
   Assert.IsFalse(FMockView.LastMessageDialogText.IsEmpty);
   Assert.IsFalse(FMockView.CloseViewCalled);
 end;
@@ -434,12 +434,12 @@ end;
 procedure TTestConfigPresenter.TestSaveConfigValidatesTemperatureRange;
 begin
   FPresenter.LoadConfig;
-  
+
   // Temperatura fora do limite (abc ou maior que 2.0)
   FMockView.SetTemperatureInput('Gemini', '2.5');
-  
+
   FPresenter.SaveConfig;
-  
+
   Assert.IsFalse(FMockView.LastMessageDialogText.IsEmpty);
   Assert.IsFalse(FMockView.CloseViewCalled);
 end;
@@ -447,12 +447,12 @@ end;
 procedure TTestConfigPresenter.TestSaveConfigValidatesIntegersRobustly;
 begin
   FPresenter.LoadConfig;
-  
-  // Timeout inválido
+
+  // Timeout invÃ¡lido
   FMockView.SetTimeoutInput('Gemini', '-5');
-  
+
   FPresenter.SaveConfig;
-  
+
   Assert.IsFalse(FMockView.LastMessageDialogText.IsEmpty);
   Assert.IsFalse(FMockView.CloseViewCalled);
 end;
@@ -460,20 +460,20 @@ end;
 procedure TTestConfigPresenter.TestTemplateCreationAndSelection;
 begin
   FPresenter.LoadConfig;
-  
+
   // Criar novo template na View
   FPresenter.CreateNewTemplate;
   Assert.IsTrue(FMockView.FocusTemplateNameCalled);
   Assert.AreEqual('', FMockView.TemplateName);
-  
+
   // Simular preenchimento
   FMockView.TemplateName := 'Custom Optimizer';
   FMockView.TemplateDesc := 'Optimize code';
   FMockView.TemplateBody := 'Optimize {code}';
   FMockView.TemplateSlash := '/opt';
-  
+
   FPresenter.SaveTemplate;
-  
+
   // Deve salvar e registrar
   Assert.IsTrue(Length(FMockView.TemplatesList) > 0);
 end;
@@ -482,9 +482,9 @@ procedure TTestConfigPresenter.TestResetQuotaUsage;
 begin
   FConfig.QuotaUsed := 50000;
   FPresenter.LoadConfig;
-  
+
   FPresenter.ResetQuota;
-  
+
   Assert.AreEqual(Int64(0), FConfig.QuotaUsed);
   Assert.AreEqual('Monthly Used Tokens: 0', FMockView.QuotaUsedText);
 end;

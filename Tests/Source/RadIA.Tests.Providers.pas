@@ -15,8 +15,8 @@ type
     FGeminiProv: TRadIAGeminiProvider;
     FOpenAIProv: TRadIAOpenAIProvider;
     FClaudeProv: TRadIAClaudeProvider;
-    
-    function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
+
+    function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string;
       const AHistory: TArray<IRadIAChatMessage>): string;
     function InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
   public
@@ -24,7 +24,7 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    
+
     [Test]
     procedure TestGeminiPayloadGeneration;
     [Test]
@@ -77,7 +77,7 @@ begin
   TRadIAConfig.SetBaseRegistryPath('');
 end;
 
-function TTestRadIAProviders.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string; 
+function TTestRadIAProviders.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string;
   const AHistory: TArray<IRadIAChatMessage>): string;
 var
   LContext: TRttiContext;
@@ -145,7 +145,7 @@ var
 begin
   LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Hello')];
   LPayload := InvokeBuildRequestBody(FGeminiProv, 'How are you?', LHistory);
-  
+
   Assert.IsNotEmpty(LPayload);
   LJson := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
   try
@@ -161,7 +161,7 @@ end;
 
 procedure TTestRadIAProviders.TestGeminiResponseParsing;
 const
-  GEMINI_MOCK_RESPONSE = 
+  GEMINI_MOCK_RESPONSE =
     '{"candidates": [{"content": {"parts": [{"text": "Hello! I am Gemini AI."}]}}], ' +
     '"usageMetadata": {"promptTokenCount": 10, "candidatesTokenCount": 15, "totalTokenCount": 25}}';
 var
@@ -184,7 +184,7 @@ var
 begin
   LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Hi')];
   LPayload := InvokeBuildRequestBody(FOpenAIProv, 'Hello OpenAI', LHistory);
-  
+
   Assert.IsNotEmpty(LPayload);
   LJson := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
   try
@@ -199,7 +199,7 @@ end;
 
 procedure TTestRadIAProviders.TestOpenAIResponseParsing;
 const
-  OPENAI_MOCK_RESPONSE = 
+  OPENAI_MOCK_RESPONSE =
     '{"choices": [{"message": {"role": "assistant", "content": "Hello! I am OpenAI ChatGPT."}}], ' +
     '"usage": {"prompt_tokens": 12, "completion_tokens": 18, "total_tokens": 30}}';
 var
@@ -222,7 +222,7 @@ var
 begin
   LHistory := [TRadIAChatMessage.CreateMessage(mrUser, 'Hey')];
   LPayload := InvokeBuildRequestBody(FClaudeProv, 'Hello Claude', LHistory);
-  
+
   Assert.IsNotEmpty(LPayload);
   LJson := TJSONObject.ParseJSONValue(LPayload) as TJSONObject;
   try
@@ -237,7 +237,7 @@ end;
 
 procedure TTestRadIAProviders.TestClaudeResponseParsing;
 const
-  CLAUDE_MOCK_RESPONSE = 
+  CLAUDE_MOCK_RESPONSE =
     '{"content": [{"type": "text", "text": "Hello! I am Anthropic Claude."}], ' +
     '"usage": {"input_tokens": 14, "output_tokens": 21}}';
 var

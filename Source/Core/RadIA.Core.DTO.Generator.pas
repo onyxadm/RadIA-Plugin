@@ -1,4 +1,4 @@
-unit RadIA.Core.DTO.Generator;
+﻿unit RadIA.Core.DTO.Generator;
 
 interface
 
@@ -21,10 +21,10 @@ var
   LFormatRules: string;
 begin
   LFormatRules := '';
-  
+
   if SameText(AOutputType, 'vanilla') then
   begin
-    LFormatRules := 
+    LFormatRules :=
       'Generate a standard Delphi class structure. ' +
       'Use proper private fields prefixed with "F" (e.g., FName: string) ' +
       'and matching public properties with read/write accessors. ' +
@@ -33,7 +33,7 @@ begin
   end
   else if SameText(AOutputType, 'record') then
   begin
-    LFormatRules := 
+    LFormatRules :=
       'Generate a modern Delphi record structure. ' +
       'Use PascalCase for field names. Do not use "F" prefix for record fields. ' +
       'Include simple helper methods if appropriate, but keep it lightweight. ' +
@@ -41,7 +41,7 @@ begin
   end
   else if SameText(AOutputType, 'restjson') then
   begin
-    LFormatRules := 
+    LFormatRules :=
       'Generate a Delphi class structure mapped for REST.Json serialization. ' +
       'Ensure the properties are decorated with the [JSONName(''field_name'')] attribute ' +
       'from the REST.Json.Types unit (part of System.JSON/REST.Json). ' +
@@ -49,7 +49,7 @@ begin
   end
   else if SameText(AOutputType, 'aurelius') then
   begin
-    LFormatRules := 
+    LFormatRules :=
       'Generate a Delphi class structure mapped for TMS Aurelius ORM. ' +
       'Ensure the class is decorated with [Entity] and [Table(''table_name'')]. ' +
       'Properties/Fields must have mapping attributes like [Column(''col_name'', [TColumnProp.Required])], ' +
@@ -58,7 +58,7 @@ begin
   end
   else if SameText(AOutputType, 'dext') then
   begin
-LFormatRules := 
+LFormatRules :=
         'Generate a complete Delphi class structure mapped for DEXT ORM using the following rules:' + sLineBreak +
         '1. Uses Clause: Must include: System.SysUtils, System.Classes, Dext.Entity, Dext.Entity.Collections, Dext.Types.Nullable, Dext.Types.Lazy, Dext.Core.SmartTypes.' + sLineBreak +
         '2. Properties: Map database columns via public properties, not private/public fields. Private backing fields must start with F (e.g., FId, FName).' + sLineBreak +
@@ -97,7 +97,7 @@ LFormatRules :=
         '11. Ensure that getter and setter methods for relationship properties are fully implemented inside the implementation section.';
   end;
 
-  Result := 
+  Result :=
     'You are a senior Delphi developer. Your task is to convert the following input ' +
     'into clean, well-formatted, and compile-ready Delphi Object Pascal code. ' +
     'The output MUST contain only the Delphi unit code (interface, implementation, uses clauses, ' +

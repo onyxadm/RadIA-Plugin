@@ -376,7 +376,7 @@ begin
   Result := '';
   if ASourceCode.IsEmpty then
     Exit;
-    
+
   { Otimização de Heap: Limitar análise a uma janela de 400 linhas ao redor do cursor }
   LStartLine := ALine - 200;
   if LStartLine < 1 then
@@ -414,11 +414,11 @@ begin
     LLines.Text := LWindowText;
     if (LRelativeLine < 1) or (LRelativeLine > LLines.Count) then
       Exit;
-      
+
     { 1. Look backwards from the cursor line to find a class declaration like "TMyClass = class" }
     LClassName := '';
     LClassStartLine := -1;
-    
+
     for I := LRelativeLine - 1 downto 0 do
     begin
       LCurLineText := LLines[I];
@@ -429,38 +429,38 @@ begin
         LClassStartLine := I;
         Break;
       end;
-      
+
       { Stop searching backwards if we reach unit boundaries }
       if SameText(LCurLineText.Trim, 'interface') or SameText(LCurLineText.Trim, 'implementation') then
         Break;
     end;
-    
+
     if LClassStartLine = -1 then
       Exit; // No class found in this scope
-      
+
     { 2. Find the end of the class declaration (which is usually the next "end;" or a new "type" / "implementation") }
     LClassEndLine := -1;
     for I := LClassStartLine + 1 to LLines.Count - 1 do
     begin
       LCurLineText := LLines[I].Trim;
-      
+
       { Delphi classes in interface end with an "end;" }
       if SameText(LCurLineText, 'end;') or SameText(LCurLineText, 'end') then
       begin
         LClassEndLine := I;
         Break;
       end;
-      
+
       if SameText(LCurLineText, 'implementation') or ContainsText(LCurLineText, 'type') then
       begin
         LClassEndLine := I - 1;
         Break;
       end;
     end;
-    
+
     if LClassEndLine = -1 then
       LClassEndLine := LLines.Count - 1;
-      
+
     { Assemble the class text scope using StringBuilder }
     LSb := TStringBuilder.Create;
     try

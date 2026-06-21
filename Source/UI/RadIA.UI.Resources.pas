@@ -62,8 +62,8 @@ end;
 function IsThemeDark(const AThemeName: string): Boolean;
 begin
   Result := AThemeName.ToLower.Contains('dark') or
-            SameText(AThemeName, 'carbon') or 
-            SameText(AThemeName, 'glow') or 
+            SameText(AThemeName, 'carbon') or
+            SameText(AThemeName, 'glow') or
             SameText(AThemeName, 'onyx');
 end;
 

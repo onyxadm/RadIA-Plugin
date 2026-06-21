@@ -1,4 +1,4 @@
-unit RadIA.OTA.Register;
+﻿unit RadIA.OTA.Register;
 
 interface
 
@@ -22,13 +22,13 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    
+
     { IOTANotifier implementation }
     procedure AfterSave;
     procedure BeforeSave;
     procedure Destroyed;
     procedure Modified;
-    
+
     { IOTAWizard implementation }
     function GetName: string;
     function GetIDString: string;
@@ -41,7 +41,7 @@ procedure Register;
 implementation
 
 uses
-  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm, 
+  Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows, RadIA.OTA.EditorHook, RadIA.UI.DiffForm,
   RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator, RadIA.Core.Config, RadIA.OTA.DockableForm,
   RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options, RadIA.Providers.Link, RadIA.Core.Container,
   RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer,
@@ -74,35 +74,35 @@ begin
     LBitmap.PixelFormat := pf24bit;
     LBitmap.Width := 24;
     LBitmap.Height := 24;
-    
+
     // Fundo azul escuro (#0F172A -> BGR $002A170F)
     LBitmap.Canvas.Brush.Color := $002A170F;
     LBitmap.Canvas.FillRect(Rect(0, 0, 24, 24));
-    
-    // Cabeça do robô cinza claro (#D1D5DB -> BGR $00DBD5D1)
+
+    // CabeÃ§a do robÃ´ cinza claro (#D1D5DB -> BGR $00DBD5D1)
     LBitmap.Canvas.Pen.Color := $00DBD5D1;
     LBitmap.Canvas.Brush.Color := $00DBD5D1;
     LBitmap.Canvas.RoundRect(4, 6, 20, 18, 4, 4);
-    
+
     // Antena
     LBitmap.Canvas.Pen.Color := $00DBD5D1;
     LBitmap.Canvas.MoveTo(12, 6);
     LBitmap.Canvas.LineTo(12, 3);
     LBitmap.Canvas.Brush.Color := $00CC7A00; // Azul RadIA (#007ACC -> BGR $00CC7A00)
     LBitmap.Canvas.Ellipse(10, 1, 14, 5);
-    
+
     // Olhos azuis brilhantes (#3B82F6 -> BGR $00F6823B)
     LBitmap.Canvas.Brush.Color := $00F6823B;
     LBitmap.Canvas.Pen.Color := $00F6823B;
     LBitmap.Canvas.Ellipse(7, 10, 10, 13);
     LBitmap.Canvas.Ellipse(14, 10, 17, 13);
-    
+
     // Boca
     LBitmap.Canvas.Pen.Color := $009CA3AF;
     LBitmap.Canvas.MoveTo(9, 15);
     LBitmap.Canvas.LineTo(15, 15);
 
-    { 1. Registrar na Splash Screen se disponível }
+    { 1. Registrar na Splash Screen se disponÃ­vel }
     if Assigned(SplashScreenServices) then
     begin
       SplashScreenServices.AddPluginBitmap(
@@ -113,7 +113,7 @@ begin
       );
     end;
 
-    { 2. Registrar no About Box se disponível }
+    { 2. Registrar no About Box se disponÃ­vel }
     if Supports(BorlandIDEServices, IOTAAboutBoxServices, LAboutServices) then
     begin
       GAboutBoxIndex := LAboutServices.AddPluginInfo(
@@ -177,14 +177,14 @@ var
 begin
   LogDebug('TRadIAWizard.Create called');
   GIsShuttingDown := False;
-  
+
   // Incrementar a contagem de referencias da BPL para mante-la mapeada em memoria se a IDE fechar
   GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, PChar(@Register), GModuleHandle);
-  
+
   inherited Create;
-  
+
   FOptionsPages := TInterfaceList.Create;
-  
+
   { Register custom forms in IDE Theming Services }
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -192,24 +192,24 @@ begin
     LThemingServices.RegisterFormClass(TRadIAFormAIConfig);
     LThemingServices.RegisterFormClass(TFormRadIADockable);
   end;
-  
+
   FEditorHook := TRadIAEditorHook.Create(nil);
   TRadIAEditorHook(FEditorHook).Install;
   RegisterMenus;
   RegisterOptions;
-  
+
   FTimer := TTimer.Create(nil);
   FTimer.Interval := 1000;
   FTimer.OnTimer := OnTimerEvent;
   FTimer.Enabled := True;
-  
+
   TRadIAContainer.Resolve<IRadIAMediator>.RegisterDiffHandler(OnRequestDiff);
 end;
 
 destructor TRadIAWizard.Destroy;
 begin
   GIsShuttingDown := True;
-  
+
   {$IFNDEF TESTS}
   RadIA.OTA.DockableForm.UnregisterDockableForm;
   {$ENDIF}
@@ -227,14 +227,14 @@ begin
   TRadIAEditorHook(FEditorHook).Uninstall;
   FEditorHook.Free;
   FOptionsPages.Free;
-  
+
   // Se nao for shutdown geral da IDE (ou seja, desinstalacao normal do pacote), libere a referencia de modulo
   if (not GIsShuttingDown) and (GModuleHandle <> 0) then
   begin
     FreeLibrary(GModuleHandle);
     GModuleHandle := 0;
   end;
-  
+
   GWizardIndex := -1;
   inherited Destroy;
 end;
@@ -242,7 +242,7 @@ end;
 procedure TRadIAWizard.RegisterOptions;
 var
   LOptionsServices: INTAEnvironmentOptionsServices;
-  
+
   procedure AddPage(const ATitle: string; ATag: TRadIAPageTag);
   var
     LOptions: INTAAddInOptions;
@@ -370,7 +370,7 @@ begin
       else
         LActiveFile := LActiveFile + '.pas';
     end;
-      
+
     LForm.InitializeDiff(LActiveFile, AOriginalCode);
     if LForm.ShowModal = mrOk then
     begin
@@ -397,10 +397,10 @@ begin
   if not Assigned(AMainMenu) then
     Exit;
 
-  // 1. Busca pelo nome do componente (independe de tradução)
+  // 1. Busca pelo nome do componente (independe de traduÃ§Ã£o)
   for I := 0 to AMainMenu.Items.Count - 1 do
   begin
-    if SameText(AMainMenu.Items[I].Name, 'ToolsMenu') or 
+    if SameText(AMainMenu.Items[I].Name, 'ToolsMenu') or
        SameText(AMainMenu.Items[I].Name, 'Tools') then
     begin
       Result := AMainMenu.Items[I];
@@ -412,8 +412,8 @@ begin
   for I := 0 to AMainMenu.Items.Count - 1 do
   begin
     LCaption := StringReplace(AMainMenu.Items[I].Caption, '&', '', [rfReplaceAll]);
-    if SameText(LCaption, 'Tools') or 
-       SameText(LCaption, 'Ferramentas') or 
+    if SameText(LCaption, 'Tools') or
+       SameText(LCaption, 'Ferramentas') or
        SameText(LCaption, 'ToolsMenu') then
     begin
       Result := AMainMenu.Items[I];
@@ -421,7 +421,7 @@ begin
     end;
   end;
 
-  // 3. Fallback clássico da Open Tools API
+  // 3. Fallback clÃ¡ssico da Open Tools API
   Result := AMainMenu.Items.Find('Tools');
 end;
 
@@ -440,7 +440,7 @@ begin
   if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
   begin
     LogDebug('INTAServices supported');
-    
+
     { Register tools actions }
     LToolsMenu := FindToolsMenu(LNTAServices.MainMenu);
     if Assigned(LToolsMenu) then
@@ -448,7 +448,7 @@ begin
       for I := 0 to LToolsMenu.Count - 1 do
       begin
         if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
-           SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or 
+           SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or
            SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsAlreadyPopulated := True;
@@ -490,7 +490,7 @@ begin
       for I := 0 to LToolsMenu.Count - 1 do
       begin
         if SameText(LToolsMenu.Items[I].Caption, 'RadIA Chat Panel') or
-           SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or 
+           SameText(LToolsMenu.Items[I].Caption, 'Rad IA Chat Panel') or
            SameText(LToolsMenu.Items[I].Caption, 'Fix Last Compiler Error') then
         begin
           LToolsPopulated := True;
@@ -547,7 +547,7 @@ begin
   LogDebug('UnregisterMenus called');
   if not Assigned(FEditorHook) then
     Exit;
-    
+
   try
     if Supports(BorlandIDEServices, INTAServices, LNTAServices) then
     begin

@@ -1,4 +1,4 @@
-unit RadIA.OTA.Options;
+﻿unit RadIA.OTA.Options;
 
 interface
 
@@ -18,7 +18,7 @@ type
     FFrame: TRadIAFrameAIConfig;
   public
     constructor Create(const ATitle: string; ATag: TRadIAPageTag);
-    
+
     { INTAAddInOptions }
     function GetArea: string;
     function GetCaption: string;
@@ -47,7 +47,7 @@ end;
 
 function TRadIAAddInOptions.GetArea: string;
 begin
-  // Retornando vazio coloca a página sob a categoria principal "Third Party"
+  // Retornando vazio coloca a pÃ¡gina sob a categoria principal "Third Party"
   Result := '';
 end;
 
@@ -57,7 +57,7 @@ begin
     ptNone: Result := 'Rad IA.General';
     ptSystem: Result := 'Rad IA.System Prompt';
     ptTemplates: Result := 'Rad IA.Templates';
-    ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio: 
+    ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio:
       Result := 'Rad IA.AI Providers.' + FTitle;
   else
     Result := 'Rad IA.' + FTitle;
@@ -75,7 +75,7 @@ begin
   begin
     FFrame := TRadIAFrameAIConfig(AFrame);
     FFrame.LoadConfig;
-    
+
     // Selecionar a aba adequada
     case FTag of
       ptNone: FFrame.SelectCategoryByName('General / Logs');

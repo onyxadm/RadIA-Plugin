@@ -21,7 +21,7 @@
           !hasPageText([
             'you are using our basic model',
             'voce esta usando o nosso modelo basico',
-            'você está usando o nosso modelo básico'
+            'vocÃª estÃ¡ usando o nosso modelo bÃ¡sico'
           ]);
       },
       isGenerating: () => {
@@ -177,7 +177,7 @@
         } else if (inputEl.getAttribute('contenteditable') === 'true') {
           inputEl.innerText = msg.text;
         }
-        
+
         // Dispatch the events required to enable the site send button
         inputEl.dispatchEvent(new Event('input', { bubbles: true }));
         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
@@ -274,17 +274,17 @@
     if (!el) return '';
     try {
       const clone = el.cloneNode(true);
-      
+
       // Remove internal buttons, including copy buttons and injected Insert into Delphi buttons
       const buttons = clone.querySelectorAll('button, .radia-insert-btn, [class*="copy" i]');
       buttons.forEach(btn => btn.remove());
-      
+
       // Find all pre/code block elements
       const preElements = clone.querySelectorAll('pre');
       preElements.forEach(pre => {
         const codeEl = pre.querySelector('code') || pre;
         let lang = 'code';
-        
+
         // Tenta extrair a linguagem das classes do code ou do pre
         const classes = (codeEl.getAttribute('class') || '') + ' ' + (pre.getAttribute('class') || '');
         const langMatch = classes.match(/language-(\w+)/i);
@@ -303,12 +303,12 @@
             }
           }
         }
-        
+
         const codeText = getCodeTextFromElement(codeEl);
-        
+
         // Create the classic Markdown representation for the block
         const markdownText = `\n\`\`\`${lang}\n${codeText}\n\`\`\`\n`;
-        
+
         const textNode = document.createTextNode(markdownText);
         pre.parentNode.replaceChild(textNode, pre);
       });
@@ -327,13 +327,13 @@
           tag.parentNode.insertBefore(afterNode, tag.nextSibling);
         }
       });
-      
+
       // Use textContent to read raw DOM independently of visual rendering and CSS layout
       let markdown = clone.textContent || '';
-      
+
       // Collapse excessive consecutive line breaks to keep formatting clean
       markdown = markdown.replaceAll(/\n{3,}/g, '\n\n');
-      
+
       return trimOuterBlankLines(markdown);
     } catch (err) {
       log('Erro ao formatar Markdown do elemento:', err);
@@ -353,16 +353,16 @@
     lastText = '';
     generatingTimeout = 0;
     wasGeneratingDetected = false;
-    
+
     // Capture the last existing response element before starting a new one
     previousResponseElement = currentSite.getLastResponseElement();
     log('Previous response element:', previousResponseElement);
-    
+
     if (monitorInterval) clearInterval(monitorInterval);
 
     monitorInterval = setInterval(() => {
       const currentEl = currentSite.getLastResponseElement();
-      
+
       // If no new element exists yet, wait for the site to create the current prompt response
       if (!currentEl || currentEl === previousResponseElement) {
         log('Waiting for the new response bubble in the DOM...');
@@ -461,7 +461,7 @@
       const preElements = document.querySelectorAll('pre');
       preElements.forEach(pre => {
         if (pre.getAttribute('data-radia-injected') === 'true') return;
-        
+
         const code = pre.querySelector('code');
         if (!code) return;
 
@@ -488,9 +488,9 @@
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          
+
           const codeText = getCodeTextFromElement(code);
-          
+
           log('Requesting code application in Delphi:', codeText.length, 'bytes');
           sendToDelphi({
             action: 'apply_code',
@@ -527,9 +527,9 @@
           log('Erro ao desconectar observer:', err);
         }
       }
-      
+
       injectDelphiButtons();
-      
+
       if (observer && document.body) {
         try {
           observer.observe(document.body, {

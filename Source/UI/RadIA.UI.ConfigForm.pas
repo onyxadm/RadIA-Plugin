@@ -1,4 +1,4 @@
-unit RadIA.UI.ConfigForm;
+﻿unit RadIA.UI.ConfigForm;
 
 interface
 
@@ -44,7 +44,7 @@ var
   LUseIDETheme: Boolean;
 begin
   inherited Create(AOwner);
-  
+
   FFrameConfig := TRadIAFrameAIConfig.Create(Self);
   FFrameConfig.Parent := Self;
   FFrameConfig.Align := alClient;
@@ -63,12 +63,12 @@ begin
   end;
 
   tvCategories.OnChange := tvCategoriesChange;
-  
+
   LNodeGeneral := tvCategories.Items.Add(nil, 'General / Logs');
   tvCategories.Items.Add(nil, 'System Prompt');
   tvCategories.Items.Add(nil, 'Templates');
   LNodeProviders := tvCategories.Items.Add(nil, 'AI Providers');
-  
+
   tvCategories.Items.AddChild(LNodeProviders, 'Gemini');
   tvCategories.Items.AddChild(LNodeProviders, 'OpenAI');
   tvCategories.Items.AddChild(LNodeProviders, 'Azure OpenAI');
@@ -82,7 +82,7 @@ begin
   tvCategories.Items.AddChild(LNodeProviders, 'AWS Bedrock');
   tvCategories.Items.AddChild(LNodeProviders, 'Ollama');
   tvCategories.Items.AddChild(LNodeProviders, 'LM Studio');
-  
+
   tvCategories.FullExpand;
   tvCategories.Selected := LNodeGeneral;
 
@@ -96,7 +96,7 @@ var
   LActiveTheme: string;
 begin
   inherited CreateWnd;
-  
+
   LActiveTheme := 'light';
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin
@@ -105,7 +105,7 @@ begin
       LActiveTheme := LThemingServices.ActiveTheme;
     end;
   end;
-  
+
   if SameText(LActiveTheme, 'dark') then
   begin
     TRadIAUIHelper.ApplyDarkTitleBar(Self, True);
