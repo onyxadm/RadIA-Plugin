@@ -23,7 +23,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Types;
+  System.SysUtils, RadIA.Core.Types;
 
 { TConversationExporter }
 

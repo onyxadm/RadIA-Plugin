@@ -28,7 +28,7 @@ type
 implementation
 
 uses
-  System.Classes, System.Net.HttpClient, RadIA.Core.Types, System.JSON, System.Threading,
+  System.Classes,RadIA.Core.Types, System.JSON, System.Threading,
   System.Generics.Collections, System.NetEncoding, System.SyncObjs, System.Math,
   RadIA.Core.Logger, RadIA.Core.ProviderRegistry;
 

@@ -40,7 +40,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Types, System.IOUtils, System.JSON,
+  System.SysUtils, System.IOUtils, System.JSON,
   System.Generics.Defaults, RadIA.Provider.Generic, RadIA.Core.Logger;
 
 { TProviderMetadata }

@@ -3,7 +3,7 @@ unit RadIA.Provider.Generic;
 interface
 
 uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types,
+  System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types,
   RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
@@ -26,7 +26,7 @@ type
 implementation
 
 uses
-  System.JSON, System.Threading, System.Math, RadIA.Core.Logger;
+  System.SysUtils, System.JSON, System.Threading, System.Math, RadIA.Core.Logger;
 
 { TRadIAGenericOpenAIProvider }
 

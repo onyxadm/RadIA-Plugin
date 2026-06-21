@@ -47,7 +47,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.IOUtils, System.JSON, System.DateUtils, System.Generics.Defaults,
+  System.SysUtils, System.IOUtils, System.JSON, System.DateUtils, System.Generics.Defaults,
   RadIA.Core.Types, RadIA.Core.Logger, RadIA.Core.ChatMessage;
 
 procedure LogSession(const AMsg: string);

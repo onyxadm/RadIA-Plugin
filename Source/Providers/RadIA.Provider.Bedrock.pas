@@ -47,7 +47,7 @@ type
 implementation
 
 uses
-  System.Classes, System.Net.HttpClient, System.Net.URLClient, RadIA.Core.Types,
+  System.Classes, System.Net.URLClient, RadIA.Core.Types,
   System.JSON, System.Threading, System.NetEncoding, System.Math,
   RadIA.Core.AwsSigner, RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs;
 
