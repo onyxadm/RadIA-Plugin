@@ -43,9 +43,10 @@ implementation
 uses
   System.SysUtils, Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows,
   RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator,
-  RadIA.Core.Config, RadIA.OTA.DockableForm, RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options, RadIA.Providers.Link,
-  RadIA.Core.Container, RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer, RadIA.Core.DTO.Generator,
-  RadIA.Core.ProjectGenerator, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder, RadIA.Core.Localizer;
+  RadIA.Core.Config, RadIA.OTA.DockableForm, RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options,
+  RadIA.Providers.Link, RadIA.Core.Container, RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer,
+  RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder,
+  RadIA.Core.Localizer;
 
 const
   GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;

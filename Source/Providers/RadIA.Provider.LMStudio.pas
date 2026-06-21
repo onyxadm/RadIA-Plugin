@@ -3,7 +3,7 @@ unit RadIA.Provider.LMStudio;
 interface
 
 uses
-  System.Classes, System.Net.HttpClient, System.Net.URLClient, RadIA.Core.Interfaces,
+  System.Classes, System.Net.HttpClient, RadIA.Core.Interfaces,
   RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
 
 type
@@ -26,7 +26,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.JSON, System.Threading, System.Math, RadIA.Core.ProviderRegistry;
+  System.SysUtils, System.JSON, System.Threading, System.Math, System.Net.URLClient, RadIA.Core.ProviderRegistry;
 
 { TRadIALMStudioProvider }
 
@@ -57,8 +57,6 @@ function TRadIALMStudioProvider.GetModelsDiscoveryUrl: string;
 begin
   Result := GetBaseUrl.TrimRight(['/']) + '/models';
 end;
-
-
 
 procedure TRadIALMStudioProvider.SendPromptAsync(const APrompt: string;
   const AHistory: TArray<IRadIAChatMessage>; const ACallback: TCompletionCallback;
