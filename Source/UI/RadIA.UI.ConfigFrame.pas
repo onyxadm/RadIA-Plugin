@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ConfigFrame;
+unit RadIA.UI.ConfigFrame;
 
 interface
 
@@ -1360,7 +1360,7 @@ var
   LForm: TCustomForm;
 begin
   LForm := GetParentForm(Self);
-  if (LForm <> nil) and SameText(LForm.ClassName, 'TRadIAFormAIConfig') then
+  if Assigned(LForm) and SameText(LForm.ClassName, 'TRadIAFormAIConfig') then
     LForm.ModalResult := AModalResult;
 end;
 

@@ -796,12 +796,10 @@ begin
     Exit;
 
   LItem := FindMenuItemByName(APopupMenu.Items, 'mnuRadIARoot');
-  if Assigned(LItem) then
-    LItem.Free;
+  LItem.Free;
 
   LItem := FindMenuItemByName(APopupMenu.Items, 'mnuRadIASeparator');
-  if Assigned(LItem) then
-    LItem.Free;
+  LItem.Free;
 end;
 
 procedure TRadIAEditorHook.PopulateToolsMenu(const AMenuItem: TMenuItem);

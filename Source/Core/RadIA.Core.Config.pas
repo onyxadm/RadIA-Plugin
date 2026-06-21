@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Config;
+unit RadIA.Core.Config;
 
 interface
 
@@ -157,7 +157,7 @@ end;
 constructor TRadIAConfig.Create;
 begin
   inherited Create;
-  if FStorage = nil then
+  if not Assigned(FStorage) then
     FStorage := TRadIARegistrySettingsStorage.Create;
 
   LogDebug('TRadIAConfig.Create: Active path = ' + GetRegistryPath);
@@ -969,7 +969,7 @@ end;
 
 class function TRadIAConfig.GetInstance: IRadIAConfig;
 begin
-  if FInstance = nil then
+  if not Assigned(FInstance) then
     FInstance := TRadIAConfig.Create;
   Result := FInstance;
 end;
@@ -977,7 +977,7 @@ end;
 class procedure TRadIAConfig.SetStorage(const AStorage: IRadIASettingsStorage);
 begin
   FStorage := AStorage;
-  if FStorage = nil then
+  if not Assigned(FStorage) then
     FStorage := TRadIARegistrySettingsStorage.Create;
   if Assigned(FInstance) then
     FInstance.Load;

@@ -283,10 +283,7 @@ begin
       FEdgeBrowserWeb.Parent := nil;
       FreeAndNil(FEdgeBrowserWeb);
     end;
-    if Assigned(FpnlBrowserWeb) then
-    begin
-      FreeAndNil(FpnlBrowserWeb);
-    end;
+    FreeAndNil(FpnlBrowserWeb);
     if Assigned(EdgeBrowser) then
     begin
       EdgeBrowser.Parent := nil;
@@ -831,8 +828,7 @@ begin
   if Assigned(cbProvider) then
   begin
     for I := 0 to cbProvider.Items.Count - 1 do
-      if Assigned(cbProvider.Items.Objects[I]) then
-        cbProvider.Items.Objects[I].Free;
+      cbProvider.Items.Objects[I].Free;
     cbProvider.Items.Clear;
   end;
 
