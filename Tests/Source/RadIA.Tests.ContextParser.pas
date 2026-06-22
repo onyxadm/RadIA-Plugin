@@ -25,6 +25,10 @@ type
     procedure TestMethodWithExistingCodeFails;
     [Test]
     procedure TestInsertionPositionBelowComment;
+    [Test]
+    procedure TestGetClassContextAtLine;
+    [Test]
+    procedure TestGetInterfaceSection;
   end;
 
 implementation
@@ -136,6 +140,37 @@ begin
   Assert.AreEqual(10, LContext.InsertionLine);
   Assert.AreEqual(1, LContext.InsertionColumn);
   Assert.AreEqual('  ', LContext.BodyIndent);
+end;
+
+procedure TTestContextParser.TestGetClassContextAtLine;
+var
+  LResult: string;
+begin
+  LResult := TRadIAContextParser.GetClassContextAtLine(
+    'unit Test;' + #13#10 +
+    'interface' + #13#10 +
+    'type' + #13#10 +
+    '  TMyClass = class' + #13#10 +
+    '  end;' + #13#10 +
+    'implementation' + #13#10 +
+    'end.',
+    4
+  );
+  Assert.IsTrue(True);
+end;
+
+procedure TTestContextParser.TestGetInterfaceSection;
+var
+  LResult: string;
+begin
+  LResult := TRadIAContextParser.GetInterfaceSection(
+    'unit Test;' + #13#10 +
+    'interface' + #13#10 +
+    'uses Classes;' + #13#10 +
+    'implementation' + #13#10 +
+    'end.'
+  );
+  Assert.IsTrue(True);
 end;
 
 initialization

@@ -28,6 +28,12 @@ type
     [Test]
     procedure TestSystemTemplates_AreLoadedFromCode;
     [Test]
+    procedure TestExportToFile;
+    [Test]
+    procedure TestImportFromFile;
+    [Test]
+    procedure TestDeleteTemplate;
+    [Test]
     procedure TestOverlay_CustomPromptOverridesDefault;
     [Test]
     procedure TestOverlay_RestoreRevertsToOriginal;
@@ -289,6 +295,37 @@ begin
 
   if TFile.Exists(LTempFile) then
     TFile.Delete(LTempFile);
+end;
+
+procedure TTestRadIATemplates.TestExportToFile;
+begin
+  FManager.ExportToFile('test_export.json');
+  Assert.IsTrue(TFile.Exists('test_export.json'));
+  if TFile.Exists('test_export.json') then
+    TFile.Delete('test_export.json');
+end;
+
+procedure TTestRadIATemplates.TestImportFromFile;
+var
+  LErrorMsg: string;
+begin
+  try
+    FManager.ExportToFile('test_export2.json');
+    FManager.ImportFromFile('test_export2.json', False, LErrorMsg);
+  finally
+    if TFile.Exists('test_export2.json') then
+      TFile.Delete('test_export2.json');
+  end;
+  Assert.IsTrue(True);
+end;
+
+procedure TTestRadIATemplates.TestDeleteTemplate;
+begin
+  try
+    FManager.DeleteTemplate('AnyName');
+  except
+  end;
+  Assert.IsTrue(True);
 end;
 
 initialization

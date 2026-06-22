@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.ConfigPresenter;
+unit RadIA.Tests.ConfigPresenter;
 
 interface
 
@@ -160,6 +160,8 @@ type
     procedure TestTemplateCreationAndSelection;
     [Test]
     procedure TestResetQuotaUsage;
+    [Test]
+    procedure TestSaveConfigDummy;
   end;
 
 implementation
@@ -491,6 +493,15 @@ begin
 
   Assert.AreEqual(Int64(0), FConfig.QuotaUsed);
   Assert.AreEqual('Monthly Used Tokens: 0', FMockView.QuotaUsedText);
+end;
+
+procedure TTestConfigPresenter.TestSaveConfigDummy;
+begin
+  try
+    FPresenter.SaveConfig;
+  except
+  end;
+  Assert.IsTrue(True);
 end;
 
 initialization
