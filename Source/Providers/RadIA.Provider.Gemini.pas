@@ -12,6 +12,8 @@ type
     function BuildRequestBody(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
       const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
+    function TryExtractNextJsonObject(var ABuffer: string; out AJsonObjectStr: string): Boolean;
+    procedure ParseAndEmitCandidate(const AJsonStr: string; const ACallback: TStreamChunkCallback);
   public
     constructor Create(const AConfig: IRadIAConfig); override;
 
@@ -367,14 +369,58 @@ begin
   TTask.Run(LTaskProc);
 end;
 
-procedure TRadIAGeminiProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
-// Parses the Gemini streaming response format: a JSON array of objects.
-// Logs every step for diagnostics. Remove TLogger calls after issue is resolved.
+function TRadIAGeminiProvider.TryExtractNextJsonObject(var ABuffer: string; out AJsonObjectStr: string): Boolean;
 var
-  LOpenBrackets: Integer;
-  I: Integer;
+  LOpenBrackets, I, LLen: Integer;
   LInString: Boolean;
-  LCandidateStr: string;
+  LPtr: PChar;
+begin
+  Result := False;
+  AJsonObjectStr := '';
+  
+  ABuffer := ABuffer.TrimLeft(['[', ',', #13, #10, ' ', ']']);
+  if ABuffer.IsEmpty or not ABuffer.StartsWith('{') then
+    Exit;
+
+  LOpenBrackets := 0;
+  LInString := False;
+  LLen := ABuffer.Length;
+  LPtr := PChar(ABuffer);
+  I := 0;
+
+  while I < LLen do
+  begin
+    if LInString then
+    begin
+      if LPtr[I] = '\' then
+        Inc(I)
+      else if LPtr[I] = '"' then
+        LInString := False;
+    end
+    else
+    begin
+      case LPtr[I] of
+        '"': LInString := True;
+        '{': Inc(LOpenBrackets);
+        '}':
+        begin
+          Dec(LOpenBrackets);
+          if LOpenBrackets = 0 then
+          begin
+            AJsonObjectStr := ABuffer.Substring(0, I + 1);
+            ABuffer := ABuffer.Substring(I + 1);
+            Result := True;
+            Exit;
+          end;
+        end;
+      end;
+    end;
+    Inc(I);
+  end;
+end;
+
+procedure TRadIAGeminiProvider.ParseAndEmitCandidate(const AJsonStr: string; const ACallback: TStreamChunkCallback);
+var
   LJson: TJSONObject;
   LCandidates: TJSONArray;
   LCandidate: TJSONObject;
@@ -382,118 +428,69 @@ var
   LParts: TJSONArray;
   LPart: TJSONObject;
   LText: string;
-  LPtr: PChar;
-  LLen: Integer;
-  LObjectCount: Integer;
 begin
-  LObjectCount := 0;
-  TLogger.Log(Format('PSB: Entry BufferLen=%d First30=|%s|', [ABuffer.Length, ABuffer.Substring(0, Min(30,
-      ABuffer.Length))]), 'Provider');
-
-  while True do
-  begin
-    ABuffer := ABuffer.TrimLeft(['[', ',', #13, #10, ' ', ']']);
-    if ABuffer.IsEmpty or not ABuffer.StartsWith('{') then
+  try
+    LJson := TJSONObject.ParseJSONValue(AJsonStr) as TJSONObject;
+    if Assigned(LJson) then
     begin
-      TLogger.Log(Format('PSB: Break. Empty=%s StartBrace=%s Objs=%d ResidualLen=%d', [
-        BoolToStr(ABuffer.IsEmpty, True), BoolToStr(ABuffer.StartsWith('{'), True),
-        LObjectCount, ABuffer.Length]), 'Provider');
-      Break;
-    end;
+      try
+        if Assigned(LJson.GetValue('error')) then
+        begin
+          LText := '';
+          if LJson.GetValue('error') is TJSONObject then
+            LText := TJSONObject(LJson.GetValue('error')).GetValue<string>('message', '');
+          if LText.IsEmpty then
+            LText := LJson.GetValue('error').ToString;
+          TLogger.Log('PSB: API error=' + LText, 'Provider');
+          ACallback('', True, LText);
+          Exit;
+        end;
 
-    LOpenBrackets := 0;
-    LInString := False;
-    LLen := ABuffer.Length;
-    LPtr := PChar(ABuffer);
-    I := 0;
-
-    while I < LLen do
-    begin
-      if LInString then
-      begin
-        if LPtr[I] = '\' then
-          Inc(I)
-        else if LPtr[I] = '"' then
-          LInString := False;
-      end
-      else
-      begin
-        case LPtr[I] of
-          '"': LInString := True;
-          '{': Inc(LOpenBrackets);
-          '}':
+        LText := '';
+        LCandidates := LJson.GetValue('candidates') as TJSONArray;
+        if Assigned(LCandidates) and (LCandidates.Count > 0) then
+        begin
+          LCandidate := LCandidates[0] as TJSONObject;
+          LContent := LCandidate.GetValue('content') as TJSONObject;
+          if Assigned(LContent) then
           begin
-            Dec(LOpenBrackets);
-            if LOpenBrackets = 0 then
+            LParts := LContent.GetValue('parts') as TJSONArray;
+            if Assigned(LParts) and (LParts.Count > 0) then
             begin
-              LCandidateStr := ABuffer.Substring(0, I + 1);
-              ABuffer := ABuffer.Substring(I + 1);
-              Inc(LObjectCount);
-
-              TLogger.Log(Format('PSB: Obj#%d Found ObjLen=%d', [LObjectCount, LCandidateStr.Length]), 'Provider');
-
-              try
-                LJson := TJSONObject.ParseJSONValue(LCandidateStr) as TJSONObject;
-                if Assigned(LJson) then
-                begin
-                  try
-                    if Assigned(LJson.GetValue('error')) then
-                    begin
-                      LText := '';
-                      if LJson.GetValue('error') is TJSONObject then
-                        LText := TJSONObject(LJson.GetValue('error')).GetValue<string>('message', '');
-                      if LText.IsEmpty then
-                        LText := LJson.GetValue('error').ToString;
-                      TLogger.Log('PSB: API error=' + LText, 'Provider');
-                      ACallback('', True, LText);
-                      Exit;
-                    end;
-
-                    LText := '';
-                    LCandidates := LJson.GetValue('candidates') as TJSONArray;
-                    if Assigned(LCandidates) and (LCandidates.Count > 0) then
-                    begin
-                      LCandidate := LCandidates[0] as TJSONObject;
-                      LContent := LCandidate.GetValue('content') as TJSONObject;
-                      if Assigned(LContent) then
-                      begin
-                        LParts := LContent.GetValue('parts') as TJSONArray;
-                        if Assigned(LParts) and (LParts.Count > 0) then
-                        begin
-                          LPart := LParts[0] as TJSONObject;
-                          if Assigned(LPart) then
-                            LText := LPart.GetValue<string>('text', '');
-                        end;
-                      end;
-                    end;
-
-                    TLogger.Log(Format('PSB: Obj#%d TextLen=%d', [LObjectCount, LText.Length]), 'Provider');
-                    if not LText.IsEmpty then
-                      ACallback(LText, False, '');
-                  finally
-                    LJson.Free;
-                  end;
-                end
-                else
-                  TLogger.Log(Format('PSB: Obj#%d ParseJSONValue=nil', [LObjectCount]), 'Provider');
-              except
-                on E: Exception do
-                  TLogger.Log(Format('PSB: Obj#%d Exception=%s', [LObjectCount, E.Message]), 'Provider');
-              end;
-              Break;
+              LPart := LParts[0] as TJSONObject;
+              if Assigned(LPart) then
+                LText := LPart.GetValue<string>('text', '');
             end;
           end;
         end;
-      end;
-      Inc(I);
-    end;
 
-    if I >= LLen then
-    begin
-      TLogger.Log(Format('PSB: Incomplete obj, waiting. BufferLen=%d', [ABuffer.Length]), 'Provider');
-      Break;
+        if not LText.IsEmpty then
+          ACallback(LText, False, '');
+      finally
+        LJson.Free;
+      end;
     end;
+  except
+    on E: Exception do
+      TLogger.Log(Format('PSB: Exception=%s', [E.Message]), 'Provider');
   end;
+end;
+
+procedure TRadIAGeminiProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
+var
+  LCandidateStr: string;
+  LObjectCount: Integer;
+begin
+  LObjectCount := 0;
+  TLogger.Log(Format('PSB: Entry BufferLen=%d First30=|%s|', [ABuffer.Length, ABuffer.Substring(0, Min(30, ABuffer.Length))]), 'Provider');
+
+  while TryExtractNextJsonObject(ABuffer, LCandidateStr) do
+  begin
+    Inc(LObjectCount);
+    TLogger.Log(Format('PSB: Obj#%d Found ObjLen=%d', [LObjectCount, LCandidateStr.Length]), 'Provider');
+    ParseAndEmitCandidate(LCandidateStr, ACallback);
+  end;
+
   TLogger.Log(Format('PSB: Exit Objs=%d ResidualLen=%d', [LObjectCount, ABuffer.Length]), 'Provider');
 end;
 

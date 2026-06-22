@@ -47,6 +47,9 @@ type
     FBaseUrlsList: TStringList;
     FAuthTypesList: TStringList;
 
+    function TryMigrateLegacyPath(const APath: string; out AMigratedPath: string): Boolean;
+    procedure LoadGlobalSettings(const APath: string);
+    procedure LoadProviderSettings(const AProviderPath, AProviderName: string);
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
     function ProtectString(const AValue: string): string;
@@ -279,54 +282,44 @@ begin
   LoadFromPath(GetRegistryPath);
 end;
 
-procedure TRadIAConfig.LoadFromPath(const APath: string);
+function TRadIAConfig.TryMigrateLegacyPath(const APath: string; out AMigratedPath: string): Boolean;
 var
-  LProvPath: string;
-  LMaxHist: Integer;
-  LMigratedPath: string;
   LParentPath: string;
-  LSubKeys: TStringList;
-  LSubKey: string;
-  LProviders: TArray<TProviderMetadata>;
-  LMeta: TProviderMetadata;
 begin
-  LogDebug('TRadIAConfig.Load starting. Path = ' + APath);
+  Result := False;
+  AMigratedPath := '';
+  
+  if FStorage.KeyExists(APath) then
+    Exit;
 
-  { If the new key does not exist, try to migrate legacy keys. }
-  if not FStorage.KeyExists(APath) then
+  LogDebug('TRadIAConfig.Load: Path does not exist, checking for migration path...');
+
+  { 1. If the path contains a backslash, try IDE-relative legacy paths. }
+  if Pos('\', APath) > 0 then
   begin
-    LogDebug('TRadIAConfig.Load: Path does not exist, checking for migration path...');
-    LMigratedPath := '';
-
-    { 1. If the path contains a backslash, try IDE-relative legacy paths. }
-    if Pos('\', APath) > 0 then
-    begin
-      LParentPath := Copy(APath, 1, LastDelimiter('\', APath));
-      if FStorage.KeyExists(LParentPath + 'AIPlugin') then
-        LMigratedPath := LParentPath + 'AIPlugin'
-      else if FStorage.KeyExists(LParentPath + 'RadIA') then
-        LMigratedPath := LParentPath + 'RadIA';
-    end;
-
-    { 2. Global fallbacks. }
-    if LMigratedPath.IsEmpty then
-    begin
-      if FStorage.KeyExists('Software\RadIA') then
-        LMigratedPath := 'Software\RadIA'
-      else if FStorage.KeyExists('Software\RadAI') then
-        LMigratedPath := 'Software\RadAI';
-    end;
-
-    if not LMigratedPath.IsEmpty and (LMigratedPath <> APath) then
-    begin
-      LogDebug('TRadIAConfig.Load: Found migration path: ' + LMigratedPath);
-      LoadFromPath(LMigratedPath);
-      SaveToPath(APath);
-      Exit;
-    end;
+    LParentPath := Copy(APath, 1, LastDelimiter('\', APath));
+    if FStorage.KeyExists(LParentPath + 'AIPlugin') then
+      AMigratedPath := LParentPath + 'AIPlugin'
+    else if FStorage.KeyExists(LParentPath + 'RadIA') then
+      AMigratedPath := LParentPath + 'RadIA';
   end;
 
-  { 1. Read global keys from the root path. }
+  { 2. Global fallbacks. }
+  if AMigratedPath.IsEmpty then
+  begin
+    if FStorage.KeyExists('Software\RadIA') then
+      AMigratedPath := 'Software\RadIA'
+    else if FStorage.KeyExists('Software\RadAI') then
+      AMigratedPath := 'Software\RadAI';
+  end;
+
+  Result := not AMigratedPath.IsEmpty and (AMigratedPath <> APath);
+end;
+
+procedure TRadIAConfig.LoadGlobalSettings(const APath: string);
+var
+  LMaxHist: Integer;
+begin
   if FStorage.OpenKey(APath, False) then
   begin
     LogDebug('TRadIAConfig.Load: Opened root path ' + APath);
@@ -361,6 +354,120 @@ begin
   end
   else
     LogDebug('TRadIAConfig.Load: Failed to open root path ' + APath);
+end;
+
+procedure TRadIAConfig.LoadProviderSettings(const AProviderPath, AProviderName: string);
+begin
+  LogDebug('TRadIAConfig.Load: Reading subkey for provider ' + AProviderName);
+  if FStorage.OpenKey(AProviderPath, False) then
+  begin
+    { Load API Key }
+    if FStorage.ValueExists('ApiKey') then
+    begin
+      try
+        FApiKeysList.Values[AProviderName.ToLower] := UnprotectString(FStorage.ReadString('ApiKey', ''));
+      except
+        on E: Exception do
+        begin
+          LogDebug('TRadIAConfig.Load: Failed to unprotect API key for ' + AProviderName + ': ' + E.Message);
+          FApiKeysList.Values[AProviderName.ToLower] := '';
+        end;
+      end;
+    end;
+
+    { Load Model }
+    if FStorage.ValueExists('Model') then
+      FModelsList.Values[AProviderName.ToLower] := FStorage.ReadString('Model', '')
+    else if FStorage.ValueExists('ActiveModel') then
+      FModelsList.Values[AProviderName.ToLower] := FStorage.ReadString('ActiveModel', '');
+
+    { Load BaseURL }
+    if FStorage.ValueExists('BaseURL') then
+    begin
+      FBaseUrlsList.Values[AProviderName.ToLower] := FStorage.ReadString('BaseURL', '');
+      { Keep public compatibility properties backed by provider subkeys. }
+      if SameText(AProviderName, 'openai') then
+        FOpenAICustomBaseUrl := FStorage.ReadString('BaseURL', '')
+      else if SameText(AProviderName, 'ollama') then
+        FOllamaBaseUrl := FStorage.ReadString('BaseURL', '');
+    end;
+
+    if SameText(AProviderName, 'AzureOpenAI') then
+      FAzureApiVersion := ReadRegString('ApiVersion', TConfigDefaults.AzureApiVersion);
+
+    if SameText(AProviderName, 'Bedrock') then
+    begin
+      FAwsRegion := ReadRegString('Region', TConfigDefaults.AwsRegion);
+      try
+        if FStorage.ValueExists('AccessKeyId') then
+          FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AccessKeyId', ''));
+      except
+        on E: Exception do
+        begin
+          LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock AccessKeyId: ' + E.Message);
+          FAwsAccessKeyId := '';
+        end;
+      end;
+      try
+        if FStorage.ValueExists('SecretAccessKey') then
+          FAwsSecretAccessKey := UnprotectString(FStorage.ReadString('SecretAccessKey', ''));
+      except
+        on E: Exception do
+        begin
+          LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SecretAccessKey: ' + E.Message);
+          FAwsSecretAccessKey := '';
+        end;
+      end;
+      try
+        if FStorage.ValueExists('SessionToken') then
+          FAwsSessionToken := UnprotectString(FStorage.ReadString('SessionToken', ''));
+      except
+        on E: Exception do
+        begin
+          LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SessionToken: ' + E.Message);
+          FAwsSessionToken := '';
+        end;
+      end;
+    end;
+
+    { Load advanced numeric parameters }
+    FTemperaturesList.Values[AProviderName.ToLower] := FloatToStr(
+      ReadRegDouble('Temperature', TConfigDefaults.Temperature),
+      TFormatSettings.Invariant);
+    FMaxTokensList.Values[AProviderName.ToLower] := IntToStr(
+      ReadRegInt('MaxTokens', TConfigDefaults.MaxTokens));
+    FTimeoutsList.Values[AProviderName.ToLower] := IntToStr(
+      ReadRegInt('Timeout', TConfigDefaults.Timeout));
+    FAuthTypesList.Values[AProviderName.ToLower] := ReadRegString(
+      'AuthType',
+      TConfigDefaults.ProviderAuthType);
+
+    FStorage.CloseKey;
+  end;
+end;
+
+procedure TRadIAConfig.LoadFromPath(const APath: string);
+var
+  LProvPath: string;
+  LMigratedPath: string;
+  LSubKeys: TStringList;
+  LSubKey: string;
+  LProviders: TArray<TProviderMetadata>;
+  LMeta: TProviderMetadata;
+begin
+  LogDebug('TRadIAConfig.Load starting. Path = ' + APath);
+
+  { If the new key does not exist, try to migrate legacy keys. }
+  if TryMigrateLegacyPath(APath, LMigratedPath) then
+  begin
+    LogDebug('TRadIAConfig.Load: Found migration path: ' + LMigratedPath);
+    LoadFromPath(LMigratedPath);
+    SaveToPath(APath);
+    Exit;
+  end;
+
+  { 1. Read global keys from the root path. }
+  LoadGlobalSettings(APath);
 
   { Initialize default fallback models before loading subkeys }
   LProviders := TProviderRegistry.GetProviders;
@@ -382,92 +489,7 @@ begin
     for LSubKey in LSubKeys do
     begin
       LProvPath := APath + '\' + LSubKey;
-      LogDebug('TRadIAConfig.Load: Reading subkey for provider ' + LSubKey);
-      if FStorage.OpenKey(LProvPath, False) then
-      begin
-        { Load API Key }
-        if FStorage.ValueExists('ApiKey') then
-        begin
-          try
-            FApiKeysList.Values[LSubKey.ToLower] := UnprotectString(FStorage.ReadString('ApiKey', ''));
-          except
-            on E: Exception do
-            begin
-              LogDebug('TRadIAConfig.Load: Failed to unprotect API key for ' + LSubKey + ': ' + E.Message);
-              FApiKeysList.Values[LSubKey.ToLower] := '';
-            end;
-          end;
-        end;
-
-        { Load Model }
-        if FStorage.ValueExists('Model') then
-          FModelsList.Values[LSubKey.ToLower] := FStorage.ReadString('Model', '')
-        else if FStorage.ValueExists('ActiveModel') then
-          FModelsList.Values[LSubKey.ToLower] := FStorage.ReadString('ActiveModel', '');
-
-        { Load BaseURL }
-        if FStorage.ValueExists('BaseURL') then
-        begin
-          FBaseUrlsList.Values[LSubKey.ToLower] := FStorage.ReadString('BaseURL', '');
-          { Keep public compatibility properties backed by provider subkeys. }
-          if SameText(LSubKey, 'openai') then
-            FOpenAICustomBaseUrl := FStorage.ReadString('BaseURL', '')
-          else if SameText(LSubKey, 'ollama') then
-            FOllamaBaseUrl := FStorage.ReadString('BaseURL', '');
-        end;
-
-        if SameText(LSubKey, 'AzureOpenAI') then
-          FAzureApiVersion := ReadRegString('ApiVersion', TConfigDefaults.AzureApiVersion);
-
-        if SameText(LSubKey, 'Bedrock') then
-        begin
-          FAwsRegion := ReadRegString('Region', TConfigDefaults.AwsRegion);
-          try
-            if FStorage.ValueExists('AccessKeyId') then
-              FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AccessKeyId', ''));
-          except
-            on E: Exception do
-            begin
-              LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock AccessKeyId: ' + E.Message);
-              FAwsAccessKeyId := '';
-            end;
-          end;
-          try
-            if FStorage.ValueExists('SecretAccessKey') then
-              FAwsSecretAccessKey := UnprotectString(FStorage.ReadString('SecretAccessKey', ''));
-          except
-            on E: Exception do
-            begin
-              LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SecretAccessKey: ' + E.Message);
-              FAwsSecretAccessKey := '';
-            end;
-          end;
-          try
-            if FStorage.ValueExists('SessionToken') then
-              FAwsSessionToken := UnprotectString(FStorage.ReadString('SessionToken', ''));
-          except
-            on E: Exception do
-            begin
-              LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SessionToken: ' + E.Message);
-              FAwsSessionToken := '';
-            end;
-          end;
-        end;
-
-        { Load advanced numeric parameters }
-        FTemperaturesList.Values[LSubKey.ToLower] := FloatToStr(
-          ReadRegDouble('Temperature', TConfigDefaults.Temperature),
-          TFormatSettings.Invariant);
-        FMaxTokensList.Values[LSubKey.ToLower] := IntToStr(
-          ReadRegInt('MaxTokens', TConfigDefaults.MaxTokens));
-        FTimeoutsList.Values[LSubKey.ToLower] := IntToStr(
-          ReadRegInt('Timeout', TConfigDefaults.Timeout));
-        FAuthTypesList.Values[LSubKey.ToLower] := ReadRegString(
-          'AuthType',
-          TConfigDefaults.ProviderAuthType);
-
-        FStorage.CloseKey;
-      end;
+      LoadProviderSettings(LProvPath, LSubKey);
     end;
   finally
     LSubKeys.Free;

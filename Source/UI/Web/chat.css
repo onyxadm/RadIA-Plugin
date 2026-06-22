@@ -1267,9 +1267,6 @@ body.light-theme .session-action-btn:disabled:hover {
   transition: border-color 0.15s ease;
 }
 
-/* .generator-form-group { */
-  position: relative;
-}
 
 .generator-options-row select {
   padding-right: 28px;

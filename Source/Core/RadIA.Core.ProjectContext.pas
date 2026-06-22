@@ -2,6 +2,9 @@
 
 interface
 
+uses
+  System.SysUtils;
+
 type
   { Loader for project-specific context configured via a .radia JSON file }
   TProjectContextLoader = class
@@ -9,14 +12,92 @@ type
     { Loads the context from a .radia file in the specified project folder,
       merging the custom system prompt and the contents of any listed context files. }
     class function LoadContext(const AProjectFolder: string; out AContextPrompt: string): Boolean; static;
+  private
+    class function ReadContextFileSafe(const APath: string; out AContent: string): Boolean; static;
+    class procedure SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer); static;
   end;
 
 implementation
 
 uses
-  System.IOUtils, System.JSON, RadIA.Core.Logger, System.SysUtils, System.Classes;
+  System.IOUtils, System.JSON, RadIA.Core.Logger, System.Classes;
 
 { TProjectContextLoader }
+
+class procedure TProjectContextLoader.SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer);
+var
+  LIdx: Integer;
+  LCountBack: Integer;
+  LCharLen: Integer;
+  LStartByte: Byte;
+begin
+  if ALength <= 0 then Exit;
+  LIdx := ALength - 1;
+  LCountBack := 0;
+  while (LIdx >= 0) and ((ABytes[LIdx] and $C0) = $80) do
+  begin
+    Dec(LIdx);
+    Inc(LCountBack);
+  end;
+
+  if LIdx >= 0 then
+  begin
+    LStartByte := ABytes[LIdx];
+    LCharLen := 1;
+    if (LStartByte and $80) <> 0 then
+    begin
+      if (LStartByte and $F8) = $F0 then
+        LCharLen := 4
+      else if (LStartByte and $F0) = $E0 then
+        LCharLen := 3
+      else if (LStartByte and $E0) = $C0 then
+        LCharLen := 2;
+
+      if LCountBack < (LCharLen - 1) then
+      begin
+        ALength := LIdx;
+      end;
+    end;
+  end;
+end;
+
+class function TProjectContextLoader.ReadContextFileSafe(const APath: string; out AContent: string): Boolean;
+var
+  LStream: TFileStream;
+  LBytes: TBytes;
+  LReadLen: Integer;
+begin
+  Result := False;
+  AContent := '';
+  if not TFile.Exists(APath) then
+    Exit;
+
+  try
+    LStream := TFileStream.Create(APath, fmOpenRead or fmShareDenyNone);
+    try
+      if LStream.Size > 51200 then
+      begin
+        SetLength(LBytes, 51200);
+        LReadLen := LStream.Read(LBytes[0], 51200);
+        SafeTruncateUTF8Bytes(LBytes, LReadLen);
+        SetLength(LBytes, LReadLen);
+        AContent := TEncoding.UTF8.GetString(LBytes);
+        Result := True; // indicates it was truncated
+      end
+      else
+      begin
+        AContent := TFile.ReadAllText(APath, TEncoding.UTF8);
+        Result := False; // not truncated
+      end;
+    finally
+      LStream.Free;
+    end;
+  except
+    on E: Exception do
+      TLogger.Log(Format('LoadContext: Failed to read context file "%s": %s',
+        [APath, E.Message]), 'Context');
+  end;
+end;
 
 class function TProjectContextLoader.LoadContext(const AProjectFolder: string; out AContextPrompt: string): Boolean;
 var
@@ -30,13 +111,7 @@ var
   LFileAbsPath: string;
   LFileContent: string;
   LSb: TStringBuilder;
-  LStream: TFileStream;
-  LBytes: TBytes;
-  LReadLen: Integer;
-  LIdx: Integer;
-  LCountBack: Integer;
-  LCharLen: Integer;
-  LStartByte: Byte;
+  LIsTruncated: Boolean;
 begin
   Result := False;
   AContextPrompt := '';
@@ -46,7 +121,7 @@ begin
 
   LRadiaFile := TPath.Combine(AProjectFolder, '.radia');
   if not TFile.Exists(LRadiaFile) then
-    Exit; { File not found - return False without error }
+    Exit;
 
   LSb := TStringBuilder.Create;
   try
@@ -57,7 +132,7 @@ begin
       if Assigned(LJsonObj) then
       begin
         try
-          Result := True; { Valid JSON parsed, we have context! }
+          Result := True;
 
           { 1. Load system_prompt }
           LSystemPrompt := LJsonObj.GetValue<string>('system_prompt', '');
@@ -81,69 +156,18 @@ begin
               LFileAbsPath := TPath.Combine(AProjectFolder, LFileRelPath);
               if TFile.Exists(LFileAbsPath) then
               begin
-                try
-                  LStream := TFileStream.Create(LFileAbsPath, fmOpenRead or fmShareDenyNone);
-                  try
-                    if LStream.Size > 51200 then
-                    begin
-                      SetLength(LBytes, 51200);
-                      LReadLen := LStream.Read(LBytes[0], 51200);
-
-                      { UTF-8 Truncation Safety Check }
-                      if LReadLen > 0 then
-                      begin
-                        LIdx := LReadLen - 1;
-                        LCountBack := 0;
-                        while (LIdx >= 0) and ((LBytes[LIdx] and $C0) = $80) do
-                        begin
-                          Dec(LIdx);
-                          Inc(LCountBack);
-                        end;
-
-                        if LIdx >= 0 then
-                        begin
-                          LStartByte := LBytes[LIdx];
-                          LCharLen := 1;
-                          if (LStartByte and $80) <> 0 then
-                          begin
-                            if (LStartByte and $F8) = $F0 then
-                              LCharLen := 4
-                            else if (LStartByte and $F0) = $E0 then
-                              LCharLen := 3
-                            else if (LStartByte and $E0) = $C0 then
-                              LCharLen := 2;
-
-                            if LCountBack < (LCharLen - 1) then
-                            begin
-                              LReadLen := LIdx;
-                            end;
-                          end;
-                        end;
-                      end;
-
-                      SetLength(LBytes, LReadLen);
-                      LFileContent := TEncoding.UTF8.GetString(LBytes);
-
-                      LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
-                      LSb.AppendLine(LFileContent.Trim);
-                      LSb.AppendLine(Format('[Aviso: Conteudo do arquivo "%s" foi truncado pois excede ' +
-                          'o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
-                      LSb.AppendLine;
-                    end
-                    else
-                    begin
-                      LFileContent := TFile.ReadAllText(LFileAbsPath, TEncoding.UTF8);
-                      LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
-                      LSb.AppendLine(LFileContent.Trim);
-                      LSb.AppendLine;
-                    end;
-                  finally
-                    LStream.Free;
+                LFileContent := '';
+                LIsTruncated := ReadContextFileSafe(LFileAbsPath, LFileContent);
+                if not LFileContent.IsEmpty then
+                begin
+                  LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
+                  LSb.AppendLine(LFileContent.Trim);
+                  if LIsTruncated then
+                  begin
+                    LSb.AppendLine(Format('[Aviso: Conteudo do arquivo "%s" foi truncado pois excede ' +
+                        'o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
                   end;
-                except
-                  on E: Exception do
-                    TLogger.Log(Format('LoadContext: Failed to read context file "%s": %s',
-                      [LFileRelPath, E.Message]), 'Context');
+                  LSb.AppendLine;
                 end;
               end;
             end;
