@@ -96,15 +96,21 @@ renderer.code = function(codeOrToken, lang) {
     language = lang || 'code';
   }
 
-  const FILEPATH_REGEX = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*(.*)$/i;
-  const fileMatch = FILEPATH_REGEX.exec(code);
   let filepath = '';
   let isProjectFile = false;
+  const prefixMatch = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*/i.exec(code);
 
-  if (fileMatch) {
-    filepath = fileMatch[1].replace(/(?:\s*\}|\s*\*\}|\s*-->)\s*$/, '').trim();
-    isProjectFile = true;
-    code = code.replace(FILEPATH_REGEX, '');
+  if (prefixMatch) {
+    let rawPath = code.substring(prefixMatch[0].length).trim();
+    if (!rawPath.includes('\n')) {
+      if (rawPath.endsWith('-->')) rawPath = rawPath.substring(0, rawPath.length - 3).trim();
+      else if (rawPath.endsWith('*}')) rawPath = rawPath.substring(0, rawPath.length - 2).trim();
+      else if (rawPath.endsWith('}')) rawPath = rawPath.substring(0, rawPath.length - 1).trim();
+      
+      filepath = rawPath;
+      isProjectFile = true;
+      code = '';
+    }
   }
 
   const id = 'cb_' + (++_codeRegistryCounter);
