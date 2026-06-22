@@ -12,12 +12,12 @@ type
     function ChooseDestinationFolder(const ADestDir: string): string;
     function ValidateOrCreateFolder(const AFolder: string; out AErrorMsg: string): Boolean;
     function WriteFilesToDisk(
- 
+
   const AFolder: string;
   AJsonArr: TJSONArray;
- 
+
   AWrittenFiles: TStringList;
- 
+
   out AErrorMsg: string): Boolean;
     procedure ProcessFileJson(const AFolder: string; AObj: TJSONObject; AWrittenFiles: TStringList);
     procedure HandleWriteError(const AExceptionMsg: string; AWrittenFiles: TStringList; out AErrorMsg: string);
@@ -90,12 +90,12 @@ begin
 end;
 
 function TRadIAProjectGenerator.WriteFilesToDisk(
- 
+
   const AFolder: string;
   AJsonArr: TJSONArray;
- 
+
   AWrittenFiles: TStringList;
- 
+
   out AErrorMsg: string): Boolean;
 var
   I: Integer;
@@ -142,11 +142,11 @@ begin
 end;
 
 procedure TRadIAProjectGenerator.HandleWriteError(
- 
+
   const AExceptionMsg: string;
- 
+
   AWrittenFiles: TStringList;
- 
+
   out AErrorMsg: string);
 var
   LRelPath: string;

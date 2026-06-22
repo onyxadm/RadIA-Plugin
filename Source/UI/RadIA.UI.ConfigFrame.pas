@@ -660,8 +660,9 @@ begin
   end;
 
   ApplyThemeToPanels([pnlGemini, pnlOpenAI, pnlClaude, pnlDeepSeek, pnlGroq, pnlOllama,
-    pnlOpenRouter, pnlLMStudio, pnlGithubCopilot, pnlAzureOpenAI, pnlQwen,
-    pnlMistral, pnlBedrock, pnlSystemPrompt, 
+    pnlOpenRouter, pnlLMStudio, 
+    pnlGithubCopilot, pnlAzureOpenAI, pnlQwen,
+    pnlMistral, pnlBedrock, pnlSystemPrompt,
     pnlTemplatesLeft, pnlTemplatesLeftButtons, pnlTemplatesClient, FPnlGeneral], LColors);
 
   for LEditD in FEdtTemperatures.Values do ApplyThemeToEdits([LEditD], LColors);

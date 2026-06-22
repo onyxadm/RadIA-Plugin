@@ -75,7 +75,7 @@ type
   const AActiveProvider: string;
    LIsWebLogin: Boolean;
    out AActiveModel: string): TJSONArray;
-  
+
     function BuildSlashCommandsJsonArray: TJSONArray;
 
     procedure LoadChatHistory;
@@ -141,9 +141,9 @@ type
 
     procedure HandleStreamSessionChange(
   AIsDone: Boolean;
-  
+
   const ASessionId, AFullResponse, AActiveProvider, AActiveModel: string);
-  
+
     procedure HandleStreamCancel(const AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamError(const AError, AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamDone(const APromptText, AActiveProvider, AActiveModel, AFullResponse: string);
@@ -443,7 +443,7 @@ function TRadIAChatPresenter.BuildModelsJsonArray(
   const AActiveProvider: string;
    LIsWebLogin: Boolean;
    out AActiveModel: string): TJSONArray;
-  
+
 var
   LMeta: TProviderMetadata;
   LDefaultModels: TArray<string>;
@@ -832,9 +832,9 @@ end;
 
 procedure TRadIAChatPresenter.HandleStreamSessionChange(
   AIsDone: Boolean;
-  
+
   const ASessionId, AFullResponse, AActiveProvider, AActiveModel: string);
-  
+
 begin
   TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.',
       [ASessionId, Self.FSessionManager.ActiveSessionId]), 'UI');
@@ -868,7 +868,7 @@ end;
 procedure TRadIAChatPresenter.HandleStreamCancel(
   const AActiveProvider, AActiveModel: string;
    var AFullResponse: string);
-  
+
 var
   LAssistantMsg: IRadIAChatMessage;
 begin
@@ -892,7 +892,7 @@ end;
 procedure TRadIAChatPresenter.HandleStreamError(
   const AError, AActiveProvider, AActiveModel: string;
    var AFullResponse: string);
-  
+
 var
   LAssistantMsg: IRadIAChatMessage;
   LIsWebError: Boolean;
@@ -1813,7 +1813,8 @@ begin
   end;
 
   LFallbackCommands := ['/review', '/explain', '/refactor', '/optimize'];
-  LFallbackNames := ['Review Leaks and SOLID', 'Explain Code', 'Review Clean Code Delphi', 'Analyze Performance'];
+  LFallbackNames := ['Review Leaks and SOLID', 'Explain Code',
+     'Review Clean Code Delphi', 'Analyze Performance'];
 
   for I := Low(LFallbackCommands) to High(LFallbackCommands) do
   begin
