@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{F70494A3-D19C-4EB9-A059-86E42CE3BD00}</ProjectGuid>
         <MainSource>RadIA.dpk</MainSource>
@@ -154,7 +154,6 @@
         <DCCReference Include="Source\Providers\RadIA.Provider.Qwen.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Mistral.pas"/>
         <DCCReference Include="Source\Providers\RadIA.Provider.Bedrock.pas"/>
-        <DCCReference Include="Source\Providers\RadIA.Providers.Link.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Adapter.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Register.pas"/>
         <DCCReference Include="Source\Integration\RadIA.OTA.Helper.pas"/>

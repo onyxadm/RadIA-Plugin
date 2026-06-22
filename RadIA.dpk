@@ -77,7 +77,6 @@ contains
   RadIA.Provider.Qwen in 'Source\Providers\RadIA.Provider.Qwen.pas',
   RadIA.Provider.Mistral in 'Source\Providers\RadIA.Provider.Mistral.pas',
   RadIA.Provider.Bedrock in 'Source\Providers\RadIA.Provider.Bedrock.pas',
-  RadIA.Providers.Link in 'Source\Providers\RadIA.Providers.Link.pas',
   RadIA.OTA.Adapter in 'Source\Integration\RadIA.OTA.Adapter.pas',
   RadIA.OTA.Register in 'Source\Integration\RadIA.OTA.Register.pas',
   RadIA.OTA.Helper in 'Source\Integration\RadIA.OTA.Helper.pas',
