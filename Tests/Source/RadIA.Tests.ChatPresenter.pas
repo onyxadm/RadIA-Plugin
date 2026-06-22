@@ -44,6 +44,30 @@ type
     constructor Create;
     destructor Destroy; override;
 
+    { IRadIAChatView }
+    procedure SetRequestState(const AInProgress: Boolean);
+    procedure UpdateTokensStats(const AStats: string);
+    procedure PostMessageToWeb(const AJson: string);
+    procedure PostMessageToBackgroundWeb(const AJson: string);
+    procedure ApplyCurrentTheme;
+    procedure CreateBackgroundBrowser;
+    function IsBackgroundBrowserInitialized: Boolean;
+    procedure NavigateBackgroundBrowser(const AUrl: string);
+    procedure ShowLoginWindow(const AUrl: string; AOnLoginSuccess: TProc);
+    procedure UpdateProviders(const AProviders: TArray<string>; const AActiveProvider: string);
+    procedure UpdateModels(const AModels: TArray<string>; const AActiveModel: string; const AEnabled: Boolean);
+    procedure UpdateSessions(const ASessions: TArray<TSessionInfo>; const AActiveSessionId: string);
+    procedure UpdateTemplates(const ATemplates: TArray<string>);
+    function GetPromptInput: string;
+    procedure SetPromptInput(const APrompt: string);
+    procedure FocusPromptInput;
+    function GetActiveEditorText(out ACode: string; const AOnlySelected: Boolean): Boolean;
+    procedure ReplaceActiveEditorText(const ACode: string);
+    procedure ShowMessageDialog(const AMessage: string);
+    function SaveDialogExecute(out AFileName: string): Boolean;
+    procedure ToggleSessionsPanel;
+    procedure OpenSettingsDialog;
+
     property RequestStateInProgress: Boolean read FRequestStateInProgress write FRequestStateInProgress;
     property RequestStateSetCalled: Boolean read FRequestStateSetCalled write FRequestStateSetCalled;
     property TokensStatsText: string read FTokensStatsText write FTokensStatsText;
@@ -78,30 +102,6 @@ type
     property SaveDialogSelectedFileName: string read FSaveDialogSelectedFileName write FSaveDialogSelectedFileName;
     property ToggleSessionsPanelCalled: Boolean read FToggleSessionsPanelCalled write FToggleSessionsPanelCalled;
     property OpenSettingsDialogCalled: Boolean read FOpenSettingsDialogCalled write FOpenSettingsDialogCalled;
-
-    { IRadIAChatView }
-    procedure SetRequestState(const AInProgress: Boolean);
-    procedure UpdateTokensStats(const AStats: string);
-    procedure PostMessageToWeb(const AJson: string);
-    procedure PostMessageToBackgroundWeb(const AJson: string);
-    procedure ApplyCurrentTheme;
-    procedure CreateBackgroundBrowser;
-    function IsBackgroundBrowserInitialized: Boolean;
-    procedure NavigateBackgroundBrowser(const AUrl: string);
-    procedure ShowLoginWindow(const AUrl: string; AOnLoginSuccess: TProc);
-    procedure UpdateProviders(const AProviders: TArray<string>; const AActiveProvider: string);
-    procedure UpdateModels(const AModels: TArray<string>; const AActiveModel: string; const AEnabled: Boolean);
-    procedure UpdateSessions(const ASessions: TArray<TSessionInfo>; const AActiveSessionId: string);
-    procedure UpdateTemplates(const ATemplates: TArray<string>);
-    function GetPromptInput: string;
-    procedure SetPromptInput(const APrompt: string);
-    procedure FocusPromptInput;
-    function GetActiveEditorText(out ACode: string; const AOnlySelected: Boolean): Boolean;
-    procedure ReplaceActiveEditorText(const ACode: string);
-    procedure ShowMessageDialog(const AMessage: string);
-    function SaveDialogExecute(out AFileName: string): Boolean;
-    procedure ToggleSessionsPanel;
-    procedure OpenSettingsDialog;
   end;
 
   TMockIAProvider = class(TInterfacedObject, IRadIAProvider)
