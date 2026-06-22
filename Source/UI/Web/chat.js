@@ -96,13 +96,13 @@ renderer.code = function(codeOrToken, lang) {
     language = lang || 'code';
   }
 
-  const FILEPATH_REGEX = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*(.+?)(?:\s*\}|\s*\*\}|\s*-->)?\s*$/i;
+  const FILEPATH_REGEX = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*(.*)$/i;
   const fileMatch = FILEPATH_REGEX.exec(code);
   let filepath = '';
   let isProjectFile = false;
 
   if (fileMatch) {
-    filepath = fileMatch[1].trim();
+    filepath = fileMatch[1].replace(/(?:\s*\}|\s*\*\}|\s*-->)\s*$/, '').trim();
     isProjectFile = true;
     code = code.replace(FILEPATH_REGEX, '');
   }

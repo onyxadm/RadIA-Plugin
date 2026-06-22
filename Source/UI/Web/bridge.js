@@ -212,11 +212,11 @@
 
   // --- Markdown and format reconstruction ---
   function trimOuterBlankLines(text) {
-    return (text || '')
-      .replaceAll('\r\n', '\n')
-      .replaceAll('\r', '\n')
-      .replace(/^\n+/, '')
-      .replace(/\n+$/, '');
+    if (!text) return '';
+    let result = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+    while (result.startsWith('\n')) result = result.substring(1);
+    while (result.endsWith('\n')) result = result.substring(0, result.length - 1);
+    return result;
   }
 
   function appendLineBreak(text) {

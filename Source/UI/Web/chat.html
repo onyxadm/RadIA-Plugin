@@ -7,12 +7,16 @@
   <title>Rad IA Chat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/prism-tomorrow.min.css">
   <script>
     const initialTheme = new URLSearchParams(window.location.search).get('theme');
     const safeInitialTheme = ['light', 'dark'].includes(initialTheme) ? initialTheme : 'light';
     document.documentElement.className = safeInitialTheme + '-theme';
+
+    const fontLink = document.createElement('link');
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
+    document.head.appendChild(fontLink);
   </script>
   <link rel="stylesheet" href="chat-theme.css">
   <link rel="stylesheet" href="chat.css">
