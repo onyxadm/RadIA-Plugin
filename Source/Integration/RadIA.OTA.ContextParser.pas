@@ -28,6 +28,12 @@ type
     class function ExtractWindowText(const ASourceCode: string; const ALine: Integer; out AStartLine: Integer): string;
     class function FindClassDeclarationBackwards(const ALines: TStrings; const ARelativeLine: Integer): Integer;
     class function FindClassDeclarationEnd(const ALines: TStrings; const AClassStartLine: Integer): Integer;
+    class function ExtractLineComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+    class function ExtractBraceComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+    class function ExtractParenComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+    class function ProcessNextChar(const ALine: string; var I: Integer; var AInBraceComment, AInParenComment, AInString: Boolean; var AResult: string): Boolean;
+    class function FindMethodStartLine(const ALines: TStrings; const ACursorIndex: Integer): Integer;
+    class function FindMethodBeginLine(const ALines: TStrings; const AMethodStartLine, ACursorIndex: Integer): Integer;
   public
     class function GetInterfaceSection(const ASourceCode: string): string;
     class function GetClassContextAtLine(const ASourceCode: string; const ALine: Integer): string;
@@ -70,6 +76,82 @@ begin
     LLine.StartsWith('class function ');
 end;
 
+class function TRadIAContextParser.ProcessNextChar(const ALine: string; var I: Integer; var AInBraceComment, AInParenComment, AInString: Boolean; var AResult: string): Boolean;
+begin
+  Result := True;
+  if AInBraceComment then
+  begin
+    if ALine[I] = '}' then
+      AInBraceComment := False;
+    AResult := AResult + ' ';
+    Inc(I);
+    Exit;
+  end;
+
+  if AInParenComment then
+  begin
+    if (ALine[I] = '*') and (I < High(ALine)) and (ALine[I + 1] = ')') then
+    begin
+      AInParenComment := False;
+      AResult := AResult + '  ';
+      Inc(I, 2);
+    end
+    else
+    begin
+      AResult := AResult + ' ';
+      Inc(I);
+    end;
+    Exit;
+  end;
+
+  if AInString then
+  begin
+    if ALine[I] = '''' then
+    begin
+      if (I < High(ALine)) and (ALine[I + 1] = '''') then
+      begin
+        AResult := AResult + '  ';
+        Inc(I, 2);
+        Exit;
+      end;
+      AInString := False;
+    end;
+    AResult := AResult + ' ';
+    Inc(I);
+    Exit;
+  end;
+
+  if (ALine[I] = '/') and (I < High(ALine)) and (ALine[I + 1] = '/') then
+    Exit(False);
+
+  if ALine[I] = '{' then
+  begin
+    AInBraceComment := True;
+    AResult := AResult + ' ';
+    Inc(I);
+    Exit;
+  end;
+
+  if (ALine[I] = '(') and (I < High(ALine)) and (ALine[I + 1] = '*') then
+  begin
+    AInParenComment := True;
+    AResult := AResult + '  ';
+    Inc(I, 2);
+    Exit;
+  end;
+
+  if ALine[I] = '''' then
+  begin
+    AInString := True;
+    AResult := AResult + ' ';
+    Inc(I);
+    Exit;
+  end;
+
+  AResult := AResult + ALine[I];
+  Inc(I);
+end;
+
 class function TRadIAContextParser.StripCommentsAndStrings(const ALine: string; var AInBraceComment: Boolean;
   var AInParenComment: Boolean): string;
 var
@@ -82,77 +164,8 @@ begin
 
   while I <= High(ALine) do
   begin
-    if AInBraceComment then
-    begin
-      if ALine[I] = '}' then
-        AInBraceComment := False;
-      Result := Result + ' ';
-      Inc(I);
-      Continue;
-    end;
-
-    if AInParenComment then
-    begin
-      if (ALine[I] = '*') and (I < High(ALine)) and (ALine[I + 1] = ')') then
-      begin
-        AInParenComment := False;
-        Result := Result + '  ';
-        Inc(I, 2);
-      end
-      else
-      begin
-        Result := Result + ' ';
-        Inc(I);
-      end;
-      Continue;
-    end;
-
-    if LInString then
-    begin
-      if ALine[I] = '''' then
-      begin
-        if (I < High(ALine)) and (ALine[I + 1] = '''') then
-        begin
-          Result := Result + '  ';
-          Inc(I, 2);
-          Continue;
-        end;
-        LInString := False;
-      end;
-      Result := Result + ' ';
-      Inc(I);
-      Continue;
-    end;
-
-    if (ALine[I] = '/') and (I < High(ALine)) and (ALine[I + 1] = '/') then
+    if not ProcessNextChar(ALine, I, AInBraceComment, AInParenComment, LInString, Result) then
       Break;
-
-    if ALine[I] = '{' then
-    begin
-      AInBraceComment := True;
-      Result := Result + ' ';
-      Inc(I);
-      Continue;
-    end;
-
-    if (ALine[I] = '(') and (I < High(ALine)) and (ALine[I + 1] = '*') then
-    begin
-      AInParenComment := True;
-      Result := Result + '  ';
-      Inc(I, 2);
-      Continue;
-    end;
-
-    if ALine[I] = '''' then
-    begin
-      LInString := True;
-      Result := Result + ' ';
-      Inc(I);
-      Continue;
-    end;
-
-    Result := Result + ALine[I];
-    Inc(I);
   end;
 end;
 
@@ -219,13 +232,74 @@ begin
   end;
 end;
 
+class function TRadIAContextParser.ExtractLineComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+begin
+  ACommentEndLine := I;
+  LBuilder.AppendLine(ATrimmed.Substring(2).Trim);
+  while (ACommentEndLine + 1 <= AEndLine) and
+        ALines[ACommentEndLine + 1].Trim.StartsWith('//') do
+  begin
+    Inc(ACommentEndLine);
+    LBuilder.AppendLine(ALines[ACommentEndLine].Trim.Substring(2).Trim);
+  end;
+  Result := LBuilder.ToString.Trim;
+end;
+
+class function TRadIAContextParser.ExtractBraceComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+var
+  LLine: string;
+  LClosePos: Integer;
+begin
+  Result := '';
+  LLine := ATrimmed.Substring(1);
+  while True do
+  begin
+    LClosePos := Pos('}', LLine);
+    if LClosePos > 0 then
+    begin
+      LBuilder.AppendLine(Copy(LLine, 1, LClosePos - 1).Trim);
+      ACommentEndLine := I;
+      Exit(LBuilder.ToString.Trim);
+    end;
+
+    LBuilder.AppendLine(LLine.Trim);
+    Inc(I);
+    if I > AEndLine then
+      Exit('');
+    LLine := ALines[I];
+  end;
+end;
+
+class function TRadIAContextParser.ExtractParenComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+var
+  LLine: string;
+  LClosePos: Integer;
+begin
+  Result := '';
+  LLine := ATrimmed.Substring(2);
+  while True do
+  begin
+    LClosePos := Pos('*)', LLine);
+    if LClosePos > 0 then
+    begin
+      LBuilder.AppendLine(Copy(LLine, 1, LClosePos - 1).Trim);
+      ACommentEndLine := I;
+      Exit(LBuilder.ToString.Trim);
+    end;
+
+    LBuilder.AppendLine(LLine.Trim);
+    Inc(I);
+    if I > AEndLine then
+      Exit('');
+    LLine := ALines[I];
+  end;
+end;
+
 class function TRadIAContextParser.TryExtractFirstBodyComment(const ALines: TStrings; const AStartLine,
   AEndLine: Integer; out ACommentText: string; out ACommentStartLine, ACommentEndLine: Integer): Boolean;
 var
   I: Integer;
-  LLine: string;
-  LTrimmed: string;
-  LClosePos: Integer;
+  LLine, LTrimmed: string;
   LBuilder: TStringBuilder;
 begin
   Result := False;
@@ -250,60 +324,20 @@ begin
 
       if LTrimmed.StartsWith('//') then
       begin
-        ACommentEndLine := I;
-        LBuilder.AppendLine(LTrimmed.Substring(2).Trim);
-        while (ACommentEndLine + 1 <= AEndLine) and
-              ALines[ACommentEndLine + 1].Trim.StartsWith('//') do
-        begin
-          Inc(ACommentEndLine);
-          LBuilder.AppendLine(ALines[ACommentEndLine].Trim.Substring(2).Trim);
-        end;
-        ACommentText := LBuilder.ToString.Trim;
+        ACommentText := ExtractLineComment(ALines, AEndLine, LTrimmed, I, ACommentEndLine, LBuilder);
         Exit(not ACommentText.IsEmpty);
       end;
 
       if LTrimmed.StartsWith('{') then
       begin
-        LLine := LTrimmed.Substring(1);
-        while True do
-        begin
-          LClosePos := Pos('}', LLine);
-          if LClosePos > 0 then
-          begin
-            LBuilder.AppendLine(Copy(LLine, 1, LClosePos - 1).Trim);
-            ACommentEndLine := I;
-            ACommentText := LBuilder.ToString.Trim;
-            Exit(not ACommentText.IsEmpty);
-          end;
-
-          LBuilder.AppendLine(LLine.Trim);
-          Inc(I);
-          if I > AEndLine then
-            Exit(False);
-          LLine := ALines[I];
-        end;
+        ACommentText := ExtractBraceComment(ALines, AEndLine, LTrimmed, I, ACommentEndLine, LBuilder);
+        Exit(not ACommentText.IsEmpty);
       end;
 
       if LTrimmed.StartsWith('(*') then
       begin
-        LLine := LTrimmed.Substring(2);
-        while True do
-        begin
-          LClosePos := Pos('*)', LLine);
-          if LClosePos > 0 then
-          begin
-            LBuilder.AppendLine(Copy(LLine, 1, LClosePos - 1).Trim);
-            ACommentEndLine := I;
-            ACommentText := LBuilder.ToString.Trim;
-            Exit(not ACommentText.IsEmpty);
-          end;
-
-          LBuilder.AppendLine(LLine.Trim);
-          Inc(I);
-          if I > AEndLine then
-            Exit(False);
-          LLine := ALines[I];
-        end;
+        ACommentText := ExtractParenComment(ALines, AEndLine, LTrimmed, I, ACommentEndLine, LBuilder);
+        Exit(not ACommentText.IsEmpty);
       end;
 
       Exit(False);
@@ -473,21 +507,46 @@ begin
   end;
 end;
 
+class function TRadIAContextParser.FindMethodStartLine(const ALines: TStrings; const ACursorIndex: Integer): Integer;
+var
+  I: Integer;
+begin
+  Result := -1;
+  for I := ACursorIndex downto 0 do
+  begin
+    if IsMethodDeclarationLine(ALines[I]) then
+      Exit(I);
+    if SameText(ALines[I].Trim, 'implementation') then
+      Break;
+  end;
+end;
+
+class function TRadIAContextParser.FindMethodBeginLine(const ALines: TStrings; const AMethodStartLine, ACursorIndex: Integer): Integer;
+var
+  I: Integer;
+  LLine: string;
+  LInBraceComment, LInParenComment: Boolean;
+begin
+  Result := -1;
+  LInBraceComment := False;
+  LInParenComment := False;
+  for I := AMethodStartLine to ACursorIndex do
+  begin
+    LLine := StripCommentsAndStrings(ALines[I], LInBraceComment, LInParenComment).Trim.ToLower;
+    if SameText(LLine, 'begin') or LLine.EndsWith(' begin') or LLine.Contains(' begin ') then
+      Exit(I);
+  end;
+end;
+
 class function TRadIAContextParser.TryGetMethodExampleContext(const ASourceCode: string;
   const ACursorLine: Integer; out AContext: TMethodExampleContext; out AErrorMessage: string): Boolean;
 var
   LLines: TStringList;
   LCursorIndex: Integer;
-  LMethodStartLine: Integer;
-  LBeginLine: Integer;
-  LEndLine: Integer;
-  LCommentStartLine: Integer;
-  LCommentEndLine: Integer;
+  LMethodStartLine, LBeginLine, LEndLine: Integer;
+  LCommentStartLine, LCommentEndLine: Integer;
   I: Integer;
-  LLine: string;
   LBuilder: TStringBuilder;
-  LInBraceComment: Boolean;
-  LInParenComment: Boolean;
 begin
   Result := False;
   AContext := Default(TMethodExampleContext);
@@ -509,38 +568,14 @@ begin
       Exit;
     end;
 
-    LMethodStartLine := -1;
-    for I := LCursorIndex downto 0 do
-    begin
-      if IsMethodDeclarationLine(LLines[I]) then
-      begin
-        LMethodStartLine := I;
-        Break;
-      end;
-
-      if SameText(LLines[I].Trim, 'implementation') then
-        Break;
-    end;
-
+    LMethodStartLine := FindMethodStartLine(LLines, LCursorIndex);
     if LMethodStartLine < 0 then
     begin
       AErrorMessage := 'Place the cursor inside an implementation method before using Create Example from Comment.';
       Exit;
     end;
 
-    LBeginLine := -1;
-    LInBraceComment := False;
-    LInParenComment := False;
-    for I := LMethodStartLine to LCursorIndex do
-    begin
-      LLine := StripCommentsAndStrings(LLines[I], LInBraceComment, LInParenComment).Trim.ToLower;
-      if SameText(LLine, 'begin') or LLine.EndsWith(' begin') or LLine.Contains(' begin ') then
-      begin
-        LBeginLine := I;
-        Break;
-      end;
-    end;
-
+    LBeginLine := FindMethodBeginLine(LLines, LMethodStartLine, LCursorIndex);
     if LBeginLine < 0 then
     begin
       AErrorMessage := 'Place the cursor inside the method body, after begin.';

@@ -1,4 +1,4 @@
-﻿unit RadIA.OTA.Helper;
+unit RadIA.OTA.Helper;
 
 interface
 
@@ -13,6 +13,11 @@ type
     class function ReadBufferText(const AEditBuffer: IOTAEditBuffer; out AText: string): Boolean;
     class function ReadCurrentSourceEditorText(out AText: string): Boolean;
     class procedure RefreshEditView(const AView: IOTAEditView);
+    class function GetIndentPrefix(const APosition: IOTAEditPosition): string;
+    class function ApplyPrefixToText(const AText, APrefix: string): string;
+    class function ReplaceWholeBufferText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText: string): Boolean;
+    class function ReplaceOriginalTextMatch(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText, AOriginalText: string): Boolean;
+    class function InsertFormattedText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText: string): Boolean;
   public
     class function NormalizeLineBreaks(const AText: string): string;
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
@@ -190,21 +195,14 @@ begin
   end;
 end;
 
-class function TRadIAOTAHelper.FormatTextWithIndent(const AText: string; const APosition: IOTAEditPosition): string;
+class function TRadIAOTAHelper.GetIndentPrefix(const APosition: IOTAEditPosition): string;
 var
   LOriginalCol, LOriginalRow: Integer;
-  LPrefix: string;
   LCol: Integer;
-  LLines: TStringList;
-  I: Integer;
 begin
-  Result := AText;
-  if not Assigned(APosition) then
-    Exit;
-
+  Result := '';
   LOriginalCol := APosition.GetColumn;
   LOriginalRow := APosition.GetRow;
-  LPrefix := '';
 
   APosition.Save;
   try
@@ -212,18 +210,23 @@ begin
     for LCol := 1 to LOriginalCol - 1 do
     begin
       if APosition.Character = #9 then
-        LPrefix := LPrefix + #9
-      else if APosition.Character = ' ' then
-        LPrefix := LPrefix + ' '
+        Result := Result + #9
       else
-        LPrefix := LPrefix + ' ';
+        Result := Result + ' ';
       APosition.Move(LOriginalRow, LCol + 1);
     end;
   finally
     APosition.Restore;
   end;
+end;
 
-  if LPrefix = '' then
+class function TRadIAOTAHelper.ApplyPrefixToText(const AText, APrefix: string): string;
+var
+  LLines: TStringList;
+  I: Integer;
+begin
+  Result := AText;
+  if APrefix = '' then
     Exit;
 
   LLines := TStringList.Create;
@@ -234,7 +237,7 @@ begin
       for I := 1 to LLines.Count - 1 do
       begin
         if LLines[I] <> '' then
-          LLines[I] := LPrefix + LLines[I];
+          LLines[I] := APrefix + LLines[I];
       end;
       Result := LLines.Text;
       if (Length(AText) > 0) and (AText[Length(AText)] <> #10) and
@@ -248,92 +251,90 @@ begin
   end;
 end;
 
-class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean;
-  const AOriginalText: string): Boolean;
+class function TRadIAOTAHelper.FormatTextWithIndent(const AText: string; const APosition: IOTAEditPosition): string;
 var
-  LEditBuffer: IOTAEditBuffer;
-  LEditBlock: IOTAEditBlock;
-  LEditWriter: IOTAEditWriter;
-  LView: IOTAEditView;
-  LPosition: IOTAEditPosition;
-  LOptions: IOTABufferOptions;
-  LSaveAutoIndent: Boolean;
-  LFormattedText: string;
-  LBufferSize: Integer;
+  LPrefix: string;
+begin
+  Result := AText;
+  if not Assigned(APosition) then
+    Exit;
+
+  LPrefix := GetIndentPrefix(APosition);
+  Result := ApplyPrefixToText(AText, LPrefix);
+end;
+
+class function TRadIAOTAHelper.ReplaceWholeBufferText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText: string): Boolean;
+var
   LBufferText: string;
-  LMatchPos: Integer;
-  LStartOffset: Integer;
-  LEndOffset: Integer;
+  LBufferSize: Integer;
+  LEditWriter: IOTAEditWriter;
   LUtf8Text: UTF8String;
 begin
   Result := False;
-  LEditBuffer := GetCurrentEditBuffer;
-  LView := GetCurrentEditView;
-  if not Assigned(LEditBuffer) or not Assigned(LView) then
+  LBufferText := '';
+  if ReadBufferText(AEditBuffer, LBufferText) then
+    LBufferSize := System.SysUtils.TEncoding.UTF8.GetByteCount(LBufferText)
+  else
+    LBufferSize := 0;
+
+  LEditWriter := AEditBuffer.CreateUndoableWriter;
+  if not Assigned(LEditWriter) then
     Exit;
 
-  if AReplaceWholeBuffer then
-  begin
-    LBufferText := '';
-    if ReadBufferText(LEditBuffer, LBufferText) then
-      LBufferSize := System.SysUtils.TEncoding.UTF8.GetByteCount(LBufferText)
-    else
-      LBufferSize := 0;
+  LEditWriter.CopyTo(0);
+  if LBufferSize > 0 then
+    LEditWriter.DeleteTo(LBufferSize);
 
-    LEditWriter := LEditBuffer.CreateUndoableWriter;
-    if not Assigned(LEditWriter) then
-      Exit;
+  LUtf8Text := UTF8Encode(NormalizeLineBreaks(ANewText));
+  LEditWriter.Insert(PAnsiChar(LUtf8Text));
+  Result := True;
+  RefreshEditView(AView);
+end;
 
-    LEditWriter.CopyTo(0);
-    if LBufferSize > 0 then
-      LEditWriter.DeleteTo(LBufferSize);
-
-    LUtf8Text := UTF8Encode(NormalizeLineBreaks(ANewText));
-    LEditWriter.Insert(PAnsiChar(LUtf8Text));
-    Result := True;
-    RefreshEditView(LView);
+class function TRadIAOTAHelper.ReplaceOriginalTextMatch(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText, AOriginalText: string): Boolean;
+var
+  LBufferText: string;
+  LMatchPos, LStartOffset, LEndOffset: Integer;
+  LEditWriter: IOTAEditWriter;
+  LUtf8Text: UTF8String;
+begin
+  Result := False;
+  LBufferText := '';
+  if not ReadBufferText(AEditBuffer, LBufferText) then
     Exit;
-  end;
 
-  LEditBlock := LEditBuffer.EditBlock;
-  if Assigned(LEditBlock) and (LEditBlock.Size > 0) then
-  begin
-    LPosition := LView.Position;
-    LPosition.Move(LEditBlock.StartingRow, LEditBlock.StartingColumn);
-    LEditBlock.Delete;
-  end;
-
-  if ((not Assigned(LEditBlock)) or (LEditBlock.Size <= 0)) and (not AOriginalText.Trim.IsEmpty) then
-  begin
-    LBufferText := '';
-    if not ReadBufferText(LEditBuffer, LBufferText) then
-      Exit;
-
-    LMatchPos := Pos(AOriginalText, LBufferText);
-    if LMatchPos <= 0 then
-      Exit;
-
-    LEditWriter := LEditBuffer.CreateUndoableWriter;
-    if not Assigned(LEditWriter) then
-      Exit;
-
-    LStartOffset := System.SysUtils.TEncoding.UTF8.GetByteCount(Copy(LBufferText, 1, LMatchPos - 1));
-    LEndOffset := LStartOffset + System.SysUtils.TEncoding.UTF8.GetByteCount(AOriginalText);
-
-    LEditWriter.CopyTo(LStartOffset);
-    LEditWriter.DeleteTo(LEndOffset);
-
-    LUtf8Text := UTF8Encode(NormalizeLineBreaks(ANewText));
-    LEditWriter.Insert(PAnsiChar(LUtf8Text));
-    Result := True;
-    RefreshEditView(LView);
+  LMatchPos := Pos(AOriginalText, LBufferText);
+  if LMatchPos <= 0 then
     Exit;
-  end;
 
-  LPosition := LView.Position;
+  LEditWriter := AEditBuffer.CreateUndoableWriter;
+  if not Assigned(LEditWriter) then
+    Exit;
+
+  LStartOffset := System.SysUtils.TEncoding.UTF8.GetByteCount(Copy(LBufferText, 1, LMatchPos - 1));
+  LEndOffset := LStartOffset + System.SysUtils.TEncoding.UTF8.GetByteCount(AOriginalText);
+
+  LEditWriter.CopyTo(LStartOffset);
+  LEditWriter.DeleteTo(LEndOffset);
+
+  LUtf8Text := UTF8Encode(NormalizeLineBreaks(ANewText));
+  LEditWriter.Insert(PAnsiChar(LUtf8Text));
+  Result := True;
+  RefreshEditView(AView);
+end;
+
+class function TRadIAOTAHelper.InsertFormattedText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText: string): Boolean;
+var
+  LPosition: IOTAEditPosition;
+  LFormattedText: string;
+  LOptions: IOTABufferOptions;
+  LSaveAutoIndent: Boolean;
+begin
+  Result := False;
+  LPosition := AView.Position;
   LFormattedText := FormatTextWithIndent(ANewText, LPosition);
 
-  LOptions := LEditBuffer.BufferOptions;
+  LOptions := AEditBuffer.BufferOptions;
   if Assigned(LOptions) then
   begin
     LSaveAutoIndent := LOptions.AutoIndent;
@@ -352,7 +353,41 @@ begin
   end;
 
   if Result then
-    RefreshEditView(LView);
+    RefreshEditView(AView);
+end;
+
+class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean;
+  const AOriginalText: string): Boolean;
+var
+  LEditBuffer: IOTAEditBuffer;
+  LEditBlock: IOTAEditBlock;
+  LView: IOTAEditView;
+  LPosition: IOTAEditPosition;
+begin
+  Result := False;
+  LEditBuffer := GetCurrentEditBuffer;
+  LView := GetCurrentEditView;
+  if not Assigned(LEditBuffer) or not Assigned(LView) then
+    Exit;
+
+  if AReplaceWholeBuffer then
+    Exit(ReplaceWholeBufferText(LEditBuffer, LView, ANewText));
+
+  LEditBlock := LEditBuffer.EditBlock;
+  if Assigned(LEditBlock) and (LEditBlock.Size > 0) then
+  begin
+    LPosition := LView.Position;
+    LPosition.Move(LEditBlock.StartingRow, LEditBlock.StartingColumn);
+    LEditBlock.Delete;
+  end;
+
+  if ((not Assigned(LEditBlock)) or (LEditBlock.Size <= 0)) and (not AOriginalText.Trim.IsEmpty) then
+  begin
+    if ReplaceOriginalTextMatch(LEditBuffer, LView, ANewText, AOriginalText) then
+      Exit(True);
+  end;
+
+  Result := InsertFormattedText(LEditBuffer, LView, ANewText);
 end;
 
 class function TRadIAOTAHelper.InsertTextAtCursor(const AText: string): Boolean;

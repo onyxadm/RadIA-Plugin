@@ -13,6 +13,7 @@ type
     LastActive: TDateTime;
 
     class function CreateNew(const AId, AName: string): TSessionInfo; static;
+    class function ParseFromJSON(const AObj: TJSONObject): TSessionInfo; static;
   end;
 
   TRadIASessionManager = class
@@ -25,6 +26,7 @@ type
     procedure LoadIndex;
     procedure SaveIndex;
     function FindSessionIndex(const AId: string): Integer;
+    function ParseChatMessage(const AObj: TJSONObject; out AMsg: IRadIAChatMessage): Boolean;
   public
     constructor Create(const ASessionsDir: string = '');
     destructor Destroy; override;
@@ -62,6 +64,41 @@ begin
   Result.Name := AName;
   Result.CreatedAt := Now;
   Result.LastActive := Now;
+end;
+
+class function TSessionInfo.ParseFromJSON(const AObj: TJSONObject): TSessionInfo;
+begin
+  if AObj.GetValue('id') <> nil then
+    Result.Id := AObj.GetValue('id').Value
+  else
+    Result.Id := '';
+
+  if AObj.GetValue('name') <> nil then
+    Result.Name := AObj.GetValue('name').Value
+  else
+    Result.Name := '';
+
+  if AObj.GetValue('createdAt') <> nil then
+  begin
+    try
+      Result.CreatedAt := ISO8601ToDate(AObj.GetValue('createdAt').Value);
+    except
+      Result.CreatedAt := Now;
+    end;
+  end
+  else
+    Result.CreatedAt := Now;
+
+  if AObj.GetValue('lastActive') <> nil then
+  begin
+    try
+      Result.LastActive := ISO8601ToDate(AObj.GetValue('lastActive').Value);
+    except
+      Result.LastActive := Now;
+    end;
+  end
+  else
+    Result.LastActive := Now;
 end;
 
 { TRadIASessionManager }
@@ -131,38 +168,7 @@ begin
           if LVal is TJSONObject then
           begin
             LObj := LVal as TJSONObject;
-
-            if LObj.GetValue('id') <> nil then
-              LInfo.Id := LObj.GetValue('id').Value
-            else
-              LInfo.Id := '';
-
-            if LObj.GetValue('name') <> nil then
-              LInfo.Name := LObj.GetValue('name').Value
-            else
-              LInfo.Name := '';
-
-            if LObj.GetValue('createdAt') <> nil then
-            begin
-              try
-                LInfo.CreatedAt := ISO8601ToDate(LObj.GetValue('createdAt').Value);
-              except
-                LInfo.CreatedAt := Now;
-              end;
-            end
-            else
-              LInfo.CreatedAt := Now;
-
-            if LObj.GetValue('lastActive') <> nil then
-            begin
-              try
-                LInfo.LastActive := ISO8601ToDate(LObj.GetValue('lastActive').Value);
-              except
-                LInfo.LastActive := Now;
-              end;
-            end
-            else
-              LInfo.LastActive := Now;
+            LInfo := TSessionInfo.ParseFromJSON(LObj);
 
             if not LInfo.Id.IsEmpty then
               FSessions.Add(LInfo);
@@ -320,6 +326,38 @@ begin
   end;
 end;
 
+function TRadIASessionManager.ParseChatMessage(const AObj: TJSONObject; out AMsg: IRadIAChatMessage): Boolean;
+var
+  LRoleStr, LContentStr, LProviderStr, LModelStr: string;
+begin
+  Result := False;
+  if AObj.GetValue('role') <> nil then
+    LRoleStr := AObj.GetValue('role').Value
+  else
+    LRoleStr := '';
+
+  if AObj.GetValue('content') <> nil then
+    LContentStr := AObj.GetValue('content').Value
+  else
+    LContentStr := '';
+
+  if AObj.GetValue('provider') <> nil then
+    LProviderStr := AObj.GetValue('provider').Value
+  else
+    LProviderStr := '';
+
+  if AObj.GetValue('model') <> nil then
+    LModelStr := AObj.GetValue('model').Value
+  else
+    LModelStr := '';
+
+  if not LContentStr.IsEmpty then
+  begin
+    AMsg := TRadIAChatMessage.CreateMessage(StringToMessageRole(LRoleStr), LContentStr, LProviderStr, LModelStr);
+    Result := True;
+  end;
+end;
+
 function TRadIASessionManager.LoadSessionHistory(const AId: string): TArray<IRadIAChatMessage>;
 var
   LFile: string;
@@ -328,8 +366,7 @@ var
   LJsonArr: TJSONArray;
   LVal: TJSONValue;
   LMsgObj: TJSONObject;
-  LRole: TAIMessageRole;
-  LRoleStr, LContentStr, LProviderStr, LModelStr: string;
+  LMsg: IRadIAChatMessage;
 begin
   Result := [];
   LFile := GetSessionFilePath(AId);
@@ -352,32 +389,8 @@ begin
           if LVal is TJSONObject then
           begin
             LMsgObj := LVal as TJSONObject;
-
-            if LMsgObj.GetValue('role') <> nil then
-              LRoleStr := LMsgObj.GetValue('role').Value
-            else
-              LRoleStr := '';
-
-            if LMsgObj.GetValue('content') <> nil then
-              LContentStr := LMsgObj.GetValue('content').Value
-            else
-              LContentStr := '';
-
-            if LMsgObj.GetValue('provider') <> nil then
-              LProviderStr := LMsgObj.GetValue('provider').Value
-            else
-              LProviderStr := '';
-
-            if LMsgObj.GetValue('model') <> nil then
-              LModelStr := LMsgObj.GetValue('model').Value
-            else
-              LModelStr := '';
-
-            if not LContentStr.IsEmpty then
-            begin
-              LRole := StringToMessageRole(LRoleStr);
-              Result := Result + [TRadIAChatMessage.CreateMessage(LRole, LContentStr, LProviderStr, LModelStr)];
-            end;
+            if ParseChatMessage(LMsgObj, LMsg) then
+              Result := Result + [LMsg];
           end;
         end;
       end;

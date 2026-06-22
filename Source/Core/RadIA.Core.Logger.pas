@@ -14,6 +14,8 @@ type
 
     function GetDefaultLogPath: string;
     procedure RotateLogFile(const AActiveFile: string; const ADateStr: string);
+    procedure CheckRotation(const AActiveFile: string; var ANeedRotation: Boolean; var AFileDateStr: string);
+    procedure WriteLogEntry(const AActiveFile, AMsg, ATag: string);
   public
     constructor Create;
     destructor Destroy; override;
@@ -138,18 +140,76 @@ begin
   end;
 end;
 
+procedure TConcreteLogger.CheckRotation(const AActiveFile: string; var ANeedRotation: Boolean; var AFileDateStr: string);
+var
+  LFileDate: TDateTime;
+  LTodayStr: string;
+  LSize: Int64;
+begin
+  if not TFile.Exists(AActiveFile) then
+    Exit;
+
+  // 1. Check Date Rotation
+  try
+    LFileDate := TFile.GetLastWriteTime(AActiveFile);
+    LTodayStr := FormatDateTime('yyyy-mm-dd', Now);
+    AFileDateStr := FormatDateTime('yyyy-mm-dd', LFileDate);
+    if LTodayStr <> AFileDateStr then
+      ANeedRotation := True;
+  except
+    on E: Exception do
+      OutputDebugString(PChar('RadIA.Logger.CheckRotation Date Error: ' + E.Message));
+  end;
+
+  // 2. Check Size Rotation
+  if not ANeedRotation then
+  begin
+    try
+      LSize := TFile.GetSize(AActiveFile);
+      if LSize >= (Int64(FLogMaxSizeKB) * 1024) then
+        ANeedRotation := True;
+    except
+      on E: Exception do
+        OutputDebugString(PChar('RadIA.Logger.CheckRotation Size Error: ' + E.Message));
+    end;
+  end;
+end;
+
+procedure TConcreteLogger.WriteLogEntry(const AActiveFile, AMsg, ATag: string);
+var
+  LStream: TFileStream;
+  LWriter: TStreamWriter;
+  LText: string;
+begin
+  try
+    if TFile.Exists(AActiveFile) then
+      LStream := TFileStream.Create(AActiveFile, fmOpenWrite or fmShareDenyNone)
+    else
+      LStream := TFileStream.Create(AActiveFile, fmCreate or fmShareDenyNone);
+    try
+      LStream.Seek(0, soEnd);
+      LWriter := TStreamWriter.Create(LStream, TEncoding.UTF8);
+      try
+        LText := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - [' + ATag + '] ' + AMsg;
+        LWriter.WriteLine(LText);
+      finally
+        LWriter.Free;
+      end;
+    finally
+      LStream.Free;
+    end;
+  except
+    on E: Exception do
+      OutputDebugString(PChar('RadIA.Logger.Write Error: ' + E.Message));
+  end;
+end;
+
 procedure TConcreteLogger.Log(const AMsg: string; const ATag: string);
 var
   LDir: string;
   LActiveFile: string;
   LNeedRotation: Boolean;
-  LFileDate: TDateTime;
-  LTodayStr: string;
   LFileDateStr: string;
-  LSize: Int64;
-  LStream: TFileStream;
-  LWriter: TStreamWriter;
-  LText: string;
 begin
   if not FLogEnabled then
     Exit;
@@ -168,60 +228,12 @@ begin
     LNeedRotation := False;
     LFileDateStr := FormatDateTime('yyyy-mm-dd', Now);
 
-    if TFile.Exists(LActiveFile) then
-    begin
-      // 1. Check Date Rotation
-      try
-        LFileDate := TFile.GetLastWriteTime(LActiveFile);
-        LTodayStr := FormatDateTime('yyyy-mm-dd', Now);
-        LFileDateStr := FormatDateTime('yyyy-mm-dd', LFileDate);
-        if LTodayStr <> LFileDateStr then
-          LNeedRotation := True;
-      except
-        on E: Exception do
-          OutputDebugString(PChar('RadIA.Logger.CheckRotation Date Error: ' + E.Message));
-      end;
+    CheckRotation(LActiveFile, LNeedRotation, LFileDateStr);
 
-      // 2. Check Size Rotation (only if date rotation didn't trigger)
-      if not LNeedRotation then
-      begin
-        try
-          LSize := TFile.GetSize(LActiveFile);
-          if LSize >= (Int64(FLogMaxSizeKB) * 1024) then
-            LNeedRotation := True;
-        except
-          on E: Exception do
-            OutputDebugString(PChar('RadIA.Logger.CheckRotation Size Error: ' + E.Message));
-        end;
-      end;
+    if LNeedRotation then
+      RotateLogFile(LActiveFile, LFileDateStr);
 
-      if LNeedRotation then
-      begin
-        RotateLogFile(LActiveFile, LFileDateStr);
-      end;
-    end;
-
-    try
-      if TFile.Exists(LActiveFile) then
-        LStream := TFileStream.Create(LActiveFile, fmOpenWrite or fmShareDenyNone)
-      else
-        LStream := TFileStream.Create(LActiveFile, fmCreate or fmShareDenyNone);
-      try
-        LStream.Seek(0, soEnd);
-        LWriter := TStreamWriter.Create(LStream, TEncoding.UTF8);
-        try
-          LText := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Now) + ' - [' + ATag + '] ' + AMsg;
-          LWriter.WriteLine(LText);
-        finally
-          LWriter.Free;
-        end;
-      finally
-        LStream.Free;
-      end;
-    except
-      on E: Exception do
-        OutputDebugString(PChar('RadIA.Logger.Write Error: ' + E.Message));
-    end;
+    WriteLogEntry(LActiveFile, AMsg, ATag);
   finally
     TMonitor.Exit(FLock);
   end;

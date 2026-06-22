@@ -57,9 +57,6 @@ function TRadIAGeminiProvider.BuildRequestBody(const APrompt: string; const AHis
 var
   LRootObj: TJSONObject;
   LContentsArr: TJSONArray;
-  LContentObj: TJSONObject;
-  LPartsArr: TJSONArray;
-  LPartObj: TJSONObject;
   LMsg: IRadIAChatMessage;
   LRoleStr: string;
   LSystemPrompt: string;
@@ -67,6 +64,24 @@ var
   LSystemPartsArr: TJSONArray;
   LSystemPartObj: TJSONObject;
   LGenConfigObj: TJSONObject;
+
+  procedure AddMessageToContent(const AMsgContent, ARoleStr: string);
+  var
+    LContentObj, LPartObj: TJSONObject;
+    LPartsArr: TJSONArray;
+  begin
+    LContentObj := TJSONObject.Create;
+    LContentsArr.AddElement(LContentObj);
+    LContentObj.AddPair('role', ARoleStr);
+    
+    LPartsArr := TJSONArray.Create;
+    LContentObj.AddPair('parts', LPartsArr);
+    
+    LPartObj := TJSONObject.Create;
+    LPartsArr.AddElement(LPartObj);
+    LPartObj.AddPair('text', AMsgContent);
+  end;
+
 begin
   LRootObj := TJSONObject.Create;
   try
@@ -84,36 +99,16 @@ begin
         Continue;
       end;
 
-      LContentObj := TJSONObject.Create;
-      LContentsArr.AddElement(LContentObj);
-
-      { Gemini expects 'model' instead of 'assistant' }
       if LMsg.Role = mrAssistant then
         LRoleStr := 'model'
       else
         LRoleStr := 'user';
 
-      LContentObj.AddPair('role', LRoleStr);
-
-      LPartsArr := TJSONArray.Create;
-      LContentObj.AddPair('parts', LPartsArr);
-
-      LPartObj := TJSONObject.Create;
-      LPartsArr.AddElement(LPartObj);
-      LPartObj.AddPair('text', LMsg.Content);
+      AddMessageToContent(LMsg.Content, LRoleStr);
     end;
 
     { Add Current Prompt }
-    LContentObj := TJSONObject.Create;
-    LContentsArr.AddElement(LContentObj);
-    LContentObj.AddPair('role', 'user');
-
-    LPartsArr := TJSONArray.Create;
-    LContentObj.AddPair('parts', LPartsArr);
-
-    LPartObj := TJSONObject.Create;
-    LPartsArr.AddElement(LPartObj);
-    LPartObj.AddPair('text', APrompt);
+    AddMessageToContent(APrompt, 'user');
 
     { Add System Instruction if present }
     if not LSystemPrompt.IsEmpty then
@@ -231,6 +226,57 @@ begin
     end, ACallback);
 end;
 
+function ParseAvailableModelsFromJson(const AJsonStr: string): TList<string>;
+var
+  LJson: TJSONObject;
+  LModelsArr, LMethodsArr: TJSONArray;
+  LVal, LMethodVal: TJSONValue;
+  LModelObj: TJSONObject;
+  LName: string;
+  LCanGenerate: Boolean;
+begin
+  Result := TList<string>.Create;
+  LJson := TJSONObject.ParseJSONValue(AJsonStr) as TJSONObject;
+  if not Assigned(LJson) then Exit;
+  try
+    LModelsArr := LJson.GetValue('models') as TJSONArray;
+    if not Assigned(LModelsArr) then Exit;
+
+    for LVal in LModelsArr do
+    begin
+      if LVal is TJSONObject then
+      begin
+        LModelObj := LVal as TJSONObject;
+        LName := LModelObj.GetValue<string>('name', '');
+        if LName.IsEmpty then Continue;
+
+        LCanGenerate := False;
+        LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
+        if Assigned(LMethodsArr) then
+        begin
+          for LMethodVal in LMethodsArr do
+          begin
+            if SameText(LMethodVal.Value, 'generateContent') then
+            begin
+              LCanGenerate := True;
+              Break;
+            end;
+          end;
+        end;
+
+        if LCanGenerate then
+        begin
+          if LName.StartsWith('models/') then
+            LName := LName.Substring(7);
+          Result.Add(LName);
+        end;
+      end;
+    end;
+  finally
+    LJson.Free;
+  end;
+end;
+
 procedure TRadIAGeminiProvider.FetchAvailableModelsAsync(const ACallback: TProc<TArray<string>, string>);
 var
   LApiKey: string;
@@ -258,14 +304,6 @@ begin
   LTaskProc := procedure
                var
                  LResponseText: string;
-                 LJson: TJSONObject;
-                 LModelsArr: TJSONArray;
-                 LVal: TJSONValue;
-                 LModelObj: TJSONObject;
-                 LName: string;
-                 LMethodsArr: TJSONArray;
-                 LMethodVal: TJSONValue;
-                 LCanGenerate: Boolean;
                  LModelsList: TList<string>;
                  LModelsArray: TArray<string>;
                  LErrorMsg: string;
@@ -273,56 +311,11 @@ begin
                  try
                    System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
                    LProviderRef.GetProviderId;
-                   LModelsList := TList<string>.Create;
+                   
                    try
+                     LResponseText := DoGetRequest(LUrl, nil, 5000);
+                     LModelsList := ParseAvailableModelsFromJson(LResponseText);
                      try
-                       LResponseText := DoGetRequest(LUrl, nil, 5000);
-                       // Timeout rapido de 5 segundos para busca de modelos
-                       LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
-                       if Assigned(LJson) then
-                       begin
-                         try
-                           LModelsArr := LJson.GetValue('models') as TJSONArray;
-                           if Assigned(LModelsArr) then
-                           begin
-                             for LVal in LModelsArr do
-                             begin
-                               if LVal is TJSONObject then
-                               begin
-                                 LModelObj := LVal as TJSONObject;
-                                 LName := LModelObj.GetValue<string>('name', '');
-
-                                 if not LName.IsEmpty then
-                                 begin
-                                   LCanGenerate := False;
-                                   LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
-                                   if Assigned(LMethodsArr) then
-                                   begin
-                                     for LMethodVal in LMethodsArr do
-                                     begin
-                                       if SameText(LMethodVal.Value, 'generateContent') then
-                                       begin
-                                         LCanGenerate := True;
-                                         Break;
-                                       end;
-                                     end;
-                                   end;
-
-                                   if LCanGenerate then
-                                   begin
-                                     if LName.StartsWith('models/') then
-                                       LName := LName.Substring(7);
-                                     LModelsList.Add(LName);
-                                   end;
-                                 end;
-                               end;
-                             end;
-                           end;
-                         finally
-                           LJson.Free;
-                         end;
-                       end;
-
                        if LModelsList.Count = 0 then
                          LModelsArray := GetAvailableModels
                        else
@@ -339,26 +332,26 @@ begin
                            )
                          );
                        end;
-                     except
-                       on E: Exception do
+                     finally
+                       LModelsList.Free;
+                     end;
+                   except
+                     on E: Exception do
+                     begin
+                       LErrorMsg := E.ClassName + ': ' + E.Message;
+                       LModelsArray := GetAvailableModels;
+                       if not GIsShuttingDown then
                        begin
-                         LErrorMsg := E.ClassName + ': ' + E.Message;
-                         LModelsArray := GetAvailableModels;
-                         if not GIsShuttingDown then
-                         begin
-                           TThread.Queue(nil,
-                             TThreadProcedure(
-                               procedure
-                               begin
-                                 ACallback(LModelsArray, LErrorMsg);
-                               end
-                             )
-                           );
-                         end;
+                         TThread.Queue(nil,
+                           TThreadProcedure(
+                             procedure
+                             begin
+                               ACallback(LModelsArray, LErrorMsg);
+                             end
+                           )
+                         );
                        end;
                      end;
-                   finally
-                     LModelsList.Free;
                    end;
                  finally
                    TInterlocked.Decrement(GActiveThreadCount);

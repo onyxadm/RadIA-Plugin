@@ -31,7 +31,13 @@ type
     {$ENDIF}
     procedure InstallEditorNotifiers;
     procedure RemoveEditorNotifiers;
+    procedure RestoreScreenOnActiveFormChange;
+    procedure UnhookAllForms;
+    procedure RestoreInterceptedMenus;
     {$IFNDEF TESTS}
+    procedure SafeHookActiveForm;
+    procedure SafeHookAllEditorForms;
+    procedure HookEditorWindowsNow;
     procedure HookPopupMenu(AForm: TCustomForm);
     {$ENDIF}
     procedure UnhookPopupMenu(AForm: TCustomForm);
@@ -72,6 +78,8 @@ type
 
     procedure HookMenuDirectly(APopupMenu: TPopupMenu);
     procedure UnhookMenuDirectly(APopupMenu: TPopupMenu);
+    class function HasCodeFence(const ALines: TStrings): Boolean; static;
+    class procedure ExtractFenceContent(const ALines, AOutput: TStrings; const AHasFence: Boolean); static;
     class function CleanCreateExampleResponse(const AResponse: string; const AIndent: string): string; static;
   end;
 
@@ -161,25 +169,8 @@ begin
   QueueHookActiveEditor;
 end;
 
-procedure TRadIAEditorHook.Uninstall;
-var
-  I: Integer;
-  LMenu: TPopupMenu;
-  LOldOnPopup: TNotifyEvent;
+procedure TRadIAEditorHook.RestoreScreenOnActiveFormChange;
 begin
-  if not FInstalled then
-    Exit;
-
-  TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
-
-  {$IFNDEF TESTS}
-  if Assigned(FTimer) then
-  begin
-    FTimer.Enabled := False;
-    FreeAndNil(FTimer);
-  end;
-  {$ENDIF}
-
   if Assigned(Screen) and (not GIsShuttingDown) then
   begin
     try
@@ -189,10 +180,12 @@ begin
         TLogger.Log('Uninstall: Error restoring Screen.OnActiveFormChange: ' + E.Message, 'EditorHook');
     end;
   end;
+end;
 
-  FInstalled := False;
-  RemoveEditorNotifiers;
-
+procedure TRadIAEditorHook.UnhookAllForms;
+var
+  I: Integer;
+begin
   if Assigned(Screen) and (not GIsShuttingDown) then
   begin
     for I := 0 to Screen.FormCount - 1 do
@@ -205,11 +198,16 @@ begin
       end;
     end;
   end;
+end;
 
+procedure TRadIAEditorHook.RestoreInterceptedMenus;
+var
+  LMenu: TPopupMenu;
+  LOldOnPopup: TNotifyEvent;
+begin
   if Assigned(FInterceptedMenus) then
   begin
     try
-      // Restore menus only outside shutdown because IDE-owned menus may already be destroyed.
       if not GIsShuttingDown then
       begin
         for LMenu in FInterceptedMenus.Keys do
@@ -229,6 +227,28 @@ begin
       FreeAndNil(FInterceptedMenus);
     end;
   end;
+end;
+
+procedure TRadIAEditorHook.Uninstall;
+begin
+  if not FInstalled then
+    Exit;
+
+  TLogger.Log('Uninstalling editor local menu hooks', 'EditorHook');
+
+  {$IFNDEF TESTS}
+  if Assigned(FTimer) then
+  begin
+    FTimer.Enabled := False;
+    FreeAndNil(FTimer);
+  end;
+  {$ENDIF}
+
+  RestoreScreenOnActiveFormChange;
+  FInstalled := False;
+  RemoveEditorNotifiers;
+  UnhookAllForms;
+  RestoreInterceptedMenus;
 end;
 
 procedure TRadIAEditorHook.ActiveFormChange(Sender: TObject);
@@ -272,13 +292,8 @@ begin
 end;
 
 {$IFNDEF TESTS}
-procedure TRadIAEditorHook.HookEditorWindowsNow;
-var
-  I: Integer;
+procedure TRadIAEditorHook.SafeHookActiveForm;
 begin
-  if (not FInstalled) or GIsShuttingDown then
-    Exit;
-
   if Assigned(Screen) and Assigned(Screen.ActiveForm) and
      Screen.ActiveForm.HandleAllocated and Screen.ActiveForm.Visible then
   begin
@@ -289,7 +304,12 @@ begin
         TLogger.Log('HookEditorWindowsNow: Error hooking active form: ' + E.Message, 'EditorHook');
     end;
   end;
+end;
 
+procedure TRadIAEditorHook.SafeHookAllEditorForms;
+var
+  I: Integer;
+begin
   if Assigned(Screen) then
   begin
     for I := 0 to Screen.FormCount - 1 do
@@ -306,6 +326,15 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TRadIAEditorHook.HookEditorWindowsNow;
+begin
+  if (not FInstalled) or GIsShuttingDown then
+    Exit;
+
+  SafeHookActiveForm;
+  SafeHookAllEditorForms;
 end;
 {$ENDIF}
 
@@ -801,15 +830,51 @@ begin
   end;
 end;
 
+class function TRadIAEditorHook.HasCodeFence(const ALines: TStrings): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to ALines.Count - 1 do
+  begin
+    if ALines[I].Trim.StartsWith('```') then
+      Exit(True);
+  end;
+end;
+
+class procedure TRadIAEditorHook.ExtractFenceContent(const ALines, AOutput: TStrings; const AHasFence: Boolean);
+var
+  I: Integer;
+  LLine, LTrimmed: string;
+  LInFence, LFoundFence: Boolean;
+begin
+  LInFence := False;
+  LFoundFence := False;
+  for I := 0 to ALines.Count - 1 do
+  begin
+    LLine := ALines[I];
+    LTrimmed := LLine.Trim;
+    if LTrimmed.StartsWith('```') then
+    begin
+      if not LInFence then
+      begin
+        LInFence := True;
+        LFoundFence := True;
+        Continue;
+      end;
+      Break;
+    end;
+
+    if (AHasFence and LInFence) or ((not AHasFence) and (not LFoundFence)) then
+      AOutput.Add(LLine);
+  end;
+end;
+
 class function TRadIAEditorHook.CleanCreateExampleResponse(const AResponse: string; const AIndent: string): string;
 var
   LLines: TStringList;
   LOutput: TStringList;
   I: Integer;
-  LLine: string;
-  LTrimmed: string;
-  LInFence: Boolean;
-  LFoundFence: Boolean;
   LHasFence: Boolean;
   LMinIndent: Integer;
   LIndentCount: Integer;
@@ -849,38 +914,9 @@ begin
   LOutput := TStringList.Create;
   try
     LLines.Text := AResponse;
-    LInFence := False;
-    LFoundFence := False;
-    LHasFence := False;
-
-    for I := 0 to LLines.Count - 1 do
-    begin
-      if LLines[I].Trim.StartsWith('```') then
-      begin
-        LHasFence := True;
-        Break;
-      end;
-    end;
-
-    for I := 0 to LLines.Count - 1 do
-    begin
-      LLine := LLines[I];
-      LTrimmed := LLine.Trim;
-      if LTrimmed.StartsWith('```') then
-      begin
-        if not LInFence then
-        begin
-          LInFence := True;
-          LFoundFence := True;
-          Continue;
-        end;
-
-        Break;
-      end;
-
-      if (LHasFence and LInFence) or ((not LHasFence) and (not LFoundFence)) then
-        LOutput.Add(LLine);
-    end;
+    
+    LHasFence := HasCodeFence(LLines);
+    ExtractFenceContent(LLines, LOutput, LHasFence);
 
     while (LOutput.Count > 0) and LOutput[0].Trim.IsEmpty do
       LOutput.Delete(0);

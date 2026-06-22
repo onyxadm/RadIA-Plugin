@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.ProjectContext;
+unit RadIA.Core.ProjectContext;
 
 interface
 
@@ -14,6 +14,7 @@ type
       out ACountBack: Integer): Integer; static;
     class function CalculateUTF8CharLen(AStartByte: Byte): Integer; static;
     class procedure SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer); static;
+    class procedure ProcessContextFiles(const AProjectFolder: string; const AContextFiles: TJSONArray; const ASb: TStringBuilder); static;
   public
     { Loads the context from a .radia file in the specified project folder,
       merging the custom system prompt and the contents of any listed context files. }
@@ -108,6 +109,39 @@ begin
   end;
 end;
 
+class procedure TProjectContextLoader.ProcessContextFiles(const AProjectFolder: string;
+  const AContextFiles: TJSONArray; const ASb: TStringBuilder);
+var
+  LVal: TJSONValue;
+  LFileRelPath, LFileAbsPath, LFileContent: string;
+  LIsTruncated: Boolean;
+begin
+  for LVal in AContextFiles do
+  begin
+    LFileRelPath := LVal.Value;
+    if LFileRelPath.IsEmpty then
+      Continue;
+
+    LFileAbsPath := TPath.Combine(AProjectFolder, LFileRelPath);
+    if TFile.Exists(LFileAbsPath) then
+    begin
+      LFileContent := '';
+      LIsTruncated := ReadContextFileSafe(LFileAbsPath, LFileContent);
+      if not LFileContent.IsEmpty then
+      begin
+        ASb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
+        ASb.AppendLine(LFileContent.Trim);
+        if LIsTruncated then
+        begin
+          ASb.AppendLine(Format('[Aviso: Conteudo do arquivo "%s" foi truncado pois excede ' +
+              'o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
+        end;
+        ASb.AppendLine;
+      end;
+    end;
+  end;
+end;
+
 class function TProjectContextLoader.LoadContext(const AProjectFolder: string; out AContextPrompt: string): Boolean;
 var
   LRadiaFile: string;
@@ -155,32 +189,7 @@ begin
           { 2. Load context_files }
           LContextFiles := LJsonObj.GetValue('context_files') as TJSONArray;
           if Assigned(LContextFiles) then
-          begin
-            for LVal in LContextFiles do
-            begin
-              LFileRelPath := LVal.Value;
-              if LFileRelPath.IsEmpty then
-                Continue;
-
-              LFileAbsPath := TPath.Combine(AProjectFolder, LFileRelPath);
-              if TFile.Exists(LFileAbsPath) then
-              begin
-                LFileContent := '';
-                LIsTruncated := ReadContextFileSafe(LFileAbsPath, LFileContent);
-                if not LFileContent.IsEmpty then
-                begin
-                  LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
-                  LSb.AppendLine(LFileContent.Trim);
-                  if LIsTruncated then
-                  begin
-                    LSb.AppendLine(Format('[Aviso: Conteudo do arquivo "%s" foi truncado pois excede ' +
-                        'o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
-                  end;
-                  LSb.AppendLine;
-                end;
-              end;
-            end;
-          end;
+            ProcessContextFiles(AProjectFolder, LContextFiles, LSb);
         finally
           LJsonObj.Free;
         end;
