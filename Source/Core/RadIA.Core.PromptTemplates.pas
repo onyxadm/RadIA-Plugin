@@ -3,7 +3,7 @@ unit RadIA.Core.PromptTemplates;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.IOUtils, System.JSON, System.Generics.Collections;
+  System.SysUtils, System.Classes, System.JSON, System.Generics.Collections;
 
 type
   { Represents a single prompt template }
@@ -56,7 +56,7 @@ type
 implementation
 
 uses
-  RadIA.Core.Logger;
+  System.IOUtils, RadIA.Core.Logger;
 
 { TPromptTemplateManager }
 
@@ -428,7 +428,7 @@ begin
 
     if ProcessLegacyReviewTemplate(LUser, I, LChanged) then Continue;
     if ProcessLegacyProjectTemplate(LUser, I, LChanged) then Continue;
-    if ProcessRedundantDefaultTemplate(LUser, I, LChanged) then Continue;
+    ProcessRedundantDefaultTemplate(LUser, I, LChanged);
   end;
 
   if LChanged then

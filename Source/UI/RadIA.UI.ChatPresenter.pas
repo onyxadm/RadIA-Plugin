@@ -39,7 +39,6 @@ type
     procedure OpenSettingsDialog;
   end;
 
-  PStreamChunkCtx = ^TStreamChunkCtx;
   TStreamChunkCtx = record
     Chunk: string;
     IsDone: Boolean;
@@ -163,7 +162,8 @@ type
     procedure HandleStreamError(const AError, AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamDone(const APromptText, AActiveProvider, AActiveModel, AFullResponse: string);
     procedure ProcessStreamChunk(const ACtx: TStreamChunkCtx; var ADoneHandled: Boolean; var AFullResponse: string);
-    procedure ProcessDTOGeneratorChunk(const AChunk, AError: string; const AIsDone: Boolean; var ADoneHandled: Boolean; const APromptText, AActiveProvider: string);
+    procedure ProcessDTOGeneratorChunk(const AChunk, AError: string; const AIsDone: Boolean;
+      var ADoneHandled: Boolean; const APromptText, AActiveProvider: string);
 
     procedure CancelRequest;
     procedure ClearChat;
@@ -1189,7 +1189,8 @@ begin
   Self.PostToWebView('append_generator_code', '', '', True);
 end;
 
-procedure TRadIAChatPresenter.ProcessDTOGeneratorChunk(const AChunk, AError: string; const AIsDone: Boolean; var ADoneHandled: Boolean; const APromptText, AActiveProvider: string);
+procedure TRadIAChatPresenter.ProcessDTOGeneratorChunk(const AChunk, AError: string;
+  const AIsDone: Boolean; var ADoneHandled: Boolean; const APromptText, AActiveProvider: string);
 begin
   if ADoneHandled then
     Exit;
@@ -1226,11 +1227,9 @@ end;
 procedure TRadIAChatPresenter.GenerateDTO(const AInput, AInputType, AOutputType: string);
 var
   LPromptText: string;
-  LGuard: IRadIALifecycleGuard;
   LDoneHandled: Boolean;
   LActiveProvider: string;
   LActiveModel: string;
-  HandleGenerateCallback: TStreamChunkCallback;
 begin
   if not CheckQuotaAvailability then
     Exit;
@@ -1247,20 +1246,18 @@ begin
     [LActiveProvider, LActiveModel, Length(AInput), AInputType, AOutputType]), 'UI');
 
   LPromptText := FDTOBuilder.BuildPrompt(AInput, AInputType, AOutputType);
-  LGuard := FLifecycleGuard as IRadIALifecycleGuard;
-
-  HandleGenerateCallback := procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-  begin
-    TThread.Queue(nil,
-      TThreadProcedure(
-      procedure
-      begin
-        ProcessDTOGeneratorChunk(AChunk, AError, AIsDone, LDoneHandled, LPromptText, LActiveProvider);
-      end));
-  end;
 
   try
-    FAIService.SendPromptStream(LPromptText, [], HandleGenerateCallback, rpGeneralChat);
+    FAIService.SendPromptStream(LPromptText, [],
+      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+      begin
+        TThread.Queue(nil,
+          TThreadProcedure(
+          procedure
+          begin
+            ProcessDTOGeneratorChunk(AChunk, AError, AIsDone, LDoneHandled, LPromptText, LActiveProvider);
+          end));
+      end);
   except
     on E: Exception do
     begin
