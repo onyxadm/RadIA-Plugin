@@ -1,4 +1,4 @@
-﻿program RadIATests;
+program RadIATests;
 
 {$DEFINE TESTS}
 {$APPTYPE CONSOLE}
@@ -54,6 +54,8 @@ uses
   RadIA.Provider.Qwen in '..\Source\Providers\RadIA.Provider.Qwen.pas',
   RadIA.Provider.Mistral in '..\Source\Providers\RadIA.Provider.Mistral.pas',
   RadIA.Core.AwsSigner in '..\Source\Core\RadIA.Core.AwsSigner.pas',
+  RadIA.Core.TextNormalizer in '..\Source\Core\RadIA.Core.TextNormalizer.pas',
+  RadIA.Provider.GithubCopilot in '..\Source\Providers\RadIA.Provider.GithubCopilot.pas',
   RadIA.Provider.Bedrock in '..\Source\Providers\RadIA.Provider.Bedrock.pas',
   RadIA.UI.ChatPresenter in '..\Source\UI\RadIA.UI.ChatPresenter.pas',
   RadIA.UI.ConfigPresenter in '..\Source\UI\RadIA.UI.ConfigPresenter.pas',
@@ -83,7 +85,9 @@ uses
   RadIA.Tests.ConfigPresenter in 'Source\RadIA.Tests.ConfigPresenter.pas',
   RadIA.Tests.ProjectGenerator in 'Source\RadIA.Tests.ProjectGenerator.pas',
   RadIA.Tests.Container in 'Source\RadIA.Tests.Container.pas',
-  RadIA.Tests.Infrastructure in 'Source\RadIA.Tests.Infrastructure.pas';
+  RadIA.Tests.Infrastructure in 'Source\RadIA.Tests.Infrastructure.pas',
+  RadIA.Tests.TextNormalizer in 'Source\RadIA.Tests.TextNormalizer.pas',
+  RadIA.Tests.AwsSigner in 'Source\RadIA.Tests.AwsSigner.pas';
 
 var
   Runner: ITestRunner;

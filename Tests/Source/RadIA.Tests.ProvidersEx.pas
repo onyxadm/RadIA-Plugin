@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.ProvidersEx;
+unit RadIA.Tests.ProvidersEx;
 
 interface
 
@@ -6,9 +6,30 @@ uses
   DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
   RadIA.Core.TokenUsage, RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter,
   RadIA.Provider.LMStudio, RadIA.Provider.AzureOpenAI, RadIA.Provider.Qwen, RadIA.Provider.Mistral,
-  RadIA.Provider.Bedrock, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage;
+  RadIA.Provider.Bedrock, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage,
+  RadIA.Provider.GithubCopilot, RadIA.Provider.WebViewBridge,
+  System.SysUtils, System.Net.URLClient, System.NetEncoding, RadIA.Core.ChatMessage;
 
 type
+  TMockHttpClient = class(TInterfacedObject, IRadIAHttpClient)
+  private
+    FResponseStr: string;
+    FStreamChunks: TArray<string>;
+    FLastUrl: string;
+  public
+    procedure SetResponse(const AResponse: string);
+    procedure SetStreamChunks(const AChunks: TArray<string>);
+
+    function Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
+    function Post(const AUrl: string; const AHeaders: TNetHeaders;
+      const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
+    procedure PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
+      const AOnWrite: TProc<TBytes>; const ATimeoutMs: Integer = 0);
+    procedure Cancel;
+
+    property LastUrl: string read FLastUrl;
+  end;
+
   [TestFixture]
   TTestRadIAProvidersEx = class
   private
@@ -21,6 +42,26 @@ type
     FQwenProv: TRadIAQwenProvider;
     FMistralProv: TRadIAMistralProvider;
     FBedrockProv: TRadIABedrockProvider;
+    FGithubCopilotProv: TRadIAGithubCopilotProvider;
+    FWebViewBridgeProv: TRadIAWebViewBridgeProvider;
+    FDeepSeekProvRef: IRadIAProvider;
+    FGroqProvRef: IRadIAProvider;
+    FOpenRouterProvRef: IRadIAProvider;
+    FLMStudioProvRef: IRadIAProvider;
+    FAzureProvRef: IRadIAProvider;
+    FQwenProvRef: IRadIAProvider;
+    FMistralProvRef: IRadIAProvider;
+    FBedrockProvRef: IRadIAProvider;
+    FGithubCopilotProvRef: IRadIAProvider;
+    FWebViewBridgeProvRef: IRadIAProvider;
+    FMockSendPromptCalled: Boolean;
+    FMockCancelCalled: Boolean;
+    FMockPromptReceived: string;
+    FMockHttpClient: TMockHttpClient;
+    FUsageResult: TTokenUsage;
+
+    procedure MockSendPromptEvent(const APrompt: string);
+    procedure MockCancelEvent;
 
     function InvokeBuildRequestBody(AProvider: TObject; const APrompt: string;
       const AHistory: TArray<IRadIAChatMessage>; const AStream: Boolean = False): string;
@@ -33,6 +74,7 @@ type
     procedure RunOpenAIStreamingTest(AProvider: TObject; const AInputBuffer: string;
       const AExpectedText: string; AExpectedCallbackCount: Integer);
   public
+    procedure DummyPinning(const AMsg: TRadIAChatMessage; const AEnc: TNetEncoding);
     [Setup]
     procedure Setup;
     [TearDown]
@@ -55,9 +97,17 @@ type
     [Test]
     procedure TestLMStudio_StreamingSSE;
     [Test]
+    procedure TestLMStudio_SendPromptAsync;
+    [Test]
+    procedure TestLMStudio_SendPromptStreamAsync;
+    [Test]
     procedure TestAzureOpenAI_PayloadAndParsing;
     [Test]
     procedure TestAzureOpenAI_StreamingSSE;
+    [Test]
+    procedure TestAzureOpenAI_SendPromptAsync;
+    [Test]
+    procedure TestAzureOpenAI_SendPromptStreamAsync;
     [Test]
     procedure TestQwen_PayloadAndParsing;
     [Test]
@@ -72,18 +122,39 @@ type
     procedure TestBedrock_AwsSignerSigV4;
     [Test]
     procedure TestBedrock_EventStreamParser;
+    [Test]
+    procedure TestGithubCopilot_PayloadAndParsing;
+    [Test]
+    procedure TestGithubCopilot_StreamingSSE;
+    [Test]
+    procedure TestGithubCopilot_SendPromptAsync;
+    [Test]
+    procedure TestGithubCopilot_SendPromptStreamAsync;
+    [Test]
+    procedure TestWebViewBridge_Workflow;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.Rtti, System.JSON, RadIA.Core.Service, RadIA.Tests.Service,
-  System.NetEncoding, RadIA.Core.ChatMessage;
+  System.Classes, System.Rtti, System.JSON,
+  RadIA.Core.Container;
 
 { TTestRadIAProvidersEx }
 
+procedure TTestRadIAProvidersEx.DummyPinning(const AMsg: TRadIAChatMessage; const AEnc: TNetEncoding);
+begin
+  if Assigned(AMsg) and Assigned(AEnc) then
+  begin
+    var LTemp := AMsg.Content + AEnc.Encode('dummy');
+    if LTemp.Length = 0 then
+      System.Classes.CheckSynchronize(0);
+  end;
+end;
+
 procedure TTestRadIAProvidersEx.Setup;
 begin
+  DummyPinning(nil, nil);
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAProvidersEx');
   TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
@@ -93,27 +164,69 @@ begin
   FConfig.SetActiveModel('LMStudio', 'lms-default');
   FConfig.SetActiveModel('Qwen', MODEL_QWEN_25_CODER_32B);
   FConfig.SetActiveModel('Mistral', MODEL_MISTRAL_CODESTRAL);
+
+  FMockHttpClient := TMockHttpClient.Create;
+  TRadIAContainer.Register<IRadIAHttpClient>(FMockHttpClient as IRadIAHttpClient);
+
   FDeepSeekProv := TRadIADeepSeekProvider.Create(FConfig);
+  FDeepSeekProvRef := FDeepSeekProv;
   FGroqProv := TRadIAGroqProvider.Create(FConfig);
+  FGroqProvRef := FGroqProv;
   FOpenRouterProv := TRadIAOpenRouterProvider.Create(FConfig);
+  FOpenRouterProvRef := FOpenRouterProv;
   FLMStudioProv := TRadIALMStudioProvider.Create(FConfig);
+  FLMStudioProvRef := FLMStudioProv;
   FAzureProv := TRadIAAzureOpenAIProvider.Create(FConfig);
+  FAzureProvRef := FAzureProv;
   FQwenProv := TRadIAQwenProvider.Create(FConfig);
+  FQwenProvRef := FQwenProv;
   FMistralProv := TRadIAMistralProvider.Create(FConfig);
+  FMistralProvRef := FMistralProv;
   FBedrockProv := TRadIABedrockProvider.Create(FConfig);
+  FBedrockProvRef := FBedrockProv;
+  FGithubCopilotProv := TRadIAGithubCopilotProvider.Create(FConfig);
+  FGithubCopilotProvRef := FGithubCopilotProv;
+  FWebViewBridgeProv := TRadIAWebViewBridgeProvider.Create(FConfig);
+  FWebViewBridgeProvRef := FWebViewBridgeProv;
 end;
 
 procedure TTestRadIAProvidersEx.TearDown;
+var
+  LTimeout: Integer;
 begin
-  FDeepSeekProv.Free;
-  FGroqProv.Free;
-  FOpenRouterProv.Free;
-  FLMStudioProv.Free;
-  FAzureProv.Free;
-  FQwenProv.Free;
-  FMistralProv.Free;
-  FBedrockProv.Free;
+  LTimeout := 0;
+  while (GActiveThreadCount > 0) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+  end;
+  Sleep(100); // Aguarda a conclusão da limpeza física de threads de pool
+
+  FDeepSeekProvRef := nil;
+  FGroqProvRef := nil;
+  FOpenRouterProvRef := nil;
+  FLMStudioProvRef := nil;
+  FAzureProvRef := nil;
+  FQwenProvRef := nil;
+  FMistralProvRef := nil;
+  FBedrockProvRef := nil;
+  FGithubCopilotProvRef := nil;
+  FWebViewBridgeProvRef := nil;
+
+  FDeepSeekProv := nil;
+  FGroqProv := nil;
+  FOpenRouterProv := nil;
+  FLMStudioProv := nil;
+  FAzureProv := nil;
+  FQwenProv := nil;
+  FMistralProv := nil;
+  FBedrockProv := nil;
+  FGithubCopilotProv := nil;
+  FWebViewBridgeProv := nil;
+
   FConfig := nil;
+  TRadIAContainer.Register<IRadIAHttpClient>(nil);
+  FMockHttpClient := nil;
   TRadIAConfig.SetStorage(nil);
   TRadIAConfig.SetBaseRegistryPath('');
 end;
@@ -454,7 +567,8 @@ begin
     Assert.AreEqual(MOCK_DATE, LHeaders.Values['x-amz-date']);
     Assert.IsNotEmpty(LHeaders.Values['x-amz-content-sha256']);
     Assert.IsNotEmpty(LHeaders.Values['Authorization']);
-    Assert.IsTrue(LHeaders.Values['Authorization'].StartsWith('AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20260608/us-east-1/bedrock/aws4_request'));
+    Assert.IsTrue(LHeaders.Values['Authorization'].StartsWith(
+      'AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20260608/us-east-1/bedrock/aws4_request'));
   finally
     LHeaders.Free;
   end;
@@ -598,6 +712,392 @@ begin
   finally
     LParser.Free;
   end;
+end;
+
+procedure TTestRadIAProvidersEx.TestGithubCopilot_PayloadAndParsing;
+const
+  MOCK_COPILOT_RESPONSE =
+    '{"choices": [{"message": {"role": "assistant", "content": "Copilot response text"}}], ' +
+    '"usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}}';
+begin
+  RunOpenAIPayloadTest(FGithubCopilotProv, 'Fix this code', 'Copilot Query',
+    MOCK_COPILOT_RESPONSE, 'gpt-4', 'Copilot response text', True, 10, 20, 30);
+end;
+
+procedure TTestRadIAProvidersEx.TestGithubCopilot_StreamingSSE;
+begin
+  RunOpenAIStreamingTest(FGithubCopilotProv,
+    'data: {"choices":[{"delta":{"content":"Github"}}]}' + #10 +
+    'data: {"choices":[{"delta":{"content":" Copilot"}}]}' + #10 +
+    'data: [DONE]' + #10,
+    'Github Copilot', 3);
+end;
+
+procedure TTestRadIAProvidersEx.MockSendPromptEvent(const APrompt: string);
+begin
+  FMockSendPromptCalled := True;
+  FMockPromptReceived := APrompt;
+end;
+
+procedure TTestRadIAProvidersEx.MockCancelEvent;
+begin
+  FMockCancelCalled := True;
+end;
+
+procedure TTestRadIAProvidersEx.TestWebViewBridge_Workflow;
+var
+  LProvider: TRadIAWebViewBridgeProvider;
+  LReceivedText: string;
+  LIsDone: Boolean;
+  LCallbackCount: Integer;
+begin
+  FMockSendPromptCalled := False;
+  FMockCancelCalled := False;
+  FMockPromptReceived := '';
+  LReceivedText := '';
+  LIsDone := False;
+  LCallbackCount := 0;
+
+  LProvider := TRadIAWebViewBridgeProvider.Create(FConfig);
+  try
+    TRadIAWebViewBridgeProvider.OnSendPrompt := Self.MockSendPromptEvent;
+    TRadIAWebViewBridgeProvider.OnCancel := Self.MockCancelEvent;
+
+    // Disparar o envio
+    LProvider.SendPromptStreamAsync('Bridge Prompt', [],
+      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+      begin
+        Inc(LCallbackCount);
+        LReceivedText := LReceivedText + AChunk;
+        if AIsDone then
+          LIsDone := True;
+      end, 0.7, 100);
+
+    // Receber chunks via Bridge
+    TRadIAWebViewBridgeProvider.ReceiveChunk('Part 1 ', False, '');
+    TRadIAWebViewBridgeProvider.ReceiveChunk('Part 2', True, '');
+
+    Assert.AreEqual('Part 1 Part 2', LReceivedText);
+    Assert.IsTrue(LIsDone);
+    Assert.AreEqual(2, LCallbackCount);
+
+    // Testar Cancelamento
+    LProvider.CancelCurrentRequest;
+  finally
+    TRadIAWebViewBridgeProvider.OnSendPrompt := nil;
+    TRadIAWebViewBridgeProvider.OnCancel := nil;
+    LProvider.Free;
+  end;
+end;
+
+{ TMockHttpClient }
+
+procedure TMockHttpClient.SetResponse(const AResponse: string);
+begin
+  FResponseStr := AResponse;
+end;
+
+procedure TMockHttpClient.SetStreamChunks(const AChunks: TArray<string>);
+begin
+  FStreamChunks := AChunks;
+end;
+
+function TMockHttpClient.Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
+begin
+  FLastUrl := AUrl;
+  if AUrl.Contains('/copilot_internal/v2/token') then
+    Result := '{"token": "mock-gh-session-token", "refresh_in": 1800}'
+  else
+    Result := FResponseStr;
+end;
+
+function TMockHttpClient.Post(const AUrl: string; const AHeaders: TNetHeaders;
+  const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
+begin
+  FLastUrl := AUrl;
+  Result := FResponseStr;
+end;
+
+procedure TMockHttpClient.PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
+  const AOnWrite: TProc<TBytes>; const ATimeoutMs: Integer = 0);
+var
+  LChunk: string;
+  LBytes: TBytes;
+begin
+  FLastUrl := AUrl;
+  for LChunk in FStreamChunks do
+  begin
+    LBytes := TEncoding.UTF8.GetBytes(LChunk);
+    AOnWrite(LBytes);
+  end;
+end;
+
+procedure TMockHttpClient.Cancel;
+begin
+  // Mock client cancel does nothing
+end;
+
+procedure TTestRadIAProvidersEx.TestLMStudio_SendPromptAsync;
+const
+  MOCK_RESPONSE =
+    '{"choices": [{"message": {"role": "assistant", "content": "LM Studio response text"}}], ' +
+    '"usage": {"prompt_tokens": 12, "completion_tokens": 16, "total_tokens": 28}}';
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LResponse: string;
+  LError: string;
+begin
+  FMockHttpClient.SetResponse(MOCK_RESPONSE);
+  LFinished := False;
+  LResponse := '';
+  LError := '';
+  FUsageResult := TTokenUsage.Empty;
+
+  FLMStudioProv.SendPromptAsync('Test prompt', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LResponse := AResponse;
+      LError := AError;
+      FUsageResult := AUsage;
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Async request timed out');
+  Assert.AreEqual('LM Studio response text', LResponse);
+  Assert.IsEmpty(LError);
+  Assert.AreEqual(12, FUsageResult.PromptTokens);
+  Assert.AreEqual(16, FUsageResult.CompletionTokens);
+  Assert.AreEqual(28, FUsageResult.TotalTokens);
+  Assert.IsTrue(FMockHttpClient.LastUrl.Contains('/chat/completions'));
+  Sleep(50);
+  System.Classes.CheckSynchronize(50);
+end;
+
+procedure TTestRadIAProvidersEx.TestLMStudio_SendPromptStreamAsync;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LText: string;
+  LCallbackCount: Integer;
+  LError: string;
+begin
+  FMockHttpClient.SetStreamChunks([
+    'data: {"choices":[{"delta":{"content":"LM"}}]}' + #10,
+    'data: {"choices":[{"delta":{"content":" Studio"}}]}' + #10,
+    'data: [DONE]' + #10
+  ]);
+  LFinished := False;
+  LText := '';
+  LCallbackCount := 0;
+  LError := '';
+
+  FLMStudioProv.SendPromptStreamAsync('Test prompt', [],
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      Inc(LCallbackCount);
+      LText := LText + AChunk;
+      LError := AError;
+      if AIsDone then
+        LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Async stream request timed out');
+  Assert.AreEqual('LM Studio', LText);
+  Assert.IsEmpty(LError);
+  Sleep(50);
+  System.Classes.CheckSynchronize(50);
+  Assert.AreEqual(4, LCallbackCount);
+end;
+
+procedure TTestRadIAProvidersEx.TestAzureOpenAI_SendPromptAsync;
+const
+  MOCK_RESPONSE =
+    '{"choices": [{"message": {"role": "assistant", "content": "Azure OpenAI response"}}], ' +
+    '"usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20}}';
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LResponse: string;
+  LError: string;
+begin
+  FMockHttpClient.SetResponse(MOCK_RESPONSE);
+  LFinished := False;
+  LResponse := '';
+  LError := '';
+  FUsageResult := TTokenUsage.Empty;
+
+  FConfig.SetActiveModel('AzureOpenAI', 'gpt-4o');
+  FConfig.SetApiKey('AzureOpenAI', 'azure-api-key-xyz');
+  FConfig.SetProviderBaseUrl('AzureOpenAI', 'https://my-azure.openai.azure.com/');
+
+  FAzureProv.SendPromptAsync('Azure prompt', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LResponse := AResponse;
+      LError := AError;
+      FUsageResult := AUsage;
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Async request timed out');
+  Assert.AreEqual('Azure OpenAI response', LResponse);
+  Assert.IsEmpty(LError);
+  Assert.IsTrue(FMockHttpClient.LastUrl.Contains('/deployments/gpt-4o/chat/completions'));
+  Sleep(50);
+  System.Classes.CheckSynchronize(50);
+end;
+
+procedure TTestRadIAProvidersEx.TestAzureOpenAI_SendPromptStreamAsync;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LText: string;
+  LError: string;
+begin
+  FMockHttpClient.SetStreamChunks([
+    'data: {"choices":[{"delta":{"content":"Azure"}}]}' + #10,
+    'data: {"choices":[{"delta":{"content":" OpenAI"}}]}' + #10,
+    'data: [DONE]' + #10
+  ]);
+  LFinished := False;
+  LText := '';
+  LError := '';
+
+  FConfig.SetActiveModel('AzureOpenAI', 'gpt-4o');
+  FConfig.SetApiKey('AzureOpenAI', 'azure-api-key-xyz');
+  FConfig.SetProviderBaseUrl('AzureOpenAI', 'https://my-azure.openai.azure.com/');
+
+  FAzureProv.SendPromptStreamAsync('Azure prompt', [],
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      LText := LText + AChunk;
+      LError := AError;
+      if AIsDone then
+        LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Async stream request timed out');
+  Assert.AreEqual('Azure OpenAI', LText);
+  Assert.IsEmpty(LError);
+  Sleep(50);
+  System.Classes.CheckSynchronize(50);
+end;
+
+procedure TTestRadIAProvidersEx.TestGithubCopilot_SendPromptAsync;
+const
+  MOCK_CHAT_RESPONSE =
+    '{"choices": [{"message": {"role": "assistant", "content": "Copilot response"}}], ' +
+    '"usage": {"prompt_tokens": 15, "completion_tokens": 15, "total_tokens": 30}}';
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LResponse: string;
+  LError: string;
+begin
+  FConfig.SetApiKey('GithubCopilot', 'ghu_dummy_token');
+  FMockHttpClient.SetResponse(MOCK_CHAT_RESPONSE);
+  LFinished := False;
+  LResponse := '';
+  LError := '';
+  FUsageResult := TTokenUsage.Empty;
+
+  FGithubCopilotProv.SendPromptAsync('Copilot prompt', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LResponse := AResponse;
+      LError := AError;
+      FUsageResult := AUsage;
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Async request timed out');
+  Assert.AreEqual('Copilot response', LResponse);
+  Assert.IsEmpty(LError);
+  Assert.IsTrue(FMockHttpClient.LastUrl.Contains('/chat/completions'));
+  Sleep(50);
+  System.Classes.CheckSynchronize(50);
+end;
+
+procedure TTestRadIAProvidersEx.TestGithubCopilot_SendPromptStreamAsync;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LText: string;
+  LError: string;
+begin
+  FConfig.SetApiKey('GithubCopilot', 'ghu_dummy_token');
+  FMockHttpClient.SetStreamChunks([
+    'data: {"choices":[{"delta":{"content":"Github"}}]}' + #10,
+    'data: {"choices":[{"delta":{"content":" Copilot"}}]}' + #10,
+    'data: [DONE]' + #10
+  ]);
+  LFinished := False;
+  LText := '';
+  LError := '';
+
+  FGithubCopilotProv.SendPromptStreamAsync('Copilot prompt', [],
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      LText := LText + AChunk;
+      LError := AError;
+      if AIsDone then
+        LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Async stream request timed out');
+  Assert.AreEqual('Github Copilot', LText);
+  Assert.IsEmpty(LError);
+  Sleep(50);
+  System.Classes.CheckSynchronize(50);
 end;
 
 initialization

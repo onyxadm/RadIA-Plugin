@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.AwsSigner;
+unit RadIA.Core.AwsSigner;
 
 interface
 
@@ -9,18 +9,18 @@ type
   { Utility class to compute AWS Signature Version 4 (SigV4) }
   TAwsSigV4Signer = class
   private
-    class function BytesToHex(const ABytes: TBytes): string; static;
-    class function HashSHA256Hex(const AContent: string): string; static;
-    class function HMAC_SHA256(const AData, AKey: TBytes): TBytes; overload; static;
-    class function HMAC_SHA256(const AData: string; const AKey: TBytes): TBytes; overload; static;
+    class function BytesToHex(const ABytes: TBytes): string;
+    class function HashSHA256Hex(const AContent: string): string;
+    class function HMAC_SHA256(const AData, AKey: TBytes): TBytes; overload;
+    class function HMAC_SHA256(const AData: string; const AKey: TBytes): TBytes; overload;
   public
-    class procedure GetAmzDateTimeStrings(var AAmzDate, ADateStamp: string); static;
+    class procedure GetAmzDateTimeStrings(var AAmzDate, ADateStamp: string);
 
     class function ComputeSignatureHeaders(
       const AAccessKeyId, ASecretAccessKey, ARegion, AService, AMethod, AUri, APayload: string;
       const AAmzDate, ADateStamp: string;
       const ASessionToken: string = ''
-    ): TStringList; static;
+    ): TStringList;
   end;
 
 implementation

@@ -84,13 +84,12 @@ end;
 function TRadIAGithubCopilotProvider.EnsureSessionToken: string;
 var
   LApiKey: string;
-  LClient: THTTPClient;
-  LResponse: IHTTPResponse;
   LHeaders: TNetHeaders;
   LJson: TJSONObject;
   LValue: TJSONValue;
   LToken: string;
   LRefreshIn: Integer;
+  LResponseStr: string;
 begin
   FSessionLock.Acquire;
   try
@@ -107,53 +106,49 @@ begin
 
     TLogger.Log('Retrieving fresh GitHub Copilot session token...', 'Provider');
 
-    LClient := THTTPClient.Create;
+    SetLength(LHeaders, 2);
+    LHeaders[0] := TNetHeader.Create('Authorization', 'token ' + LApiKey);
+    LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
+
     try
-      LClient.ConnectionTimeout := 15000;
-      LClient.SendTimeout := 15000;
-      LClient.ResponseTimeout := 15000;
-      LClient.AcceptCharSet := 'utf-8';
-      LClient.ProtocolVersion := THTTPProtocolVersion.HTTP_1_1;
-
-      SetLength(LHeaders, 2);
-      LHeaders[0] := TNetHeader.Create('Authorization', 'token ' + LApiKey);
-      LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
-
-      LResponse := LClient.Get('https://api.github.com/copilot_internal/v2/token', nil, LHeaders);
-      if LResponse.StatusCode <> 200 then
-        raise Exception.CreateFmt('HTTP error %d: %s. Response: %s',
-          [LResponse.StatusCode, LResponse.StatusText, LResponse.ContentAsString(TEncoding.UTF8)]);
-
-      LJson := TJSONObject.ParseJSONValue(LResponse.ContentAsString(TEncoding.UTF8)) as TJSONObject;
-      if not Assigned(LJson) then
-        raise Exception.Create('Failed to parse token response JSON.');
-
-      try
-        LValue := LJson.GetValue('token');
-        if Assigned(LValue) then
-          LToken := LValue.Value
-        else
-          LToken := '';
-
-        LValue := LJson.GetValue('refresh_in');
-        if Assigned(LValue) then
-          LRefreshIn := StrToIntDef(LValue.Value, 1500)
-        else
-          LRefreshIn := 1500;
-
-        if LToken.IsEmpty then
-          raise Exception.Create('Token field is missing in response.');
-
-        FSessionToken := LToken;
-        FTokenExpiryTime := IncSecond(Now, LRefreshIn);
-
-        TLogger.Log('GitHub Copilot session token retrieved successfully. Valid for ' + LRefreshIn.ToString + ' seconds.', 'Provider');
-        Result := FSessionToken;
-      finally
-        LJson.Free;
+      LResponseStr := FHTTPClient.Get('https://api.github.com/copilot_internal/v2/token', LHeaders, 15000);
+    except
+      on E: ERadIAHttpException do
+      begin
+        var LDecodedError := FErrorDecoder.DecodeError(E.StatusCode, E.Content);
+        raise Exception.Create(LDecodedError);
       end;
+      on E: Exception do
+        raise;
+    end;
+
+    LJson := TJSONObject.ParseJSONValue(LResponseStr) as TJSONObject;
+    if not Assigned(LJson) then
+      raise Exception.Create('Failed to parse token response JSON.');
+
+    try
+      LValue := LJson.GetValue('token');
+      if Assigned(LValue) then
+        LToken := LValue.Value
+      else
+        LToken := '';
+
+      LValue := LJson.GetValue('refresh_in');
+      if Assigned(LValue) then
+        LRefreshIn := StrToIntDef(LValue.Value, 1500)
+      else
+        LRefreshIn := 1500;
+
+      if LToken.IsEmpty then
+        raise Exception.Create('Token field is missing in response.');
+
+      FSessionToken := LToken;
+      FTokenExpiryTime := IncSecond(Now, LRefreshIn);
+
+      TLogger.Log('GitHub Copilot session token retrieved successfully. Valid for ' + LRefreshIn.ToString + ' seconds.', 'Provider');
+      Result := FSessionToken;
     finally
-      LClient.Free;
+      LJson.Free;
     end;
   finally
     FSessionLock.Release;

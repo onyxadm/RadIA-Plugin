@@ -144,6 +144,12 @@ type
     procedure TestDelphiVersionInjection;
     [Test]
     procedure TestDelphiVersionInjectionWithMockAdapter;
+    [Test]
+    procedure TestGetEffectiveSystemPrompt;
+    [Test]
+    procedure TestClearCache;
+    [Test]
+    procedure TestQuotaLimitReached;
   end;
 
   [TestFixture]
@@ -903,6 +909,67 @@ begin
     end;
   finally
     TRadIAContainer.Clear;
+  end;
+end;
+
+procedure TTestRadIAService.TestGetEffectiveSystemPrompt;
+var
+  LConfig: IRadIAConfig;
+  LService: TRadIAService;
+begin
+  LConfig := TMockConfig.Create(5, 'Custom System Prompt');
+  LService := TRadIAService.Create(LConfig);
+  try
+    LConfig.InjectDelphiVersion := False;
+    LConfig.ConciseResponses := False;
+    Assert.AreEqual('Custom System Prompt', LService.GetEffectiveSystemPrompt.Trim);
+  finally
+    LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestClearCache;
+var
+  LConfig: IRadIAConfig;
+  LService: TRadIAService;
+begin
+  LConfig := TMockConfig.Create(5);
+  LService := TRadIAService.Create(LConfig);
+  try
+    LService.ClearCache;
+    Assert.Pass;
+  finally
+    LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestQuotaLimitReached;
+var
+  LConfig: IRadIAConfig;
+  LService: TRadIAService;
+  LCallbackCalled: Boolean;
+  LResponseError: string;
+begin
+  LConfig := TMockConfig.Create(5);
+  LConfig.SetQuotaEnabled(True);
+  LConfig.SetQuotaLimit(100);
+  LConfig.SetQuotaUsed(150);
+
+  LService := TRadIAService.Create(LConfig);
+  LCallbackCalled := False;
+  LResponseError := '';
+  try
+    LService.SendPrompt('Hello', [],
+      procedure(const AResponse: string; const AError: string; AIsCached: Boolean; const AUsage: TTokenUsage)
+      begin
+        LCallbackCalled := True;
+        LResponseError := AError;
+      end);
+
+    Assert.IsTrue(LCallbackCalled);
+    Assert.IsTrue(LResponseError.ToLower.Contains('quota') or LResponseError.ToLower.Contains('cota'));
+  finally
+    LService.Free;
   end;
 end;
 

@@ -338,11 +338,11 @@ if ($runTests) {
             $sourcePaths = @()
             $sourcePaths += (Get-Item -Path "Source").FullName
             $sourcePaths += Get-ChildItem -Path "Source" -Recurse -Directory | Select-Object -ExpandProperty FullName
-            $sourcePaths | Out-File -FilePath "$coverageOutputDir\paths.lst" -Encoding utf8
+            $sourcePaths | Out-File -FilePath "$coverageOutputDir\paths.lst" -Encoding ascii
             
             # Gerar lista de units do projeto com a extensao .pas
             $units = Get-ChildItem -Path "Source" -Filter "*.pas" -Recurse | Select-Object -ExpandProperty Name
-            $units | Out-File -FilePath "$coverageOutputDir\units.lst" -Encoding utf8
+            $units | Out-File -FilePath "$coverageOutputDir\units.lst" -Encoding ascii
             
             # Executar DelphiCodeCoverage
             $ccArgs = @(
