@@ -889,18 +889,29 @@ function renderTokenStats(text) {
   statusText.innerHTML = '';
 
   parts.forEach((part, index) => {
-    const match = /^(.+?)\s+([0-9.,]+%?)$/.exec(part);
+    let labelText = '';
+    let valueText = '';
+    const lastSpaceIdx = part.lastIndexOf(' ');
+
+    if (lastSpaceIdx !== -1) {
+      const potentialValue = part.slice(lastSpaceIdx + 1);
+      if (/^[0-9.,]+%?$/.test(potentialValue)) {
+        labelText = part.slice(0, lastSpaceIdx).trim();
+        valueText = potentialValue;
+      }
+    }
+
     const item = document.createElement('span');
     item.className = 'token-stat';
 
-    if (match) {
+    if (valueText) {
       const label = document.createElement('span');
       label.className = 'token-stat-label';
-      label.textContent = match[1];
+      label.textContent = labelText;
 
       const value = document.createElement('span');
       value.className = 'token-stat-value';
-      value.textContent = match[2];
+      value.textContent = valueText;
 
       item.appendChild(label);
       item.appendChild(value);
