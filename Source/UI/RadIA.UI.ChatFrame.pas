@@ -172,13 +172,17 @@ end;
 
 type
   TSessionObject = class
+  private
+    FId: string;
   public
-    Id: string;
+    property Id: string read FId write FId;
     constructor Create(const AId: string);
   end;
   TProviderObject = class
+  private
+    FId: string;
   public
-    Id: string;
+    property Id: string read FId write FId;
     constructor Create(const AId: string);
   end;
 

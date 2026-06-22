@@ -9,62 +9,98 @@ uses
 
 type
   TMockConfigView = class(TInterfacedObject, IRadIAConfigView)
+  private
+    FApiKeyMap: TDictionary<string, string>;
+    FCustomUrlMap: TDictionary<string, string>;
+    FAuthTypeMap: TDictionary<string, Integer>;
+    FTempMap: TDictionary<string, string>;
+    FMaxTokensMap: TDictionary<string, string>;
+    FTimeoutMap: TDictionary<string, string>;
+    FAzureModel: string;
+    FAzureApiVersion: string;
+    FAwsAccessKeyId: string;
+    FAwsSecretAccessKey: string;
+    FAwsRegion: string;
+    FAwsSessionToken: string;
+    FSystemPrompt: string;
+    FSmartConfigEnabled: Boolean;
+    FInjectDelphiVersion: Boolean;
+    FConciseResponses: Boolean;
+    FLogEnabled: Boolean;
+    FLogPath: string;
+    FLogMaxSize: string;
+    FQuotaEnabled: Boolean;
+    FQuotaLimit: string;
+    FQuotaUsedText: string;
+    FLastMessageDialogText: string;
+    FSaveDialogResult: Boolean;
+    FSaveDialogSelectedFileName: string;
+    FOpenDialogResult: Boolean;
+    FOpenDialogSelectedFileName: string;
+    FFolderDialogResult: Boolean;
+    FFolderDialogSelectedFolderName: string;
+    FCloseViewCalled: Boolean;
+    FCloseViewModalResult: Integer;
+    FTemplatesList: TArray<string>;
+    FSelectedTemplateIndex: Integer;
+    FTemplateName: string;
+    FTemplateDesc: string;
+    FTemplateBody: string;
+    FTemplateSlash: string;
+    FTemplateIsProjGen: Boolean;
+    FTemplateIsSystem: Boolean;
+    FTemplateIsCustomized: Boolean;
+    FDeleteTemplateButtonCaption: string;
+    FDeleteTemplateButtonEnabled: Boolean;
+    FTemplateOriginLabelText: string;
+    FTemplateOriginLabelColor: TColor;
+    FFocusTemplateNameCalled: Boolean;
   public
-    ApiKeyMap: TDictionary<string, string>;
-    CustomUrlMap: TDictionary<string, string>;
-    AuthTypeMap: TDictionary<string, Integer>;
-    TempMap: TDictionary<string, string>;
-    MaxTokensMap: TDictionary<string, string>;
-    TimeoutMap: TDictionary<string, string>;
-
-    AzureModel: string;
-    AzureApiVersion: string;
-
-    AwsAccessKeyId: string;
-    AwsSecretAccessKey: string;
-    AwsRegion: string;
-    AwsSessionToken: string;
-
-    SystemPrompt: string;
-    SmartConfigEnabled: Boolean;
-    InjectDelphiVersion: Boolean;
-    ConciseResponses: Boolean;
-    LogEnabled: Boolean;
-    LogPath: string;
-    LogMaxSize: string;
-
-    QuotaEnabled: Boolean;
-    QuotaLimit: string;
-    QuotaUsedText: string;
-
-    LastMessageDialogText: string;
-    SaveDialogResult: Boolean;
-    SaveDialogSelectedFileName: string;
-    OpenDialogResult: Boolean;
-    OpenDialogSelectedFileName: string;
-    FolderDialogResult: Boolean;
-    FolderDialogSelectedFolderName: string;
-    CloseViewCalled: Boolean;
-    CloseViewModalResult: Integer;
-
-    TemplatesList: TArray<string>;
-    SelectedTemplateIndex: Integer;
-
-    TemplateName: string;
-    TemplateDesc: string;
-    TemplateBody: string;
-    TemplateSlash: string;
-    TemplateIsProjGen: Boolean;
-
-    TemplateIsSystem: Boolean;
-    TemplateIsCustomized: Boolean;
-    DeleteTemplateButtonCaption: string;
-    DeleteTemplateButtonEnabled: Boolean;
-    TemplateOriginLabelText: string;
-    TemplateOriginLabelColor: TColor;
-
-    FocusTemplateNameCalled: Boolean;
-
+    property ApiKeyMap: TDictionary<string, string> read FApiKeyMap write FApiKeyMap;
+    property CustomUrlMap: TDictionary<string, string> read FCustomUrlMap write FCustomUrlMap;
+    property AuthTypeMap: TDictionary<string, Integer> read FAuthTypeMap write FAuthTypeMap;
+    property TempMap: TDictionary<string, string> read FTempMap write FTempMap;
+    property MaxTokensMap: TDictionary<string, string> read FMaxTokensMap write FMaxTokensMap;
+    property TimeoutMap: TDictionary<string, string> read FTimeoutMap write FTimeoutMap;
+    property AzureModel: string read FAzureModel write FAzureModel;
+    property AzureApiVersion: string read FAzureApiVersion write FAzureApiVersion;
+    property AwsAccessKeyId: string read FAwsAccessKeyId write FAwsAccessKeyId;
+    property AwsSecretAccessKey: string read FAwsSecretAccessKey write FAwsSecretAccessKey;
+    property AwsRegion: string read FAwsRegion write FAwsRegion;
+    property AwsSessionToken: string read FAwsSessionToken write FAwsSessionToken;
+    property SystemPrompt: string read FSystemPrompt write FSystemPrompt;
+    property SmartConfigEnabled: Boolean read FSmartConfigEnabled write FSmartConfigEnabled;
+    property InjectDelphiVersion: Boolean read FInjectDelphiVersion write FInjectDelphiVersion;
+    property ConciseResponses: Boolean read FConciseResponses write FConciseResponses;
+    property LogEnabled: Boolean read FLogEnabled write FLogEnabled;
+    property LogPath: string read FLogPath write FLogPath;
+    property LogMaxSize: string read FLogMaxSize write FLogMaxSize;
+    property QuotaEnabled: Boolean read FQuotaEnabled write FQuotaEnabled;
+    property QuotaLimit: string read FQuotaLimit write FQuotaLimit;
+    property QuotaUsedText: string read FQuotaUsedText write FQuotaUsedText;
+    property LastMessageDialogText: string read FLastMessageDialogText write FLastMessageDialogText;
+    property SaveDialogResult: Boolean read FSaveDialogResult write FSaveDialogResult;
+    property SaveDialogSelectedFileName: string read FSaveDialogSelectedFileName write FSaveDialogSelectedFileName;
+    property OpenDialogResult: Boolean read FOpenDialogResult write FOpenDialogResult;
+    property OpenDialogSelectedFileName: string read FOpenDialogSelectedFileName write FOpenDialogSelectedFileName;
+    property FolderDialogResult: Boolean read FFolderDialogResult write FFolderDialogResult;
+    property FolderDialogSelectedFolderName: string read FFolderDialogSelectedFolderName write FFolderDialogSelectedFolderName;
+    property CloseViewCalled: Boolean read FCloseViewCalled write FCloseViewCalled;
+    property CloseViewModalResult: Integer read FCloseViewModalResult write FCloseViewModalResult;
+    property TemplatesList: TArray<string> read FTemplatesList write FTemplatesList;
+    property SelectedTemplateIndex: Integer read FSelectedTemplateIndex write FSelectedTemplateIndex;
+    property TemplateName: string read FTemplateName write FTemplateName;
+    property TemplateDesc: string read FTemplateDesc write FTemplateDesc;
+    property TemplateBody: string read FTemplateBody write FTemplateBody;
+    property TemplateSlash: string read FTemplateSlash write FTemplateSlash;
+    property TemplateIsProjGen: Boolean read FTemplateIsProjGen write FTemplateIsProjGen;
+    property TemplateIsSystem: Boolean read FTemplateIsSystem write FTemplateIsSystem;
+    property TemplateIsCustomized: Boolean read FTemplateIsCustomized write FTemplateIsCustomized;
+    property DeleteTemplateButtonCaption: string read FDeleteTemplateButtonCaption write FDeleteTemplateButtonCaption;
+    property DeleteTemplateButtonEnabled: Boolean read FDeleteTemplateButtonEnabled write FDeleteTemplateButtonEnabled;
+    property TemplateOriginLabelText: string read FTemplateOriginLabelText write FTemplateOriginLabelText;
+    property TemplateOriginLabelColor: TColor read FTemplateOriginLabelColor write FTemplateOriginLabelColor;
+    property FocusTemplateNameCalled: Boolean read FFocusTemplateNameCalled write FFocusTemplateNameCalled;
     constructor Create;
     destructor Destroy; override;
 

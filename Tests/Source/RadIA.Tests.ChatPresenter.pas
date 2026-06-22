@@ -8,43 +8,70 @@ uses
 
 type
   TMockChatView = class(TInterfacedObject, IRadIAChatView)
+  private
+    FRequestStateInProgress: Boolean;
+    FRequestStateSetCalled: Boolean;
+    FTokensStatsText: string;
+    FLastPostedJson: string;
+    FLastPostedBackgroundJson: string;
+    FBackgroundBrowserCreated: Boolean;
+    FBackgroundBrowserInitialized: Boolean;
+    FBackgroundBrowserNavigatedUrl: string;
+    FLoginWindowShown: Boolean;
+    FLoginWindowUrl: string;
+    FLoginSuccessCallback: TProc;
+    FPostedMessages: TStringList;
+    FProvidersList: TArray<string>;
+    FActiveProviderId: string;
+    FModelsList: TArray<string>;
+    FActiveModelName: string;
+    FModelsComboEnabled: Boolean;
+    FSessionsList: TArray<TSessionInfo>;
+    FActiveSessionId: string;
+    FTemplatesList: TArray<string>;
+    FPromptInputText: string;
+    FPromptFocused: Boolean;
+    FActiveEditorText: string;
+    FActiveEditorTextSelectionOnly: Boolean;
+    FEditorTextReplaced: Boolean;
+    FReplacedEditorTextValue: string;
+    FLastMessageDialogText: string;
+    FSaveDialogResult: Boolean;
+    FSaveDialogSelectedFileName: string;
+    FToggleSessionsPanelCalled: Boolean;
+    FOpenSettingsDialogCalled: Boolean;
   public
-    RequestStateInProgress: Boolean;
-    RequestStateSetCalled: Boolean;
-    TokensStatsText: string;
-    LastPostedJson: string;
-    LastPostedBackgroundJson: string;
-    BackgroundBrowserCreated: Boolean;
-    BackgroundBrowserInitialized: Boolean;
-    BackgroundBrowserNavigatedUrl: string;
-    LoginWindowShown: Boolean;
-    LoginWindowUrl: string;
-    LoginSuccessCallback: TProc;
-
-    PostedMessages: TStringList;
-
-    ProvidersList: TArray<string>;
-    ActiveProviderId: string;
-    ModelsList: TArray<string>;
-    ActiveModelName: string;
-    ModelsComboEnabled: Boolean;
-    SessionsList: TArray<TSessionInfo>;
-    ActiveSessionId: string;
-    TemplatesList: TArray<string>;
-
-    PromptInputText: string;
-    PromptFocused: Boolean;
-    ActiveEditorText: string;
-    ActiveEditorTextSelectionOnly: Boolean;
-    EditorTextReplaced: Boolean;
-    ReplacedEditorTextValue: string;
-
-    LastMessageDialogText: string;
-    SaveDialogResult: Boolean;
-    SaveDialogSelectedFileName: string;
-    ToggleSessionsPanelCalled: Boolean;
-    OpenSettingsDialogCalled: Boolean;
-
+    property RequestStateInProgress: Boolean read FRequestStateInProgress write FRequestStateInProgress;
+    property RequestStateSetCalled: Boolean read FRequestStateSetCalled write FRequestStateSetCalled;
+    property TokensStatsText: string read FTokensStatsText write FTokensStatsText;
+    property LastPostedJson: string read FLastPostedJson write FLastPostedJson;
+    property LastPostedBackgroundJson: string read FLastPostedBackgroundJson write FLastPostedBackgroundJson;
+    property BackgroundBrowserCreated: Boolean read FBackgroundBrowserCreated write FBackgroundBrowserCreated;
+    property BackgroundBrowserInitialized: Boolean read FBackgroundBrowserInitialized write FBackgroundBrowserInitialized;
+    property BackgroundBrowserNavigatedUrl: string read FBackgroundBrowserNavigatedUrl write FBackgroundBrowserNavigatedUrl;
+    property LoginWindowShown: Boolean read FLoginWindowShown write FLoginWindowShown;
+    property LoginWindowUrl: string read FLoginWindowUrl write FLoginWindowUrl;
+    property LoginSuccessCallback: TProc read FLoginSuccessCallback write FLoginSuccessCallback;
+    property PostedMessages: TStringList read FPostedMessages write FPostedMessages;
+    property ProvidersList: TArray<string> read FProvidersList write FProvidersList;
+    property ActiveProviderId: string read FActiveProviderId write FActiveProviderId;
+    property ModelsList: TArray<string> read FModelsList write FModelsList;
+    property ActiveModelName: string read FActiveModelName write FActiveModelName;
+    property ModelsComboEnabled: Boolean read FModelsComboEnabled write FModelsComboEnabled;
+    property SessionsList: TArray<TSessionInfo> read FSessionsList write FSessionsList;
+    property ActiveSessionId: string read FActiveSessionId write FActiveSessionId;
+    property TemplatesList: TArray<string> read FTemplatesList write FTemplatesList;
+    property PromptInputText: string read FPromptInputText write FPromptInputText;
+    property PromptFocused: Boolean read FPromptFocused write FPromptFocused;
+    property ActiveEditorText: string read FActiveEditorText write FActiveEditorText;
+    property ActiveEditorTextSelectionOnly: Boolean read FActiveEditorTextSelectionOnly write FActiveEditorTextSelectionOnly;
+    property EditorTextReplaced: Boolean read FEditorTextReplaced write FEditorTextReplaced;
+    property ReplacedEditorTextValue: string read FReplacedEditorTextValue write FReplacedEditorTextValue;
+    property LastMessageDialogText: string read FLastMessageDialogText write FLastMessageDialogText;
+    property SaveDialogResult: Boolean read FSaveDialogResult write FSaveDialogResult;
+    property SaveDialogSelectedFileName: string read FSaveDialogSelectedFileName write FSaveDialogSelectedFileName;
+    property ToggleSessionsPanelCalled: Boolean read FToggleSessionsPanelCalled write FToggleSessionsPanelCalled;
+    property OpenSettingsDialogCalled: Boolean read FOpenSettingsDialogCalled write FOpenSettingsDialogCalled;
     constructor Create;
     destructor Destroy; override;
 
