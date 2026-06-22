@@ -26,12 +26,14 @@ type
     procedure TestLogRotationBySize;
     [Test]
     procedure TestLogRotationByDate;
+    [Test]
+    procedure TestLoggerExceptions;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.IOUtils, RadIA.Core.Logger;
+  System.SysUtils, System.Classes, System.IOUtils, RadIA.Core.Interfaces, RadIA.Core.Logger;
 
 { TTestRadIALogger }
 
@@ -140,6 +142,44 @@ begin
   // 5. Verify contents
   Assert.IsTrue(TFile.ReadAllText(LRotatedFile, TEncoding.UTF8).Contains('yesterday initial log line'), 'Rotated file contents');
   Assert.IsTrue(TFile.ReadAllText(FActiveLogFile, TEncoding.UTF8).Contains('today new log line'), 'Active file contents');
+end;
+
+procedure TTestRadIALogger.TestLoggerExceptions;
+var
+  LStream: TFileStream;
+  LTempLogger: IRadIALogger;
+begin
+  // 1. ForÃƒÂ§ar erro de rotaÃƒÂ§ÃƒÂ£o e escrita bloqueando o arquivo de log ativo exclusivamente
+  TLogger.Configure(True, FTempDir, 1); // RotaÃƒÂ§ÃƒÂ£o de 1 KB
+
+  // Criar arquivo ativo
+  ForceDirectories(FTempDir);
+  TFile.WriteAllText(FActiveLogFile, StringOfChar('A', 2000), TEncoding.UTF8);
+
+  // Bloquear o prÃƒÂ³prio arquivo de log ativo exclusivamente
+  LStream := TFileStream.Create(FActiveLogFile, fmOpenWrite or fmShareExclusive);
+  try
+    // Logar algo para forÃƒÂ§ar erros de escrita e rotaÃƒÂ§ÃƒÂ£o (o move e a escrita falharÃƒÂ£o por causa do bloqueio)
+    TLogger.Log('Forcing logger exceptions', 'UnitTest');
+  finally
+    LStream.Free;
+  end;
+
+  // 2. Testar SetActiveLogger
+  LTempLogger := TConcreteLogger.Create;
+  TLogger.SetActiveLogger(LTempLogger);
+  TLogger.SetActiveLogger(TConcreteLogger.Create); // Volta para um novo logger limpo
+
+  // 3. Testar Configure com caminho vazio (fallbacks)
+  TLogger.Configure(True, '', 0);
+  TLogger.Log('Test default fallback path', 'UnitTest');
+
+  // 4. Testar erro de criaÃƒÂ§ÃƒÂ£o de pasta (caminho de rede invÃƒÂ¡lido)
+  TLogger.Configure(True, '\\invalid_server_xyz\invalid_share_xyz', 1024);
+  TLogger.Log('Test directory creation failure', 'UnitTest');
+
+  // Restaura o logger configurado para os testes do setup
+  TLogger.Configure(True, FTempDir, 1024);
 end;
 
 initialization

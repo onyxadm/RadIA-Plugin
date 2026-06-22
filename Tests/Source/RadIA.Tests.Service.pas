@@ -251,7 +251,7 @@ end;
 procedure TMockHttpClient.Cancel;
 begin
   // Mock client cancellation is a no-op
-  Sleep(0);
+  if True then ;
 end;
 
 { TMockConfig }
@@ -1311,7 +1311,7 @@ begin
     LService.SendPrompt('Hello Cancel', [],
       procedure(const AResponse: string; const AError: string; AIsCached: Boolean; const AUsage: TTokenUsage)
       begin
-        Sleep(0);
+        if True then ;
       end);
 
     LService.CancelCurrentRequest;

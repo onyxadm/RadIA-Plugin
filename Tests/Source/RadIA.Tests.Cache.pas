@@ -26,12 +26,16 @@ type
     procedure TestExpiration;
     [Test]
     procedure TestLRUEviction;
+    [Test]
+    procedure TestCacheExceptions;
+    [Test]
+    procedure TestCache_LoadInvalid;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.IOUtils, System.JSON, System.DateUtils;
+  System.SysUtils, System.Classes, System.IOUtils, System.JSON, System.DateUtils;
 
 procedure TTestRadIACache.Setup;
 begin
@@ -133,6 +137,93 @@ begin
   Assert.IsTrue(FCache.Get('hash-1', LResponse), 'hash-1 should still be present since it was recently accessed');
   Assert.IsFalse(FCache.Get('hash-2', LResponse), 'hash-2 should have been evicted (LRU)');
   Assert.IsTrue(FCache.Get('hash-6', LResponse), 'hash-6 should be present');
+end;
+
+procedure TTestRadIACache.TestCacheExceptions;
+var
+  LExceptCache: TRadIACacheManager;
+  LInvalidFile: string;
+  LStream: TFileStream;
+begin
+  LInvalidFile := TPath.Combine(FCacheDir, 'cache_readonly_error.json');
+  if TFile.Exists(LInvalidFile) then
+    TFile.Delete(LInvalidFile);
+
+  // Criar o arquivo e mantÃª-lo aberto com fmShareDenyWrite (permite ler, nega escrever)
+  LStream := TFileStream.Create(LInvalidFile, fmCreate or fmShareDenyWrite);
+  try
+    // O construtor chamarÃ¡ LoadCache e passarÃ¡ sem erro (TFile.Exists Ã© True, ReadAllText lÃª com sucesso)
+    LExceptCache := TRadIACacheManager.Create(LInvalidFile, 5);
+    try
+      // Put tentarÃ¡ SaveCache, que falharÃ¡ na escrita por estar bloqueado para escrita
+      try
+        LExceptCache.Put('test', 'data');
+        Assert.Fail('Should have failed writing to locked cache file');
+      except
+        on E: Exception do
+          Assert.IsTrue(True); // Exception is expected here
+      end;
+    finally
+      // A destruiÃ§Ã£o tambÃ©m tentarÃ¡ SaveCache e cairÃ¡ na exceÃ§Ã£o do Destroy
+      LExceptCache.Free;
+    end;
+  finally
+    LStream.Free;
+  end;
+
+  // Limpar arquivo de teste
+  if TFile.Exists(LInvalidFile) then
+    TFile.Delete(LInvalidFile);
+
+  // Para testar a exceÃ§Ã£o de exclusÃ£o do arquivo no Clear:
+  // 1. Criamos um arquivo real
+  FCache.Free;
+  FCache := nil;
+  if TFile.Exists(FCacheFile) then
+    TFile.Delete(FCacheFile);
+  TFile.WriteAllText(FCacheFile, '[]');
+
+  // 2. Bloqueamos o arquivo exclusivamente
+  LStream := TFileStream.Create(FCacheFile, fmOpenWrite or fmShareExclusive);
+  try
+    // 3. Criamos o cache e chamamos Clear
+    LExceptCache := TRadIACacheManager.Create(FCacheFile, 5);
+    try
+      // Clear tentarÃ¡ deletar FCacheFile (TFile.Exists Ã© True), mas falharÃ¡ porque LStream o mantÃ©m bloqueado
+      LExceptCache.Clear;
+    finally
+      LExceptCache.Free;
+    end;
+  finally
+    LStream.Free;
+  end;
+
+  // Recria o cache do setup para o TearDown nÃ£o quebrar
+  FCache := TRadIACacheManager.Create(FCacheFile, 5);
+end;
+
+procedure TTestRadIACache.TestCache_LoadInvalid;
+var
+  LTempCache: TRadIACacheManager;
+  LTempFile: string;
+begin
+  LTempFile := TPath.Combine(FCacheDir, 'cache_invalid.json');
+  if TFile.Exists(LTempFile) then
+    TFile.Delete(LTempFile);
+
+  // Caso 1: Arquivo vazio para cobrir if LContent.IsEmpty then Exit;
+  TFile.WriteAllText(LTempFile, '');
+  LTempCache := TRadIACacheManager.Create(LTempFile, 5);
+  LTempCache.Free;
+
+  // Caso 2: JSON com datas invÃ¡lidas para cobrir except do ISO8601ToDate
+  TFile.WriteAllText(LTempFile,
+    '[{"hash":"h1","response":"r1","timestamp":"invalid-date","last_accessed":"invalid-date"}]');
+  LTempCache := TRadIACacheManager.Create(LTempFile, 5);
+  LTempCache.Free;
+
+  if TFile.Exists(LTempFile) then
+    TFile.Delete(LTempFile);
 end;
 
 initialization

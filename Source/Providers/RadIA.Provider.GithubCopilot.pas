@@ -1,4 +1,4 @@
-unit RadIA.Provider.GithubCopilot;
+﻿unit RadIA.Provider.GithubCopilot;
 
 interface
 
@@ -36,6 +36,7 @@ type
       out AInterval, AExpiresIn: Integer; out AErrorMsg: string): Boolean; static;
     class function PollForAccessToken(const ADeviceCode: string; AInterval, AExpiresIn: Integer;
       const ACancelledRef: PBoolean; out AAccessToken, AErrorMsg: string): Boolean; static;
+    class procedure ClearSessionToken; static;
   end;
 
 implementation
@@ -58,6 +59,17 @@ end;
 class destructor TRadIAGithubCopilotProvider.Destroy;
 begin
   FSessionLock.Free;
+end;
+
+class procedure TRadIAGithubCopilotProvider.ClearSessionToken;
+begin
+  FSessionLock.Enter;
+  try
+    FSessionToken := '';
+    FTokenExpiryTime := 0;
+  finally
+    FSessionLock.Leave;
+  end;
 end;
 
 constructor TRadIAGithubCopilotProvider.Create(const AConfig: IRadIAConfig);
@@ -508,7 +520,7 @@ initialization
       'GitHub Copilot',
       'https://api.githubcopilot.com',
       True,  { Requer API Key (ghu_... / gho_...) }
-      False, { NÃ£o permite URL customizada }
+      False, { NÃƒÂ£o permite URL customizada }
       ['gpt-4', 'gpt-3.5-turbo'],
       function(const ACfg: IRadIAConfig): IRadIAProvider
       begin

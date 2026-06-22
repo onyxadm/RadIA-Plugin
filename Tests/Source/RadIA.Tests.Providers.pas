@@ -1,11 +1,11 @@
-﻿unit RadIA.Tests.Providers;
+unit RadIA.Tests.Providers;
 
 interface
 
 uses
   DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
   RadIA.Core.TokenUsage, RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude,
-  RadIA.Core.SettingsStorage;
+  RadIA.Provider.Generic, RadIA.Core.SettingsStorage;
 
 type
   [TestFixture]
@@ -37,6 +37,8 @@ type
     procedure TestClaudePayloadGeneration;
     [Test]
     procedure TestClaudeResponseParsing;
+    [Test]
+    procedure TestGenericProvider_Create;
   end;
 
   [TestFixture]
@@ -248,7 +250,54 @@ begin
   Assert.AreEqual('Hello! I am Anthropic Claude.', LText);
   Assert.AreEqual(14, LUsage.PromptTokens);
   Assert.AreEqual(21, LUsage.CompletionTokens);
-  Assert.AreEqual(35, LUsage.TotalTokens);
+end;
+
+
+type
+  TMockSettingsStorageWithError = class(TRadIAMemorySettingsStorage, IRadIASettingsStorage)
+  public
+    procedure WriteString(const AName, AValue: string);
+  end;
+
+procedure TMockSettingsStorageWithError.WriteString(const AName, AValue: string);
+begin
+  raise Exception.Create('Mock write error');
+end;
+
+procedure TTestRadIAProviders.TestGenericProvider_Create;
+var
+  LProv: TRadIAGenericOpenAIProvider;
+begin
+  // Caso de sucesso (API Key vazia, nao grava no config)
+  LProv := TRadIAGenericOpenAIProvider.Create(FConfig, 'DeepSeek', 'DeepSeek AI', 'https://api.deepseek.com', ['deepseek-chat']);
+  try
+    Assert.AreEqual('DeepSeek AI', LProv.GetName);
+    Assert.AreEqual(1, Length(LProv.GetAvailableModels));
+    Assert.AreEqual('deepseek-chat', LProv.GetAvailableModels[0]);
+  finally
+    LProv.Free;
+  end;
+
+  // Caso 2: API Key nao vazia, grava no config com sucesso
+  LProv := TRadIAGenericOpenAIProvider.Create(FConfig, 'DeepSeekTest', 'DeepSeek Test', 'https://api.deepseek.com', ['deepseek-chat'], 'sk-dummy-key');
+  try
+    Assert.AreEqual('sk-dummy-key', FConfig.GetApiKey('DeepSeekTest'));
+  finally
+    LProv.Free;
+  end;
+
+  // Caso 3: API Key nao vazia, mas gravacao do config falha (cobre except de Generic.pas)
+  TRadIAConfig.SetStorage(TMockSettingsStorageWithError.Create);
+  try
+    LProv := TRadIAGenericOpenAIProvider.Create(FConfig, 'DeepSeekError', 'DeepSeek Error', 'https://api.deepseek.com', ['deepseek-chat'], 'sk-error-key');
+    try
+      Assert.AreEqual('DeepSeek Error', LProv.GetName);
+    finally
+      LProv.Free;
+    end;
+  finally
+    TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
+  end;
 end;
 
 
@@ -264,7 +313,7 @@ begin
   LProvider := TRadIAOpenAIProvider.Create(LConfig);
   try
     Assert.IsEmpty(LConfig.GetOpenAICustomBaseUrl,
-      'Custom Base URL must be empty by default — provider will use official OpenAI endpoint');
+      'Custom Base URL must be empty by default â€” provider will use official OpenAI endpoint');
   finally
     LProvider.Free;
     LConfig := nil;

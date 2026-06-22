@@ -17,9 +17,12 @@ type
     FResponseStr: string;
     FStreamChunks: TArray<string>;
     FLastUrl: string;
+    FStatusCodeToThrow: Integer;
+    FErrorContentToThrow: string;
   public
     procedure SetResponse(const AResponse: string);
     procedure SetStreamChunks(const AChunks: TArray<string>);
+    procedure SetErrorResponse(const AStatusCode: Integer; const AContent: string);
 
     function Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
     function Post(const AUrl: string; const AHeaders: TNetHeaders;
@@ -179,12 +182,20 @@ type
     procedure TestBedrock_SendPromptAsync;
     [Test]
     procedure TestBedrock_SendPromptStreamAsync;
+    [Test]
+    procedure TestProviderBase_HttpExceptionsPart1;
+    [Test]
+    procedure TestProviderBase_HttpExceptionsPart2;
+    [Test]
+    procedure TestOllama_FetchAvailableModels;
+    [Test]
+    procedure TestGithubCopilot_HttpExceptions;
   end;
 
 implementation
 
 uses
-  System.Classes, System.Rtti, System.JSON,
+  System.Classes, System.Rtti, System.JSON, System.Net.HttpClient,
   RadIA.Core.Container;
 
 { TTestRadIAProvidersEx }
@@ -257,7 +268,7 @@ begin
     Sleep(10);
     Inc(LTimeout, 10);
   end;
-  Sleep(100); // Aguarda a conclusão da limpeza física de threads de pool
+  Sleep(100); // Aguarda a conclusÃ£o da limpeza fÃ­sica de threads de pool
 
   FDeepSeekProvRef := nil;
   FGroqProvRef := nil;
@@ -945,16 +956,34 @@ end;
 procedure TMockHttpClient.SetResponse(const AResponse: string);
 begin
   FResponseStr := AResponse;
+  FStatusCodeToThrow := 0;
 end;
 
 procedure TMockHttpClient.SetStreamChunks(const AChunks: TArray<string>);
 begin
   FStreamChunks := AChunks;
+  FStatusCodeToThrow := 0;
+end;
+
+procedure TMockHttpClient.SetErrorResponse(const AStatusCode: Integer; const AContent: string);
+begin
+  FStatusCodeToThrow := AStatusCode;
+  FErrorContentToThrow := AContent;
 end;
 
 function TMockHttpClient.Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
 begin
   FLastUrl := AUrl;
+  if FStatusCodeToThrow <> 0 then
+  begin
+    if FStatusCodeToThrow = -2 then
+      raise ENetHTTPClientException.Create(FErrorContentToThrow)
+    else if FStatusCodeToThrow < 0 then
+      raise Exception.Create(FErrorContentToThrow)
+    else
+      raise ERadIAHttpException.Create('Mock HTTP Error', FStatusCodeToThrow, FErrorContentToThrow);
+  end;
+
   if AUrl.Contains('/copilot_internal/v2/token') then
     Result := '{"token": "mock-gh-session-token", "refresh_in": 1800}'
   else
@@ -965,6 +994,16 @@ function TMockHttpClient.Post(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
 begin
   FLastUrl := AUrl;
+  if FStatusCodeToThrow <> 0 then
+  begin
+    if FStatusCodeToThrow = -2 then
+      raise ENetHTTPClientException.Create(FErrorContentToThrow)
+    else if FStatusCodeToThrow < 0 then
+      raise Exception.Create(FErrorContentToThrow)
+    else
+      raise ERadIAHttpException.Create('Mock HTTP Error', FStatusCodeToThrow, FErrorContentToThrow);
+  end;
+
   Result := FResponseStr;
 end;
 
@@ -975,6 +1014,7 @@ var
   LBytes: TBytes;
 begin
   FLastUrl := AUrl;
+
   for LChunk in FStreamChunks do
   begin
     if AUrl.Contains('bedrock') then
@@ -982,6 +1022,16 @@ begin
     else
       LBytes := TEncoding.UTF8.GetBytes(LChunk);
     AOnWrite(LBytes);
+  end;
+
+  if FStatusCodeToThrow <> 0 then
+  begin
+    if FStatusCodeToThrow = -2 then
+      raise ENetHTTPClientException.Create(FErrorContentToThrow)
+    else if FStatusCodeToThrow < 0 then
+      raise Exception.Create(FErrorContentToThrow)
+    else
+      raise ERadIAHttpException.Create('Mock HTTP Error', FStatusCodeToThrow, FErrorContentToThrow);
   end;
 end;
 
@@ -1266,6 +1316,218 @@ begin
     CreateMockFrameB64('Bedrock '),
     CreateMockFrameB64('response')
   ], 'Bedrock response');
+end;
+
+procedure TTestRadIAProvidersEx.TestProviderBase_HttpExceptionsPart1;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+begin
+  // 1. Testar ExtractErrorMessageFromJson e exceptions do HTTPClient no Gemini
+  FMockHttpClient.SetErrorResponse(500, '{invalid-json-error-response');
+  LFinished := False;
+  FGeminiProvRef.SendPromptAsync('Test prompt', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  // 2. Testar ProcessOpenAICompatibleStreamBuffer exception no OpenAI/DeepSeek
+  FMockHttpClient.SetStreamChunks(['data: {invalid-json-chunk-data']);
+  LFinished := False;
+  FDeepSeekProvRef.SendPromptStreamAsync('Test prompt', [],
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      if AIsDone or (not AError.IsEmpty) then
+        LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+end;
+
+procedure TTestRadIAProvidersEx.TestProviderBase_HttpExceptionsPart2;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+begin
+  // 3. Testar exception de parsing no Ollama stream
+  FMockHttpClient.SetStreamChunks(['{invalid-ollama-json']);
+  LFinished := False;
+  FOllamaProvRef.SendPromptStreamAsync('Test prompt', [],
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      if AIsDone or (not AError.IsEmpty) then
+        LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  // 4. Testar ENetHTTPClientException e ExtractErrorMessageFromJson no stream
+  FMockHttpClient.SetStreamChunks(['{invalid-json-error-response']);
+  FMockHttpClient.SetErrorResponse(-2, 'Connection dropped');
+  LFinished := False;
+  FDeepSeekProvRef.SendPromptStreamAsync('Test prompt', [],
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      if AIsDone or (not AError.IsEmpty) then
+        LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  // 5. Testar exception de parsing no Claude stream
+  FMockHttpClient.SetStreamChunks(['data: {invalid-claude-json']);
+  LFinished := False;
+  FClaudeProvRef.SendPromptStreamAsync('Test prompt', [],
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      if AIsDone or (not AError.IsEmpty) then
+        LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+end;
+
+procedure TTestRadIAProvidersEx.TestOllama_FetchAvailableModels;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LModels: TArray<string>;
+  LError: string;
+begin
+  FConfig.SetOllamaBaseUrl('http://127.0.0.1:11434');
+
+  // Caso 1: Sucesso com JSON de modelos vÃ¡lido
+  FMockHttpClient.SetResponse('{"models": [{"name": "llama3:latest"}, {"name": "phi3:latest"}]}');
+  LFinished := False;
+  LModels := [];
+  LError := '';
+
+  (FOllamaProvRef as TRadIAOllamaProvider).FetchAvailableModelsAsync(
+    procedure(AModels: TArray<string>; AError: string)
+    begin
+      LModels := AModels;
+      LError := AError;
+      LFinished := True;
+    end);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Fetch should have finished');
+  Assert.AreEqual(2, Length(LModels));
+  Assert.AreEqual('llama3:latest', LModels[0]);
+  Assert.AreEqual('phi3:latest', LModels[1]);
+  Assert.IsTrue(LError.IsEmpty);
+
+  // Caso 2: Falha de rede para cobrir o except do DoGetRequest
+  FMockHttpClient.SetErrorResponse(-1, 'Connection refused');
+  LFinished := False;
+  LModels := [];
+  LError := '';
+
+  (FOllamaProvRef as TRadIAOllamaProvider).FetchAvailableModelsAsync(
+    procedure(AModels: TArray<string>; AError: string)
+    begin
+      LModels := AModels;
+      LError := AError;
+      LFinished := True;
+    end);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Fetch should have finished with error');
+  Assert.IsTrue(Length(LModels) > 0);
+  Assert.IsFalse(LError.IsEmpty);
+end;
+
+procedure TTestRadIAProvidersEx.TestGithubCopilot_HttpExceptions;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+begin
+  FConfig.SetApiKey('GithubCopilot', 'ghu_dummy_token');
+
+  // Caso 1: ERadIAHttpException no EnsureSessionToken
+  TRadIAGithubCopilotProvider.ClearSessionToken;
+
+  FMockHttpClient.SetErrorResponse(401, '{"error": "Unauthorized Copilot Key"}');
+  LFinished := False;
+  FGithubCopilotProvRef.SendPromptAsync('Test prompt', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  // Caso 2: Exception genÃ©rica no EnsureSessionToken
+  TRadIAGithubCopilotProvider.ClearSessionToken;
+
+  FMockHttpClient.SetErrorResponse(-1, 'Generic network failure');
+  LFinished := False;
+  FGithubCopilotProvRef.SendPromptAsync('Test prompt', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
 end;
 
 initialization

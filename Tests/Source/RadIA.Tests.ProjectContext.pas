@@ -28,12 +28,14 @@ type
     procedure TestContextLoader_FileNotFound_NoError;
     [Test]
     procedure TestContextLoader_TruncatesLargeFile;
+    [Test]
+    procedure TestContextLoader_Exceptions;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.IOUtils;
+  System.SysUtils, System.Classes, System.IOUtils;
 
 { TTestRadIAProjectContext }
 
@@ -71,12 +73,12 @@ var
 const
   RADIA_JSON =
     '{' +
-    '  "system_prompt": "Prompt do sistema especÃ­fico do projeto.",' +
+    '  "system_prompt": "Prompt do sistema especÃƒÂ­fico do projeto.",' +
     '  "context_files": [' +
     '    "docs/architecture.md"' +
     '  ]' +
     '}';
-  ARCH_MD = 'Esta unit usa padrÃ£o Singleton.';
+  ARCH_MD = 'Esta unit usa padrÃƒÂ£o Singleton.';
 begin
   CreateFile('.radia', RADIA_JSON);
   CreateFile('docs/architecture.md', ARCH_MD);
@@ -85,9 +87,9 @@ begin
 
   Assert.IsTrue(LSuccess, 'Should parse valid JSON successfully');
   Assert.IsTrue(LContextPrompt.Contains('[Contexto do Projeto (.radia)]'));
-  Assert.IsTrue(LContextPrompt.Contains('Prompt do sistema especÃ­fico do projeto.'));
+  Assert.IsTrue(LContextPrompt.Contains('Prompt do sistema especÃƒÂ­fico do projeto.'));
   Assert.IsTrue(LContextPrompt.Contains('[Arquivo: docs/architecture.md]'));
-  Assert.IsTrue(LContextPrompt.Contains('Esta unit usa padrÃ£o Singleton.'));
+  Assert.IsTrue(LContextPrompt.Contains('Esta unit usa padrÃƒÂ£o Singleton.'));
 end;
 
 procedure TTestRadIAProjectContext.TestParseRadiaFile_InvalidJSON_UsesDefaults;
@@ -150,8 +152,9 @@ const
     '}';
 begin
   LLargeContent := '';
-  for I := 1 to 6100 do
-    LLargeContent := LLargeContent + '1234567890'; // 61000 characters (~61KB)
+  for I := 1 to 51198 do
+    LLargeContent := LLargeContent + 'a';
+  LLargeContent := LLargeContent + 'ðŸš€'; // ðŸš€ occupies 4 bytes in UTF-8
 
   CreateFile('.radia', RADIA_JSON);
   CreateFile('large_file.txt', LLargeContent);
@@ -162,8 +165,56 @@ begin
   Assert.IsTrue(LContextPrompt.Contains('Projeto A.'));
   Assert.IsTrue(LContextPrompt.Contains('[Arquivo: large_file.txt]'));
   Assert.IsTrue(LContextPrompt.Contains('[Aviso: Conteudo do arquivo "large_file.txt" foi truncado pois excede o limite de 50KB]'));
-  // Ensure it was truncated at 51200 bytes
   Assert.IsTrue(LContextPrompt.Length < 60000, 'Context prompt should be significantly shorter than full large file');
+end;
+
+procedure TTestRadIAProjectContext.TestContextLoader_Exceptions;
+var
+  LContextPrompt: string;
+  LSuccess: Boolean;
+  LStream: TFileStream;
+  LRadiaFile: string;
+  LContextFile: string;
+const
+  RADIA_JSON =
+    '{' +
+    '  "system_prompt": "Projeto A.",' +
+    '  "context_files": [' +
+    '    "locked_file.txt"' +
+    '  ]' +
+    '}';
+begin
+  // Caso 1: ForÃ§ar exceÃ§Ã£o no LoadContext externo (pasta em vez de arquivo)
+  LRadiaFile := TPath.Combine(FTempFolder, '.radia');
+  ForceDirectories(LRadiaFile);
+
+  LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
+  Assert.IsFalse(LSuccess, 'Should fail to load context when .radia is a folder');
+
+  TDirectory.Delete(LRadiaFile);
+
+  // Caso 2: ForÃ§ar exceÃ§Ã£o ao ler arquivo especÃ­fico listado em context_files
+  CreateFile('.radia', RADIA_JSON);
+  CreateFile('locked_file.txt', 'Algum conteudo.');
+
+  LContextFile := TPath.Combine(FTempFolder, 'locked_file.txt');
+  LStream := TFileStream.Create(LContextFile, fmOpenWrite or fmShareExclusive);
+  try
+    LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
+    Assert.IsTrue(LSuccess, 'Should still succeed in loading other context elements');
+  finally
+    LStream.Free;
+  end;
+
+  // Caso 3: ForÃ§ar exceÃ§Ã£o na leitura do prÃ³prio arquivo .radia (bloqueado exclusivamente)
+  CreateFile('.radia', RADIA_JSON);
+  LStream := TFileStream.Create(LRadiaFile, fmOpenWrite or fmShareExclusive);
+  try
+    LSuccess := TProjectContextLoader.LoadContext(FTempFolder, LContextPrompt);
+    Assert.IsFalse(LSuccess, 'Should fail to load context when .radia file is exclusively locked');
+  finally
+    LStream.Free;
+  end;
 end;
 
 initialization

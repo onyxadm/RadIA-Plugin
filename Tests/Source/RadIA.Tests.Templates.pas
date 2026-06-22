@@ -35,12 +35,14 @@ type
     procedure TestMigration_CleansRedundantOverlays;
     [Test]
     procedure TestMigration_CleansLegacyTemplatesWithoutUses;
+    [Test]
+    procedure TestTemplateManager_LoadException;
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.IOUtils;
+  System.SysUtils, System.Classes, System.IOUtils;
 
 { TTestRadIATemplates }
 
@@ -257,6 +259,28 @@ begin
   Assert.IsTrue(LTemplate.IsSystem);
   Assert.IsFalse(LTemplate.IsCustomized, 'Legacy templates missing uses should have been discarded on load and reverted to code system default');
   Assert.IsTrue(LTemplate.Template.Contains('uses'), 'Active template must contain the newly updated uses rule');
+
+  if TFile.Exists(LTempFile) then
+    TFile.Delete(LTempFile);
+end;
+
+procedure TTestRadIATemplates.TestTemplateManager_LoadException;
+var
+  LTempFile: string;
+  LStream: TFileStream;
+begin
+  LTempFile := TPath.Combine(FTempDir, 'templates.json');
+  if TFile.Exists(LTempFile) then
+    TFile.Delete(LTempFile);
+
+  TFile.WriteAllText(LTempFile, '[]');
+
+  LStream := TFileStream.Create(LTempFile, fmOpenRead or fmShareExclusive);
+  try
+    FManager.Load;
+  finally
+    LStream.Free;
+  end;
 
   if TFile.Exists(LTempFile) then
     TFile.Delete(LTempFile);

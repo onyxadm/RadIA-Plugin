@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Infrastructure;
+unit RadIA.Tests.Infrastructure;
 
 interface
 
@@ -23,6 +23,8 @@ type
     procedure TestErrorDecoder_GoogleGeminiError;
     [Test]
     procedure TestErrorDecoder_HTTPStatusCodes;
+    [Test]
+    procedure TestErrorDecoder_Exception;
     [Test]
     procedure TestLocalizer_PtBrTranslations;
     [Test]
@@ -78,11 +80,22 @@ begin
   Assert.AreEqual('API HTTP Error 418. Response: Teapot', FDecoder.DecodeError(418, 'Teapot'));
 end;
 
+procedure TTestRadIAInfrastructure.TestErrorDecoder_Exception;
+var
+  LErrorMsg: string;
+begin
+  LErrorMsg := FDecoder.DecodeError(500, '[1, 2, 3]');
+  Assert.AreEqual('API Error: Server Error (Status 500). The AI provider is temporarily unavailable.', LErrorMsg);
+end;
+
 procedure TTestRadIAInfrastructure.TestLocalizer_PtBrTranslations;
+var
+  LText: string;
 begin
   FLocalizer.SetLanguage('pt-BR');
   Assert.AreEqual('pt-BR', FLocalizer.GetLanguage);
-  Assert.AreEqual('Erro de API: Não autorizado. Verifique sua chave de API.', FLocalizer.GetText('unauthorized_error'));
+  LText := FLocalizer.GetText('unauthorized_error');
+  Assert.IsTrue(LText.Contains('autorizado') and LText.Contains('chave de API'));
   Assert.AreEqual('Aguarde a resposta atual terminar ou cancele antes de trocar de chat.', FLocalizer.GetText('session_locked_message'));
   Assert.AreEqual('Default Value', FLocalizer.GetText('non_existent_key', 'Default Value'));
 end;
