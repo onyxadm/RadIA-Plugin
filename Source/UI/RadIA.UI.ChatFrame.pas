@@ -175,15 +175,15 @@ type
   private
     FId: string;
   public
-    property Id: string read FId write FId;
     constructor Create(const AId: string);
+    property Id: string read FId write FId;
   end;
   TProviderObject = class
   private
     FId: string;
   public
-    property Id: string read FId write FId;
     constructor Create(const AId: string);
+    property Id: string read FId write FId;
   end;
 
 constructor TProviderObject.Create(const AId: string);

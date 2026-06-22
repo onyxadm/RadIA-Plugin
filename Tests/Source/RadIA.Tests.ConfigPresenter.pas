@@ -56,6 +56,9 @@ type
     FTemplateOriginLabelColor: TColor;
     FFocusTemplateNameCalled: Boolean;
   public
+    constructor Create;
+    destructor Destroy; override;
+
     property ApiKeyMap: TDictionary<string, string> read FApiKeyMap write FApiKeyMap;
     property CustomUrlMap: TDictionary<string, string> read FCustomUrlMap write FCustomUrlMap;
     property AuthTypeMap: TDictionary<string, Integer> read FAuthTypeMap write FAuthTypeMap;
@@ -84,7 +87,8 @@ type
     property OpenDialogResult: Boolean read FOpenDialogResult write FOpenDialogResult;
     property OpenDialogSelectedFileName: string read FOpenDialogSelectedFileName write FOpenDialogSelectedFileName;
     property FolderDialogResult: Boolean read FFolderDialogResult write FFolderDialogResult;
-    property FolderDialogSelectedFolderName: string read FFolderDialogSelectedFolderName write FFolderDialogSelectedFolderName;
+    property FolderDialogSelectedFolderName: string
+      read FFolderDialogSelectedFolderName write FFolderDialogSelectedFolderName;
     property CloseViewCalled: Boolean read FCloseViewCalled write FCloseViewCalled;
     property CloseViewModalResult: Integer read FCloseViewModalResult write FCloseViewModalResult;
     property TemplatesList: TArray<string> read FTemplatesList write FTemplatesList;
@@ -101,8 +105,6 @@ type
     property TemplateOriginLabelText: string read FTemplateOriginLabelText write FTemplateOriginLabelText;
     property TemplateOriginLabelColor: TColor read FTemplateOriginLabelColor write FTemplateOriginLabelColor;
     property FocusTemplateNameCalled: Boolean read FFocusTemplateNameCalled write FFocusTemplateNameCalled;
-    constructor Create;
-    destructor Destroy; override;
 
     { IRadIAConfigView }
     function GetApiKey(const AProviderId: string): string;

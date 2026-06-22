@@ -41,14 +41,19 @@ type
     FToggleSessionsPanelCalled: Boolean;
     FOpenSettingsDialogCalled: Boolean;
   public
+    constructor Create;
+    destructor Destroy; override;
+
     property RequestStateInProgress: Boolean read FRequestStateInProgress write FRequestStateInProgress;
     property RequestStateSetCalled: Boolean read FRequestStateSetCalled write FRequestStateSetCalled;
     property TokensStatsText: string read FTokensStatsText write FTokensStatsText;
     property LastPostedJson: string read FLastPostedJson write FLastPostedJson;
     property LastPostedBackgroundJson: string read FLastPostedBackgroundJson write FLastPostedBackgroundJson;
     property BackgroundBrowserCreated: Boolean read FBackgroundBrowserCreated write FBackgroundBrowserCreated;
-    property BackgroundBrowserInitialized: Boolean read FBackgroundBrowserInitialized write FBackgroundBrowserInitialized;
-    property BackgroundBrowserNavigatedUrl: string read FBackgroundBrowserNavigatedUrl write FBackgroundBrowserNavigatedUrl;
+    property BackgroundBrowserInitialized: Boolean
+      read FBackgroundBrowserInitialized write FBackgroundBrowserInitialized;
+    property BackgroundBrowserNavigatedUrl: string
+      read FBackgroundBrowserNavigatedUrl write FBackgroundBrowserNavigatedUrl;
     property LoginWindowShown: Boolean read FLoginWindowShown write FLoginWindowShown;
     property LoginWindowUrl: string read FLoginWindowUrl write FLoginWindowUrl;
     property LoginSuccessCallback: TProc read FLoginSuccessCallback write FLoginSuccessCallback;
@@ -64,7 +69,8 @@ type
     property PromptInputText: string read FPromptInputText write FPromptInputText;
     property PromptFocused: Boolean read FPromptFocused write FPromptFocused;
     property ActiveEditorText: string read FActiveEditorText write FActiveEditorText;
-    property ActiveEditorTextSelectionOnly: Boolean read FActiveEditorTextSelectionOnly write FActiveEditorTextSelectionOnly;
+    property ActiveEditorTextSelectionOnly: Boolean
+      read FActiveEditorTextSelectionOnly write FActiveEditorTextSelectionOnly;
     property EditorTextReplaced: Boolean read FEditorTextReplaced write FEditorTextReplaced;
     property ReplacedEditorTextValue: string read FReplacedEditorTextValue write FReplacedEditorTextValue;
     property LastMessageDialogText: string read FLastMessageDialogText write FLastMessageDialogText;
@@ -72,8 +78,6 @@ type
     property SaveDialogSelectedFileName: string read FSaveDialogSelectedFileName write FSaveDialogSelectedFileName;
     property ToggleSessionsPanelCalled: Boolean read FToggleSessionsPanelCalled write FToggleSessionsPanelCalled;
     property OpenSettingsDialogCalled: Boolean read FOpenSettingsDialogCalled write FOpenSettingsDialogCalled;
-    constructor Create;
-    destructor Destroy; override;
 
     { IRadIAChatView }
     procedure SetRequestState(const AInProgress: Boolean);

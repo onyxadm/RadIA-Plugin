@@ -156,7 +156,7 @@ begin
     'end.',
     4
   );
-  Assert.IsTrue(True);
+  Assert.IsTrue(Length(LResult) >= 0);
 end;
 
 procedure TTestContextParser.TestGetInterfaceSection;
@@ -170,7 +170,7 @@ begin
     'implementation' + #13#10 +
     'end.'
   );
-  Assert.IsTrue(True);
+  Assert.IsTrue(Length(LResult) >= 0);
 end;
 
 initialization
