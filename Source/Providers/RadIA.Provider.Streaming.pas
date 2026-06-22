@@ -101,7 +101,7 @@ begin
 
   I := LLenCombined - 1;
   LContinuations := 0;
-  
+
   while (I >= 0) and (I >= LLenCombined - 4) do
   begin
     LStartByte := ACombined[I];

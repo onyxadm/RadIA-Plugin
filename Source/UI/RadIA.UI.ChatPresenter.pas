@@ -71,7 +71,11 @@ type
 
     procedure HandleUpdateModelsComboResult(AModels: TArray<string>; AProvider: IRadIAProvider);
     function BuildProvidersJsonArray: TJSONArray;
-    function BuildModelsJsonArray(const AActiveProvider: string; LIsWebLogin: Boolean; out AActiveModel: string): TJSONArray;
+    function BuildModelsJsonArray(
+  const AActiveProvider: string;
+   LIsWebLogin: Boolean;
+   out AActiveModel: string): TJSONArray;
+  
     function BuildSlashCommandsJsonArray: TJSONArray;
 
     procedure LoadChatHistory;
@@ -135,7 +139,11 @@ type
     procedure SendPromptText(const APromptText: string);
     procedure SendPromptToAI(const APromptText: string);
 
-    procedure HandleStreamSessionChange(AIsDone: Boolean; const ASessionId, AFullResponse, AActiveProvider, AActiveModel: string);
+    procedure HandleStreamSessionChange(
+  AIsDone: Boolean;
+  
+  const ASessionId, AFullResponse, AActiveProvider, AActiveModel: string);
+  
     procedure HandleStreamCancel(const AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamError(const AError, AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamDone(const APromptText, AActiveProvider, AActiveModel, AFullResponse: string);
@@ -431,7 +439,11 @@ begin
   end;
 end;
 
-function TRadIAChatPresenter.BuildModelsJsonArray(const AActiveProvider: string; LIsWebLogin: Boolean; out AActiveModel: string): TJSONArray;
+function TRadIAChatPresenter.BuildModelsJsonArray(
+  const AActiveProvider: string;
+   LIsWebLogin: Boolean;
+   out AActiveModel: string): TJSONArray;
+  
 var
   LMeta: TProviderMetadata;
   LDefaultModels: TArray<string>;
@@ -439,7 +451,7 @@ var
 begin
   Result := TJSONArray.Create;
   AActiveModel := FConfig.GetActiveModel(AActiveProvider);
-  
+
   if LIsWebLogin then
   begin
     if TProviderRegistry.GetProvider('WebViewBridge', LMeta) then
@@ -818,7 +830,11 @@ begin
 end;
 
 
-procedure TRadIAChatPresenter.HandleStreamSessionChange(AIsDone: Boolean; const ASessionId, AFullResponse, AActiveProvider, AActiveModel: string);
+procedure TRadIAChatPresenter.HandleStreamSessionChange(
+  AIsDone: Boolean;
+  
+  const ASessionId, AFullResponse, AActiveProvider, AActiveModel: string);
+  
 begin
   TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.',
       [ASessionId, Self.FSessionManager.ActiveSessionId]), 'UI');
@@ -849,7 +865,10 @@ begin
   end;
 end;
 
-procedure TRadIAChatPresenter.HandleStreamCancel(const AActiveProvider, AActiveModel: string; var AFullResponse: string);
+procedure TRadIAChatPresenter.HandleStreamCancel(
+  const AActiveProvider, AActiveModel: string;
+   var AFullResponse: string);
+  
 var
   LAssistantMsg: IRadIAChatMessage;
 begin
@@ -870,7 +889,10 @@ begin
   Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
 end;
 
-procedure TRadIAChatPresenter.HandleStreamError(const AError, AActiveProvider, AActiveModel: string; var AFullResponse: string);
+procedure TRadIAChatPresenter.HandleStreamError(
+  const AError, AActiveProvider, AActiveModel: string;
+   var AFullResponse: string);
+  
 var
   LAssistantMsg: IRadIAChatMessage;
   LIsWebError: Boolean;
@@ -1767,36 +1789,39 @@ end;
 function TRadIAChatPresenter.FindTemplateForCommand(const ACommand, AArgument: string; out ATemplate: TPromptTemplate): Boolean;
 var
   LTemp: TPromptTemplate;
+  LFallbackNames: TArray<string>;
+  LFallbackCommands: TArray<string>;
+  I: Integer;
 begin
-  Result := False;
+  if not ACommand.StartsWith('/') then
+    Exit(False);
 
   if SameText(ACommand, '/template') then
   begin
     if not AArgument.IsEmpty then
-      Result := FTemplateManager.FindTemplate(AArgument, ATemplate);
-    Exit;
+      Exit(FTemplateManager.FindTemplate(AArgument, ATemplate));
+    Exit(False);
   end;
 
-  if ACommand.StartsWith('/') then
+  for LTemp in FTemplateManager.GetTemplates do
   begin
-    for LTemp in FTemplateManager.GetTemplates do
+    if SameText(LTemp.SlashCommand, ACommand) then
     begin
-      if SameText(LTemp.SlashCommand, ACommand) then
-      begin
-        ATemplate := LTemp;
-        Exit(True);
-      end;
+      ATemplate := LTemp;
+      Exit(True);
     end;
-
-    if SameText(ACommand, '/review') then
-      Exit(FTemplateManager.FindTemplate('Review Leaks and SOLID', ATemplate))
-    else if SameText(ACommand, '/explain') then
-      Exit(FTemplateManager.FindTemplate('Explain Code', ATemplate))
-    else if SameText(ACommand, '/refactor') then
-      Exit(FTemplateManager.FindTemplate('Review Clean Code Delphi', ATemplate))
-    else if SameText(ACommand, '/optimize') then
-      Exit(FTemplateManager.FindTemplate('Analyze Performance', ATemplate));
   end;
+
+  LFallbackCommands := ['/review', '/explain', '/refactor', '/optimize'];
+  LFallbackNames := ['Review Leaks and SOLID', 'Explain Code', 'Review Clean Code Delphi', 'Analyze Performance'];
+
+  for I := Low(LFallbackCommands) to High(LFallbackCommands) do
+  begin
+    if SameText(ACommand, LFallbackCommands[I]) then
+      Exit(FTemplateManager.FindTemplate(LFallbackNames[I], ATemplate));
+  end;
+
+  Result := False;
 end;
 
 function TRadIAChatPresenter.PreProcessPrompt(const APromptText: string): string;

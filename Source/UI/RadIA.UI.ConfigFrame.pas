@@ -661,7 +661,8 @@ begin
 
   ApplyThemeToPanels([pnlGemini, pnlOpenAI, pnlClaude, pnlDeepSeek, pnlGroq, pnlOllama,
     pnlOpenRouter, pnlLMStudio, pnlGithubCopilot, pnlAzureOpenAI, pnlQwen,
-    pnlMistral, pnlBedrock, pnlSystemPrompt, pnlTemplatesLeft, pnlTemplatesLeftButtons, pnlTemplatesClient, FPnlGeneral], LColors);
+    pnlMistral, pnlBedrock, pnlSystemPrompt, 
+    pnlTemplatesLeft, pnlTemplatesLeftButtons, pnlTemplatesClient, FPnlGeneral], LColors);
 
   for LEditD in FEdtTemperatures.Values do ApplyThemeToEdits([LEditD], LColors);
   for LEditD in FEdtMaxTokens.Values do ApplyThemeToEdits([LEditD], LColors);
@@ -816,7 +817,7 @@ begin
   LNames := ['General / Logs', 'System Prompt', 'Templates', 'Gemini', 'OpenAI',
              'Claude', 'DeepSeek', 'Groq', 'Ollama', 'OpenRouter', 'LM Studio',
              'GitHub Copilot', 'Azure OpenAI', 'Alibaba Qwen', 'Mistral AI', 'AWS Bedrock'];
-             
+
   LPages := [FTsGeneral, tsSystemPrompt, tsTemplates, tsGemini, tsOpenAI,
              tsClaude, tsDeepSeek, tsGroq, tsOllama, tsOpenRouter, tsLMStudio,
              tsGithubCopilot, tsAzureOpenAI, tsQwen, tsMistral, tsBedrock];
