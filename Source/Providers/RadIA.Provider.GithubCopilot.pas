@@ -496,7 +496,8 @@ begin
           if LResponse.StatusCode = 200 then
           begin
             LAbort := False;
-            Result := ProcessPollResponse(LResponse.ContentAsString(TEncoding.UTF8), LIntervalMs, AAccessToken, AErrorMsg, LAbort);
+            Result := ProcessPollResponse(LResponse.ContentAsString(TEncoding.UTF8),
+              LIntervalMs, AAccessToken, AErrorMsg, LAbort);
             if LAbort then Exit;
           end
           else

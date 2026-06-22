@@ -38,7 +38,8 @@ type
       const ARequestBody: string; const AProcessBufferFunc: TProcessBufferFunc;
       const ACallback: TStreamChunkCallback);
     procedure ProcessBufferLines(var ABuffer: string; const ALineCallback: TProc<string>);
-    procedure HandleStreamException(E: Exception; var ABufferText: string; const AProcessBufferFunc: TProcessBufferFunc; const ACallback: TStreamChunkCallback);
+    procedure HandleStreamException(E: Exception; var ABufferText: string;
+      const AProcessBufferFunc: TProcessBufferFunc; const ACallback: TStreamChunkCallback);
 
     { OpenAI-compatible helpers (shared by OpenAI, DeepSeek, Groq providers) }
     function BuildOpenAICompatibleRequestBody(const APrompt: string;
@@ -464,7 +465,8 @@ begin
   TTask.Run(LTaskProc);
 end;
 
-procedure TRadIAProviderBase.HandleStreamException(E: Exception; var ABufferText: string; const AProcessBufferFunc: TProcessBufferFunc; const ACallback: TStreamChunkCallback);
+procedure TRadIAProviderBase.HandleStreamException(E: Exception; var ABufferText: string;
+  const AProcessBufferFunc: TProcessBufferFunc; const ACallback: TStreamChunkCallback);
 var
   LErrorMsg: string;
   LJsonError: string;

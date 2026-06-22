@@ -39,6 +39,16 @@ type
     procedure OpenSettingsDialog;
   end;
 
+  PStreamChunkCtx = ^TStreamChunkCtx;
+  TStreamChunkCtx = record
+    Chunk: string;
+    IsDone: Boolean;
+    Error: string;
+    SessionId: string;
+    ActiveProvider: string;
+    ActiveModel: string;
+  end;
+
   TRadIAChatPresenter = class
   private
     FView: IRadIAChatView;
@@ -152,7 +162,8 @@ type
     procedure HandleStreamCancel(const AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamError(const AError, AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamDone(const APromptText, AActiveProvider, AActiveModel, AFullResponse: string);
-    procedure ProcessStreamChunk(const AChunk: string; const AIsDone: Boolean; const AError: string; var ADoneHandled: Boolean; const ASessionId, AActiveProvider, AActiveModel: string; var AFullResponse: string);
+    procedure ProcessStreamChunk(const ACtx: TStreamChunkCtx; var ADoneHandled: Boolean; var AFullResponse: string);
+    procedure ProcessDTOGeneratorChunk(const AChunk, AError: string; const AIsDone: Boolean; var ADoneHandled: Boolean; const APromptText, AActiveProvider: string);
 
     procedure CancelRequest;
     procedure ClearChat;
@@ -985,7 +996,8 @@ begin
   end;
 end;
 
-procedure TRadIAChatPresenter.ProcessStreamChunk(const AChunk: string; const AIsDone: Boolean; const AError: string; var ADoneHandled: Boolean; const ASessionId, AActiveProvider, AActiveModel: string; var AFullResponse: string);
+procedure TRadIAChatPresenter.ProcessStreamChunk(const ACtx: TStreamChunkCtx;
+  var ADoneHandled: Boolean; var AFullResponse: string);
 begin
   if ADoneHandled then
     Exit;
@@ -993,37 +1005,37 @@ begin
   if not (FLifecycleGuard as IRadIALifecycleGuard).IsAlive then
     Exit;
 
-  if not SameText(Self.FSessionManager.ActiveSessionId, ASessionId) then
+  if not SameText(Self.FSessionManager.ActiveSessionId, ACtx.SessionId) then
   begin
-    Self.HandleStreamSessionChange(AIsDone, ASessionId, AFullResponse, AActiveProvider, AActiveModel);
+    Self.HandleStreamSessionChange(ACtx.IsDone, ACtx.SessionId, AFullResponse, ACtx.ActiveProvider, ACtx.ActiveModel);
     Exit;
   end;
 
   if Self.FCancelledByUser then
   begin
     ADoneHandled := True;
-    Self.HandleStreamCancel(AActiveProvider, AActiveModel, AFullResponse);
+    Self.HandleStreamCancel(ACtx.ActiveProvider, ACtx.ActiveModel, AFullResponse);
     Exit;
   end;
 
-  if not AError.IsEmpty then
+  if not ACtx.Error.IsEmpty then
   begin
     ADoneHandled := True;
-    Self.HandleStreamError(AError, AActiveProvider, AActiveModel, AFullResponse);
+    Self.HandleStreamError(ACtx.Error, ACtx.ActiveProvider, ACtx.ActiveModel, AFullResponse);
     Exit;
   end;
 
-  if not AChunk.IsEmpty then
+  if not ACtx.Chunk.IsEmpty then
   begin
-    AFullResponse := AFullResponse + AChunk;
-    if not Self.FConfig.IsWebLoginProvider(AActiveProvider) then
-      Self.PostToWebView('append_message', 'assistant', AChunk, False, AActiveProvider, AActiveModel);
+    AFullResponse := AFullResponse + ACtx.Chunk;
+    if not Self.FConfig.IsWebLoginProvider(ACtx.ActiveProvider) then
+      Self.PostToWebView('append_message', 'assistant', ACtx.Chunk, False, ACtx.ActiveProvider, ACtx.ActiveModel);
   end;
 
-  if AIsDone then
+  if ACtx.IsDone then
   begin
     ADoneHandled := True;
-    Self.HandleStreamDone(FPendingPrompt, AActiveProvider, AActiveModel, AFullResponse);
+    Self.HandleStreamDone(FPendingPrompt, ACtx.ActiveProvider, ACtx.ActiveModel, AFullResponse);
   end;
 end;
 
@@ -1103,9 +1115,13 @@ begin
     TThread.Queue(nil,
       TThreadProcedure(
       procedure
-      begin
-        ProcessStreamChunk(AChunk, AIsDone, AError, LDoneHandled, LSessionId, LActiveProvider, LActiveModel, LFullResponse);
-      end));
+        var LCtx: TStreamChunkCtx;
+        begin
+          LCtx.Chunk := AChunk; LCtx.IsDone := AIsDone; LCtx.Error := AError;
+          LCtx.SessionId := LSessionId; LCtx.ActiveProvider := LActiveProvider;
+          LCtx.ActiveModel := LActiveModel;
+          ProcessStreamChunk(LCtx, LDoneHandled, LFullResponse);
+        end));
   end;
 
   try
@@ -1173,6 +1189,40 @@ begin
   Self.PostToWebView('append_generator_code', '', '', True);
 end;
 
+procedure TRadIAChatPresenter.ProcessDTOGeneratorChunk(const AChunk, AError: string; const AIsDone: Boolean; var ADoneHandled: Boolean; const APromptText, AActiveProvider: string);
+begin
+  if ADoneHandled then
+    Exit;
+
+  if not (FLifecycleGuard as IRadIALifecycleGuard).IsAlive then
+    Exit;
+
+  if Self.FCancelledByUser then
+  begin
+    ADoneHandled := True;
+    Self.HandleGenerateDTOCancel;
+    Exit;
+  end;
+
+  if not AError.IsEmpty then
+  begin
+    ADoneHandled := True;
+    Self.HandleGenerateDTOError(AError);
+    Exit;
+  end;
+
+  if not AChunk.IsEmpty then
+  begin
+    Self.PostToWebView('append_generator_code', '', AChunk, False);
+  end;
+
+  if AIsDone then
+  begin
+    ADoneHandled := True;
+    Self.HandleGenerateDTODone(APromptText, AActiveProvider);
+  end;
+end;
+
 procedure TRadIAChatPresenter.GenerateDTO(const AInput, AInputType, AOutputType: string);
 var
   LPromptText: string;
@@ -1205,37 +1255,8 @@ begin
       TThreadProcedure(
       procedure
       begin
-            if LDoneHandled then
-              Exit;
-
-            if not LGuard.IsAlive then
-              Exit;
-
-            if Self.FCancelledByUser then
-            begin
-              LDoneHandled := True;
-              Self.HandleGenerateDTOCancel;
-              Exit;
-            end;
-
-            if not AError.IsEmpty then
-            begin
-              LDoneHandled := True;
-              Self.HandleGenerateDTOError(AError);
-              Exit;
-            end;
-
-            if not AChunk.IsEmpty then
-            begin
-              Self.PostToWebView('append_generator_code', '', AChunk, False);
-            end;
-
-            if AIsDone then
-            begin
-              LDoneHandled := True;
-              Self.HandleGenerateDTODone(LPromptText, LActiveProvider);
-            end;
-          end));
+        ProcessDTOGeneratorChunk(AChunk, AError, AIsDone, LDoneHandled, LPromptText, LActiveProvider);
+      end));
   end;
 
   try

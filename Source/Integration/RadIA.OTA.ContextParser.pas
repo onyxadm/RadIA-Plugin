@@ -249,7 +249,8 @@ end;
 class function TRadIAContextParser.TryExtractFirstBodyComment(const ALines: TStrings; const AStartLine,
   AEndLine: Integer; out ACommentText: string; out ACommentStartLine, ACommentEndLine: Integer): Boolean;
 
-  function ExtractLineComment(const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+  function ExtractLineComment(const ATrimmed: string; var I, ACommentEndLine: Integer;
+    LBuilder: TStringBuilder): string;
   begin
     ACommentEndLine := I;
     LBuilder.AppendLine(ATrimmed.Substring(2).Trim);
@@ -262,7 +263,8 @@ class function TRadIAContextParser.TryExtractFirstBodyComment(const ALines: TStr
     Result := LBuilder.ToString.Trim;
   end;
 
-  function ExtractBraceComment(const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+  function ExtractBraceComment(const ATrimmed: string; var I, ACommentEndLine: Integer;
+    LBuilder: TStringBuilder): string;
   var
     LLine: string;
     LClosePos: Integer;
@@ -287,7 +289,8 @@ class function TRadIAContextParser.TryExtractFirstBodyComment(const ALines: TStr
     end;
   end;
 
-  function ExtractParenComment(const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+  function ExtractParenComment(const ATrimmed: string; var I, ACommentEndLine: Integer;
+    LBuilder: TStringBuilder): string;
   var
     LLine: string;
     LClosePos: Integer;
