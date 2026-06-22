@@ -264,8 +264,7 @@ begin
   if Assigned(lstSessions) then
   begin
     for I := 0 to lstSessions.Items.Count - 1 do
-      if Assigned(lstSessions.Items.Objects[I]) then
-        lstSessions.Items.Objects[I].Free;
+      lstSessions.Items.Objects[I].Free;
   end;
 
   if Assigned(cbProvider) then
@@ -679,13 +678,13 @@ end;
 function TRadIAFrameAIChat.ColorToHex(AColor: TColor): string;
 var
   LColorRGB: LongInt;
-  R, G, B: Byte;
+  LRed, LGreen, LBlue: Byte;
 begin
   LColorRGB := ColorToRGB(AColor);
-  R := GetRValue(LColorRGB);
-  G := GetGValue(LColorRGB);
-  B := GetBValue(LColorRGB);
-  Result := Format('#%.2x%.2x%.2x', [R, G, B]);
+  LRed := GetRValue(LColorRGB);
+  LGreen := GetGValue(LColorRGB);
+  LBlue := GetBValue(LColorRGB);
+  Result := Format('#%.2x%.2x%.2x', [LRed, LGreen, LBlue]);
 end;
 
 procedure TRadIAFrameAIChat.UpdateSendButtonVisual(const AInProgress: Boolean);

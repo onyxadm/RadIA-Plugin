@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.EditorHook;
+unit RadIA.Tests.EditorHook;
 
 interface
 
@@ -17,8 +17,8 @@ type
     procedure DummyOnPopup2(Sender: TObject);
     procedure DummyOnPopupClearsMenu(Sender: TObject);
   public
-    [SetUp]
-    procedure SetUp;
+    [Setup]
+    procedure Setup;
     [TearDown]
     procedure TearDown;
 

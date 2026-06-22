@@ -1550,7 +1550,7 @@ function updateMessage(text, isDone, provider, model) {
   }
 }
 
-if (globalThis.chrome && globalThis.chrome.webview) {
+if (globalThis.chrome?.webview) {
   // globalThis.chrome.webview.addEventListener is a secure host-to-web channel.
   // event.origin is not present here as messages originate directly from the host Delphi process (bds.exe).
   globalThis.chrome.webview.addEventListener('message', event => {

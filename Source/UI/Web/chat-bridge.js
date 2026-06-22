@@ -3,9 +3,7 @@
 // ============================================================
 
 function postMessageToDelphi(payload) {
-  if (window.chrome && window.chrome.webview) {
-    window.chrome.webview.postMessage(payload);
-  }
+  globalThis.chrome?.webview?.postMessage(payload);
 }
 
 (function redirectConsoleToDelphi() {
@@ -36,7 +34,7 @@ function postMessageToDelphi(payload) {
     sendLog('WARN', args);
   };
 
-  window.addEventListener('error', (event) => {
+  globalThis.addEventListener('error', (event) => {
     postMessageToDelphi({
       action: 'log',
       text: `[WINDOW_ERROR] ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`

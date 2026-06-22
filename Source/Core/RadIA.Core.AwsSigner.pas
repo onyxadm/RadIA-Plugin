@@ -6,6 +6,19 @@ uses
   System.SysUtils, System.Classes;
 
 type
+  TAwsSignRequest = record
+    AccessKeyId: string;
+    SecretAccessKey: string;
+    Region: string;
+    Service: string;
+    Method: string;
+    Uri: string;
+    Payload: string;
+    AmzDate: string;
+    DateStamp: string;
+    SessionToken: string;
+  end;
+
   { Utility class to compute AWS Signature Version 4 (SigV4) }
   TAwsSigV4Signer = class
   private
@@ -16,11 +29,7 @@ type
   public
     class procedure GetAmzDateTimeStrings(var AAmzDate, ADateStamp: string);
 
-    class function ComputeSignatureHeaders(
-      const AAccessKeyId, ASecretAccessKey, ARegion, AService, AMethod, AUri, APayload: string;
-      const AAmzDate, ADateStamp: string;
-      const ASessionToken: string = ''
-    ): TStringList;
+    class function ComputeSignatureHeaders(const AReq: TAwsSignRequest): TStringList;
   end;
 
 implementation
@@ -72,11 +81,7 @@ begin
   AAmzDate := Format('%sT%.2d%.2d%.2dZ', [ADateStamp, LHour, LMin, LSec]);
 end;
 
-class function TAwsSigV4Signer.ComputeSignatureHeaders(
-  const AAccessKeyId, ASecretAccessKey, ARegion, AService, AMethod, AUri, APayload: string;
-  const AAmzDate, ADateStamp: string;
-  const ASessionToken: string
-): TStringList;
+class function TAwsSigV4Signer.ComputeSignatureHeaders(const AReq: TAwsSignRequest): TStringList;
 var
   LHost: string;
   LPayloadHash: string;
@@ -101,17 +106,17 @@ var
 begin
   Result := TStringList.Create;
 
-  LHost := Format('%s-runtime.%s.amazonaws.com', [AService, ARegion]).ToLower;
-  LPayloadHash := THashSHA2.GetHashString(APayload).ToLower;
+  LHost := Format('%s-runtime.%s.amazonaws.com', [AReq.Service, AReq.Region]).ToLower;
+  LPayloadHash := THashSHA2.GetHashString(AReq.Payload).ToLower;
 
   // 1. Construct Canonical Headers & Signed Headers
-  if ASessionToken.Trim.IsEmpty then
+  if AReq.SessionToken.Trim.IsEmpty then
   begin
     LCanonicalHeaders :=
       'content-type:application/json'#10 +
       'host:' + LHost + #10 +
       'x-amz-content-sha256:' + LPayloadHash + #10 +
-      'x-amz-date:' + AAmzDate + #10;
+      'x-amz-date:' + AReq.AmzDate + #10;
     LSignedHeaders := 'content-type;host;x-amz-content-sha256;x-amz-date';
   end
   else
@@ -120,15 +125,15 @@ begin
       'content-type:application/json'#10 +
       'host:' + LHost + #10 +
       'x-amz-content-sha256:' + LPayloadHash + #10 +
-      'x-amz-date:' + AAmzDate + #10 +
-      'x-amz-security-token:' + ASessionToken.Trim + #10;
+      'x-amz-date:' + AReq.AmzDate + #10 +
+      'x-amz-security-token:' + AReq.SessionToken.Trim + #10;
     LSignedHeaders := 'content-type;host;x-amz-content-sha256;x-amz-date;x-amz-security-token';
   end;
 
   // 2. Canonical Request
   LCanonicalRequest :=
-    AMethod.ToUpper + #10 +
-    AUri + #10 +
+    AReq.Method.ToUpper + #10 +
+    AReq.Uri + #10 +
     #10 + // Empty query string (query parameters)
     LCanonicalHeaders + #10 +
     LSignedHeaders + #10 +
@@ -137,18 +142,18 @@ begin
   LCanonicalRequestHash := HashSHA256Hex(LCanonicalRequest);
 
   // 3. String to Sign
-  LScope := Format('%s/%s/%s/aws4_request', [ADateStamp, ARegion, AService]);
+  LScope := Format('%s/%s/%s/aws4_request', [AReq.DateStamp, AReq.Region, AReq.Service]);
   LStringToSign :=
     'AWS4-HMAC-SHA256' + #10 +
-    AAmzDate + #10 +
+    AReq.AmzDate + #10 +
     LScope + #10 +
     LCanonicalRequestHash;
 
   // 4. Compute Signing Key
-  LSecretKeyBytes := TEncoding.UTF8.GetBytes('AWS4' + ASecretAccessKey);
-  LKeyDate := HMAC_SHA256(ADateStamp, LSecretKeyBytes);
-  LKeyRegion := HMAC_SHA256(ARegion, LKeyDate);
-  LKeyService := HMAC_SHA256(AService, LKeyRegion);
+  LSecretKeyBytes := TEncoding.UTF8.GetBytes('AWS4' + AReq.SecretAccessKey);
+  LKeyDate := HMAC_SHA256(AReq.DateStamp, LSecretKeyBytes);
+  LKeyRegion := HMAC_SHA256(AReq.Region, LKeyDate);
+  LKeyService := HMAC_SHA256(AReq.Service, LKeyRegion);
   LKeySigning := HMAC_SHA256('aws4_request', LKeyService);
 
   // 5. Signature
@@ -158,15 +163,15 @@ begin
   // 6. Build Headers
   LAuthorizationHeader := Format(
     'AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s',
-    [AAccessKeyId, LScope, LSignedHeaders, LSignatureHex]
+    [AReq.AccessKeyId, LScope, LSignedHeaders, LSignatureHex]
   );
 
   Result.Values['Authorization'] := LAuthorizationHeader;
-  Result.Values['x-amz-date'] := AAmzDate;
+  Result.Values['x-amz-date'] := AReq.AmzDate;
   Result.Values['x-amz-content-sha256'] := LPayloadHash;
   Result.Values['content-type'] := 'application/json';
-  if not ASessionToken.Trim.IsEmpty then
-    Result.Values['x-amz-security-token'] := ASessionToken.Trim;
+  if not AReq.SessionToken.Trim.IsEmpty then
+    Result.Values['x-amz-security-token'] := AReq.SessionToken.Trim;
 end;
 
 end.

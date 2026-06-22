@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Config;
+unit RadIA.Tests.Config;
 
 interface
 
@@ -166,7 +166,7 @@ begin
     LCode := LJson.GetValue<string>('code', '');
 
     Assert.AreEqual(11, LCode.Length);
-    Assert.AreEqual(Char(#10), LCode[6]);
+    Assert.AreEqual(#10, LCode[6]);
   finally
     LParsed.Free;
   end;

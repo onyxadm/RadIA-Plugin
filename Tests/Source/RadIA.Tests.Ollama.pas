@@ -40,7 +40,7 @@ begin
   LContext := TRttiContext.Create;
   LType := LContext.GetType(TRadIAOllamaProvider);
   LMethod := LType.GetMethod(AMethodName);
-  if LMethod = nil then
+  if not Assigned(LMethod) then
     raise Exception.CreateFmt('Method %s not found via RTTI', [AMethodName]);
   Result := LMethod.Invoke(FProvider, AArgs);
 end;

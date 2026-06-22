@@ -1002,7 +1002,7 @@ begin
   else if SameText(ACategoryName, 'Mistral AI') then
     pgcSettings.ActivePage := tsMistral
   else if SameText(ACategoryName, 'AWS Bedrock') then
-    pgcSettings.ActivePage := tsBedrock
+    pgcSettings.ActivePage := tsBedrock;
 end;
 
 procedure TRadIAFrameAIConfig.grpGeminiAuthTypeClick(Sender: TObject);

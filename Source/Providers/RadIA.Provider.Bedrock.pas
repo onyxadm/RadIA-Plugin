@@ -351,9 +351,20 @@ begin
   LBody := BuildBedrockRequestBody(APrompt, AHistory, ATemperature, AMaxTokens);
 
   TAwsSigV4Signer.GetAmzDateTimeStrings(LAmzDate, LDateStamp);
-  var LHeadersList := TAwsSigV4Signer.ComputeSignatureHeaders(
-    LAccessKey, LSecretKey, LRegion, 'bedrock', 'POST', LUri, LBody, LAmzDate, LDateStamp, LSessionToken
-  );
+
+  var LReq: TAwsSignRequest;
+  LReq.AccessKeyId := LAccessKey;
+  LReq.SecretAccessKey := LSecretKey;
+  LReq.Region := LRegion;
+  LReq.Service := 'bedrock';
+  LReq.Method := 'POST';
+  LReq.Uri := LUri;
+  LReq.Payload := LBody;
+  LReq.AmzDate := LAmzDate;
+  LReq.DateStamp := LDateStamp;
+  LReq.SessionToken := LSessionToken;
+
+  var LHeadersList := TAwsSigV4Signer.ComputeSignatureHeaders(LReq);
   try
     SetLength(LHeaders, LHeadersList.Count);
     for var I := 0 to LHeadersList.Count - 1 do
@@ -448,9 +459,20 @@ begin
   LBody := BuildBedrockRequestBody(APrompt, AHistory, ATemperature, AMaxTokens);
 
   TAwsSigV4Signer.GetAmzDateTimeStrings(LAmzDate, LDateStamp);
-  var LHeadersList := TAwsSigV4Signer.ComputeSignatureHeaders(
-    LAccessKey, LSecretKey, LRegion, 'bedrock', 'POST', LUri, LBody, LAmzDate, LDateStamp, LSessionToken
-  );
+
+  var LReq: TAwsSignRequest;
+  LReq.AccessKeyId := LAccessKey;
+  LReq.SecretAccessKey := LSecretKey;
+  LReq.Region := LRegion;
+  LReq.Service := 'bedrock';
+  LReq.Method := 'POST';
+  LReq.Uri := LUri;
+  LReq.Payload := LBody;
+  LReq.AmzDate := LAmzDate;
+  LReq.DateStamp := LDateStamp;
+  LReq.SessionToken := LSessionToken;
+
+  var LHeadersList := TAwsSigV4Signer.ComputeSignatureHeaders(LReq);
   try
     SetLength(LHeaders, LHeadersList.Count);
     for var I := 0 to LHeadersList.Count - 1 do

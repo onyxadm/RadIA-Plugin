@@ -29,9 +29,6 @@ type
     constructor Create(const ASessionsDir: string = '');
     destructor Destroy; override;
 
-    property Sessions: TList<TSessionInfo> read FSessions;
-    property ActiveSessionId: string read FActiveSessionId write FActiveSessionId;
-
     function CreateSession(const AName: string = ''): TSessionInfo;
     procedure DeleteSession(const AId: string);
     procedure RenameSession(const AId: string; const ANewName: string);
@@ -41,6 +38,9 @@ type
     function SessionHasHistory(const AId: string): Boolean;
     function LoadSessionHistory(const AId: string): TArray<IRadIAChatMessage>;
     procedure SaveSessionHistory(const AId: string; const AHistory: TArray<IRadIAChatMessage>);
+
+    property Sessions: TList<TSessionInfo> read FSessions;
+    property ActiveSessionId: string read FActiveSessionId write FActiveSessionId;
   end;
 
 implementation
@@ -174,11 +174,11 @@ begin
 
     { Sort by LastActive descending to show recent first }
     FSessions.Sort(TComparer<TSessionInfo>.Construct(
-      function(const L, R: TSessionInfo): Integer
+      function(const LLeft, LRight: TSessionInfo): Integer
       begin
-        if L.LastActive > R.LastActive then
+        if LLeft.LastActive > LRight.LastActive then
           Result := -1
-        else if L.LastActive < R.LastActive then
+        else if LLeft.LastActive < LRight.LastActive then
           Result := 1
         else
           Result := 0;

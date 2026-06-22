@@ -40,20 +40,20 @@ end;
 class function TCredentialProtector.CleanApiKey(const AValue: string): string;
 var
   I: Integer;
-  C: Char;
+  LChar: Char;
 begin
   Result := '';
   for I := Low(AValue) to High(AValue) do
   begin
-    C := AValue[I];
-    if ((C >= 'a') and (C <= 'z')) or
-       ((C >= 'A') and (C <= 'Z')) or
-       ((C >= '0') and (C <= '9')) or
-       (C = '.') or (C = '-') or (C = '_') or
-       (C = '/') or (C = '+') or (C = '=') or
-       (C = '@') or (C = ':') then
+    LChar := AValue[I];
+    if ((LChar >= 'a') and (LChar <= 'z')) or
+       ((LChar >= 'A') and (LChar <= 'Z')) or
+       ((LChar >= '0') and (LChar <= '9')) or
+       (LChar = '.') or (LChar = '-') or (LChar = '_') or
+       (LChar = '/') or (LChar = '+') or (LChar = '=') or
+       (LChar = '@') or (LChar = ':') then
     begin
-      Result := Result + C;
+      Result := Result + LChar;
     end;
   end;
 end;

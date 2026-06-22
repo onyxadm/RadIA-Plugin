@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.WebLoginForm;
+unit RadIA.UI.WebLoginForm;
 
 interface
 
@@ -373,7 +373,7 @@ begin
   if IsSuccess then
   begin
     pnlBrowserFallback.Visible := False;
-    lblStatus.Caption := 'Provider sign in page loaded. Complete the login in the browser area.'
+    lblStatus.Caption := 'Provider sign in page loaded. Complete the login in the browser area.';
   end
   else
   begin

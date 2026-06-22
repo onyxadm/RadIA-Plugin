@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.WebViewBridge;
+unit RadIA.Provider.WebViewBridge;
 
 interface
 
@@ -28,10 +28,10 @@ type
     function GetName: string; override;
     procedure CancelCurrentRequest; override;
 
+    class procedure ReceiveChunk(const AChunk: string; const AIsDone: Boolean; const AError: string);
+
     class property OnSendPrompt: TWebViewBridgeSendPromptEvent read FOnSendPrompt write FOnSendPrompt;
     class property OnCancel: TWebViewBridgeCancelEvent read FOnCancel write FOnCancel;
-
-    class procedure ReceiveChunk(const AChunk: string; const AIsDone: Boolean; const AError: string);
   end;
 
 implementation

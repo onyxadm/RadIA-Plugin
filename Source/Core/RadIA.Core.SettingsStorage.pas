@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.SettingsStorage;
+unit RadIA.Core.SettingsStorage;
 
 interface
 
@@ -86,7 +86,7 @@ end;
 destructor TRadIARegistrySettingsStorage.Destroy;
 begin
   if Assigned(FReg) then
-    TRegistry(FReg).Free;
+    FReg.Free;
   inherited Destroy;
 end;
 

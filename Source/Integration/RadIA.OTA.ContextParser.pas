@@ -363,7 +363,6 @@ var
   LLines: TStringList;
   I: Integer;
   LCurLineText: string;
-  LClassName: string;
   LClassStartLine, LClassEndLine: Integer;
   LSb: TStringBuilder;
   LStartLine, LEndLine: Integer;
@@ -415,7 +414,6 @@ begin
       Exit;
 
     { 1. Look backwards from the cursor line to find a class declaration like "TMyClass = class" }
-    LClassName := '';
     LClassStartLine := -1;
 
     for I := LRelativeLine - 1 downto 0 do
@@ -424,7 +422,6 @@ begin
       if ContainsText(LCurLineText, 'class') and ContainsText(LCurLineText, '=') then
       begin
         // Extract class name
-        LClassName := LLines[I].Split(['='])[0].Trim;
         LClassStartLine := I;
         Break;
       end;
