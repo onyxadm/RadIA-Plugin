@@ -36,7 +36,8 @@ type
 
 implementation
 
-uses  RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SysUtils, System.Classes, RadIA.Core.Types, RadIA.Core.TokenUsage;
+uses  RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SysUtils, System.Classes, RadIA.Core.Types,
+  RadIA.Core.TokenUsage;
 
 { TRadIAWebViewBridgeProvider }
 

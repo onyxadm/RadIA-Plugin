@@ -247,7 +247,9 @@ var
   LTempFile: string;
   LTemplate: TPromptTemplate;
 const
-  LEGACY_JSON_NO_USES = '[{"name":"Create Project Delphi","description":"Legacy description","template":"Create project Delphi legacy layout.","isProjectGenerator":true,"slashCommand":"/createproject"}]';
+  LEGACY_JSON_NO_USES = '[{"name":"Create Project Delphi", "description":"Legacy description",
+    "template":"Create project Delphi legacy layout.", "isProjectGenerator":true,
+    "slashCommand":"/createproject"}]';
 begin
   LTempFile := TPath.Combine(FTempDir, 'templates.json');
   ForceDirectories(TPath.GetDirectoryName(LTempFile));
@@ -257,7 +259,8 @@ begin
 
   Assert.IsTrue(FManager.FindTemplate('Create Project Delphi', LTemplate));
   Assert.IsTrue(LTemplate.IsSystem);
-  Assert.IsFalse(LTemplate.IsCustomized, 'Legacy templates missing uses should have been discarded on load and reverted to code system default');
+  Assert.IsFalse(LTemplate.IsCustomized,
+    'Legacy templates missing uses should have been discarded on load and reverted to code system default');
   Assert.IsTrue(LTemplate.Template.Contains('uses'), 'Active template must contain the newly updated uses rule');
 
   if TFile.Exists(LTempFile) then

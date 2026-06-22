@@ -2,7 +2,7 @@
 
 interface
 
-uses 
+uses
   RadIA.Core.Interfaces, RadIA.Provider.Base;
 
 type
