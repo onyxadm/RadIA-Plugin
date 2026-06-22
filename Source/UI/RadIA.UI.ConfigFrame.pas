@@ -562,7 +562,8 @@ begin
   end;
 end;
 
-procedure ApplyThemeToLabels(const ALabels: array of TLabel; const AColors: TRadIAThemeColors; AAccent: Boolean = False);
+procedure ApplyThemeToLabels(const ALabels: array of TLabel; const AColors: TRadIAThemeColors;
+  AAccent: Boolean = False);
 var
   LLabel: TLabel;
   I: Integer;

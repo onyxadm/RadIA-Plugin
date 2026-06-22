@@ -1786,7 +1786,8 @@ begin
     Result := Copy(LText, LCodeStart, MaxInt).TrimRight;
 end;
 
-function TRadIAChatPresenter.FindTemplateForCommand(const ACommand, AArgument: string; out ATemplate: TPromptTemplate): Boolean;
+function TRadIAChatPresenter.FindTemplateForCommand(const ACommand, AArgument: string;
+  out ATemplate: TPromptTemplate): Boolean;
 var
   LTemp: TPromptTemplate;
   LFallbackNames: TArray<string>;
