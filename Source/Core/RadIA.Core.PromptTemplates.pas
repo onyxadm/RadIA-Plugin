@@ -3,7 +3,7 @@ unit RadIA.Core.PromptTemplates;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.JSON, System.Generics.Collections;
+  System.JSON, System.Generics.Collections;
 
 type
   { Represents a single prompt template }
@@ -56,7 +56,7 @@ type
 implementation
 
 uses
-  System.IOUtils, RadIA.Core.Logger;
+  System.SysUtils, System.Classes, System.IOUtils, RadIA.Core.Logger;
 
 { TPromptTemplateManager }
 

@@ -769,7 +769,7 @@ var
   FallbackToDefaultModels: TProc<string>;
 begin
   LProviderRef := Self;
-  
+
   FallbackToDefaultModels := procedure(AReason: string)
   begin
     if not GIsShuttingDown then

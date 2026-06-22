@@ -1611,10 +1611,10 @@ var
 begin
   DispatchSystemMessage(AAction, AJson, LHandled);
   if LHandled then Exit;
-  
+
   DispatchSessionMessage(AAction, AJson, LHandled);
   if LHandled then Exit;
-  
+
   DispatchInteractionMessage(AAction, AJson, LHandled);
 end;
 
@@ -1959,7 +1959,7 @@ var
 begin
   Result := APromptText;
   ParseCommandAndArgument(APromptText, LCommand, LArgument);
-  
+
   LFound := FindTemplateForCommand(LCommand, LArgument, LTemplate);
   if LFound then
     Result := ApplyTemplateVariables(LTemplate.Template, LArgument);
