@@ -369,21 +369,18 @@ begin
   TTask.Run(LTaskProc);
 end;
 
-function TRadIAGeminiProvider.TryExtractNextJsonObject(var ABuffer: string; out AJsonObjectStr: string): Boolean;
+function FindJsonObjectEnd(const ABuffer: string; out AEndIdx: Integer): Boolean;
 var
   LBrackets, I, LLen: Integer;
   LStr: Boolean;
   LPtr: PChar;
 begin
   Result := False;
-  AJsonObjectStr := '';
-  ABuffer := ABuffer.TrimLeft(['[', ',', #13, #10, ' ', ']']);
-  if ABuffer.IsEmpty or not ABuffer.StartsWith('{') then Exit;
-
   LBrackets := 0;
   LStr := False;
   LLen := ABuffer.Length;
   LPtr := PChar(ABuffer);
+  AEndIdx := -1;
   I := 0;
 
   while I < LLen do
@@ -403,15 +400,30 @@ begin
           Dec(LBrackets);
           if LBrackets = 0 then
           begin
-            AJsonObjectStr := ABuffer.Substring(0, I + 1);
-            ABuffer := ABuffer.Substring(I + 1);
-            Result := True;
-            Exit;
+            AEndIdx := I;
+            Exit(True);
           end;
         end;
       end;
     end;
     Inc(I);
+  end;
+end;
+
+function TRadIAGeminiProvider.TryExtractNextJsonObject(var ABuffer: string; out AJsonObjectStr: string): Boolean;
+var
+  LEndIdx: Integer;
+begin
+  Result := False;
+  AJsonObjectStr := '';
+  ABuffer := ABuffer.TrimLeft(['[', ',', #13, #10, ' ', ']']);
+  if ABuffer.IsEmpty or not ABuffer.StartsWith('{') then Exit;
+
+  if FindJsonObjectEnd(ABuffer, LEndIdx) then
+  begin
+    AJsonObjectStr := ABuffer.Substring(0, LEndIdx + 1);
+    ABuffer := ABuffer.Substring(LEndIdx + 1);
+    Result := True;
   end;
 end;
 

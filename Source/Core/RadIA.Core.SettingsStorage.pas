@@ -85,8 +85,7 @@ end;
 
 destructor TRadIARegistrySettingsStorage.Destroy;
 begin
-  if Assigned(FReg) then
-    FReg.Free;
+  FReg.Free;
   inherited Destroy;
 end;
 

@@ -45,7 +45,7 @@ uses
 
 { TTestEditorHook }
 
-procedure TTestEditorHook.SetUp;
+procedure TTestEditorHook.Setup;
 begin
   FHook := TRadIAEditorHook.Create(nil);
   FHook.Install;
