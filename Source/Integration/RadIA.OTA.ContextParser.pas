@@ -25,6 +25,9 @@ type
       var AInParenComment: Boolean): string;
     class function TryExtractFirstBodyComment(const ALines: TStrings; const AStartLine, AEndLine: Integer;
       out ACommentText: string; out ACommentStartLine, ACommentEndLine: Integer): Boolean;
+    class function ExtractWindowText(const ASourceCode: string; const ALine: Integer; out AStartLine: Integer): string;
+    class function FindClassDeclarationBackwards(const ALines: TStrings; const ARelativeLine: Integer): Integer;
+    class function FindClassDeclarationEnd(const ALines: TStrings; const AClassStartLine: Integer): Integer;
   public
     class function GetInterfaceSection(const ASourceCode: string): string;
     class function GetClassContextAtLine(const ASourceCode: string; const ALine: Integer): string;
@@ -358,27 +361,16 @@ begin
   end;
 end;
 
-class function TRadIAContextParser.GetClassContextAtLine(const ASourceCode: string; const ALine: Integer): string;
+class function TRadIAContextParser.ExtractWindowText(const ASourceCode: string; const ALine: Integer; out AStartLine: Integer): string;
 var
-  LLines: TStringList;
-  I: Integer;
-  LCurLineText: string;
-  LClassStartLine, LClassEndLine: Integer;
-  LSb: TStringBuilder;
-  LStartLine, LEndLine: Integer;
   LStartPos, LEndPos: Integer;
   LCharCount, LCurLine: Integer;
-  LWindowText: string;
-  LRelativeLine: Integer;
+  I: Integer;
+  LEndLine: Integer;
 begin
-  Result := '';
-  if ASourceCode.IsEmpty then
-    Exit;
-
-  { Otimização de Heap: Limitar análise a uma janela de 400 linhas ao redor do cursor }
-  LStartLine := ALine - 200;
-  if LStartLine < 1 then
-    LStartLine := 1;
+  AStartLine := ALine - 200;
+  if AStartLine < 1 then
+    AStartLine := 1;
   LEndLine := ALine + 200;
 
   LStartPos := 1;
@@ -391,10 +383,8 @@ begin
     if ASourceCode.Chars[I - 1] = #10 then
     begin
       Inc(LCurLine);
-      if LCurLine = LStartLine then
-      begin
+      if LCurLine = AStartLine then
         LStartPos := I + 1;
-      end;
       if LCurLine = LEndLine + 1 then
       begin
         LEndPos := I;
@@ -404,7 +394,58 @@ begin
     Inc(I);
   end;
 
-  LWindowText := ASourceCode.Substring(LStartPos - 1, LEndPos - LStartPos + 1);
+  Result := ASourceCode.Substring(LStartPos - 1, LEndPos - LStartPos + 1);
+end;
+
+class function TRadIAContextParser.FindClassDeclarationBackwards(const ALines: TStrings; const ARelativeLine: Integer): Integer;
+var
+  I: Integer;
+  LCurLineText: string;
+begin
+  Result := -1;
+  for I := ARelativeLine - 1 downto 0 do
+  begin
+    LCurLineText := ALines[I];
+    if ContainsText(LCurLineText, 'class') and ContainsText(LCurLineText, '=') then
+      Exit(I);
+
+    if SameText(LCurLineText.Trim, 'interface') or SameText(LCurLineText.Trim, 'implementation') then
+      Break;
+  end;
+end;
+
+class function TRadIAContextParser.FindClassDeclarationEnd(const ALines: TStrings; const AClassStartLine: Integer): Integer;
+var
+  I: Integer;
+  LCurLineText: string;
+begin
+  Result := ALines.Count - 1;
+  for I := AClassStartLine + 1 to ALines.Count - 1 do
+  begin
+    LCurLineText := ALines[I].Trim;
+    if SameText(LCurLineText, 'end;') or SameText(LCurLineText, 'end') then
+      Exit(I);
+
+    if SameText(LCurLineText, 'implementation') or ContainsText(LCurLineText, 'type') then
+      Exit(I - 1);
+  end;
+end;
+
+class function TRadIAContextParser.GetClassContextAtLine(const ASourceCode: string; const ALine: Integer): string;
+var
+  LLines: TStringList;
+  LClassStartLine, LClassEndLine: Integer;
+  LSb: TStringBuilder;
+  LStartLine: Integer;
+  LWindowText: string;
+  LRelativeLine: Integer;
+  I: Integer;
+begin
+  Result := '';
+  if ASourceCode.IsEmpty then
+    Exit;
+
+  LWindowText := ExtractWindowText(ASourceCode, ALine, LStartLine);
   LRelativeLine := ALine - LStartLine + 1;
 
   LLines := TStringList.Create;
@@ -413,57 +454,16 @@ begin
     if (LRelativeLine < 1) or (LRelativeLine > LLines.Count) then
       Exit;
 
-    { 1. Look backwards from the cursor line to find a class declaration like "TMyClass = class" }
-    LClassStartLine := -1;
-
-    for I := LRelativeLine - 1 downto 0 do
-    begin
-      LCurLineText := LLines[I];
-      if ContainsText(LCurLineText, 'class') and ContainsText(LCurLineText, '=') then
-      begin
-        // Extract class name
-        LClassStartLine := I;
-        Break;
-      end;
-
-      { Stop searching backwards if we reach unit boundaries }
-      if SameText(LCurLineText.Trim, 'interface') or SameText(LCurLineText.Trim, 'implementation') then
-        Break;
-    end;
-
+    LClassStartLine := FindClassDeclarationBackwards(LLines, LRelativeLine);
     if LClassStartLine = -1 then
-      Exit; // No class found in this scope
+      Exit;
 
-    { 2. Find the end of the class declaration (which is usually the next "end;" or a new "type" / "implementation") }
-    LClassEndLine := -1;
-    for I := LClassStartLine + 1 to LLines.Count - 1 do
-    begin
-      LCurLineText := LLines[I].Trim;
+    LClassEndLine := FindClassDeclarationEnd(LLines, LClassStartLine);
 
-      { Delphi classes in interface end with an "end;" }
-      if SameText(LCurLineText, 'end;') or SameText(LCurLineText, 'end') then
-      begin
-        LClassEndLine := I;
-        Break;
-      end;
-
-      if SameText(LCurLineText, 'implementation') or ContainsText(LCurLineText, 'type') then
-      begin
-        LClassEndLine := I - 1;
-        Break;
-      end;
-    end;
-
-    if LClassEndLine = -1 then
-      LClassEndLine := LLines.Count - 1;
-
-    { Assemble the class text scope using StringBuilder }
     LSb := TStringBuilder.Create;
     try
       for I := LClassStartLine to LClassEndLine do
-      begin
         LSb.AppendLine(LLines[I]);
-      end;
       Result := LSb.ToString;
     finally
       LSb.Free;

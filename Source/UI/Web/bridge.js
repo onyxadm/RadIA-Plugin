@@ -459,60 +459,63 @@
     }
   }
 
+  function handleInsertClick(e, btn, code) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const codeText = getCodeTextFromElement(code);
+
+    log('Requesting code application in Delphi:', codeText.length, 'bytes');
+    sendToDelphi({
+      action: 'apply_code',
+      code: codeText
+    });
+
+    const span = btn.querySelector('span');
+    const originalText = span.innerText;
+    span.innerText = 'Inserido!';
+    btn.style.background = '#4CAF50';
+    setTimeout(() => {
+      span.innerText = originalText;
+      btn.style.background = '';
+    }, 1500);
+  }
+
+  function injectButtonIntoPre(pre) {
+    if (pre.dataset.radiaInjected === 'true') return;
+
+    const code = pre.querySelector('code');
+    if (!code) return;
+
+    const computedStyle = globalThis.getComputedStyle(pre);
+    if (computedStyle.position === 'static') {
+      pre.style.position = 'relative';
+    }
+
+    const btn = document.createElement('button');
+    btn.className = 'radia-insert-btn';
+    btn.title = 'Insert this code directly into the Delphi editor';
+    btn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; width:12px; height:12px;">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>
+      <span>Inserir no Delphi</span>
+    `;
+
+    btn.style.position = 'absolute';
+    btn.style.top = '8px';
+    btn.style.right = '85px';
+
+    btn.addEventListener('click', (e) => handleInsertClick(e, btn, code));
+
+    pre.appendChild(btn);
+    pre.dataset.radiaInjected = 'true';
+  }
+
   function injectDelphiButtons() {
     try {
-      const preElements = document.querySelectorAll('pre');
-      preElements.forEach(pre => {
-        if (pre.dataset.radiaInjected === 'true') return;
-
-        const code = pre.querySelector('code');
-        if (!code) return;
-
-        const computedStyle = globalThis.getComputedStyle(pre);
-        if (computedStyle.position === 'static') {
-          pre.style.position = 'relative';
-        }
-
-        const btn = document.createElement('button');
-        btn.className = 'radia-insert-btn';
-        btn.title = 'Insert this code directly into the Delphi editor';
-        btn.innerHTML = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; width:12px; height:12px;">
-            <polyline points="16 18 22 12 16 6"></polyline>
-            <polyline points="8 6 2 12 8 18"></polyline>
-          </svg>
-          <span>Inserir no Delphi</span>
-        `;
-
-        btn.style.position = 'absolute';
-        btn.style.top = '8px';
-        btn.style.right = '85px';
-
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          const codeText = getCodeTextFromElement(code);
-
-          log('Requesting code application in Delphi:', codeText.length, 'bytes');
-          sendToDelphi({
-            action: 'apply_code',
-            code: codeText
-          });
-
-          const span = btn.querySelector('span');
-          const originalText = span.innerText;
-          span.innerText = 'Inserido!';
-          btn.style.background = '#4CAF50';
-          setTimeout(() => {
-            span.innerText = originalText;
-            btn.style.background = '';
-          }, 1500);
-        });
-
-        pre.appendChild(btn);
-        pre.dataset.radiaInjected = 'true';
-      });
+      document.querySelectorAll('pre').forEach(injectButtonIntoPre);
     } catch (err) {
       log('Error injecting buttons into pre elements:', err);
     }

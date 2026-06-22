@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="vendor/prism-tomorrow.min.css">
   <script>
-    const initialTheme = new URLSearchParams(window.location.search).get('theme');
+    const initialTheme = new URLSearchParams(globalThis.location.search).get('theme');
     const safeInitialTheme = ['light', 'dark'].includes(initialTheme) ? initialTheme : 'light';
     document.documentElement.className = safeInitialTheme + '-theme';
 

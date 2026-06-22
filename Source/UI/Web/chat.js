@@ -455,69 +455,83 @@ promptTextarea.addEventListener('input', () => {
   }
 });
 
+function handleSlashPopupKeydown(e) {
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (filteredSlashCommands.length > 0) {
+      slashPopupSelectedIndex = (slashPopupSelectedIndex - 1 + filteredSlashCommands.length) % filteredSlashCommands.length;
+      renderSlashCommands();
+    }
+    return true;
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (filteredSlashCommands.length > 0) {
+      slashPopupSelectedIndex = (slashPopupSelectedIndex + 1) % filteredSlashCommands.length;
+      renderSlashCommands();
+    }
+    return true;
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (filteredSlashCommands.length > 0) {
+      insertSlashCommand(filteredSlashCommands[slashPopupSelectedIndex].name);
+    }
+    return true;
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    hideSlashPopup();
+    return true;
+  }
+  return false;
+}
+
+function handleHistoryKeydown(e) {
+  if (e.key === 'ArrowUp') {
+    const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
+    if (!textBeforeCursor.includes('\n') && _promptHistory.length > 0) {
+      if (_promptHistoryIndex === -1) {
+        _promptDraft = promptTextarea.value;
+        _promptHistoryIndex = _promptHistory.length - 1;
+      } else if (_promptHistoryIndex > 0) {
+        _promptHistoryIndex--;
+      }
+      promptTextarea.value = _promptHistory[_promptHistoryIndex];
+      setTimeout(() => {
+        promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+        promptTextarea.dispatchEvent(new Event('input'));
+      }, 0);
+      e.preventDefault();
+      return true;
+    }
+  } else if (e.key === 'ArrowDown') {
+    const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
+    if (!textAfterCursor.includes('\n') && _promptHistoryIndex !== -1) {
+      if (_promptHistoryIndex < _promptHistory.length - 1) {
+        _promptHistoryIndex++;
+        promptTextarea.value = _promptHistory[_promptHistoryIndex];
+      } else {
+        _promptHistoryIndex = -1;
+        promptTextarea.value = _promptDraft;
+      }
+      setTimeout(() => {
+        promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+        promptTextarea.dispatchEvent(new Event('input'));
+      }, 0);
+      e.preventDefault();
+      return true;
+    }
+  }
+  return false;
+}
+
 promptTextarea.addEventListener('keydown', (e) => {
   if (slashPopupVisible) {
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (filteredSlashCommands.length > 0) {
-        slashPopupSelectedIndex = (slashPopupSelectedIndex - 1 + filteredSlashCommands.length) % filteredSlashCommands.length;
-        renderSlashCommands();
-      }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (filteredSlashCommands.length > 0) {
-        slashPopupSelectedIndex = (slashPopupSelectedIndex + 1) % filteredSlashCommands.length;
-        renderSlashCommands();
-      }
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (filteredSlashCommands.length > 0) {
-        insertSlashCommand(filteredSlashCommands[slashPopupSelectedIndex].name);
-      }
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      hideSlashPopup();
-    }
+    if (handleSlashPopupKeydown(e)) return;
   } else if (e.key === 'Enter' && e.ctrlKey) {
-      e.preventDefault();
-      handleSend();
-    } else if (e.key === 'ArrowUp') {
-      const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
-      if (!textBeforeCursor.includes('\n')) {
-        if (_promptHistory.length > 0) {
-          if (_promptHistoryIndex === -1) {
-            _promptDraft = promptTextarea.value;
-            _promptHistoryIndex = _promptHistory.length - 1;
-          } else if (_promptHistoryIndex > 0) {
-            _promptHistoryIndex--;
-          }
-          promptTextarea.value = _promptHistory[_promptHistoryIndex];
-          setTimeout(() => {
-            promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
-            promptTextarea.dispatchEvent(new Event('input'));
-          }, 0);
-          e.preventDefault();
-        }
-      }
-    } else if (e.key === 'ArrowDown') {
-      const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
-      if (!textAfterCursor.includes('\n')) {
-        if (_promptHistoryIndex !== -1) {
-          if (_promptHistoryIndex < _promptHistory.length - 1) {
-            _promptHistoryIndex++;
-            promptTextarea.value = _promptHistory[_promptHistoryIndex];
-          } else {
-            _promptHistoryIndex = -1;
-            promptTextarea.value = _promptDraft;
-          }
-          setTimeout(() => {
-            promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
-            promptTextarea.dispatchEvent(new Event('input'));
-          }, 0);
-          e.preventDefault();
-        }
-      }
-    }
+    e.preventDefault();
+    handleSend();
+  } else {
+    handleHistoryKeydown(e);
+  }
 });
 
 btnSendPrompt.addEventListener('click', handleSend);
@@ -843,6 +857,21 @@ function clearChat() {
   showWelcomeScreen();
 }
 
+function applyThemeVariables(themeInfo) {
+  const root = document.documentElement;
+  if (themeInfo.bgBase) root.style.setProperty('--bg-base', themeInfo.bgBase);
+  if (themeInfo.bgPanel) root.style.setProperty('--bg-panel', themeInfo.bgPanel);
+  if (themeInfo.bgInput) root.style.setProperty('--bg-input', themeInfo.bgInput);
+  if (themeInfo.fgPrimary) root.style.setProperty('--fg-primary', themeInfo.fgPrimary);
+  if (themeInfo.bgElevated) root.style.setProperty('--bg-elevated', themeInfo.bgElevated);
+  if (themeInfo.fgSecondary) root.style.setProperty('--fg-secondary', themeInfo.fgSecondary);
+  if (themeInfo.border) root.style.setProperty('--border', themeInfo.border);
+  if (themeInfo.accent) root.style.setProperty('--accent', themeInfo.accent);
+  if (themeInfo.codeBg) root.style.setProperty('--code-bg', themeInfo.codeBg);
+  if (themeInfo.codeHeader) root.style.setProperty('--code-header', themeInfo.codeHeader);
+  if (themeInfo.greenApply) root.style.setProperty('--green-apply', themeInfo.greenApply);
+}
+
 function setTheme(themeInfo) {
   if (!themeInfo) return;
 
@@ -857,18 +886,7 @@ function setTheme(themeInfo) {
   const themeName = themeInfo.theme === 'dark' ? 'dark' : 'light';
   document.body.className = themeName + '-theme';
 
-  const root = document.documentElement;
-  if (themeInfo.bgBase) root.style.setProperty('--bg-base', themeInfo.bgBase);
-  if (themeInfo.bgPanel) root.style.setProperty('--bg-panel', themeInfo.bgPanel);
-  if (themeInfo.bgInput) root.style.setProperty('--bg-input', themeInfo.bgInput);
-  if (themeInfo.fgPrimary) root.style.setProperty('--fg-primary', themeInfo.fgPrimary);
-  if (themeInfo.bgElevated) root.style.setProperty('--bg-elevated', themeInfo.bgElevated);
-  if (themeInfo.fgSecondary) root.style.setProperty('--fg-secondary', themeInfo.fgSecondary);
-  if (themeInfo.border) root.style.setProperty('--border', themeInfo.border);
-  if (themeInfo.accent) root.style.setProperty('--accent', themeInfo.accent);
-  if (themeInfo.codeBg) root.style.setProperty('--code-bg', themeInfo.codeBg);
-  if (themeInfo.codeHeader) root.style.setProperty('--code-header', themeInfo.codeHeader);
-  if (themeInfo.greenApply) root.style.setProperty('--green-apply', themeInfo.greenApply);
+  applyThemeVariables(themeInfo);
   updateChatScrollbar();
 }
 
