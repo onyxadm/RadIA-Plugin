@@ -10,7 +10,8 @@ type
   TProjectContextLoader = class
   private
     class function ReadContextFileSafe(const APath: string; out AContent: string): Boolean; static;
-    class function FindUTF8StartByte(const ABytes: TBytes; ALength: Integer; out ACountBack: Integer): Integer; static;
+    class function FindUTF8StartByte(const ABytes: TBytes; ALength: Integer;
+      out ACountBack: Integer): Integer; static;
     class function CalculateUTF8CharLen(AStartByte: Byte): Integer; static;
     class procedure SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer); static;
   public
@@ -26,7 +27,8 @@ uses
 
 { TProjectContextLoader }
 
-class function TProjectContextLoader.FindUTF8StartByte(const ABytes: TBytes; ALength: Integer; out ACountBack: Integer): Integer;
+class function TProjectContextLoader.FindUTF8StartByte(const ABytes: TBytes;
+  ALength: Integer; out ACountBack: Integer): Integer;
 var
   LIdx: Integer;
 begin

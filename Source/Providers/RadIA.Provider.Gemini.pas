@@ -13,8 +13,6 @@ type
       const ATemperature: Double; const AMaxTokens: Integer): string;
     function ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
     function TryExtractNextJsonObject(var ABuffer: string; out AJsonObjectStr: string): Boolean;
-    function TryGetErrorText(AJson: TJSONObject; out AText: string): Boolean;
-    function TryGetCandidateText(AJson: TJSONObject; out AText: string): Boolean;
     procedure ParseAndEmitCandidate(const AJsonStr: string; const ACallback: TStreamChunkCallback);
   public
     constructor Create(const AConfig: IRadIAConfig); override;
@@ -375,7 +373,7 @@ function TRadIAGeminiProvider.TryExtractNextJsonObject(var ABuffer: string; out 
 var
   LBrackets, I, LLen: Integer;
   LStr: Boolean;
-  P: PChar;
+  LPtr: PChar;
 begin
   Result := False;
   AJsonObjectStr := '';
@@ -385,34 +383,39 @@ begin
   LBrackets := 0;
   LStr := False;
   LLen := ABuffer.Length;
-  P := PChar(ABuffer);
+  LPtr := PChar(ABuffer);
   I := 0;
 
   while I < LLen do
   begin
     if LStr then
     begin
-      if P[I] = '\' then Inc(I)
-      else if P[I] = '"' then LStr := False;
+      if LPtr[I] = '\' then Inc(I)
+      else if LPtr[I] = '"' then LStr := False;
     end
-    else if P[I] = '"' then LStr := True
-    else if P[I] = '{' then Inc(LBrackets)
-    else if P[I] = '}' then
+    else
     begin
-      Dec(LBrackets);
-      if LBrackets = 0 then
-      begin
-        AJsonObjectStr := ABuffer.Substring(0, I + 1);
-        ABuffer := ABuffer.Substring(I + 1);
-        Result := True;
-        Exit;
+      case LPtr[I] of
+        '"': LStr := True;
+        '{': Inc(LBrackets);
+        '}':
+        begin
+          Dec(LBrackets);
+          if LBrackets = 0 then
+          begin
+            AJsonObjectStr := ABuffer.Substring(0, I + 1);
+            ABuffer := ABuffer.Substring(I + 1);
+            Result := True;
+            Exit;
+          end;
+        end;
       end;
     end;
     Inc(I);
   end;
 end;
 
-function TRadIAGeminiProvider.TryGetErrorText(AJson: TJSONObject; out AText: string): Boolean;
+function TryGetErrorText(AJson: TJSONObject; out AText: string): Boolean;
 var
   LError: TJSONValue;
 begin
@@ -428,7 +431,7 @@ begin
   Result := True;
 end;
 
-function TRadIAGeminiProvider.TryGetCandidateText(AJson: TJSONObject; out AText: string): Boolean;
+function TryGetCandidateText(AJson: TJSONObject; out AText: string): Boolean;
 var
   LCandidates: TJSONArray;
   LCandidate, LContent, LPart: TJSONObject;

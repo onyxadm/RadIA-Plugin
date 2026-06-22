@@ -50,6 +50,8 @@ type
     function TryMigrateLegacyPath(const APath: string; out AMigratedPath: string): Boolean;
     procedure LoadGlobalSettings(const APath: string);
     procedure LoadBedrockSettings(const AProviderName: string);
+    procedure LoadApiKey(const AProviderName: string);
+    procedure LoadBaseUrl(const AProviderName: string);
     procedure LoadNumericSettings(const AProviderName: string);
     procedure LoadProviderSettings(const AProviderPath, AProviderName: string);
     procedure LoadFromPath(const APath: string);
@@ -407,50 +409,54 @@ begin
     TConfigDefaults.ProviderAuthType);
 end;
 
+procedure TRadIAConfig.LoadApiKey(const AProviderName: string);
+begin
+  if FStorage.ValueExists('ApiKey') then
+  begin
+    try
+      FApiKeysList.Values[AProviderName.ToLower] := UnprotectString(FStorage.ReadString('ApiKey', ''));
+    except
+      on E: Exception do
+      begin
+        LogDebug('TRadIAConfig.Load: Failed to unprotect API key for ' + AProviderName + ': ' + E.Message);
+        FApiKeysList.Values[AProviderName.ToLower] := '';
+      end;
+    end;
+  end;
+end;
+
+procedure TRadIAConfig.LoadBaseUrl(const AProviderName: string);
+begin
+  if FStorage.ValueExists('BaseURL') then
+  begin
+    FBaseUrlsList.Values[AProviderName.ToLower] := FStorage.ReadString('BaseURL', '');
+    if SameText(AProviderName, 'openai') then
+      FOpenAICustomBaseUrl := FStorage.ReadString('BaseURL', '')
+    else if SameText(AProviderName, 'ollama') then
+      FOllamaBaseUrl := FStorage.ReadString('BaseURL', '');
+  end;
+end;
+
 procedure TRadIAConfig.LoadProviderSettings(const AProviderPath, AProviderName: string);
 begin
   LogDebug('TRadIAConfig.Load: Reading subkey for provider ' + AProviderName);
   if FStorage.OpenKey(AProviderPath, False) then
   begin
-    { Load API Key }
-    if FStorage.ValueExists('ApiKey') then
-    begin
-      try
-        FApiKeysList.Values[AProviderName.ToLower] := UnprotectString(FStorage.ReadString('ApiKey', ''));
-      except
-        on E: Exception do
-        begin
-          LogDebug('TRadIAConfig.Load: Failed to unprotect API key for ' + AProviderName + ': ' + E.Message);
-          FApiKeysList.Values[AProviderName.ToLower] := '';
-        end;
-      end;
-    end;
+    LoadApiKey(AProviderName);
 
-    { Load Model }
     if FStorage.ValueExists('Model') then
       FModelsList.Values[AProviderName.ToLower] := FStorage.ReadString('Model', '')
     else if FStorage.ValueExists('ActiveModel') then
       FModelsList.Values[AProviderName.ToLower] := FStorage.ReadString('ActiveModel', '');
 
-    { Load BaseURL }
-    if FStorage.ValueExists('BaseURL') then
-    begin
-      FBaseUrlsList.Values[AProviderName.ToLower] := FStorage.ReadString('BaseURL', '');
-      { Keep public compatibility properties backed by provider subkeys. }
-      if SameText(AProviderName, 'openai') then
-        FOpenAICustomBaseUrl := FStorage.ReadString('BaseURL', '')
-      else if SameText(AProviderName, 'ollama') then
-        FOllamaBaseUrl := FStorage.ReadString('BaseURL', '');
-    end;
+    LoadBaseUrl(AProviderName);
 
     if SameText(AProviderName, 'AzureOpenAI') then
       FAzureApiVersion := ReadRegString('ApiVersion', TConfigDefaults.AzureApiVersion);
-
     if SameText(AProviderName, 'Bedrock') then
       LoadBedrockSettings(AProviderName);
 
     LoadNumericSettings(AProviderName);
-
     FStorage.CloseKey;
   end;
 end;
