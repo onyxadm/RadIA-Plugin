@@ -20,7 +20,9 @@ type
     function IsLocalQuotaLimitReached: Boolean;
     procedure SetActiveProvider(const AProvider: IRadIAProvider);
     procedure ClearActiveProvider(const AProvider: IRadIAProvider);
-    procedure ExecutePromptStreamTask(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; const AProfile: TAIRequestProfile; const ACallback: TStreamChunkCallback);
+    procedure ExecutePromptStreamTask(const APrompt: string;
+      const AHistory: TArray<IRadIAChatMessage>; const AProfile: TAIRequestProfile;
+      const ACallback: TStreamChunkCallback);
   public
     constructor Create(const AConfig: IRadIAConfig);
     destructor Destroy; override;
@@ -343,7 +345,9 @@ begin
     end);
 end;
 
-procedure TRadIAService.ExecutePromptStreamTask(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; const AProfile: TAIRequestProfile; const ACallback: TStreamChunkCallback);
+procedure TRadIAService.ExecutePromptStreamTask(const APrompt: string;
+  const AHistory: TArray<IRadIAChatMessage>; const AProfile: TAIRequestProfile;
+  const ACallback: TStreamChunkCallback);
 var
   LProvider: IRadIAProvider;
   LSystemPrompt: string;
@@ -354,6 +358,7 @@ var
   LAccumulator: string;
   LTemperature: Double;
   LMaxTokens: Integer;
+  LErrMsg: string;
 begin
   try
     System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
@@ -421,7 +426,7 @@ begin
       begin
         ClearActiveProvider(LProvider);
         LogService('SendPromptStream: Exception in initialization: ' + E.Message);
-        var LErrMsg := 'Failed to initialize AI Provider: ' + E.Message;
+        LErrMsg := 'Failed to initialize AI Provider: ' + E.Message;
         TThread.Queue(nil,
           procedure
           begin

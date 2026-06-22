@@ -397,7 +397,8 @@ begin
   end;
 end;
 
-function ProcessPollResponse(const AJsonStr: string; var AIntervalMs: Integer; out AAccessToken, AErrorMsg: string; out AAbort: Boolean): Boolean;
+function ProcessPollResponse(const AJsonStr: string; var AIntervalMs: Integer;
+  out AAccessToken, AErrorMsg: string; out AAbort: Boolean): Boolean;
 var
   LJson: TJSONObject;
   LVal, LErrVal: TJSONValue;

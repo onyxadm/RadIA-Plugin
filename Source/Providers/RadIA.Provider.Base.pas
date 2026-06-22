@@ -393,7 +393,8 @@ begin
   TTask.Run(LTaskProc);
 end;
 
-procedure ProcessResidualBuffer(var ABufferText: string; AProcessBufferFunc: TProcessBufferFunc; const AContext: string);
+procedure ProcessResidualBuffer(var ABufferText: string;
+  AProcessBufferFunc: TProcessBufferFunc; const AContext: string);
 begin
   if ABufferText.IsEmpty then Exit;
 
@@ -403,7 +404,8 @@ begin
     AProcessBufferFunc(ABufferText);
   except
     on E: Exception do
-      TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer ' + AContext + ': ' + E.Message, 'Provider');
+      TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer ' +
+        AContext + ': ' + E.Message, 'Provider');
   end;
 end;
 
@@ -421,6 +423,34 @@ begin
       LBufferText: string;
       LErrorMsg: string;
       LJsonError: string;
+      procedure HandleException(E: Exception);
+      begin
+        ProcessResidualBuffer(LBufferText, AProcessBufferFunc, 'in error handler');
+
+        LErrorMsg := E.Message;
+        if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
+        begin
+          LJsonError := ExtractErrorMessageFromJson(LBufferText);
+          if not LJsonError.IsEmpty then
+            LErrorMsg := LErrorMsg + ' Response: ' + LJsonError
+          else if not LBufferText.Trim.IsEmpty then
+            LErrorMsg := LErrorMsg + ' Response: ' + LBufferText.Trim;
+        end;
+        LErrorMsg := E.ClassName + ': ' + LErrorMsg;
+
+        if not GIsShuttingDown then
+        begin
+          TThread.Queue(nil,
+            TThreadProcedure(
+              procedure
+              begin
+                ACallback('', True, LErrorMsg);
+              end
+            )
+          );
+        end;
+      end;
+
     begin
       try
         System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
@@ -451,31 +481,7 @@ begin
         except
           on E: Exception do
           begin
-            // Process residual buffer data before returning error
-            ProcessResidualBuffer(LBufferText, AProcessBufferFunc, 'in error handler');
-
-            LErrorMsg := E.Message;
-            if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
-            begin
-              LJsonError := ExtractErrorMessageFromJson(LBufferText);
-              if not LJsonError.IsEmpty then
-                LErrorMsg := LErrorMsg + ' Response: ' + LJsonError
-              else if not LBufferText.Trim.IsEmpty then
-                LErrorMsg := LErrorMsg + ' Response: ' + LBufferText.Trim;
-            end;
-            LErrorMsg := E.ClassName + ': ' + LErrorMsg;
-
-            if not GIsShuttingDown then
-            begin
-              TThread.Queue(nil,
-                TThreadProcedure(
-                  procedure
-                  begin
-                    ACallback('', True, LErrorMsg);
-                  end
-                )
-              );
-            end;
+            HandleException(E);
           end;
         end;
       finally
@@ -688,61 +694,22 @@ end;
 procedure TRadIAProviderBase.ProcessOpenAICompatibleStreamBuffer(var ABuffer: string;
   const ACallback: TStreamChunkCallback);
 var
-  LJsonLine: string;
-  LIdx: Integer;
-  LStartPos: Integer;
-  LPtr: PChar;
-  LLen: Integer;
-  LLastProcessedPos: Integer;
-  LLineLen: Integer;
   LDone: Boolean;
 begin
-  LLen := ABuffer.Length;
-  if LLen = 0 then
-    Exit;
-
-  LPtr := PChar(ABuffer);
-  LStartPos := 0;
-  LLastProcessedPos := 0;
   LDone := False;
-
-  while LStartPos < LLen do
-  begin
-    LIdx := LStartPos;
-    while (LIdx < LLen) and (LPtr[LIdx] <> #10) do
-      Inc(LIdx);
-
-    if LIdx >= LLen then
-      Break;
-
-    LLineLen := LIdx - LStartPos;
-    // Skip empty or trivial lines quickly using pointer checks to avoid creating substring
-    if LLineLen > 5 then
+  ProcessBufferLines(ABuffer,
+    procedure(ALine: string)
+    var
+      LJsonLine: string;
     begin
-      // Look for "data:" prefix without substring allocation first
-      if (LPtr[LStartPos] = 'd') and (LPtr[LStartPos+1] = 'a') and
-         (LPtr[LStartPos+2] = 't') and (LPtr[LStartPos+3] = 'a') and (LPtr[LStartPos+4] = ':') then
+      if LDone then Exit;
+
+      if ALine.Trim.StartsWith('data:') then
       begin
-        var LLine := ABuffer.Substring(LStartPos, LLineLen).Trim;
-        LJsonLine := Trim(LLine.Substring(5));
-        
+        LJsonLine := Trim(ALine.Trim.Substring(5));
         ProcessOpenAIJsonLine(LJsonLine, ACallback, LDone);
-        if LDone then
-        begin
-          LStartPos := LIdx + 1;
-          LLastProcessedPos := LStartPos;
-          ABuffer := ABuffer.Substring(LLastProcessedPos);
-          Exit;
-        end;
       end;
-    end;
-
-    LStartPos := LIdx + 1;
-    LLastProcessedPos := LStartPos;
-  end;
-
-  if LLastProcessedPos > 0 then
-    ABuffer := ABuffer.Substring(LLastProcessedPos);
+    end);
 end;
 
 { --- Model Discovery Hook (for OpenAI-compatible /models endpoints) --- }
@@ -795,12 +762,11 @@ var
   LHeaders: TNetHeaders;
   LTaskProc: TProc;
   LProviderRef: IRadIAProvider;
+  FallbackToDefaultModels: TProc<string>;
 begin
   LProviderRef := Self;
-  LUrl := GetModelsDiscoveryUrl;
-
-  { Providers that do not supply a discovery URL fall back to static list }
-  if LUrl.IsEmpty then
+  
+  FallbackToDefaultModels := procedure(AReason: string)
   begin
     if not GIsShuttingDown then
     begin
@@ -811,33 +777,26 @@ begin
             LModels: TArray<string>;
           begin
             LModels := GetAvailableModels;
-            ACallback(LModels, '');
+            ACallback(LModels, AReason);
           end
         )
       );
     end;
+  end;
+
+  LUrl := GetModelsDiscoveryUrl;
+
+  { Providers that do not supply a discovery URL fall back to static list }
+  if LUrl.IsEmpty then
+  begin
+    FallbackToDefaultModels('');
     Exit;
   end;
 
   LApiKey := GetApiKey;
   if LApiKey.IsEmpty then
   begin
-    if not GIsShuttingDown then
-    begin
-      TThread.Queue(nil,
-        TThreadProcedure(
-          procedure
-          var
-            LModels: TArray<string>;
-            LMsg: string;
-          begin
-            LModels := GetAvailableModels;
-            LMsg := Format('API Key is missing for %s. Using fallback models.', [GetName]);
-            ACallback(LModels, LMsg);
-          end
-        )
-      );
-    end;
+    FallbackToDefaultModels(Format('API Key is missing for %s. Using fallback models.', [GetName]));
     Exit;
   end;
 
@@ -885,18 +844,7 @@ begin
             on E: Exception do
             begin
               LErrorMsg := E.ClassName + ': ' + E.Message;
-              LModelsArray := GetAvailableModels;
-              if not GIsShuttingDown then
-              begin
-                TThread.Queue(nil,
-                  TThreadProcedure(
-                    procedure
-                    begin
-                      ACallback(LModelsArray, LErrorMsg);
-                    end
-                  )
-                );
-              end;
+              FallbackToDefaultModels(LErrorMsg);
             end;
           end;
         finally

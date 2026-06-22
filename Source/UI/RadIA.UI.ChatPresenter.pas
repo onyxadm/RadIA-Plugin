@@ -1027,6 +1027,7 @@ var
   LActiveProvider: string;
   LActiveModel: string;
   LSessionId: string;
+  HandleStreamCallback: TStreamChunkCallback;
 begin
   if not CheckQuotaAvailability then
     Exit;
@@ -1056,14 +1057,12 @@ begin
 
   PostToWebView('show_typing', '', '');
 
-  try
-    FAIService.SendPromptStream(APromptText, FHistory,
-      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+  HandleStreamCallback := procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+  begin
+    TThread.Queue(nil,
+      TThreadProcedure(
+      procedure
       begin
-        TThread.Queue(nil,
-          TThreadProcedure(
-          procedure
-          begin
             if LDoneHandled then
               Exit;
 
@@ -1103,7 +1102,10 @@ begin
               Self.HandleStreamDone(APromptText, LActiveProvider, LActiveModel, LFullResponse);
             end;
           end));
-      end, LProfile);
+  end;
+
+  try
+    FAIService.SendPromptStream(APromptText, FHistory, HandleStreamCallback, LProfile);
   except
     on E: Exception do
     begin
@@ -1174,6 +1176,7 @@ var
   LDoneHandled: Boolean;
   LActiveProvider: string;
   LActiveModel: string;
+  HandleGenerateCallback: TStreamChunkCallback;
 begin
   if not CheckQuotaAvailability then
     Exit;
@@ -1192,14 +1195,12 @@ begin
   LPromptText := FDTOBuilder.BuildPrompt(AInput, AInputType, AOutputType);
   LGuard := FLifecycleGuard as IRadIALifecycleGuard;
 
-  try
-    FAIService.SendPromptStream(LPromptText, [],
-      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+  HandleGenerateCallback := procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+  begin
+    TThread.Queue(nil,
+      TThreadProcedure(
+      procedure
       begin
-        TThread.Queue(nil,
-          TThreadProcedure(
-          procedure
-          begin
             if LDoneHandled then
               Exit;
 
@@ -1231,7 +1232,10 @@ begin
               Self.HandleGenerateDTODone(LPromptText, LActiveProvider);
             end;
           end));
-      end, rpGeneralChat);
+  end;
+
+  try
+    FAIService.SendPromptStream(LPromptText, [], HandleGenerateCallback, rpGeneralChat);
   except
     on E: Exception do
     begin
@@ -1752,10 +1756,13 @@ begin
   begin
     TLogger.Log('OnBackgroundBrowserNavigation: Auth page redirect detected. URL: ' + AUrl, 'UI');
     TThread.Queue(nil,
-      procedure
-      begin
-        HandleOnbtnWebLoginConnectClick;
-      end);
+      TThreadProcedure(
+        procedure
+        begin
+          HandleOnbtnWebLoginConnectClick;
+        end
+      )
+    );
   end;
 end;
 
@@ -1866,45 +1873,46 @@ end;
 
 function TRadIAChatPresenter.PreProcessPrompt(const APromptText: string): string;
 var
-  LActiveCode: string;
   LTemplate: TPromptTemplate;
   LFound: Boolean;
   LCommand: string;
   LArgument: string;
-  LFirstSeparator: Integer;
-  I: Integer;
-begin
-  Result := APromptText;
-  LActiveCode := '';
 
-  LCommand := Trim(APromptText);
-  LArgument := '';
-  LFirstSeparator := -1;
-  for I := Low(APromptText) to High(APromptText) do
+  procedure ParseCommandAndArgument(const APrompt: string; var ACmd, AArg: string);
+  var
+    LFirstSeparator: Integer;
+    I: Integer;
   begin
-    if CharInSet(APromptText[I], [#9, #10, #13, ' ']) then
+    ACmd := Trim(APrompt);
+    AArg := '';
+    LFirstSeparator := -1;
+    for I := Low(APrompt) to High(APrompt) do
     begin
-      LFirstSeparator := I - 1;
-      Break;
+      if CharInSet(APrompt[I], [#9, #10, #13, ' ']) then
+      begin
+        LFirstSeparator := I - 1;
+        Break;
+      end;
+    end;
+
+    if LFirstSeparator > 0 then
+    begin
+      ACmd := APrompt.Substring(0, LFirstSeparator).Trim;
+      AArg := APrompt.Substring(LFirstSeparator + 1).Trim;
     end;
   end;
 
-  if LFirstSeparator > 0 then
+  function ApplyTemplateVariables(const ATplText, AArgText: string): string;
+  var
+    LActiveCode: string;
   begin
-    LCommand := APromptText.Substring(0, LFirstSeparator).Trim;
-    LArgument := APromptText.Substring(LFirstSeparator + 1).Trim;
-  end;
-
-  LFound := FindTemplateForCommand(LCommand, LArgument, LTemplate);
-
-  if LFound then
-  begin
-    Result := LTemplate.Template;
+    Result := ATplText;
+    LActiveCode := '';
 
     if Result.Contains('{code}') then
     begin
-      if not LArgument.IsEmpty then
-        LActiveCode := ExtractCodeArgument(LArgument);
+      if not AArgText.IsEmpty then
+        LActiveCode := ExtractCodeArgument(AArgText);
 
       if LActiveCode.IsEmpty then
       begin
@@ -1916,12 +1924,20 @@ begin
     end;
 
     if Result.Contains('{specification}') then
-      Result := Result.Replace('{specification}', LArgument)
+      Result := Result.Replace('{specification}', AArgText)
     else if Result.Contains('{stacktrace}') then
-      Result := Result.Replace('{stacktrace}', LArgument)
+      Result := Result.Replace('{stacktrace}', AArgText)
     else if Result.Contains('{argument}') then
-      Result := Result.Replace('{argument}', LArgument);
+      Result := Result.Replace('{argument}', AArgText);
   end;
+
+begin
+  Result := APromptText;
+  ParseCommandAndArgument(APromptText, LCommand, LArgument);
+  
+  LFound := FindTemplateForCommand(LCommand, LArgument, LTemplate);
+  if LFound then
+    Result := ApplyTemplateVariables(LTemplate.Template, LArgument);
 end;
 
 {$IFDEF TESTS}

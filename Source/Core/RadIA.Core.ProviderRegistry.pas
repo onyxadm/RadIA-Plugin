@@ -29,7 +29,8 @@ type
     class constructor Create;
     class destructor Destroy;
     class procedure ParseProviderFile(const AFilePath: string); static;
-    class function CreateFactory(const AId, ADisplayName, ABaseUrl: string; const AModels: TArray<string>; const AApiKey: string): TProviderFactoryFunc; static;
+    class function CreateFactory(const AId, ADisplayName, ABaseUrl: string;
+      const AModels: TArray<string>; const AApiKey: string): TProviderFactoryFunc; static;
   public
     class procedure LoadJsonProviders; static;
     class procedure RegisterProvider(const AMetadata: TProviderMetadata);

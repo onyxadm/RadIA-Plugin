@@ -1018,7 +1018,7 @@ body.light-theme .session-action-btn:disabled:hover {
 }
 
 .session-action-btn.delete-btn:hover {
-  color: #b91c1c;
+  color: #991b1b;
   background-color: rgba(220, 38, 38, 0.1);
 }
 
