@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Logger;
+unit RadIA.Core.Logger;
 
 interface
 
@@ -157,8 +157,6 @@ begin
   TMonitor.Enter(FLock);
   try
     LDir := FLogPath;
-    if LDir.IsEmpty then
-      LDir := GetDefaultLogPath;
 
     try
       ForceDirectories(LDir);
