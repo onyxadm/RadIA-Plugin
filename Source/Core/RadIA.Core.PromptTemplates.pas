@@ -494,7 +494,7 @@ end;
 
 procedure TPromptTemplateManager.AddTemplate(const AName, ADescription, ATemplate: string;
     const AIsProjectGenerator: Boolean = False; const ASlashCommand: string = '');
-    
+
 var
   LTemplate: TPromptTemplate;
   I: Integer;

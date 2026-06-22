@@ -1,4 +1,4 @@
-unit RadIA.UI.WebLoginForm;
+﻿unit RadIA.UI.WebLoginForm;
 
 interface
 
@@ -286,7 +286,7 @@ begin
   if Assigned(FNavigationTimer) then
     FNavigationTimer.Enabled := False;
 
-  if Assigned(FEdgeBrowser) and 
+  if Assigned(FEdgeBrowser) and
      (FEdgeBrowser.BrowserControlState = TCustomEdgeBrowser.TBrowserControlState.Creating) then
   begin
     ShowBrowserFallback(

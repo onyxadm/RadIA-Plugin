@@ -112,7 +112,7 @@ type
     procedure HandleClearChatMessage;
     procedure HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
   public
-    constructor Create(const AView: IRadIAChatView; const AConfig: IRadIAConfig = nil;
+    constructor Create(const AView: IRadIAChatView; const AConfig: IRadIAConfig;
         const AService: IRadIAService = nil; const ADataDir: string = '');
     destructor Destroy; override;
 
@@ -922,9 +922,9 @@ begin
               if LUsage.TotalTokens > 0 then
               begin
                 Self.FAccumulatedUsage.PromptTokens := Self.FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
-                Self.FAccumulatedUsage.CompletionTokens := 
+                Self.FAccumulatedUsage.CompletionTokens :=
                   Self.FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
-                    
+
                 Self.FAccumulatedUsage.TotalTokens := Self.FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
 
                 if not Self.FConfig.IsWebLoginProvider(LActiveProvider) then

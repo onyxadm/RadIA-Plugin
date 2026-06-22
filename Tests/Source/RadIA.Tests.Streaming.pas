@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Streaming;
+unit RadIA.Tests.Streaming;
 
 interface
 
@@ -50,7 +50,7 @@ implementation
 
 
 uses
-  System.SysUtils, System.RTTI, RadIA.Provider.Streaming, RadIA.Core.Config, RadIA.Core.SettingsStorage;
+  System.SysUtils, System.Rtti, RadIA.Provider.Streaming, RadIA.Core.Config, RadIA.Core.SettingsStorage;
 
 { TTestRadIAStreaming }
 

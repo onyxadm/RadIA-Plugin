@@ -217,7 +217,7 @@ begin
   FWebFilesDir := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
   CopyWebFiles;
 
-  FPresenter := TRadIAChatPresenter.Create(Self);
+  FPresenter := TRadIAChatPresenter.Create(Self, nil);
 
   if Supports(BorlandIDEServices, IOTAIDEThemingServices, LThemingServices) then
   begin

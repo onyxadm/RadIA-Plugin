@@ -340,7 +340,7 @@ end;
 
 procedure TMockConfigView.SetTemplateFields(const AName, ADesc, ABody, ASlash: string;
     const AIsProjGen: Boolean; const AIsSystem,
-    
+
     AIsCustomized: Boolean);
 begin
   TemplateName := AName;

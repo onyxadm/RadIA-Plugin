@@ -1,4 +1,4 @@
-unit RadIA.UI.ConfigFrame;
+﻿unit RadIA.UI.ConfigFrame;
 
 interface
 
@@ -1516,7 +1516,7 @@ end;
 
 procedure TRadIAFrameAIConfig.SetTemplateFields(const AName, ADesc, ABody, ASlash: string;
     const AIsProjGen: Boolean; const AIsSystem,
-    
+
     AIsCustomized: Boolean);
 begin
   edtTemplateName.Text := AName;
