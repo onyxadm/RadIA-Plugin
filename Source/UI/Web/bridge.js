@@ -156,7 +156,7 @@
 
 
   // --- Inbound communication (Delphi -> WebView) ---
-  if (globalThis.chrome && globalThis.chrome.webview) {
+  if (globalThis.chrome?.webview) {
     // globalThis.chrome.webview.addEventListener is a secure host-to-web channel.
     // event.origin is not present here as messages originate directly from the host Delphi process (bds.exe).
     globalThis.chrome.webview.addEventListener('message', event => {
@@ -166,7 +166,7 @@
       const msg = event.data;
       log('Message received from Delphi:', msg);
 
-      if (msg && msg.action === 'send_prompt') {
+      if (msg?.action === 'send_prompt') {
         const inputEl = currentSite.getInput();
         if (!inputEl) {
           log('Error: input field not found.');
@@ -203,7 +203,7 @@
 
   // Envia mensagem de volta para o Delphi
   function sendToDelphi(data) {
-    if (globalThis.chrome && globalThis.chrome.webview) {
+    if (globalThis.chrome?.webview) {
       globalThis.chrome.webview.postMessage(data);
     } else {
       log('PostMessage simulation:', data);
@@ -247,7 +247,7 @@
 
     const className = String(node.className || '');
     const hasLineRole =
-      node.hasAttribute('data-line') ||
+      ('line' in node.dataset) ||
       /\b(?:line|token-line|cm-line|view-line)\b/i.test(className);
     const isBlock =
       ['DIV', 'P', 'LI', 'TR'].includes(tagName) ||
@@ -290,7 +290,7 @@
 
         // Tenta extrair a linguagem das classes do code ou do pre
         const classes = (codeEl.getAttribute('class') || '') + ' ' + (pre.getAttribute('class') || '');
-        const langMatch = classes.match(/language-(\w+)/i);
+        const langMatch = /language-(\w+)/i.exec(classes);
         if (langMatch) {
           lang = langMatch[1];
         } else {
@@ -463,7 +463,7 @@
     try {
       const preElements = document.querySelectorAll('pre');
       preElements.forEach(pre => {
-        if (pre.getAttribute('data-radia-injected') === 'true') return;
+        if (pre.dataset.radiaInjected === 'true') return;
 
         const code = pre.querySelector('code');
         if (!code) return;
@@ -511,7 +511,7 @@
         });
 
         pre.appendChild(btn);
-        pre.setAttribute('data-radia-injected', 'true');
+        pre.dataset.radiaInjected = 'true';
       });
     } catch (err) {
       log('Error injecting buttons into pre elements:', err);
@@ -550,7 +550,7 @@
   function checkLoginComplete() {
     if (loginSignaled) return true;
     try {
-      if (currentSite.isSignedIn && currentSite.isSignedIn()) {
+      if (currentSite.isSignedIn?.()) {
         log('Signed-in session detected. Notifying Delphi.');
         sendToDelphi({ action: 'login_complete' });
         loginSignaled = true;
@@ -569,7 +569,7 @@
     injectDelphiButtons();
 
     try {
-      if (typeof MutationObserver !== 'undefined') {
+      if (typeof MutationObserver === 'function') {
         observer = new MutationObserver((mutations) => {
           checkLoginComplete();
           let shouldCheck = false;

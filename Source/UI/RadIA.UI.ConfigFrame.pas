@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.ConfigFrame;
+unit RadIA.UI.ConfigFrame;
 
 interface
 
@@ -11,7 +11,6 @@ type
   TRadIAFrameAIConfig = class(TFrame, IRadIAConfigView)
   private
     FPresenter: TRadIAConfigPresenter;
-    FOnClose: TNotifyEvent;
     FLblTemplateOrigin: TLabel;
 
     FEdtTemperatures: TDictionary<string, TEdit>;
@@ -126,7 +125,6 @@ type
     procedure SetDeleteTemplateButtonState(const ACaption: string; const AEnabled: Boolean);
     procedure SetTemplateOriginLabel(const AText: string; const AColor: TColor);
 
-    property OnClose: TNotifyEvent read FOnClose write FOnClose;
   published
     pgcSettings: TPageControl;
     tsGemini: TTabSheet;

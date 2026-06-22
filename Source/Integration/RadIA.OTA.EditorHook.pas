@@ -31,7 +31,6 @@ type
     {$ENDIF}
     procedure InstallEditorNotifiers;
     procedure RemoveEditorNotifiers;
-    procedure TryAddSourceEditorNotifier(const ASourceEditor: IOTASourceEditor);
     {$IFNDEF TESTS}
     procedure HookPopupMenu(AForm: TCustomForm);
     {$ENDIF}
@@ -107,130 +106,6 @@ var
 
 threadvar
   GExecutingPopup: Boolean;
-
-type
-  TRadIAIDEEditorNotifier = class(TNotifierObject, IOTAIDENotifier)
-  private
-    FHook: TRadIAEditorHook;
-  public
-    constructor Create(AHook: TRadIAEditorHook);
-    procedure FileNotification(NotifyCode: TOTAFileNotification; const FileName: string; var Cancel: Boolean);
-    procedure BeforeCompile(const Project: IOTAProject; var Cancel: Boolean); overload;
-    procedure AfterCompile(Succeeded: Boolean); overload;
-  end;
-
-  TRadIASourceEditorNotifier = class(TNotifierObject, IOTANotifier, IOTAEditorNotifier)
-  private
-    FHook: TRadIAEditorHook;
-    FSourceEditor: IOTASourceEditor;
-    FIndex: Integer;
-    procedure RemoveNotifier;
-  public
-    constructor Create(AHook: TRadIAEditorHook; const ASourceEditor: IOTASourceEditor);
-    destructor Destroy; override;
-    procedure Destroyed;
-    procedure ViewActivated(const View: IOTAEditView);
-    procedure ViewNotification(const View: IOTAEditView; Operation: TOperation);
-  end;
-
-  TControlAccess = class(TControl);
-
-{ TRadIAIDEEditorNotifier }
-
-constructor TRadIAIDEEditorNotifier.Create(AHook: TRadIAEditorHook);
-begin
-  inherited Create;
-  FHook := AHook;
-end;
-
-procedure TRadIAIDEEditorNotifier.AfterCompile(Succeeded: Boolean);
-begin
-  // Intentionally empty: IOTAIDENotifier implementation
-end;
-
-procedure TRadIAIDEEditorNotifier.BeforeCompile(const Project: IOTAProject; var Cancel: Boolean);
-begin
-  Cancel := False;
-end;
-
-procedure TRadIAIDEEditorNotifier.FileNotification(NotifyCode: TOTAFileNotification;
-    const FileName: string; var Cancel: Boolean);
-var
-  LModuleServices: IOTAModuleServices;
-  LModule: IOTAModule;
-  LSourceEditor: IOTASourceEditor;
-  I: Integer;
-begin
-  Cancel := False;
-  if NotifyCode <> ofnFileOpened then
-    Exit;
-
-  if not SameText(ExtractFileExt(FileName), '.pas') then
-    Exit;
-
-  if not Assigned(FHook) then
-    Exit;
-
-  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
-  begin
-    LModule := LModuleServices.FindModule(FileName);
-    if Assigned(LModule) then
-    begin
-      for I := 0 to LModule.GetModuleFileCount - 1 do
-      begin
-        if Supports(LModule.GetModuleFileEditor(I), IOTASourceEditor, LSourceEditor) then
-          FHook.TryAddSourceEditorNotifier(LSourceEditor);
-      end;
-    end;
-  end;
-
-  FHook.QueueHookActiveEditor;
-end;
-
-{ TRadIASourceEditorNotifier }
-
-constructor TRadIASourceEditorNotifier.Create(AHook: TRadIAEditorHook; const ASourceEditor: IOTASourceEditor);
-begin
-  inherited Create;
-  FHook := AHook;
-  FSourceEditor := ASourceEditor;
-  FIndex := -1;
-  if Assigned(FSourceEditor) then
-    FIndex := FSourceEditor.AddNotifier(Self);
-end;
-
-destructor TRadIASourceEditorNotifier.Destroy;
-begin
-  RemoveNotifier;
-  inherited Destroy;
-end;
-
-procedure TRadIASourceEditorNotifier.Destroyed;
-begin
-  RemoveNotifier;
-end;
-
-procedure TRadIASourceEditorNotifier.RemoveNotifier;
-begin
-  if Assigned(FSourceEditor) and (FIndex >= 0) then
-  begin
-    FSourceEditor.RemoveNotifier(FIndex);
-    FIndex := -1;
-    FSourceEditor := nil;
-  end;
-end;
-
-procedure TRadIASourceEditorNotifier.ViewActivated(const View: IOTAEditView);
-begin
-  if Assigned(FHook) then
-    FHook.QueueHookActiveEditor;
-end;
-
-procedure TRadIASourceEditorNotifier.ViewNotification(const View: IOTAEditView; Operation: TOperation);
-begin
-  if (Operation = opInsert) and Assigned(FHook) then
-    FHook.QueueHookActiveEditor;
-end;
 
 { TRadIAEditorHook }
 
@@ -463,27 +338,6 @@ begin
     FIDENotifierIndex := -1;
   end;
 end;
-
-procedure TRadIAEditorHook.TryAddSourceEditorNotifier(const ASourceEditor: IOTASourceEditor);
-var
-  LNotifier: IOTAEditorNotifier;
-begin
-  {$IFDEF TESTS}
-  Exit;
-  {$ENDIF}
-
-  if not Assigned(ASourceEditor) then
-    Exit;
-
-  try
-    LNotifier := TRadIASourceEditorNotifier.Create(Self, ASourceEditor);
-    FEditorNotifiers.Add(LNotifier);
-  except
-    on E: Exception do
-      TLogger.Log('TryAddSourceEditorNotifier: Error adding source editor notifier: ' + E.Message, 'EditorHook');
-  end;
-end;
-
 
 function TRadIAEditorHook.FindEditorPopupMenu(AParent: TComponent): TPopupMenu;
 var
@@ -1148,7 +1002,6 @@ begin
           begin
             TLogger.Log('OnCreateExampleExecute failed: insert operation returned false', 'EditorHook');
             ShowMessage('Could not insert the generated example into the active editor.');
-            Exit;
           end;
         finally
           FinishCreateExampleRequest;

@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.PromptTemplates;
+unit RadIA.Core.PromptTemplates;
 
 interface
 
@@ -37,7 +37,6 @@ type
         const ASlashCommand: string = '');
     procedure DeleteTemplate(const AName: string);
     procedure RestoreDefaultTemplate(const AName: string);
-    procedure ClearTemplates;
     procedure RestoreDefaultTemplates;
     function GetTemplates: TArray<TPromptTemplate>;
     function FindTemplate(const AName: string; out ATemplate: TPromptTemplate): Boolean;
@@ -574,12 +573,6 @@ begin
 
   BuildActiveTemplates;
   Save;
-end;
-
-procedure TPromptTemplateManager.ClearTemplates;
-begin
-  FUserTemplates.Clear;
-  BuildActiveTemplates;
 end;
 
 procedure TPromptTemplateManager.RestoreDefaultTemplates;

@@ -155,9 +155,7 @@ type
     function TestPreProcessPrompt(const APromptText: string): string;
     {$ENDIF}
 
-    property RequestInProgress: Boolean read FRequestInProgress;
     property SessionManager: TRadIASessionManager read FSessionManager;
-    property TemplateManager: TPromptTemplateManager read FTemplateManager;
     property WebViewReady: Boolean read FWebViewReady write FWebViewReady;
   end;
 

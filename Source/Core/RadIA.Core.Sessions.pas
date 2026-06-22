@@ -31,7 +31,6 @@ type
 
     property Sessions: TList<TSessionInfo> read FSessions;
     property ActiveSessionId: string read FActiveSessionId write FActiveSessionId;
-    property SessionsDir: string read FSessionsDir;
 
     function CreateSession(const AName: string = ''): TSessionInfo;
     procedure DeleteSession(const AId: string);

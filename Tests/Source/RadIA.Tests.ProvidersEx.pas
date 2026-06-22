@@ -755,11 +755,9 @@ var
   LChunk1, LChunk2: TBytes;
   LReceivedText: string;
   LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
   LReceivedText := '';
   LCallbackCount := 0;
-  LIsDone := False;
 
   LParser := TRadIAAwsEventStreamParser.Create(
     procedure(const AChunk: string; AIsDone: Boolean; const AError: string)

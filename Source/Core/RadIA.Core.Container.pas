@@ -36,13 +36,10 @@ begin
 end;
 
 class procedure TRadIAContainer.Register<T>(const AInstance: T);
-var
-  LGuid: TGUID;
 begin
-  LGuid := GetTypeData(TypeInfo(T))^.GUID;
   TMonitor.Enter(FServices);
   try
-    FServices.AddOrSetValue(LGuid, AInstance);
+    FServices.AddOrSetValue(GetTypeData(TypeInfo(T))^.GUID, AInstance);
   finally
     TMonitor.Exit(FServices);
   end;

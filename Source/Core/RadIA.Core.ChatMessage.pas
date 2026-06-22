@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.ChatMessage;
+unit RadIA.Core.ChatMessage;
 
 interface
 
@@ -27,10 +27,6 @@ type
     class function CreateMessage(const ARole: TAIMessageRole; const AContent: string;
       const AProvider: string = ''; const AModel: string = ''): IRadIAChatMessage; static;
 
-    property Role: TAIMessageRole read GetRole;
-    property Content: string read GetContent write SetContent;
-    property Provider: string read GetProvider write SetProvider;
-    property Model: string read GetModel write SetModel;
   end;
 
 implementation

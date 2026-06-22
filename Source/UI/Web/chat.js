@@ -50,7 +50,7 @@ function getCodeHeaderTitle(language, highlightLanguage) {
   return normalized.toUpperCase();
 }
 
-if (globalThis.Prism && Prism.languages && Prism.languages.pascal) {
+if (globalThis.Prism?.languages?.pascal) {
   Prism.languages.delphi = Prism.languages.pascal;
   Prism.languages.pas = Prism.languages.pascal;
   Prism.languages['object-pascal'] = Prism.languages.pascal;
@@ -96,8 +96,8 @@ renderer.code = function(codeOrToken, lang) {
     language = lang || 'code';
   }
 
-  const FILEPATH_REGEX = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*([^\r\n]+?)(?:\s*\}|\s*\*\}|\s*-->)?(?:\r?\n|$)/i;
-  const fileMatch = code.match(FILEPATH_REGEX);
+  const FILEPATH_REGEX = /^(?:\/\/|\{#|\{\*|<!--)\s*filepath:\s*(.+?)(?:\s*\}|\s*\*\}|\s*-->)?\s*$/i;
+  const fileMatch = FILEPATH_REGEX.exec(code);
   let filepath = '';
   let isProjectFile = false;
 
@@ -472,8 +472,7 @@ promptTextarea.addEventListener('keydown', (e) => {
       e.preventDefault();
       hideSlashPopup();
     }
-  } else {
-    if (e.key === 'Enter' && e.ctrlKey) {
+  } else if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault();
       handleSend();
     } else if (e.key === 'ArrowUp') {
@@ -513,7 +512,6 @@ promptTextarea.addEventListener('keydown', (e) => {
         }
       }
     }
-  }
 });
 
 btnSendPrompt.addEventListener('click', handleSend);
@@ -527,7 +525,7 @@ function handleSend() {
   const text = promptTextarea.value.trim();
   if (!text) return;
 
-  if (_promptHistory.length === 0 || _promptHistory[_promptHistory.length - 1] !== text) {
+  if (_promptHistory.length === 0 || _promptHistory.at(-1) !== text) {
     _promptHistory.push(text);
     if (_promptHistory.length > 100) {
       _promptHistory.shift();
@@ -891,7 +889,7 @@ function renderTokenStats(text) {
   statusText.innerHTML = '';
 
   parts.forEach((part, index) => {
-    const match = part.match(/^(.+?)\s+([0-9.,]+%?)$/);
+    const match = /^(.+?)\s+([0-9.,]+%?)$/.exec(part);
     const item = document.createElement('span');
     item.className = 'token-stat';
 
@@ -1068,7 +1066,7 @@ function processProjectFiles(contentElement) {
   filesList.className = 'radia-project-files-list';
 
   fileBlocks.forEach((block) => {
-    const filepath = block.getAttribute('data-filepath');
+    const filepath = block.dataset.filepath;
     const ext = filepath.split('.').pop().toLowerCase();
     const copyBtn = block.querySelector('.copy-btn');
     if (!copyBtn) return;
@@ -1144,7 +1142,7 @@ function processProjectFiles(contentElement) {
   actionBtn.addEventListener('click', () => {
     const filesData = [];
     fileBlocks.forEach(block => {
-      const filepath = block.getAttribute('data-filepath');
+      const filepath = block.dataset.filepath;
       const codeEl = block.querySelector('code');
       const content = codeEl ? codeEl.textContent : '';
       filesData.push({ path: filepath, content: content });
@@ -1350,7 +1348,7 @@ function setRequestState(inProgress) {
 }
 
 function setContextText(text) {
-  if (text && text.trim()) {
+  if (text?.trim()) {
     contextText.innerText = text;
     contextBar.classList.remove('hidden');
   } else {
@@ -1449,7 +1447,7 @@ function startRename(item, sessionId, nameEl) {
   input.value = currentName;
 
   nameEl.style.display = 'none';
-  item.insertBefore(input, nameEl);
+  nameEl.before(input);
   input.focus();
   input.select();
 

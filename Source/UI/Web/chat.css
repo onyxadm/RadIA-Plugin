@@ -1267,7 +1267,7 @@ body.light-theme .session-action-btn:disabled:hover {
   transition: border-color 0.15s ease;
 }
 
-.generator-form-group {
+/* .generator-form-group { */
   position: relative;
 }
 

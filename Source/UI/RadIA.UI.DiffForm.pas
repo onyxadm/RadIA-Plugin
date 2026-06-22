@@ -1,4 +1,4 @@
-﻿unit RadIA.UI.DiffForm;
+unit RadIA.UI.DiffForm;
 
 interface
 
@@ -53,7 +53,6 @@ type
   public
     procedure InitializeDiff(const AUnitName, AOriginalCode: string; const AWebFilesDir: string = '');
 
-    property OriginalCode: string read FOriginalCode;
     property SuggestedCode: string read FSuggestedCode;
   end;
 
