@@ -1286,7 +1286,7 @@ body.light-theme .session-action-btn:disabled:hover {
 }
 
 .btn-primary-gradient {
-  background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #005bb5 0%, #4338ca 100%);
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -1539,7 +1539,7 @@ body.light-theme .file-item-btn:hover {
 }
 
 .radia-project-action-btn {
-  background: linear-gradient(135deg, var(--accent) 0%, #0098ff 100%);
+  background: linear-gradient(135deg, #005bb5 0%, #005a9e 100%);
   color: #ffffff;
   border: none;
   border-radius: 8px;

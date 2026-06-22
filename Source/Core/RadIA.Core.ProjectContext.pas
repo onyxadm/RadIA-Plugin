@@ -8,13 +8,15 @@ uses
 type
   { Loader for project-specific context configured via a .radia JSON file }
   TProjectContextLoader = class
+  private
+    class function ReadContextFileSafe(const APath: string; out AContent: string): Boolean; static;
+    class function FindUTF8StartByte(const ABytes: TBytes; ALength: Integer; out ACountBack: Integer): Integer; static;
+    class function CalculateUTF8CharLen(AStartByte: Byte): Integer; static;
+    class procedure SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer); static;
   public
     { Loads the context from a .radia file in the specified project folder,
       merging the custom system prompt and the contents of any listed context files. }
     class function LoadContext(const AProjectFolder: string; out AContextPrompt: string): Boolean; static;
-  private
-    class function ReadContextFileSafe(const APath: string; out AContent: string): Boolean; static;
-    class procedure SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer); static;
   end;
 
 implementation
@@ -24,40 +26,45 @@ uses
 
 { TProjectContextLoader }
 
-class procedure TProjectContextLoader.SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer);
+class function TProjectContextLoader.FindUTF8StartByte(const ABytes: TBytes; ALength: Integer; out ACountBack: Integer): Integer;
 var
   LIdx: Integer;
-  LCountBack: Integer;
-  LCharLen: Integer;
-  LStartByte: Byte;
 begin
-  if ALength <= 0 then Exit;
   LIdx := ALength - 1;
-  LCountBack := 0;
+  ACountBack := 0;
   while (LIdx >= 0) and ((ABytes[LIdx] and $C0) = $80) do
   begin
     Dec(LIdx);
-    Inc(LCountBack);
+    Inc(ACountBack);
   end;
+  Result := LIdx;
+end;
 
+class function TProjectContextLoader.CalculateUTF8CharLen(AStartByte: Byte): Integer;
+begin
+  if (AStartByte and $80) = 0 then
+    Result := 1
+  else if (AStartByte and $F8) = $F0 then
+    Result := 4
+  else if (AStartByte and $F0) = $E0 then
+    Result := 3
+  else if (AStartByte and $E0) = $C0 then
+    Result := 2
+  else
+    Result := 1;
+end;
+
+class procedure TProjectContextLoader.SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer);
+var
+  LIdx, LCountBack, LCharLen: Integer;
+begin
+  if ALength <= 0 then Exit;
+  LIdx := FindUTF8StartByte(ABytes, ALength, LCountBack);
   if LIdx >= 0 then
   begin
-    LStartByte := ABytes[LIdx];
-    LCharLen := 1;
-    if (LStartByte and $80) <> 0 then
-    begin
-      if (LStartByte and $F8) = $F0 then
-        LCharLen := 4
-      else if (LStartByte and $F0) = $E0 then
-        LCharLen := 3
-      else if (LStartByte and $E0) = $C0 then
-        LCharLen := 2;
-
-      if LCountBack < (LCharLen - 1) then
-      begin
-        ALength := LIdx;
-      end;
-    end;
+    LCharLen := CalculateUTF8CharLen(ABytes[LIdx]);
+    if LCountBack < (LCharLen - 1) then
+      ALength := LIdx;
   end;
 end;
 

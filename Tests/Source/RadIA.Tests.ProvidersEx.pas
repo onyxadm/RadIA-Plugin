@@ -641,15 +641,7 @@ procedure TTestRadIAProvidersEx.TestBedrock_AwsSignerSigV4;
 var
   LHeaders: TStringList;
 const
-  MOCK_ACCESS_KEY = 'AKIAIOSFODNN7EXAMPLE';
-  MOCK_SECRET_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY';
-  MOCK_REGION = 'us-east-1';
-  MOCK_SERVICE = 'bedrock';
-  MOCK_METHOD = 'POST';
-  MOCK_URI = '/model/anthropic.claude-3-5-sonnet-20241022-v2:0/invoke';
-  MOCK_PAYLOAD = '{"anthropic_version":"bedrock-2023-05-31","messages":[]}';
   MOCK_DATE = '20260608T170000Z';
-  MOCK_STAMP = '20260608';
 begin
   LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(
     MOCK_ACCESS_KEY, MOCK_SECRET_KEY, MOCK_REGION, MOCK_SERVICE,

@@ -39,15 +39,7 @@ procedure TTestAwsSigner.TestComputeSignatureHeaders;
 var
   LHeaders: TStringList;
 const
-  ACCESS_KEY = 'TEST_ACCESS_KEY';
-  SECRET_KEY = 'TEST_SECRET_KEY';
-  REGION = 'us-east-1';
-  SERVICE = 'bedrock';
-  METHOD = 'POST';
-  URI = '/model/anthropic.claude-3/invoke';
-  PAYLOAD = '{"prompt":"hello"}';
   AMZ_DATE = '20260608T170000Z';
-  DATE_STAMP = '20260608';
 begin
   LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(
     ACCESS_KEY, SECRET_KEY, REGION, SERVICE, METHOD, URI, PAYLOAD, AMZ_DATE, DATE_STAMP
@@ -71,15 +63,6 @@ procedure TTestAwsSigner.TestComputeSignatureHeadersWithSessionToken;
 var
   LHeaders: TStringList;
 const
-  ACCESS_KEY = 'TEST_ACCESS_KEY';
-  SECRET_KEY = 'TEST_SECRET_KEY';
-  REGION = 'us-east-1';
-  SERVICE = 'bedrock';
-  METHOD = 'POST';
-  URI = '/model/anthropic.claude-3/invoke';
-  PAYLOAD = '{"prompt":"hello"}';
-  AMZ_DATE = '20260608T170000Z';
-  DATE_STAMP = '20260608';
   SESSION_TOKEN = 'session_token_xyz_123';
 begin
   LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(

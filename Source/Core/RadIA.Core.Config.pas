@@ -49,6 +49,8 @@ type
 
     function TryMigrateLegacyPath(const APath: string; out AMigratedPath: string): Boolean;
     procedure LoadGlobalSettings(const APath: string);
+    procedure LoadBedrockSettings(const AProviderName: string);
+    procedure LoadNumericSettings(const AProviderName: string);
     procedure LoadProviderSettings(const AProviderPath, AProviderName: string);
     procedure LoadFromPath(const APath: string);
     procedure SaveToPath(const APath: string);
@@ -288,7 +290,7 @@ var
 begin
   Result := False;
   AMigratedPath := '';
-  
+
   if FStorage.KeyExists(APath) then
     Exit;
 
@@ -356,6 +358,55 @@ begin
     LogDebug('TRadIAConfig.Load: Failed to open root path ' + APath);
 end;
 
+procedure TRadIAConfig.LoadBedrockSettings(const AProviderName: string);
+begin
+  FAwsRegion := ReadRegString('Region', TConfigDefaults.AwsRegion);
+  try
+    if FStorage.ValueExists('AccessKeyId') then
+      FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AccessKeyId', ''));
+  except
+    on E: Exception do
+    begin
+      LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock AccessKeyId: ' + E.Message);
+      FAwsAccessKeyId := '';
+    end;
+  end;
+  try
+    if FStorage.ValueExists('SecretAccessKey') then
+      FAwsSecretAccessKey := UnprotectString(FStorage.ReadString('SecretAccessKey', ''));
+  except
+    on E: Exception do
+    begin
+      LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SecretAccessKey: ' + E.Message);
+      FAwsSecretAccessKey := '';
+    end;
+  end;
+  try
+    if FStorage.ValueExists('SessionToken') then
+      FAwsSessionToken := UnprotectString(FStorage.ReadString('SessionToken', ''));
+  except
+    on E: Exception do
+    begin
+      LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SessionToken: ' + E.Message);
+      FAwsSessionToken := '';
+    end;
+  end;
+end;
+
+procedure TRadIAConfig.LoadNumericSettings(const AProviderName: string);
+begin
+  FTemperaturesList.Values[AProviderName.ToLower] := FloatToStr(
+    ReadRegDouble('Temperature', TConfigDefaults.Temperature),
+    TFormatSettings.Invariant);
+  FMaxTokensList.Values[AProviderName.ToLower] := IntToStr(
+    ReadRegInt('MaxTokens', TConfigDefaults.MaxTokens));
+  FTimeoutsList.Values[AProviderName.ToLower] := IntToStr(
+    ReadRegInt('Timeout', TConfigDefaults.Timeout));
+  FAuthTypesList.Values[AProviderName.ToLower] := ReadRegString(
+    'AuthType',
+    TConfigDefaults.ProviderAuthType);
+end;
+
 procedure TRadIAConfig.LoadProviderSettings(const AProviderPath, AProviderName: string);
 begin
   LogDebug('TRadIAConfig.Load: Reading subkey for provider ' + AProviderName);
@@ -396,51 +447,9 @@ begin
       FAzureApiVersion := ReadRegString('ApiVersion', TConfigDefaults.AzureApiVersion);
 
     if SameText(AProviderName, 'Bedrock') then
-    begin
-      FAwsRegion := ReadRegString('Region', TConfigDefaults.AwsRegion);
-      try
-        if FStorage.ValueExists('AccessKeyId') then
-          FAwsAccessKeyId := UnprotectString(FStorage.ReadString('AccessKeyId', ''));
-      except
-        on E: Exception do
-        begin
-          LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock AccessKeyId: ' + E.Message);
-          FAwsAccessKeyId := '';
-        end;
-      end;
-      try
-        if FStorage.ValueExists('SecretAccessKey') then
-          FAwsSecretAccessKey := UnprotectString(FStorage.ReadString('SecretAccessKey', ''));
-      except
-        on E: Exception do
-        begin
-          LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SecretAccessKey: ' + E.Message);
-          FAwsSecretAccessKey := '';
-        end;
-      end;
-      try
-        if FStorage.ValueExists('SessionToken') then
-          FAwsSessionToken := UnprotectString(FStorage.ReadString('SessionToken', ''));
-      except
-        on E: Exception do
-        begin
-          LogDebug('TRadIAConfig.Load: Failed to unprotect Bedrock SessionToken: ' + E.Message);
-          FAwsSessionToken := '';
-        end;
-      end;
-    end;
+      LoadBedrockSettings(AProviderName);
 
-    { Load advanced numeric parameters }
-    FTemperaturesList.Values[AProviderName.ToLower] := FloatToStr(
-      ReadRegDouble('Temperature', TConfigDefaults.Temperature),
-      TFormatSettings.Invariant);
-    FMaxTokensList.Values[AProviderName.ToLower] := IntToStr(
-      ReadRegInt('MaxTokens', TConfigDefaults.MaxTokens));
-    FTimeoutsList.Values[AProviderName.ToLower] := IntToStr(
-      ReadRegInt('Timeout', TConfigDefaults.Timeout));
-    FAuthTypesList.Values[AProviderName.ToLower] := ReadRegString(
-      'AuthType',
-      TConfigDefaults.ProviderAuthType);
+    LoadNumericSettings(AProviderName);
 
     FStorage.CloseKey;
   end;
