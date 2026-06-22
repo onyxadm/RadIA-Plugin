@@ -72,7 +72,8 @@ begin
 
     LFile2 := TJSONObject.Create;
     LFile2.AddPair('path', 'src\uMain.pas');
-    LFile2.AddPair('content', 'unit uMain;' + sLineBreak + 'interface' + sLineBreak + 'implementation' + sLineBreak + 'end.');
+    LFile2.AddPair('content', 'unit uMain;' + sLineBreak + 'interface' + sLineBreak + 'implementatio' +
+        'n' + sLineBreak + 'end.');
     LJson.AddElement(LFile2);
 
     LJsonStr := LJson.ToJSON;
@@ -91,8 +92,10 @@ begin
   Assert.IsTrue(TFile.Exists(LWrittenFile1), 'MyProject.dpr was not physically created');
   Assert.IsTrue(TFile.Exists(LWrittenFile2), 'uMain.pas was not physically created');
 
-  Assert.AreEqual('program MyProject;' + sLineBreak + 'begin' + sLineBreak + 'end.', TFile.ReadAllText(LWrittenFile1), 'Content mismatch in file 1');
-  Assert.AreEqual('unit uMain;' + sLineBreak + 'interface' + sLineBreak + 'implementation' + sLineBreak + 'end.', TFile.ReadAllText(LWrittenFile2), 'Content mismatch in file 2');
+  Assert.AreEqual('program MyProject;' + sLineBreak + 'begin' + sLineBreak + 'end.', TFile.ReadAllText(LWrittenFile1),
+      'Content mismatch in file 1');
+  Assert.AreEqual('unit uMain;' + sLineBreak + 'interface' + sLineBreak + 'implementation' + sLineBreak + 'end.',
+      TFile.ReadAllText(LWrittenFile2), 'Content mismatch in file 2');
 end;
 
 procedure TTestRadIAProjectGenerator.TestGenerateProjectEmptyJSON;
@@ -145,7 +148,8 @@ begin
   Assert.IsNotEmpty(LErrorMsg, 'Error message should be captured during exception');
 
   LWrittenFile1 := TPath.Combine(FTempDir, 'FirstValidFile.pas');
-  Assert.IsFalse(TFile.Exists(LWrittenFile1), 'Rollback failed: FirstValidFile.pas should have been cleaned up and deleted');
+  Assert.IsFalse(TFile.Exists(LWrittenFile1), 'Rollback failed: FirstValidFile.pas should have been ' +
+      'cleaned up and deleted');
 end;
 
 initialization

@@ -154,16 +154,21 @@ begin
     LSb.AppendLine('      padding: 20px;');
     LSb.AppendLine('      line-height: 1.6;');
     LSb.AppendLine('    }');
-    LSb.AppendLine('    h1 { color: #007acc; border-bottom: 1px solid #3c3c3c; padding-bottom: 10px; margin-bottom: 20px; }');
-    LSb.AppendLine('    .meta { color: #858585; font-size: 13px; margin-bottom: 30px; background: #252526; padding: 12px; border-radius: 4px; border: 1px solid #3c3c3c; }');
+    LSb.AppendLine('    h1 { color: #007acc; border-bottom: 1px solid #3c3c3c; padding-bottom: 10px; ' +
+        'margin-bottom: 20px; }');
+    LSb.AppendLine('    .meta { color: #858585; font-size: 13px; margin-bottom: 30px; background: #252526; ' +
+        'padding: 12px; border-radius: 4px; border: 1px solid #3c3c3c; }');
     LSb.AppendLine('    .meta p { margin: 4px 0; }');
-    LSb.AppendLine('    .message { margin-bottom: 24px; padding: 16px; border-radius: 6px; border: 1px solid #3c3c3c; }');
+    LSb.AppendLine('    .message { margin-bottom: 24px; padding: 16px; border-radius: 6px; border: 1px ' +
+        'solid #3c3c3c; }');
     LSb.AppendLine('    .message.user { background-color: #0b253a; border-color: #007acc; }');
     LSb.AppendLine('    .message.assistant { background-color: #252526; }');
-    LSb.AppendLine('    .role { font-weight: bold; font-size: 11px; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px; }');
+    LSb.AppendLine('    .role { font-weight: bold; font-size: 11px; text-transform: uppercase; margin-bottom: ' +
+        '10px; letter-spacing: 0.5px; }');
     LSb.AppendLine('    .message.user .role { color: #007acc; }');
     LSb.AppendLine('    .message.assistant .role { color: #858585; }');
-    LSb.AppendLine('    pre { background-color: #111; padding: 12px; border-radius: 4px; overflow-x: auto; border: 1px solid #2d2d2d; }');
+    LSb.AppendLine('    pre { background-color: #111; padding: 12px; border-radius: 4px; overflow-x: ' +
+        'auto; border: 1px solid #2d2d2d; }');
     LSb.AppendLine('    code { font-family: "Consolas", "Monaco", monospace; font-size: 13px; color: #9cdcfe; }');
     LSb.AppendLine('    p { margin: 0 0 10px 0; }');
     LSb.AppendLine('    p:last-child { margin-bottom: 0; }');

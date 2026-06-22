@@ -85,7 +85,8 @@ implementation
 
 uses
   System.JSON, System.Generics.Collections, System.Math, RadIA.Core.Logger, System.SyncObjs,
-  RadIA.Core.Container, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder, System.Classes, System.Net.HttpClient, System.Threading, RadIA.Core.Types, RadIA.Provider.Streaming;
+  RadIA.Core.Container, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder, System.Classes, System.Net.HttpClient,
+      System.Threading, RadIA.Core.Types, RadIA.Provider.Streaming;
 
 const
   CLogPreviewMaxLength = 320;
@@ -213,7 +214,8 @@ begin
   FHTTPClient.Cancel;
 end;
 
-function TRadIAProviderBase.DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
+function TRadIAProviderBase.DoGetRequest(const AUrl: string; const AHeaders: TNetHeaders;
+    const ATimeoutMs: Integer = 0): string;
 var
   LTimeoutMs: Integer;
 begin
@@ -689,7 +691,9 @@ begin
     if LLineLen > 5 then
     begin
       // Look for "data:" prefix without substring allocation first
-      if (LPtr[LStartPos] = 'd') and (LPtr[LStartPos+1] = 'a') and (LPtr[LStartPos+2] = 't') and (LPtr[LStartPos+3] = 'a') and (LPtr[LStartPos+4] = ':') then
+      if (LPtr[LStartPos] = 'd') and (LPtr[LStartPos+1] = 'a') and
+         (LPtr[LStartPos+2] = 't') and (LPtr[LStartPos+3] = 'a' +
+          '') and (LPtr[LStartPos+4] = ':') then
       begin
         var LLine := ABuffer.Substring(LStartPos, LLineLen).Trim;
         LJsonLine := Trim(LLine.Substring(5));

@@ -80,7 +80,8 @@ begin
   end
   else // default to English ('en')
   begin
-    FDictionary.Add('session_locked_message', 'Wait for the current response to finish, or cancel it before switching chats.');
+    FDictionary.Add('session_locked_message', 'Wait for the current response to finish, or cancel it ' +
+        'before switching chats.');
     FDictionary.Add('unauthorized_error', 'API Error: Unauthorized. Please check your API key.');
     FDictionary.Add('rate_limit_error', 'API Error: Rate Limit Exceeded. Please wait a moment.');
     FDictionary.Add('server_error', 'API Error: Server temporarily unavailable.');

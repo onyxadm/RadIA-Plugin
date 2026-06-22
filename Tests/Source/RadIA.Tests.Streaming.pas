@@ -238,7 +238,9 @@ var
   LCallbackCount: Integer;
 begin
   // Gemini stream is in progressive array brackets like: [\r\n{...}\r\n,\r\n{...}\r\n]
-  LBuffer := '[' + #13#10 + '{"candidates": [{"content": {"parts": [{"text": "Gemini "}]}}]}' + #13#10 + ',' + #13#10 + '{"candidates": [{"content": {"parts": [{"text": "says hi"}]}}]}';
+  LBuffer := '[' + #13#10 + '{"candidates": [{"content": {"parts": [{"text": "Gemini ' +
+      '"}]}}]}' + #13#10 + ',' + #13#10 + '{"candidates": ' +
+      '[{"content": {"parts": [{"text": "says hi"}]}}]}';
   LReceivedText := '';
   LCallbackCount := 0;
 

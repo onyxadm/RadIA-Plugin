@@ -17,7 +17,8 @@ uses
 
 { TRadIAMessageViewHook }
 
-class function TRadIAMessageViewHook.GetLastCompilerError(out AErrorMessage: string; out AFileName: string; out ALine: Integer): Boolean;
+class function TRadIAMessageViewHook.GetLastCompilerError(out AErrorMessage: string;
+    out AFileName: string; out ALine: Integer): Boolean;
 var
   LModuleServices: IOTAModuleServices;
   LModule: IOTAModule;

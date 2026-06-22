@@ -28,7 +28,8 @@ type
 implementation
 
 uses
-  System.SysUtils, System.JSON, RadIA.Core.ChatMessage, RadIA.Core.Config, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Core.SettingsStorage;
+  System.SysUtils, System.JSON, RadIA.Core.ChatMessage, RadIA.Core.Config, RadIA.Core.Types, RadIA.Core.TokenUsage,
+      RadIA.Core.SettingsStorage;
 
 function TTestRadIAOllama.CallPrivateMethod(const AMethodName: string; const AArgs: array of TValue): TValue;
 var
@@ -78,7 +79,8 @@ begin
   FConfig.SetActiveModel('Ollama', 'llama3:latest');
 
   { Invoke private method BuildRequestBody via RTTI }
-  LResultJson := CallPrivateMethod('BuildRequestBody', [LPrompt, TValue.From<TArray<IRadIAChatMessage>>(LHistory), False, 0.7, 2048]).AsString;
+  LResultJson := CallPrivateMethod('BuildRequestBody', [LPrompt, TValue.From<TArray<IRadIAChatMessage>>(LHistory),
+      False, 0.7, 2048]).AsString;
 
   Assert.IsFalse(LResultJson.IsEmpty, 'JSON Request body should not be empty');
 

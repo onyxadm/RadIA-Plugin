@@ -32,7 +32,8 @@ var
 implementation
 
 uses
-  DeskUtil, RadIA.Core.Config, RadIA.UI.Resources, Winapi.Windows, System.SysUtils, System.Win.Registry, Vcl.Controls, Vcl.Forms, ToolsAPI;
+  DeskUtil, RadIA.Core.Config, RadIA.UI.Resources, Winapi.Windows, System.SysUtils, System.Win.Registry,
+      Vcl.Controls, Vcl.Forms, ToolsAPI;
 
 procedure ShowRadIAChat;
 begin

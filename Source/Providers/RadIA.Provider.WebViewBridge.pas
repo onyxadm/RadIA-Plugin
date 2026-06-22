@@ -163,7 +163,8 @@ begin
   end
   else
   begin
-    TLogger.Log('WebViewBridge.ReceiveChunk Warning: No active callback or active instance found to process chunk.', 'Provider');
+    TLogger.Log('WebViewBridge.ReceiveChunk Warning: No active callback or active instance found to ' +
+        'process chunk.', 'Provider');
   end;
 end;
 

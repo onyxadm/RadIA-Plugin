@@ -6,7 +6,8 @@ uses  Vcl.Forms, ToolsAPI, RadIA.UI.ConfigFrame;
 
 type
   { Provider page configuration tag }
-  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio, ptSystem, ptTemplates);
+  TRadIAPageTag = (ptNone, ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral,
+      ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio, ptSystem, ptTemplates);
 
   { INTAAddInOptions implementation for Rad IA Options }
   TRadIAAddInOptions = class(TInterfacedObject, INTAAddInOptions)
@@ -52,7 +53,8 @@ begin
     ptNone: Result := 'Rad IA.General';
     ptSystem: Result := 'Rad IA.System Prompt';
     ptTemplates: Result := 'Rad IA.Templates';
-    ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter, ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio:
+    ptGemini, ptOpenAI, ptAzureOpenAI, ptClaude, ptDeepSeek, ptGroq, ptQwen, ptMistral, ptOpenRouter,
+        ptGithubCopilot, ptBedrock, ptOllama, ptLMStudio:
       Result := 'Rad IA.AI Providers.' + FTitle;
   else
     Result := 'Rad IA.' + FTitle;

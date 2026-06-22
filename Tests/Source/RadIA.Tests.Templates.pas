@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.Templates;
+unit RadIA.Tests.Templates;
 
 interface
 
@@ -195,7 +195,8 @@ begin
   Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
   LOriginalTemplate := LTemplate.Template;
 
-  FManager.AddTemplate(SYS_NAME, LTemplate.Description, 'Modified body {code}', LTemplate.IsProjectGenerator, LTemplate.SlashCommand);
+  FManager.AddTemplate(SYS_NAME, LTemplate.Description, 'Modified body {code}', LTemplate.IsProjectGenerator,
+      LTemplate.SlashCommand);
   Assert.IsTrue(FManager.FindTemplate(SYS_NAME, LTemplate));
   Assert.IsTrue(LTemplate.IsCustomized);
 
@@ -231,7 +232,8 @@ begin
 
   Assert.IsTrue(FManager.FindTemplate('Review Clean Code Delphi', LTemplate));
   Assert.IsTrue(LTemplate.IsSystem);
-  Assert.IsFalse(LTemplate.IsCustomized, 'Redundant overlay should have been removed and reverted to raw system template');
+  Assert.IsFalse(LTemplate.IsCustomized, 'Redundant overlay should have been removed and reverted to ' +
+      'raw system template');
   Assert.AreEqual('/review', LTemplate.SlashCommand);
 
   if TFile.Exists(LTempFile) then
@@ -247,9 +249,9 @@ var
   LTempFile: string;
   LTemplate: TPromptTemplate;
 const
-  LEGACY_JSON_NO_USES = '[{"name":"Create Project Delphi", "description":"Legacy description",
-    "template":"Create project Delphi legacy layout.", "isProjectGenerator":true,
-    "slashCommand":"/createproject"}]';
+  LEGACY_JSON_NO_USES = '[{"name":"Create Project Delphi", "description":"Legacy description", ' +
+    '"template":"Create project Delphi legacy layout.", "isProjectGenerator":true, ' +
+    '"slashCommand":"/createproject"}]';
 begin
   LTempFile := TPath.Combine(FTempDir, 'templates.json');
   ForceDirectories(TPath.GetDirectoryName(LTempFile));

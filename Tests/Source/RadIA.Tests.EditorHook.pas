@@ -136,7 +136,8 @@ begin
     FPopupMenu.OnPopup(FPopupMenu);
 
   Assert.IsTrue(FOnPopupCalled, 'The original IDE popup handler should run before RadIA injection');
-  Assert.IsNotNull(FPopupMenu.Items.Find('Rad IA'), 'Rad IA menu should be present after the original popup rebuilds the menu');
+  Assert.IsNotNull(FPopupMenu.Items.Find('Rad IA'), 'Rad IA menu should be present after the original ' +
+      'popup rebuilds the menu');
 end;
 
 procedure TTestEditorHook.TestUnhooking;

@@ -323,8 +323,10 @@ begin
   if Assigned(LMethod) then
   begin
     case Length(LMethod.GetParameters) of
-      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
-      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), AStream, TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
+      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory),
+          TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
+      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory),
+          AStream, TValue.From<Double>(0.7), TValue.From<Integer>(2048)]);
     else
       LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), AStream]);
     end;
@@ -334,7 +336,8 @@ begin
     Result := '';
 end;
 
-function TTestRadIAProvidersEx.InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
+function TTestRadIAProvidersEx.InvokeParseResponseBody(AProvider: TObject; const AJson: string;
+    out AUsage: TTokenUsage): string;
 var
   LContext: TRttiContext;
   LType: TRttiInstanceType;
@@ -473,7 +476,10 @@ end;
 procedure TTestRadIAProvidersEx.TestDeepSeek_StreamingSSE;
 begin
   RunOpenAIStreamingTest(FDeepSeekProv,
-    'data: {"choices":[{"delta":{"content":"Deep"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"Seek"}}]}' + #10 + 'data: [DONE]' + #10,
+    'data: {"choices":[{"delta":{"content":"Deep"}}]}' + #10 + 'data: {"choices":[{"delta":{"content' +
+        '":"Seek"}}]}' + #10 + 'data: ' +
+        '' +
+        '[DONE]' + #10,
     'DeepSeek', 3);
 end;
 
@@ -490,7 +496,10 @@ end;
 procedure TTestRadIAProvidersEx.TestGroq_StreamingSSE;
 begin
   RunOpenAIStreamingTest(FGroqProv,
-    'data: {"choices":[{"delta":{"content":"Gro"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"q"}}]}' + #10 + 'data: [DONE]' + #10,
+    'data: {"choices":[{"delta":{"content":"Gro"}}]}' + #10 + 'data: {"choices":[{"delta":{"content"' +
+        ':"q"}}]}' + #10 + 'data: ' +
+        '' +
+        '[DONE]' + #10,
     'Groq', 3);
 end;
 
@@ -507,7 +516,10 @@ end;
 procedure TTestRadIAProvidersEx.TestOpenRouter_StreamingSSE;
 begin
   RunOpenAIStreamingTest(FOpenRouterProv,
-    'data: {"choices":[{"delta":{"content":"Open"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"Router"}}]}' + #10 + 'data: [DONE]' + #10,
+    'data: {"choices":[{"delta":{"content":"Open"}}]}' + #10 + 'data: {"choices":[{"delta":{"content' +
+        '":"Router"}}]}' + #10 + 'data: ' +
+        '' +
+        '[DONE]' + #10,
     'OpenRouter', 3);
 end;
 
@@ -524,7 +536,8 @@ end;
 procedure TTestRadIAProvidersEx.TestLMStudio_StreamingSSE;
 begin
   RunOpenAIStreamingTest(FLMStudioProv,
-    'data: {"choices":[{"delta":{"content":"LM"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":" Studio"}}]}' + #10 + 'data: [DONE]' + #10,
+    'data: {"choices":[{"delta":{"content":"LM"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":" ' +
+        'Studio"}}]}' + #10 + 'data: [DONE]' + #10,
     'LM Studio', 3);
 end;
 
@@ -542,7 +555,8 @@ end;
 procedure TTestRadIAProvidersEx.TestAzureOpenAI_StreamingSSE;
 begin
   RunOpenAIStreamingTest(FAzureProv,
-    'data: {"choices":[{"delta":{"content":"Azure"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":" OpenAI"}}]}' + #10 + 'data: [DONE]' + #10,
+    'data: {"choices":[{"delta":{"content":"Azure"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":" ' +
+        'OpenAI"}}]}' + #10 + 'data: [DONE]' + #10,
     'Azure OpenAI', 3);
 end;
 
@@ -559,7 +573,10 @@ end;
 procedure TTestRadIAProvidersEx.TestQwen_StreamingSSE;
 begin
   RunOpenAIStreamingTest(FQwenProv,
-    'data: {"choices":[{"delta":{"content":"Ali"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"baba"}}]}' + #10 + 'data: [DONE]' + #10,
+    'data: {"choices":[{"delta":{"content":"Ali"}}]}' + #10 + 'data: {"choices":[{"delta":{"content"' +
+        ':"baba"}}]}' + #10 + 'data: ' +
+        '' +
+        '[DONE]' + #10,
     'Alibaba', 3);
 end;
 
@@ -576,7 +593,10 @@ end;
 procedure TTestRadIAProvidersEx.TestMistral_StreamingSSE;
 begin
   RunOpenAIStreamingTest(FMistralProv,
-    'data: {"choices":[{"delta":{"content":"Mis"}}]}' + #10 + 'data: {"choices":[{"delta":{"content":"tral"}}]}' + #10 + 'data: [DONE]' + #10,
+    'data: {"choices":[{"delta":{"content":"Mis"}}]}' + #10 + 'data: {"choices":[{"delta":{"content"' +
+        ':"tral"}}]}' + #10 + 'data: ' +
+        '' +
+        '[DONE]' + #10,
     'Mistral', 3);
 end;
 

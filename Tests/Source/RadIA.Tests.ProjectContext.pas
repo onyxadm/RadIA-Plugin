@@ -41,7 +41,8 @@ uses
 
 procedure TTestRadIAProjectContext.Setup;
 begin
-  FTempFolder := TPath.Combine(TPath.GetTempPath, 'RadIATestProject_' + TGUID.NewGuid.ToString.Replace('{','').Replace('}',''));
+  FTempFolder := TPath.Combine(TPath.GetTempPath, 'RadIATestProject_' + TGUID.NewGuid.ToString.Replace('{',
+      '').Replace('}',''));
   ForceDirectories(FTempFolder);
 end;
 
@@ -164,7 +165,8 @@ begin
   Assert.IsTrue(LSuccess);
   Assert.IsTrue(LContextPrompt.Contains('Projeto A.'));
   Assert.IsTrue(LContextPrompt.Contains('[Arquivo: large_file.txt]'));
-  Assert.IsTrue(LContextPrompt.Contains('[Aviso: Conteudo do arquivo "large_file.txt" foi truncado pois excede o limite de 50KB]'));
+  Assert.IsTrue(LContextPrompt.Contains('[Aviso: Conteudo do arquivo "large_file.txt" foi truncado pois ' +
+      'excede o limite de 50KB]'));
   Assert.IsTrue(LContextPrompt.Length < 60000, 'Context prompt should be significantly shorter than full large file');
 end;
 

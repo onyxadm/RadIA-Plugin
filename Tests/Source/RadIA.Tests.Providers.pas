@@ -122,7 +122,8 @@ begin
     Result := '';
 end;
 
-function TTestRadIAProviders.InvokeParseResponseBody(AProvider: TObject; const AJson: string; out AUsage: TTokenUsage): string;
+function TTestRadIAProviders.InvokeParseResponseBody(AProvider: TObject; const AJson: string;
+    out AUsage: TTokenUsage): string;
 var
   LContext: TRttiContext;
   LType: TRttiInstanceType;

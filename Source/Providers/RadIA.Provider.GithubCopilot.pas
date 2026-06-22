@@ -41,7 +41,8 @@ type
 implementation
 
 uses
-  System.JSON, System.DateUtils, System.Threading, RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, RadIA.Core.Types, RadIA.Core.TokenUsage;
+  System.JSON, System.DateUtils, System.Threading, RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SysUtils,
+      System.Classes, System.Net.HttpClient, System.Net.URLClient, RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 const
   COPILOT_CLIENT_ID = '01ab8ac9400c4e429b23'; // Official Client ID for VS Code Copilot
@@ -156,7 +157,8 @@ begin
       FSessionToken := LToken;
       FTokenExpiryTime := IncSecond(Now, LRefreshIn);
 
-      TLogger.Log('GitHub Copilot session token retrieved successfully. Valid for ' + LRefreshIn.ToString + ' seconds.', 'Provider');
+      TLogger.Log('GitHub Copilot session token retrieved successfully. Valid for ' + LRefreshIn.ToString + ' ' +
+          'seconds.', 'Provider');
       Result := FSessionToken;
     finally
       LJson.Free;
@@ -208,7 +210,8 @@ begin
         LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
         LHeaders[2] := TNetHeader.Create('Editor-Version', 'vscode/1.80.0');
         LHeaders[3] := TNetHeader.Create('Editor-Plugin-Version', 'copilot-chat/0.4.1');
-        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGUID.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
+        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGUID.NewGuid.ToString.ToLower.Replace('{',
+            '').Replace('}', ''));
 
         try
           LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, False, ATemperature, AMaxTokens);
@@ -275,7 +278,8 @@ begin
         LHeaders[1] := TNetHeader.Create('User-Agent', 'GithubCopilot/1.155.0');
         LHeaders[2] := TNetHeader.Create('Editor-Version', 'vscode/1.80.0');
         LHeaders[3] := TNetHeader.Create('Editor-Plugin-Version', 'copilot-chat/0.4.1');
-        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGUID.NewGuid.ToString.ToLower.Replace('{', '').Replace('}', ''));
+        LHeaders[4] := TNetHeader.Create('X-Request-Id', TGUID.NewGuid.ToString.ToLower.Replace('{',
+            '').Replace('}', ''));
 
         try
           LRequestBody := BuildOpenAICompatibleRequestBody(APrompt, AHistory, True, ATemperature, AMaxTokens);

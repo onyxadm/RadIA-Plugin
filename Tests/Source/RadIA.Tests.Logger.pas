@@ -95,7 +95,8 @@ begin
   // Write enough log messages to exceed 1024 bytes (e.g. 20 lines of ~80 chars)
   for ILine := 1 to 30 do
   begin
-    TLogger.Log('This is a relatively long log line used to quickly exceed the one kilobyte rotation limit ' + IntToStr(ILine), 'UnitTest');
+    TLogger.Log('This is a relatively long log line used to quickly exceed the one kilobyte rotation ' +
+        'limit ' + IntToStr(ILine), 'UnitTest');
   end;
 
   Assert.IsTrue(TFile.Exists(FActiveLogFile), 'Active log file should still exist');
@@ -140,8 +141,10 @@ begin
   Assert.IsTrue(TFile.Exists(FActiveLogFile), 'New active log file should exist');
 
   // 5. Verify contents
-  Assert.IsTrue(TFile.ReadAllText(LRotatedFile, TEncoding.UTF8).Contains('yesterday initial log line'), 'Rotated file contents');
-  Assert.IsTrue(TFile.ReadAllText(FActiveLogFile, TEncoding.UTF8).Contains('today new log line'), 'Active file contents');
+  Assert.IsTrue(TFile.ReadAllText(LRotatedFile, TEncoding.UTF8).Contains('yesterday initial log line'),
+      'Rotated file contents');
+  Assert.IsTrue(TFile.ReadAllText(FActiveLogFile, TEncoding.UTF8).Contains('today new log line'), 'Active ' +
+      'file contents');
 end;
 
 procedure TTestRadIALogger.TestLoggerExceptions;

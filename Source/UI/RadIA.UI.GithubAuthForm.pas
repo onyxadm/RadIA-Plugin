@@ -38,7 +38,8 @@ implementation
 
 
 uses
-  Winapi.Windows, System.SysUtils, Vcl.Graphics, Vcl.Dialogs, System.Threading, RadIA.Provider.GithubCopilot, Winapi.ShellAPI, ToolsAPI, RadIA.UI.Resources;
+  Winapi.Windows, System.SysUtils, Vcl.Graphics, Vcl.Dialogs, System.Threading, RadIA.Provider.GithubCopilot,
+      Winapi.ShellAPI, ToolsAPI, RadIA.UI.Resources;
 
 {$R *.dfm}
 

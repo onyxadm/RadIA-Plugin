@@ -28,7 +28,8 @@ type
 implementation
 
 uses
-  System.SysUtils, System.IOUtils, System.JSON, RadIA.Core.ProviderRegistry, RadIA.Core.Config, RadIA.Core.SettingsStorage;
+  System.SysUtils, System.IOUtils, System.JSON, RadIA.Core.ProviderRegistry, RadIA.Core.Config,
+      RadIA.Core.SettingsStorage;
 
 { TTestRadIAJSONProviders }
 

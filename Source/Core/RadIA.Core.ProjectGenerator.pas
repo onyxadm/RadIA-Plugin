@@ -23,7 +23,8 @@ uses
 
 { TRadIAProjectGenerator }
 
-function TRadIAProjectGenerator.GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string; const ADestDir: string): Boolean;
+function TRadIAProjectGenerator.GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string;
+    const ADestDir: string): Boolean;
 var
   LChosenDir: string;
   LJsonValue: TJSONValue;

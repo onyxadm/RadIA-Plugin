@@ -95,7 +95,8 @@ var
   LMeta: TProviderMetadata;
   LRegApiKey: string;
 begin
-  LProvidersFolder := TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA', 'providers');
+  LProvidersFolder := TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA',
+      'providers');
   if not TDirectory.Exists(LProvidersFolder) then
   begin
     try

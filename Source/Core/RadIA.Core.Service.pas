@@ -40,7 +40,9 @@ type
 implementation
 
 uses  System.JSON, System.Threading, System.Math, RadIA.Core.Container, RadIA.Core.ProjectContext,
-  RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs, System.SysUtils, System.Classes, RadIA.Core.TokenUsage, RadIA.Core.ChatMessage;
+  RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs, System.SysUtils,
+      System.Classes, RadIA.Core.TokenUsage,
+      RadIA.Core.ChatMessage;
 
 procedure LogService(const AMsg: string);
 begin
@@ -151,8 +153,10 @@ begin
   if FConfig.InjectDelphiVersion then
   begin
     LDelphiVersionPrompt := 'The user is writing code using Embarcadero ' + LDelphiVersionName + '. ' +
-                            'Make sure any code, syntax, keywords, and RTL components you generate are fully compatible and compile ' +
-                            'in this version. Avoid newer language features that are not supported in ' + LDelphiVersionName + '. ';
+                            'Make sure any code, syntax, keywords, and RTL components you generate are ' +
+                                'fully compatible and compile ' +
+                            'in this version. Avoid newer language features that are not supported in ' +
+                                '' + LDelphiVersionName + '. ';
     if not LPreferredLanguage.IsEmpty then
       LDelphiVersionPrompt := LDelphiVersionPrompt + LPreferredLanguage;
 
@@ -389,7 +393,8 @@ begin
               TMonitor.Exit(Self);
             end;
 
-            LogService('SendPromptStream: Cache hit for hash ' + LHash + '. Response length: ' + IntToStr(Length(LCachedResponse)));
+            LogService('SendPromptStream: Cache hit for hash ' + LHash + '. Response ' +
+                'length: ' + IntToStr(Length(LCachedResponse)));
             TThread.Queue(nil,
               procedure
               begin

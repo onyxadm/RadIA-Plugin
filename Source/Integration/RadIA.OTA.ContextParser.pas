@@ -560,7 +560,8 @@ begin
     if not TryExtractFirstBodyComment(LLines, LBeginLine + 1, LEndLine - 1,
       AContext.CommentText, LCommentStartLine, LCommentEndLine) then
     begin
-      AErrorMessage := 'Add a natural-language comment inside the empty method body before using Create Example from Comment.';
+      AErrorMessage := 'Add a natural-language comment inside the empty method body before using Create ' +
+          'Example from Comment.';
       Exit;
     end;
 

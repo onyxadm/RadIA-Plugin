@@ -41,7 +41,8 @@ type
     procedure NavigationTimerElapsed(Sender: TObject);
     procedure AutoCloseTimerElapsed(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
-    procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
+    procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean;
+        WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
     procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
     procedure ProcessWebMessage(const AMessage: string);
   public
@@ -285,7 +286,8 @@ begin
   if Assigned(FNavigationTimer) then
     FNavigationTimer.Enabled := False;
 
-  if Assigned(FEdgeBrowser) and (FEdgeBrowser.BrowserControlState = TCustomEdgeBrowser.TBrowserControlState.Creating) then
+  if Assigned(FEdgeBrowser) and 
+     (FEdgeBrowser.BrowserControlState = TCustomEdgeBrowser.TBrowserControlState.Creating) then
   begin
     ShowBrowserFallback(
       'Sign-in page is taking longer than expected',
@@ -325,7 +327,8 @@ begin
 
         if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
         begin
-          LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+          LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, ' +
+              'like Gecko) Chrome/120.0.0.0 Safari/537.36');
         end;
       end;
 
@@ -381,7 +384,8 @@ begin
   end;
 end;
 
-procedure TRadIAFormWebLogin.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+procedure TRadIAFormWebLogin.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser;
+    Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
   LJsonStr: PWideChar;

@@ -191,7 +191,8 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.Net.URLClient, RadIA.Core.Types, RadIA.Core.Service, RadIA.Core.ChatMessage, RadIA.Core.Config, RadIA.Core.ProviderRegistry, RadIA.Core.SettingsStorage, RadIA.Core.Container;
+  System.SysUtils, System.Classes, System.Net.URLClient, RadIA.Core.Types, RadIA.Core.Service, RadIA.Core.ChatMessage,
+      RadIA.Core.Config, RadIA.Core.ProviderRegistry, RadIA.Core.SettingsStorage, RadIA.Core.Container;
 
 type
   TMockHttpClient = class(TInterfacedObject, IRadIAHttpClient)
@@ -359,7 +360,8 @@ begin
   if True then ;
 end;
 
-// Os overloads obsoletos de GetTemperature, SetTemperature, GetMaxTokens, SetMaxTokens, GetTimeout e SetTimeout com enum foram removidos daqui
+// Os overloads obsoletos de GetTemperature, SetTemperature, GetMaxTokens, SetMaxTokens,
+// GetTimeout e SetTimeout com enum foram removidos daqui
 
 function TMockConfig.GetSmartConfigEnabled: Boolean;
 begin
@@ -936,7 +938,8 @@ begin
   Result := 'Please reply in Klingon.';
 end;
 
-function TMockIDEAdapter.GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
+function TMockIDEAdapter.GetLastCompilerError(out AErrorMsg: string; out AFileName: string;
+    out ALine: Integer): Boolean;
 begin
   AErrorMsg := 'Mock Error';
   AFileName := 'MockUnit.pas';

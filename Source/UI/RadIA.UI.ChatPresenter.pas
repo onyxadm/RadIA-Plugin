@@ -82,8 +82,10 @@ type
     procedure SendInitialConfigToWeb;
     procedure SendModelsUpdateToWeb(const AModels: TArray<string>; const AActiveModel: string);
     procedure SendSessionsUpdateToWeb;
-    procedure PostToWebView(const AAction, ARole, AText: string; const AProvider: string = ''; const AModel: string = ''); overload;
-    procedure PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean; const AProvider: string = ''; const AModel: string = ''); overload;
+    procedure PostToWebView(const AAction, ARole, AText: string; const AProvider: string = '';
+        const AModel: string = ''); overload;
+    procedure PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean;
+        const AProvider: string = ''; const AModel: string = ''); overload;
 
     procedure HandleOnbtnWebLoginConnectClick;
     procedure QueueOnUI(const AProcedure: TProc);
@@ -110,7 +112,8 @@ type
     procedure HandleClearChatMessage;
     procedure HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
   public
-    constructor Create(const AView: IRadIAChatView; const AConfig: IRadIAConfig = nil; const AService: IRadIAService = nil; const ADataDir: string = '');
+    constructor Create(const AView: IRadIAChatView; const AConfig: IRadIAConfig = nil;
+        const AService: IRadIAService = nil; const ADataDir: string = '');
     destructor Destroy; override;
 
     procedure Initialize(const AWebFilesDir: string);
@@ -182,7 +185,8 @@ end;
 
 { TRadIAChatPresenter }
 
-constructor TRadIAChatPresenter.Create(const AView: IRadIAChatView; const AConfig: IRadIAConfig; const AService: IRadIAService; const ADataDir: string);
+constructor TRadIAChatPresenter.Create(const AView: IRadIAChatView; const AConfig: IRadIAConfig;
+    const AService: IRadIAService; const ADataDir: string);
 begin
   inherited Create;
   FView := AView;
@@ -733,7 +737,8 @@ begin
     FConfig.Load;
     if FConfig.QuotaUsed >= FConfig.QuotaLimit then
     begin
-      FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local limit of %s tokens reached).',
+      FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local ' +
+          'limit of %s tokens reached).',
         [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
       Exit;
     end;
@@ -756,11 +761,14 @@ begin
   LProfile := rpGeneralChat;
   if APromptText.StartsWith('/refactor', True) or APromptText.StartsWith('/optimize', True) then
     LProfile := rpRefactorCode
-  else if APromptText.StartsWith('/bugs', True) or APromptText.StartsWith('Perform a comprehensive static analysis', True) then
+  else if APromptText.StartsWith('/bugs', True) or APromptText.StartsWith('Perform a comprehensive static ' +
+      'analysis', True) then
     LProfile := rpFindBugs
   else if APromptText.StartsWith('/test', True) then
     LProfile := rpGenerateTests
-  else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc', True) or APromptText.StartsWith('/fix', True) or APromptText.StartsWith('Analyze the following Delphi stack trace', True) then
+  else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc',
+      True) or APromptText.StartsWith('/fix',
+      True) or APromptText.StartsWith('Analyze the following Delphi stack trace', True) then
     LProfile := rpExplainCode;
 
   LUserMsg := TRadIAChatMessage.CreateMessage(mrUser, APromptText, LActiveProvider, LActiveModel);
@@ -792,7 +800,8 @@ begin
 
             if not SameText(Self.FSessionManager.ActiveSessionId, LSessionId) then
             begin
-              TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.', [LSessionId, Self.FSessionManager.ActiveSessionId]), 'UI');
+              TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.',
+                  [LSessionId, Self.FSessionManager.ActiveSessionId]), 'UI');
               if AIsDone and (not LFullResponse.IsEmpty) and (not GIsShuttingDown) then
               begin
                 TInterlocked.Increment(GActiveThreadCount);
@@ -805,7 +814,8 @@ begin
                     try
                       try
                         LOrigHistory := Self.FSessionManager.LoadSessionHistory(LSessionId);
-                        LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+                        LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse,
+                            LActiveProvider, LActiveModel);
                         LOrigHistory := LOrigHistory + [LAssistantMsg];
                         Self.FSessionManager.SaveSessionHistory(LSessionId, LOrigHistory);
                       except
@@ -829,12 +839,14 @@ begin
 
               if not LFullResponse.IsEmpty then
               begin
-                LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse + ' [Cancelled by user]', LActiveProvider, LActiveModel);
+                LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse + ' [Cancelled ' +
+                    'by user]', LActiveProvider, LActiveModel);
                 Self.FHistory := Self.FHistory + [LAssistantMsg];
                 Self.SaveChatHistory;
               end;
 
-              Self.PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*', False, LActiveProvider, LActiveModel);
+              Self.PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*',
+                  False, LActiveProvider, LActiveModel);
               Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
               Exit;
             end;
@@ -849,15 +861,18 @@ begin
               if not LFullResponse.IsEmpty then
               begin
                 LFullResponse := LFullResponse + #13#10#13#10 + '**Error:** ' + AError;
-                Self.PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + AError, True, LActiveProvider, LActiveModel);
+                Self.PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + AError,
+                    True, LActiveProvider, LActiveModel);
 
-                LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+                LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider,
+                    LActiveModel);
                 Self.FHistory := Self.FHistory + [LAssistantMsg];
                 Self.SaveChatHistory;
               end
               else
               begin
-                Self.PostToWebView('add_message', 'assistant', '**Error:** ' + AError, False, LActiveProvider, LActiveModel);
+                Self.PostToWebView('add_message', 'assistant', '**Error:** ' + AError, False, LActiveProvider,
+                    LActiveModel);
                 Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
               end;
 
@@ -889,12 +904,14 @@ begin
               if LFullResponse.IsEmpty then
               begin
                 TLogger.Log('SendPromptToAI: Empty response from AI provider', 'UI');
-                Self.PostToWebView('add_message', 'assistant', '**Error:** The provider returned empty response.', False, LActiveProvider, LActiveModel);
+                Self.PostToWebView('add_message', 'assistant', '**Error:** The provider returned empty ' +
+                    'response.', False, LActiveProvider, LActiveModel);
                 Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
                 Exit;
               end;
 
-              LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider, LActiveModel);
+              LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider,
+                  LActiveModel);
               Self.FHistory := Self.FHistory + [LAssistantMsg];
               Self.SaveChatHistory;
 
@@ -905,7 +922,9 @@ begin
               if LUsage.TotalTokens > 0 then
               begin
                 Self.FAccumulatedUsage.PromptTokens := Self.FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
-                Self.FAccumulatedUsage.CompletionTokens := Self.FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
+                Self.FAccumulatedUsage.CompletionTokens := 
+                  Self.FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
+                    
                 Self.FAccumulatedUsage.TotalTokens := Self.FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
 
                 if not Self.FConfig.IsWebLoginProvider(LActiveProvider) then
@@ -960,7 +979,8 @@ begin
     FConfig.Load;
     if FConfig.QuotaUsed >= FConfig.QuotaLimit then
     begin
-      FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local limit of %s tokens reached).',
+      FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local ' +
+          'limit of %s tokens reached).',
         [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
       Exit;
     end;
@@ -1297,7 +1317,8 @@ begin
     end);
 end;
 
-procedure TRadIAChatPresenter.HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean; const AError: string);
+procedure TRadIAChatPresenter.HandleStreamChunkMessage(const AText: string; const AIsDone: Boolean;
+    const AError: string);
 begin
   QueueOnUI(
     procedure
@@ -1422,7 +1443,8 @@ begin
 
   if not FView.IsBackgroundBrowserInitialized then
   begin
-    TLogger.Log('OnWebViewBridgeSendPrompt: Background browser is not initialized yet. Queueing prompt and initializing...', 'UI');
+    TLogger.Log('OnWebViewBridgeSendPrompt: Background browser is not initialized yet. Queueing prompt ' +
+        'and initializing...', 'UI');
     FPendingPrompt := APrompt;
     FBackgroundBrowserReady := False;
     FView.CreateBackgroundBrowser;
@@ -1563,7 +1585,8 @@ begin
       procedure
       begin
         FLoginPopupOpen := False;
-        TLogger.Log('HandleOnbtnWebLoginConnectClick: Login completed successfully. Refreshing background browser.', 'UI');
+        TLogger.Log('HandleOnbtnWebLoginConnectClick: Login completed successfully. Refreshing background ' +
+            'browser.', 'UI');
         FConfig.SetProviderAuthType(LActiveProvider, 'web_login');
         FConfig.Save;
         FView.NavigateBackgroundBrowser(LUrl);
@@ -1829,12 +1852,14 @@ begin
   end;
 end;
 
-procedure TRadIAChatPresenter.PostToWebView(const AAction, ARole, AText: string; const AProvider: string; const AModel: string);
+procedure TRadIAChatPresenter.PostToWebView(const AAction, ARole, AText: string;
+    const AProvider: string; const AModel: string);
 begin
   PostToWebView(AAction, ARole, AText, False, AProvider, AModel);
 end;
 
-procedure TRadIAChatPresenter.PostToWebView(const AAction, ARole, AText: string; const AIsDone: Boolean; const AProvider: string; const AModel: string);
+procedure TRadIAChatPresenter.PostToWebView(const AAction, ARole, AText: string;
+    const AIsDone: Boolean; const AProvider: string; const AModel: string);
 var
   LJson: TJSONObject;
   LDisplayModel: string;

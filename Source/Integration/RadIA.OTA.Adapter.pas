@@ -85,7 +85,8 @@ begin
   Result := TRadIAOTAHelper.GetPreferredLanguageInstruction;
 end;
 
-function TRadIAConcreteIDEAdapter.GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
+function TRadIAConcreteIDEAdapter.GetLastCompilerError(out AErrorMsg: string; out AFileName: string;
+    out ALine: Integer): Boolean;
 begin
   Result := TRadIAMessageViewHook.GetLastCompilerError(AErrorMsg, AFileName, ALine);
 end;

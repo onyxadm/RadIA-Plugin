@@ -37,7 +37,8 @@ end;
 
 function TRadIAOpenRouterProvider.GetAvailableModels: TArray<string>;
 begin
-  Result := TArray<string>.Create(MODEL_OPENROUTER_GEMINI25_PRO, MODEL_OPENROUTER_LLAMA33, MODEL_OPENROUTER_DEEPSEEK_R1);
+  Result := TArray<string>.Create(MODEL_OPENROUTER_GEMINI25_PRO, MODEL_OPENROUTER_LLAMA33,
+      MODEL_OPENROUTER_DEEPSEEK_R1);
 end;
 
 function TRadIAOpenRouterProvider.GetName: string;

@@ -230,7 +230,8 @@ begin
   ActiveProviderId := AActiveProvider;
 end;
 
-procedure TMockChatView.UpdateModels(const AModels: TArray<string>; const AActiveModel: string; const AEnabled: Boolean);
+procedure TMockChatView.UpdateModels(const AModels: TArray<string>; const AActiveModel: string;
+    const AEnabled: Boolean);
 begin
   ModelsList := AModels;
   ActiveModelName := AActiveModel;
@@ -377,10 +378,12 @@ begin
   FHasOriginalOpenAI := TProviderRegistry.GetProvider('OpenAI', FOpenAIOriginalMeta);
 
   TProviderRegistry.RegisterProvider(
-    TProviderMetadata.Create('Gemini', 'Gemini Mock', '', True, False, TArray<string>.Create('gemini-1.5-flash', 'gemini-1.5-pro'),
+    TProviderMetadata.Create('Gemini', 'Gemini Mock', '', True, False, TArray<string>.Create('gemini-1.5-flash',
+        'gemini-1.5-pro'),
       function(const ACfg: IRadIAConfig): IRadIAProvider
       begin
-        Result := TMockIAProvider.Create('Gemini', 'Gemini Mock', TArray<string>.Create('gemini-1.5-flash', 'gemini-1.5-pro'));
+        Result := TMockIAProvider.Create('Gemini', 'Gemini Mock', TArray<string>.Create('gemini-1.5-flash',
+            'gemini-1.5-pro'));
       end
     )
   );
@@ -444,7 +447,8 @@ begin
   LFound := False;
   for LMsg in FMockView.PostedMessages do
   begin
-    if LMsg.Contains('"action":"add_message"') and LMsg.Contains('"role":"user"') and LMsg.Contains('Hello Assistant') then
+    if LMsg.Contains('"action":"add_message"') and LMsg.Contains('"role":"user"') and LMsg.Contains('Hello ' +
+        'Assistant') then
     begin
       LFound := True;
       Break;

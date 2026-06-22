@@ -15,7 +15,8 @@ type
     function GetBaseUrl: string; override;
     function GetModelsDiscoveryUrl: string; override;
   public
-    constructor Create(const AConfig: IRadIAConfig; const AProviderId, ADisplayName, ADefaultBaseUrl: string; const ADefaultModels: TArray<string>; const AApiKey: string = ''); reintroduce;
+    constructor Create(const AConfig: IRadIAConfig; const AProviderId, ADisplayName,
+        ADefaultBaseUrl: string; const ADefaultModels: TArray<string>; const AApiKey: string = ''); reintroduce;
 
     function GetAvailableModels: TArray<string>; override;
     function GetName: string; override;

@@ -153,7 +153,8 @@ begin
   Cancel := False;
 end;
 
-procedure TRadIAIDEEditorNotifier.FileNotification(NotifyCode: TOTAFileNotification; const FileName: string; var Cancel: Boolean);
+procedure TRadIAIDEEditorNotifier.FileNotification(NotifyCode: TOTAFileNotification;
+    const FileName: string; var Cancel: Boolean);
 var
   LModuleServices: IOTAModuleServices;
   LModule: IOTAModule;
@@ -641,7 +642,8 @@ begin
       begin
         LPopupMenu := TPopupMenu(Sender);
 
-        if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu, LOldOnPopup) and Assigned(LOldOnPopup) then
+        if Assigned(FInterceptedMenus) and FInterceptedMenus.TryGetValue(LPopupMenu,
+            LOldOnPopup) and Assigned(LOldOnPopup) then
         begin
           try
             LOldOnPopup(Sender);
@@ -877,12 +879,14 @@ end;
 
 procedure TRadIAEditorHook.OnOptimizeSQLExecute(Sender: TObject);
 begin
-  SendCommandToChat('/sqloptimize', 'Analyze and optimize this SQL query. Suggest indexes, join optimization, syntax corrections, and general improvements:');
+  SendCommandToChat('/sqloptimize', 'Analyze and optimize this SQL query. Suggest indexes, join optimization, ' +
+      'syntax corrections, and general improvements:');
 end;
 
 procedure TRadIAEditorHook.OnScanWarningsExecute(Sender: TObject);
 begin
-  SendCommandToChat('/scanwarnings', 'Analyze this Delphi code for potential compiler warnings, thread-safety violations, and Windows resource leaks (such as unreleased GDI handles):');
+  SendCommandToChat('/scanwarnings', 'Analyze this Delphi code for potential compiler warnings, thread-safety ' +
+      'violations, and Windows resource leaks (such as unreleased GDI handles):');
 end;
 
 procedure TRadIAEditorHook.OnShowChatExecute(Sender: TObject);
@@ -916,10 +920,13 @@ begin
   try
     LBuilder.AppendLine('You are generating Object Pascal code for Delphi.');
     LBuilder.AppendLine('Return only the statements that must be inserted inside the existing method body.');
-    LBuilder.AppendLine('Do not return the method signature, the outer begin/end, explanations, or Markdown outside one pascal code block.');
+    LBuilder.AppendLine('Do not return the method signature, the outer begin/end, explanations, or Markdown ' +
+        'outside one pascal code block.');
     LBuilder.AppendLine('Use only symbols already available in the full unit context whenever possible.');
-    LBuilder.AppendLine('Do not introduce dependencies that require changing the unit uses clause unless there is no practical alternative.');
-    LBuilder.AppendLine('Use inline local variable declarations only if they are necessary and compatible with Delphi 10.3 or newer.');
+    LBuilder.AppendLine('Do not introduce dependencies that require changing the unit uses clause unless ' +
+        'there is no practical alternative.');
+    LBuilder.AppendLine('Use inline local variable declarations only if they are necessary and compatible ' +
+        'with Delphi 10.3 or newer.');
     LBuilder.AppendLine('Preserve valid Delphi formatting and indentation using two spaces per indentation level.');
     LBuilder.AppendLine('The code will be inserted immediately below the natural-language comment.');
     LBuilder.AppendLine;
@@ -1075,7 +1082,8 @@ var
 begin
   if FCreateExampleInProgress then
   begin
-    ShowMessage('Create Example from Comment is already generating code. Please wait for the current request to finish.');
+    ShowMessage('Create Example from Comment is already generating code. Please wait for the current ' +
+        'request to finish.');
     Exit;
   end;
 
@@ -1135,7 +1143,8 @@ begin
             Exit;
           end;
 
-          if not FIDEAdapter.InsertTextAtLineColumn(LCode + sLineBreak, LContext.InsertionLine, LContext.InsertionColumn) then
+          if not FIDEAdapter.InsertTextAtLineColumn(LCode + sLineBreak, LContext.InsertionLine,
+              LContext.InsertionColumn) then
           begin
             TLogger.Log('OnCreateExampleExecute failed: insert operation returned false', 'EditorHook');
             ShowMessage('Could not insert the generated example into the active editor.');
@@ -1162,7 +1171,8 @@ end;
 
 procedure TRadIAEditorHook.OnBugsExecute(Sender: TObject);
 begin
-  SendCommandToChat('/bugs', 'Analyze this Delphi code for actionable bugs, exceptions, memory leaks, and SOLID issues. Be concise:');
+  SendCommandToChat('/bugs', 'Analyze this Delphi code for actionable bugs, exceptions, memory leaks, ' +
+      'and SOLID issues. Be concise:');
 end;
 
 procedure TRadIAEditorHook.OnDocExecute(Sender: TObject);
@@ -1215,7 +1225,8 @@ begin
     Exit;
   end;
 
-  TLogger.Log(Format('OnFixErrorExecute: Compiler Error found. File=%s, Line=%d, Msg=%s', [LFileName, LLine, LErrorMsg]), 'EditorHook');
+  TLogger.Log(Format('OnFixErrorExecute: Compiler Error found. File=%s, Line=%d, Msg=%s', [LFileName,
+      LLine, LErrorMsg]), 'EditorHook');
 
   { Extract source code context if line is valid }
   LSourceCode := '';

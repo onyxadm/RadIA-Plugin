@@ -250,7 +250,8 @@ type
   IRadIAHttpClient = interface
     ['{7468E6A2-0FBE-4BD2-BE1E-D7C6FBFA9A2E}']
     function Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
-    function Post(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
+    function Post(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
+        const ATimeoutMs: Integer = 0): string;
     procedure PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
       const AOnWrite: TProc<TBytes>; const ATimeoutMs: Integer = 0);
     procedure Cancel;

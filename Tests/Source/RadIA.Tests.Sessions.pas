@@ -38,7 +38,8 @@ uses
 
 procedure TTestRadIASessions.Setup;
 begin
-  FTempDir := TPath.Combine(TPath.GetTempPath, 'RadIATests_sessions_' + TGUID.NewGuid.ToString.Replace('{', '').Replace('}', ''));
+  FTempDir := TPath.Combine(TPath.GetTempPath, 'RadIATests_sessions_' + TGUID.NewGuid.ToString.Replace('{',
+      '').Replace('}', ''));
   FManager := TRadIASessionManager.Create(FTempDir);
 end;
 

@@ -18,7 +18,8 @@ type
 
     { IRadIAHttpClient implementation }
     function Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
-    function Post(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
+    function Post(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
+        const ATimeoutMs: Integer = 0): string;
     procedure PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
       const AOnWrite: TProc<TBytes>; const ATimeoutMs: Integer = 0);
     procedure Cancel;

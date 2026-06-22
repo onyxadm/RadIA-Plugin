@@ -562,7 +562,8 @@ begin
   end;
 end;
 
-procedure TRadIAFrameAIChat.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+procedure TRadIAFrameAIChat.EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser;
+    Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
   LJsonStr: PWideChar;
@@ -850,7 +851,8 @@ begin
     cbProvider.ItemIndex := 0;
 end;
 
-procedure TRadIAFrameAIChat.UpdateModels(const AModels: TArray<string>; const AActiveModel: string; const AEnabled: Boolean);
+procedure TRadIAFrameAIChat.UpdateModels(const AModels: TArray<string>; const AActiveModel: string;
+    const AEnabled: Boolean);
 var
   LModel: string;
 begin
@@ -1044,7 +1046,8 @@ begin
 
         if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
         begin
-          LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+          LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, ' +
+              'like Gecko) Chrome/120.0.0.0 Safari/537.36');
         end;
       end;
 
@@ -1074,7 +1077,8 @@ begin
     FPresenter.OnBackgroundBrowserNavigation(Sender.LocationURL);
 end;
 
-procedure TRadIAFrameAIChat.EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
+procedure TRadIAFrameAIChat.EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser;
+    Args: TWebMessageReceivedEventArgs);
 var
   LStr: PWideChar;
   LJsonStr: PWideChar;

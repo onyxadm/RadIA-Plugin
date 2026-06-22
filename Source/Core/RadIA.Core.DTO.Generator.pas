@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.DTO.Generator;
+unit RadIA.Core.DTO.Generator;
 
 interface
 
@@ -60,18 +60,23 @@ begin
   begin
 LFormatRules :=
         'Generate a complete Delphi class structure mapped for DEXT ORM using the following rules:' + sLineBreak +
-        '1. Uses Clause: Must include: System.SysUtils, System.Classes, Dext.Entity, Dext.Entity.Collections,
-          Dext.Types.Nullable, Dext.Types.Lazy, Dext.Core.SmartTypes.' + sLineBreak +
-        '2. Properties: Map database columns via public properties, not private/public fields. Private backing fields must start with F (e.g., FId, FName).' + sLineBreak +
-        '3. No Unnecessary Getters/Setters: For regular columns (including standard Smart Properties and nullable columns), ' +
+        '1. Uses Clause: Must include: System.SysUtils, System.Classes, Dext.Entity, Dext.Entity.Collections, ' +
+        'Dext.Types.Nullable, Dext.Types.Lazy, Dext.Core.SmartTypes.' + sLineBreak +
+        '2. Properties: Map database columns via public properties, not private/public fields. Private ' +
+            'backing fields must start with F (e.g., FId, FName).' + sLineBreak +
+        '3. No Unnecessary Getters/Setters: For regular columns (including standard Smart Properties ' +
+            'and nullable columns), ' +
         'do NOT create getter/setter methods. Use direct read/write access to the backing fields ' +
         '(e.g., property Name: StringType read FName write FName;). Getters and setters should ' +
         'only be created for relationship properties (BelongsTo/HasMany).' + sLineBreak +
         '4. Smart Properties: Use native aliases for columns: IntType, StringType, DoubleType, BoolType.' + sLineBreak +
         '5. Class Attributes: Apply [Table(''table_name'')] directly above the class definition.' + sLineBreak +
         '6. Primary Keys: Annotate properties with [PK] or [PK, AutoInc] for auto-incrementing fields.' + sLineBreak +
-        '7. Columns: Use [Column(''column_name'')]. Use [Required] for non-nullable fields, and [MaxLength(N)] for string limits. NEVER use [StringLength].' + sLineBreak +
-        '8. Nullable: For database columns that can be NULL, use Nullable<T> (e.g. Nullable<Integer>) for standard fields. For Smart Properties, use Prop<Nullable<T>> (e.g. Prop<Nullable<string>>). NEVER use Nullable<Prop<T>> or Nullable<StringType>.' + sLineBreak +
+        '7. Columns: Use [Column(''column_name'')]. Use [Required] for non-nullable fields, and [MaxLength(N)] ' +
+            'for string limits. NEVER use [StringLength].' + sLineBreak +
+        '8. Nullable: For database columns that can be NULL, use Nullable<T> (e.g. Nullable<Integer>) ' +
+            'for standard fields. For Smart Properties, use Prop<Nullable<T>> (e.g. Prop<Nullable<string>>). ' +
+            'NEVER use Nullable<Prop<T>> or Nullable<StringType>.' + sLineBreak +
         '9. Many-to-One (BelongsTo) Relationships:' + sLineBreak +
         '   - Private backing field must be ILazy<TEntityClass> (e.g., FUser: ILazy<TUser>;).' + sLineBreak +
         '   - Annotate property with [ForeignKey(''foreign_key_column''), BelongsTo].' + sLineBreak +
@@ -87,15 +92,18 @@ LFormatRules :=
         '       if Value <> nil then FForeignKeyId := Value.Id;' + sLineBreak +
         '     end;' + sLineBreak +
         '10. One-to-Many (HasMany) Relationships:' + sLineBreak +
-        '    - Private backing field must be ILazy<TList<TEntityClass>> (e.g., FOrders: ILazy<TList<TOrder>>;).' + sLineBreak +
-        '    - Annotate property with [InverseProperty(''BackNavigationPropName''), HasMany]. No setter should be generated.' + sLineBreak +
+        '    - Private backing field must be ILazy<TList<TEntityClass>> (e.g., FOrders: ' +
+            'ILazy<TList<TOrder>>;).' + sLineBreak +
+        '    - Annotate property with [InverseProperty(''BackNavigationPropName''), HasMany]. No setter ' +
+            'should be generated.' + sLineBreak +
         '    - Getter implementation pattern:' + sLineBreak +
         '      function TMyClass.GetMyList: TList<TEntityClass>;' + sLineBreak +
         '      begin' + sLineBreak +
         '        if FMyList = nil then FMyList := TLazy<TList<TEntityClass>>.Create;' + sLineBreak +
         '        Result := FMyList.Value;' + sLineBreak +
         '      end;' + sLineBreak +
-        '11. Ensure that getter and setter methods for relationship properties are fully implemented inside the implementation section.';
+        '11. Ensure that getter and setter methods for relationship properties are fully implemented ' +
+            'inside the implementation section.';
   end;
 
   Result :=

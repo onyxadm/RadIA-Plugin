@@ -40,8 +40,10 @@ type
     procedure BtnBrowseLogPathClick(Sender: TObject);
     procedure BtnResetQuotaClick(Sender: TObject);
 
-    function CreateCheckBox(AParent: TWinControl; const ACaption: string; const ALeft, ATop, AWidth: Integer): TCheckBox;
-    function CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer; const ANumbersOnly: Boolean = False): TEdit;
+    function CreateCheckBox(AParent: TWinControl; const ACaption: string; const ALeft,
+        ATop, AWidth: Integer): TCheckBox;
+    function CreateEdit(AParent: TWinControl; const ALeft, ATop, AWidth: Integer;
+        const ANumbersOnly: Boolean = False): TEdit;
     function CreateLabel(AParent: TWinControl; const ACaption: string; const ALeft, ATop: Integer): TLabel;
     procedure CreateGeneralTab;
     procedure CreateTemplateOriginLabel;
@@ -115,7 +117,8 @@ type
 
     procedure UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
     procedure GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
-    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem,
+        AIsCustomized: Boolean);
     procedure ClearTemplateFields;
     procedure FocusTemplateName;
     function GetSelectedTemplateIndex: Integer;
@@ -890,7 +893,11 @@ begin
   end;
 
   if SameText(btnDeleteTemplate.Caption, 'Restore Default') then
-    LConfirmMsg := 'Do you really want to restore the default template "' + lstTemplates.Items[lstTemplates.ItemIndex] + '" to its original content?'
+    LConfirmMsg := 'Do you really want to restore the default template "' +
+                   lstTemplates.Items[lstTemplates.ItemIndex] + '"' +
+        ' ' +
+        '' +
+        'to its original content?'
   else
     LConfirmMsg := 'Are you sure you want to delete the template "' + lstTemplates.Items[lstTemplates.ItemIndex] + '"?';
 
@@ -1507,7 +1514,10 @@ begin
   AIsProjGen := chkIsProjectGenerator.Checked;
 end;
 
-procedure TRadIAFrameAIConfig.SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+procedure TRadIAFrameAIConfig.SetTemplateFields(const AName, ADesc, ABody, ASlash: string;
+    const AIsProjGen: Boolean; const AIsSystem,
+    
+    AIsCustomized: Boolean);
 begin
   edtTemplateName.Text := AName;
   edtTemplateDesc.Text := ADesc;

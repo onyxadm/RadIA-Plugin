@@ -274,7 +274,8 @@ begin
                    LModelsList := TList<string>.Create;
                    try
                      try
-                       LResponseText := DoGetRequest(LUrl, nil, 5000); // Timeout rápido de 5 segundos para busca de modelos
+                       LResponseText := DoGetRequest(LUrl, nil, 5000);
+                       // Timeout rapido de 5 segundos para busca de modelos
                        LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
                        if Assigned(LJson) then
                        begin
@@ -386,7 +387,8 @@ var
   LObjectCount: Integer;
 begin
   LObjectCount := 0;
-  TLogger.Log(Format('PSB: Entry BufferLen=%d First30=|%s|', [ABuffer.Length, ABuffer.Substring(0, Min(30, ABuffer.Length))]), 'Provider');
+  TLogger.Log(Format('PSB: Entry BufferLen=%d First30=|%s|', [ABuffer.Length, ABuffer.Substring(0, Min(30,
+      ABuffer.Length))]), 'Provider');
 
   while True do
   begin

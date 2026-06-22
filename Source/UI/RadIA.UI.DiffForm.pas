@@ -19,7 +19,8 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
-    procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
+    procedure EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean;
+        WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
     procedure btnPrevConflictClick(Sender: TObject);
     procedure btnNextConflictClick(Sender: TObject);
   protected
@@ -60,7 +61,8 @@ implementation
 
 
 uses
-  Winapi.Windows, System.SysUtils, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage, System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources,
+  Winapi.Windows, System.SysUtils, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage,
+      System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources,
   RadIA.Core.Container;
 
 {$R *.dfm}

@@ -77,7 +77,8 @@ begin
       403: Result := 'API Error: Forbidden (Status 403). You might not have access to this resource or model.';
       404: Result := 'API Error: Not Found (Status 404). The requested resource or model was not found.';
       429: Result := 'API Error: Rate Limit Exceeded (Status 429). Please wait a moment before sending more requests.';
-      500, 502, 503, 504: Result := Format('API Error: Server Error (Status %d). The AI provider is temporarily unavailable.', [AStatusCode]);
+      500, 502, 503, 504: Result := Format('API Error: Server Error (Status %d). The AI provider is ' +
+          'temporarily unavailable.', [AStatusCode]);
     else
       Result := Format('API HTTP Error %d. Response: %s', [AStatusCode, AResponseContent]);
     end;

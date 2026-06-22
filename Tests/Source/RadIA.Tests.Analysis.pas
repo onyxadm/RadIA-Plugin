@@ -74,8 +74,10 @@ procedure TTestRadIAAnalysis.TestAnalysisTemplates_ArePresent;
 var
   LTemplate: TPromptTemplate;
 begin
-  Assert.IsTrue(FManager.FindTemplate('Analyze Stack Trace', LTemplate), 'Analyze Stack Trace template must be present');
-  Assert.IsTrue(FManager.FindTemplate('Review Leaks and SOLID', LTemplate), 'Review Leaks and SOLID template must be present');
+  Assert.IsTrue(FManager.FindTemplate('Analyze Stack Trace', LTemplate), 'Analyze Stack Trace template ' +
+      'must be present');
+  Assert.IsTrue(FManager.FindTemplate('Review Leaks and SOLID', LTemplate), 'Review Leaks and SOLID ' +
+      'template must be present');
 end;
 
 procedure TTestRadIAAnalysis.TestResolveStackTraceTemplate;

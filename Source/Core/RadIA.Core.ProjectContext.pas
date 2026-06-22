@@ -126,7 +126,8 @@ begin
 
                       LSb.AppendLine(Format('[Arquivo: %s]', [LFileRelPath.Replace('\', '/')]));
                       LSb.AppendLine(LFileContent.Trim);
-                      LSb.AppendLine(Format('[Aviso: Conteudo do arquivo "%s" foi truncado pois excede o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
+                      LSb.AppendLine(Format('[Aviso: Conteudo do arquivo "%s" foi truncado pois excede ' +
+                          'o limite de 50KB]', [LFileRelPath.Replace('\', '/')]));
                       LSb.AppendLine;
                     end
                     else

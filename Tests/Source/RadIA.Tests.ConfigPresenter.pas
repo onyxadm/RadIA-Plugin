@@ -126,7 +126,8 @@ type
 
     procedure UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
     procedure GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
-    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem,
+        AIsCustomized: Boolean);
     procedure ClearTemplateFields;
     procedure FocusTemplateName;
     function GetSelectedTemplateIndex: Integer;
@@ -337,7 +338,10 @@ begin
   AIsProjGen := TemplateIsProjGen;
 end;
 
-procedure TMockConfigView.SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+procedure TMockConfigView.SetTemplateFields(const AName, ADesc, ABody, ASlash: string;
+    const AIsProjGen: Boolean; const AIsSystem,
+    
+    AIsCustomized: Boolean);
 begin
   TemplateName := AName;
   TemplateDesc := ADesc;

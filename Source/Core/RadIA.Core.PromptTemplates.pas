@@ -33,7 +33,8 @@ type
 
     procedure Load;
     procedure Save;
-    procedure AddTemplate(const AName, ADescription, ATemplate: string; const AIsProjectGenerator: Boolean = False; const ASlashCommand: string = '');
+    procedure AddTemplate(const AName, ADescription, ATemplate: string; const AIsProjectGenerator: Boolean = False;
+        const ASlashCommand: string = '');
     procedure DeleteTemplate(const AName: string);
     procedure RestoreDefaultTemplate(const AName: string);
     procedure ClearTemplates;
@@ -75,7 +76,8 @@ begin
 end;
 
 procedure TPromptTemplateManager.CreateDefaultTemplates;
-  procedure AddDefault(const AName, ADescription, ATemplate: string; const AIsProjectGenerator: Boolean = False; const ASlashCommand: string = '');
+  procedure AddDefault(const AName, ADescription, ATemplate: string; const AIsProjectGenerator: Boolean = False;
+      const ASlashCommand: string = '');
   var
     LTemplate: TPromptTemplate;
   begin
@@ -133,7 +135,8 @@ begin
   AddDefault(
     'Analyze Stack Trace',
     'Analyze exception stack trace and suggest root cause fixes',
-    'Analyze the following Delphi stack trace/error log:'#13#10#13#10'{stacktrace}'#13#10#13#10'Here is the active unit code context for line reference:'#13#10#13#10'{code}',
+    'Analyze the following Delphi stack trace/error log:'#13#10#13#10'{stacktrace}'#13#10#13#10'Here ' +
+        'is the active unit code context for line reference:'#13#10#13#10'{code}',
     False,
     '/stacktrace'
   );
@@ -149,11 +152,14 @@ begin
   AddDefault(
     'Create Project Delphi',
     'Generate a complete Delphi project from specification with file paths',
-    'You are a Senior Delphi Software Architect. Create a complete, fully functional and compilable Delphi project based on the following specification:'#13#10 +
+    'You are a Senior Delphi Software Architect. Create a complete, fully functional and compilable ' +
+        'Delphi project based on the following specification:'#13#10 +
     '"{specification}"'#13#10#13#10 +
-    'Provide all necessary files (such as .dpr, .pas, .dfm) so the project is complete and ready to compile and run. Follow these strict rules:'#13#10 +
+    'Provide all necessary files (such as .dpr, .pas, .dfm) so the project is complete and ready to ' +
+        'compile and run. Follow these strict rules:'#13#10 +
     '1. Do not use placeholders or omit any code. Write the entire implementation.'#13#10 +
-    '2. You MUST start the very first line of EVERY code block with a filepath comment representing the relative path of that file in the project directory.'#13#10 +
+    '2. You MUST start the very first line of EVERY code block with a filepath comment representing ' +
+        'the relative path of that file in the project directory.'#13#10 +
     'Use the following format for each file block:'#13#10 +
     '```pascal'#13#10 +
     '// filepath: ProjectName.dpr'#13#10 +
@@ -167,23 +173,30 @@ begin
     '...'#13#10 +
     'end'#13#10 +
     '```'#13#10 +
-    '3. Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together.'#13#10 +
+    '3. Ensure all unit linkages, main program blocks, form definitions, and class declarations match ' +
+        'and compile correctly together.'#13#10 +
     '4. Memory Safety, Type Safety and Dependencies:'#13#10 +
     '   - Enforce proper "uses" clauses: Double-check that every unit imports all units required for its ' +
     'compilation (e.g. System.Generics.Collections for generic lists, System.Classes for persistence/lists, ' +
-    'System.SysUtils for exceptions/guid, Vcl.Dialogs/Forms/Controls/Graphics/StdCtrls/ExtCrts for VCL UI controls, etc.).'#13#10 +
-    '   - Use strongly typed generic collections (from System.Generics.Collections like TList<T> or TDictionary<K,V>) instead of legacy non-generic collections (like TList without generic type parameters). Never use raw non-generic lists.',
+    'System.SysUtils for exceptions/guid, Vcl.Dialogs/Forms/Controls/Graphics/StdCtrls/ExtCrts for VCL ' +
+        'UI controls, etc.).'#13#10 +
+    '   - Use strongly typed generic collections (from System.Generics.Collections like TList<T> or ' +
+        'TDictionary<K,V>) instead of legacy non-generic collections (like TList without generic type ' +
+        'parameters). Never use raw non-generic lists.',
     True,
     '/createproject'
   );
   AddDefault(
     'Create Project Delphi Architecture',
     'Generate a SOLID clean architecture Delphi project from specification with files paths',
-    'You are a Senior Delphi Software Architect. Create a complete, fully functional, compilable, and highly structured Delphi project based on the following specification:'#13#10 +
+    'You are a Senior Delphi Software Architect. Create a complete, fully functional, compilable, and ' +
+        'highly structured Delphi project based on the following specification:'#13#10 +
     '"{specification}"'#13#10#13#10 +
-    'Provide all necessary files (such as .dpr, .pas, .dfm) so the project is complete and ready to compile and run. Follow these strict rules:'#13#10 +
+    'Provide all necessary files (such as .dpr, .pas, .dfm) so the project is complete and ready to ' +
+        'compile and run. Follow these strict rules:'#13#10 +
     '1. Do not use placeholders or omit any code. Write the entire implementation.'#13#10 +
-    '2. You MUST start the very first line of EVERY code block with a filepath comment representing the relative path of that file in the project directory.'#13#10 +
+    '2. You MUST start the very first line of EVERY code block with a filepath comment representing ' +
+        'the relative path of that file in the project directory.'#13#10 +
     'Use the following format for each file block:'#13#10 +
     '```pascal'#13#10 +
     '// filepath: ProjectName.dpr'#13#10 +
@@ -203,7 +216,8 @@ begin
     '(OnClick, OnCreate, etc.). Event handlers should only call domain services.'#13#10 +
     '   - Dependency Inversion (DIP): Use interfaces (IInterface) to decouple objects where appropriate.'#13#10 +
     '4. Memory Safety & Resource Management:'#13#10 +
-    '   - Prevent memory leaks: Every time an object is instantiated locally, wrap its usage inside a try..finally block and free it in the finally block.'#13#10 +
+    '   - Prevent memory leaks: Every time an object is instantiated locally, wrap its usage inside ' +
+        'a try..finally block and free it in the finally block.'#13#10 +
     '5. Delphi Naming Style Guide Conventions:'#13#10 +
     '   - Types and classes must be prefixed with "T" (e.g., TDomainService).'#13#10 +
     '   - Interfaces must be prefixed with "I" (e.g., IDomainService).'#13#10 +
@@ -216,7 +230,9 @@ begin
     'non-generic collections like TList without a type parameter (TList<T>) if you import ' +
     'System.Generics.Collections, and always specify its generic arguments.'#13#10 +
     '7. Compile-Ready Integration:'#13#10 +
-    '   - Ensure all unit linkages, main program blocks, form definitions, and class declarations match and compile correctly together without external third-party dependencies unless explicitly requested.'#13#10 +
+    '   - Ensure all unit linkages, main program blocks, form definitions, and class declarations match ' +
+        'and compile correctly together without external third-party dependencies unless explicitly ' +
+        'requested.'#13#10 +
     '   - Double-check the "uses" clause of every unit: ensure every type, class, record, interface or ' +
     'collection used is properly imported (e.g. System.Generics.Collections for generic lists, ' +
     'System.Classes for persistence/lists, System.SysUtils for exceptions/guid, ' +
@@ -237,8 +253,10 @@ begin
   AddDefault(
     'Scan Compiler and OS Warnings',
     'Scan code for potential compiler warnings, thread-safety issues, and Windows GDI resource leaks',
-    'Analyze this Delphi code for potential compiler warnings (such as uninitialized variables, unreachable code, implicit typecasts, ' +
-    'and unused units), thread-safety violations (like unsafe VCL concurrency usage or race conditions), and Windows resource leaks ' +
+    'Analyze this Delphi code for potential compiler warnings (such as uninitialized variables, unreachable ' +
+        'code, implicit typecasts, ' +
+    'and unused units), thread-safety violations (like unsafe VCL concurrency usage or race conditions), ' +
+        'and Windows resource leaks ' +
     '(such as unreleased GDI handles like Pen, Brush, Font, or handles without proper try..finally protection). ' +
     'Be concise, list findings location/context, and provide clean refactored suggestions:'#13#10#13#10 +
     '```pascal'#13#10'{code}'#13#10'```',
@@ -314,7 +332,8 @@ procedure TPromptTemplateManager.CleanRedundantUserTemplates;
   function IsLegacyReviewTemplate(const ATemplate: string): Boolean;
   const
     LEGACY_REVIEW_TEMPLATE =
-      'Review the following Delphi Pascal code block applying Clean Code, readability, and optimization principles:'#10#10'{code}';
+      'Review the following Delphi Pascal code block applying Clean Code, readability, and optimization ' +
+          'principles:'#10#10'{code}';
   begin
     Result := NormalizeLineEndings(ATemplate) = LEGACY_REVIEW_TEMPLATE;
   end;
@@ -473,7 +492,9 @@ begin
   end;
 end;
 
-procedure TPromptTemplateManager.AddTemplate(const AName, ADescription, ATemplate: string; const AIsProjectGenerator: Boolean = False; const ASlashCommand: string = '');
+procedure TPromptTemplateManager.AddTemplate(const AName, ADescription, ATemplate: string;
+    const AIsProjectGenerator: Boolean = False; const ASlashCommand: string = '');
+    
 var
   LTemplate: TPromptTemplate;
   I: Integer;
@@ -624,7 +645,8 @@ begin
   end;
 end;
 
-function TPromptTemplateManager.ImportFromFile(const AFileName: string; const AMerge: Boolean; out AErrorMsg: string): Boolean;
+function TPromptTemplateManager.ImportFromFile(const AFileName: string; const AMerge: Boolean;
+    out AErrorMsg: string): Boolean;
 var
   LJsonContent: string;
   LParsedVal: TJSONValue;

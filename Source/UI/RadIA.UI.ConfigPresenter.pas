@@ -72,7 +72,8 @@ type
     // Templates UI
     procedure UpdateTemplatesList(const ATemplateNames: TArray<string>; const ASelectedIndex: Integer);
     procedure GetTemplateEditorFields(out AName, ADesc, ABody, ASlash: string; out AIsProjGen: Boolean);
-    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem, AIsCustomized: Boolean);
+    procedure SetTemplateFields(const AName, ADesc, ABody, ASlash: string; const AIsProjGen: Boolean; const AIsSystem,
+        AIsCustomized: Boolean);
     procedure ClearTemplateFields;
     procedure FocusTemplateName;
     function GetSelectedTemplateIndex: Integer;
@@ -92,7 +93,8 @@ type
     function ValidateUrl(const AUrl: string; const AFieldName: string): Boolean;
     procedure PopulateTemplatesList;
   public
-    constructor Create(const AView: IRadIAConfigView; const AConfig: IRadIAConfig = nil; const ATemplateManager: TPromptTemplateManager = nil);
+    constructor Create(const AView: IRadIAConfigView; const AConfig: IRadIAConfig = nil;
+        const ATemplateManager: TPromptTemplateManager = nil);
     destructor Destroy; override;
 
     procedure LoadConfig;
@@ -124,7 +126,8 @@ uses
 
 { TRadIAConfigPresenter }
 
-constructor TRadIAConfigPresenter.Create(const AView: IRadIAConfigView; const AConfig: IRadIAConfig; const ATemplateManager: TPromptTemplateManager);
+constructor TRadIAConfigPresenter.Create(const AView: IRadIAConfigView; const AConfig: IRadIAConfig;
+    const ATemplateManager: TPromptTemplateManager);
 begin
   inherited Create;
   FView := AView;
@@ -265,7 +268,8 @@ begin
   // ValidaÃ§Ãµes de Temperaturas, Max Tokens e Timeouts preventivas
   for LProviderId in FProvidersList do
   begin
-    if not TryStrToFloat(FView.GetTemperatureInput(LProviderId), LTemp, LFormatSettings) or (LTemp < 0.0) or (LTemp > 2.0) then
+    if not TryStrToFloat(FView.GetTemperatureInput(LProviderId), LTemp, LFormatSettings) or
+       (LTemp < 0.0) or (LTemp > 2.0) then
     begin
       FView.ShowMessageDialog(Format('Temperature for %s must be a valid number between 0.0 and 2.0', [LProviderId]));
       Exit;
