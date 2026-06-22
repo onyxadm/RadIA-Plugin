@@ -252,9 +252,6 @@ end;
 procedure TRadIACacheManager.Put(const AHash: string; const AResponse: string);
 var
   LEntry: TRadIACacheEntry;
-  I: Integer;
-  LMinIndex: Integer;
-  LMinDate: TDateTime;
 begin
   FCriticalSection.Enter;
   try

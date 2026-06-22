@@ -3,7 +3,7 @@ unit RadIA.Core.ProjectContext;
 interface
 
 uses
-  System.SysUtils;
+  System.SysUtils, System.JSON;
 
 type
   { Loader for project-specific context configured via a .radia JSON file }
@@ -14,7 +14,8 @@ type
       out ACountBack: Integer): Integer; static;
     class function CalculateUTF8CharLen(AStartByte: Byte): Integer; static;
     class procedure SafeTruncateUTF8Bytes(var ABytes: TBytes; var ALength: Integer); static;
-    class procedure ProcessContextFiles(const AProjectFolder: string; const AContextFiles: TJSONArray; const ASb: TStringBuilder); static;
+    class procedure ProcessContextFiles(const AProjectFolder: string;
+      const AContextFiles: TJSONArray; const ASb: TStringBuilder); static;
   public
     { Loads the context from a .radia file in the specified project folder,
       merging the custom system prompt and the contents of any listed context files. }
@@ -24,7 +25,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, RadIA.Core.Logger, System.Classes;
+  System.IOUtils, RadIA.Core.Logger, System.Classes;
 
 { TProjectContextLoader }
 
@@ -149,12 +150,7 @@ var
   LJsonObj: TJSONObject;
   LSystemPrompt: string;
   LContextFiles: TJSONArray;
-  LVal: TJSONValue;
-  LFileRelPath: string;
-  LFileAbsPath: string;
-  LFileContent: string;
   LSb: TStringBuilder;
-  LIsTruncated: Boolean;
 begin
   Result := False;
   AContextPrompt := '';

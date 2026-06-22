@@ -3,7 +3,7 @@ unit RadIA.Core.Sessions;
 interface
 
 uses
-  System.Generics.Collections, RadIA.Core.Interfaces;
+  System.Generics.Collections, RadIA.Core.Interfaces, System.JSON;
 
 type
   TSessionInfo = record
@@ -26,9 +26,10 @@ type
     procedure LoadIndex;
     procedure SaveIndex;
     function FindSessionIndex(const AId: string): Integer;
-    function ParseChatMessage(const AObj: TJSONObject; out AMsg: IRadIAChatMessage): Boolean;
+
     procedure ParseIndexJsonArray(AArr: TJSONArray);
     procedure ParseHistoryJsonArray(AArr: TJSONArray; var AHistory: TArray<IRadIAChatMessage>);
+    function ParseChatMessage(const AObj: TJSONObject; out AMsg: IRadIAChatMessage): Boolean;
   public
     constructor Create(const ASessionsDir: string = '');
     destructor Destroy; override;
@@ -50,7 +51,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.IOUtils, System.JSON, System.DateUtils, System.Generics.Defaults,
+  System.SysUtils, System.IOUtils, System.DateUtils, System.Generics.Defaults,
   RadIA.Core.Types, RadIA.Core.Logger, RadIA.Core.ChatMessage;
 
 procedure LogSession(const AMsg: string);
@@ -142,15 +143,14 @@ end;
 procedure TRadIASessionManager.ParseIndexJsonArray(AArr: TJSONArray);
 var
   LVal: TJSONValue;
-  LObj: TJSONObject;
+
   LInfo: TSessionInfo;
 begin
   for LVal in AArr do
   begin
     if LVal is TJSONObject then
     begin
-      LObj := LVal as TJSONObject;
-      LInfo := TSessionInfo.ParseFromJSON(LObj);
+      LInfo := TSessionInfo.ParseFromJSON(LVal as TJSONObject);
       if not LInfo.Id.IsEmpty then
         FSessions.Add(LInfo);
     end;

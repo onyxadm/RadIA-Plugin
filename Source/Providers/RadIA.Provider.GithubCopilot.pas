@@ -397,7 +397,7 @@ begin
   end;
 end;
 
-class function ProcessPollResponse(const AJsonStr: string; var AIntervalMs: Integer; out AAccessToken, AErrorMsg: string; out AAbort: Boolean): Boolean;
+function ProcessPollResponse(const AJsonStr: string; var AIntervalMs: Integer; out AAccessToken, AErrorMsg: string; out AAbort: Boolean): Boolean;
 var
   LJson: TJSONObject;
   LVal, LErrVal: TJSONValue;
@@ -427,7 +427,7 @@ begin
       end
       else if SameText(LErrVal.Value, 'slow_down') then
       begin
-        LIntervalMs := LIntervalMs + 5000;
+        AIntervalMs := AIntervalMs + 5000;
       end
       else
       begin

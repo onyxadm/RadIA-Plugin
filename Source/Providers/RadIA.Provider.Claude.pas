@@ -186,7 +186,8 @@ begin
     end, ACallback);
 end;
 
-procedure ProcessClaudeJsonLine(const AJsonLine: string; const ACallback: TStreamChunkCallback; var AStopRequested: Boolean);
+procedure ProcessClaudeJsonLine(const AJsonLine: string; const ACallback: TStreamChunkCallback;
+  var AStopRequested: Boolean);
 var
   LJson, LDeltaObj: TJSONObject;
   LTypeStr, LText: string;

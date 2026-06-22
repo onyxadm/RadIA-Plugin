@@ -309,7 +309,7 @@ var
   LTime: Integer;
 begin
   LFormatSettings := TFormatSettings.Invariant;
-  
+
   if FView.GetAuthTypeIndex('Gemini') = 1 then
     FConfig.SetProviderAuthType('Gemini', 'web_login')
   else

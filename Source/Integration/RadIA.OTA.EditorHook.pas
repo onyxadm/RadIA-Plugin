@@ -37,7 +37,7 @@ type
     {$IFNDEF TESTS}
     procedure SafeHookActiveForm;
     procedure SafeHookAllEditorForms;
-    procedure HookEditorWindowsNow;
+
     procedure HookPopupMenu(AForm: TCustomForm);
     {$ENDIF}
     procedure UnhookPopupMenu(AForm: TCustomForm);
@@ -914,7 +914,7 @@ begin
   LOutput := TStringList.Create;
   try
     LLines.Text := AResponse;
-    
+
     LHasFence := HasCodeFence(LLines);
     ExtractFenceContent(LLines, LOutput, LHasFence);
 

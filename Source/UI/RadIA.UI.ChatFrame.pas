@@ -4,7 +4,7 @@ interface
 
 uses  Winapi.Messages, System.SysUtils, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.Edge,
+  Vcl.Edge, Winapi.WebView2,
   Vcl.Menus, Vcl.Buttons, RadIA.Core.Sessions, RadIA.UI.Resources,
   RadIA.UI.ChatPresenter;
 
@@ -62,6 +62,8 @@ type
     FBrowserWebInitialized: Boolean;
 
     procedure CreateEdgeBrowserWeb;
+    procedure ConfigureWebViewSettings(const ADefaultInterface: ICoreWebView2);
+    procedure InjectBridgeScript(const ADefaultInterface: ICoreWebView2);
     procedure EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
     procedure EdgeBrowserWebSourceChanged(Sender: TCustomEdgeBrowser; IsNewDocument: Boolean);
     procedure EdgeBrowserWebWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
@@ -80,12 +82,11 @@ type
     procedure OnTemplateMenuClick(Sender: TObject);
     procedure UpdateVCLColors(const AColors: TRadIAThemeColors);
     procedure OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
-    
+
     procedure CleanupUIComponents;
     procedure UnregisterHandlers;
     procedure CleanupBrowsers;
-    procedure ConfigureWebViewSettings(const ADefaultInterface: ICoreWebView2);
-    procedure InjectBridgeScript(const ADefaultInterface: ICoreWebView2);
+
   protected
     procedure CreateWnd; override;
     procedure DestroyWnd; override;
@@ -131,7 +132,7 @@ implementation
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
   RadIA.Core.Mediator, RadIA.Core.Logger, RadIA.UI.WebLoginForm, RadIA.Core.Container,
-  Winapi.WebView2, Winapi.ActiveX, RadIA.Core.ProviderRegistry, RadIA.Core.Types, Winapi.Windows, RadIA.Core.Interfaces;
+  Winapi.ActiveX, RadIA.Core.ProviderRegistry, RadIA.Core.Types, Winapi.Windows, RadIA.Core.Interfaces;
 
 {$R *.dfm}
 
@@ -278,7 +279,7 @@ var
 begin
   if Assigned(FLifecycleGuard) then
     (FLifecycleGuard as IRadIALifecycleGuard).Invalidate;
-    
+
   if TRadIAContainer.TryResolve<IRadIAMediator>(LMediator) then
     LMediator.UnregisterPromptHandler
   else

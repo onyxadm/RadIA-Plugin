@@ -28,10 +28,14 @@ type
     class function ExtractWindowText(const ASourceCode: string; const ALine: Integer; out AStartLine: Integer): string;
     class function FindClassDeclarationBackwards(const ALines: TStrings; const ARelativeLine: Integer): Integer;
     class function FindClassDeclarationEnd(const ALines: TStrings; const AClassStartLine: Integer): Integer;
-    class function ExtractLineComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
-    class function ExtractBraceComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
-    class function ExtractParenComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
-    class function ProcessNextChar(const ALine: string; var I: Integer; var AInBraceComment, AInParenComment, AInString: Boolean; var AResult: string): Boolean;
+    class function ProcessBraceCommentState(const ALine: string; var I: Integer; var AInBraceComment: Boolean;
+      var AResult: string): Boolean;
+    class function ProcessParenCommentState(const ALine: string; var I: Integer; var AInParenComment: Boolean;
+      var AResult: string): Boolean;
+    class function ProcessStringState(const ALine: string; var I: Integer; var AInString: Boolean;
+      var AResult: string): Boolean;
+    class function ProcessNextChar(const ALine: string; var I: Integer; var AInBraceComment, AInParenComment,
+      AInString: Boolean; var AResult: string): Boolean;
     class function FindMethodStartLine(const ALines: TStrings; const ACursorIndex: Integer): Integer;
     class function FindMethodBeginLine(const ALines: TStrings; const AMethodStartLine, ACursorIndex: Integer): Integer;
   public
@@ -76,50 +80,58 @@ begin
     LLine.StartsWith('class function ');
 end;
 
-class function TRadIAContextParser.ProcessNextChar(const ALine: string; var I: Integer; var AInBraceComment, AInParenComment, AInString: Boolean; var AResult: string): Boolean;
+class function TRadIAContextParser.ProcessBraceCommentState(const ALine: string; var I: Integer;
+  var AInBraceComment: Boolean; var AResult: string): Boolean;
 begin
+  if ALine[I] = '}' then
+    AInBraceComment := False;
+  AResult := AResult + ' ';
+  Inc(I);
   Result := True;
-  if AInBraceComment then
+end;
+
+class function TRadIAContextParser.ProcessParenCommentState(const ALine: string; var I: Integer;
+  var AInParenComment: Boolean; var AResult: string): Boolean;
+begin
+  if (ALine[I] = '*') and (I < High(ALine)) and (ALine[I + 1] = ')') then
   begin
-    if ALine[I] = '}' then
-      AInBraceComment := False;
+    AInParenComment := False;
+    AResult := AResult + '  ';
+    Inc(I, 2);
+  end
+  else
+  begin
     AResult := AResult + ' ';
     Inc(I);
-    Exit;
   end;
+  Result := True;
+end;
 
-  if AInParenComment then
+class function TRadIAContextParser.ProcessStringState(const ALine: string; var I: Integer;
+  var AInString: Boolean; var AResult: string): Boolean;
+begin
+  if ALine[I] = '''' then
   begin
-    if (ALine[I] = '*') and (I < High(ALine)) and (ALine[I + 1] = ')') then
+    if (I < High(ALine)) and (ALine[I + 1] = '''') then
     begin
-      AInParenComment := False;
       AResult := AResult + '  ';
       Inc(I, 2);
-    end
-    else
-    begin
-      AResult := AResult + ' ';
-      Inc(I);
+      Exit(True);
     end;
-    Exit;
+    AInString := False;
   end;
+  AResult := AResult + ' ';
+  Inc(I);
+  Result := True;
+end;
 
-  if AInString then
-  begin
-    if ALine[I] = '''' then
-    begin
-      if (I < High(ALine)) and (ALine[I + 1] = '''') then
-      begin
-        AResult := AResult + '  ';
-        Inc(I, 2);
-        Exit;
-      end;
-      AInString := False;
-    end;
-    AResult := AResult + ' ';
-    Inc(I);
-    Exit;
-  end;
+class function TRadIAContextParser.ProcessNextChar(const ALine: string; var I: Integer; var AInBraceComment,
+  AInParenComment, AInString: Boolean; var AResult: string): Boolean;
+begin
+  Result := True;
+  if AInBraceComment then Exit(ProcessBraceCommentState(ALine, I, AInBraceComment, AResult));
+  if AInParenComment then Exit(ProcessParenCommentState(ALine, I, AInParenComment, AResult));
+  if AInString then Exit(ProcessStringState(ALine, I, AInString, AResult));
 
   if (ALine[I] = '/') and (I < High(ALine)) and (ALine[I + 1] = '/') then
     Exit(False);
@@ -232,71 +244,74 @@ begin
   end;
 end;
 
-class function TRadIAContextParser.ExtractLineComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
-begin
-  ACommentEndLine := I;
-  LBuilder.AppendLine(ATrimmed.Substring(2).Trim);
-  while (ACommentEndLine + 1 <= AEndLine) and
-        ALines[ACommentEndLine + 1].Trim.StartsWith('//') do
-  begin
-    Inc(ACommentEndLine);
-    LBuilder.AppendLine(ALines[ACommentEndLine].Trim.Substring(2).Trim);
-  end;
-  Result := LBuilder.ToString.Trim;
-end;
 
-class function TRadIAContextParser.ExtractBraceComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
-var
-  LLine: string;
-  LClosePos: Integer;
-begin
-  Result := '';
-  LLine := ATrimmed.Substring(1);
-  while True do
-  begin
-    LClosePos := Pos('}', LLine);
-    if LClosePos > 0 then
-    begin
-      LBuilder.AppendLine(Copy(LLine, 1, LClosePos - 1).Trim);
-      ACommentEndLine := I;
-      Exit(LBuilder.ToString.Trim);
-    end;
-
-    LBuilder.AppendLine(LLine.Trim);
-    Inc(I);
-    if I > AEndLine then
-      Exit('');
-    LLine := ALines[I];
-  end;
-end;
-
-class function TRadIAContextParser.ExtractParenComment(const ALines: TStrings; const AEndLine: Integer; const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
-var
-  LLine: string;
-  LClosePos: Integer;
-begin
-  Result := '';
-  LLine := ATrimmed.Substring(2);
-  while True do
-  begin
-    LClosePos := Pos('*)', LLine);
-    if LClosePos > 0 then
-    begin
-      LBuilder.AppendLine(Copy(LLine, 1, LClosePos - 1).Trim);
-      ACommentEndLine := I;
-      Exit(LBuilder.ToString.Trim);
-    end;
-
-    LBuilder.AppendLine(LLine.Trim);
-    Inc(I);
-    if I > AEndLine then
-      Exit('');
-    LLine := ALines[I];
-  end;
-end;
 
 class function TRadIAContextParser.TryExtractFirstBodyComment(const ALines: TStrings; const AStartLine,
   AEndLine: Integer; out ACommentText: string; out ACommentStartLine, ACommentEndLine: Integer): Boolean;
+
+  function ExtractLineComment(const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+  begin
+    ACommentEndLine := I;
+    LBuilder.AppendLine(ATrimmed.Substring(2).Trim);
+    while (ACommentEndLine + 1 <= AEndLine) and
+          ALines[ACommentEndLine + 1].Trim.StartsWith('//') do
+    begin
+      Inc(ACommentEndLine);
+      LBuilder.AppendLine(ALines[ACommentEndLine].Trim.Substring(2).Trim);
+    end;
+    Result := LBuilder.ToString.Trim;
+  end;
+
+  function ExtractBraceComment(const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+  var
+    LLine: string;
+    LClosePos: Integer;
+  begin
+    Result := '';
+    LLine := ATrimmed.Substring(1);
+    while True do
+    begin
+      LClosePos := Pos('}', LLine);
+      if LClosePos > 0 then
+      begin
+        LBuilder.AppendLine(Copy(LLine, 1, LClosePos - 1).Trim);
+        ACommentEndLine := I;
+        Exit(LBuilder.ToString.Trim);
+      end;
+
+      LBuilder.AppendLine(LLine.Trim);
+      Inc(I);
+      if I > AEndLine then
+        Exit('');
+      LLine := ALines[I];
+    end;
+  end;
+
+  function ExtractParenComment(const ATrimmed: string; var I, ACommentEndLine: Integer; LBuilder: TStringBuilder): string;
+  var
+    LLine: string;
+    LClosePos: Integer;
+  begin
+    Result := '';
+    LLine := ATrimmed.Substring(2);
+    while True do
+    begin
+      LClosePos := Pos('*)', LLine);
+      if LClosePos > 0 then
+      begin
+        LBuilder.AppendLine(Copy(LLine, 1, LClosePos - 1).Trim);
+        ACommentEndLine := I;
+        Exit(LBuilder.ToString.Trim);
+      end;
+
+      LBuilder.AppendLine(LLine.Trim);
+      Inc(I);
+      if I > AEndLine then
+        Exit('');
+      LLine := ALines[I];
+    end;
+  end;
+
 var
   I: Integer;
   LLine, LTrimmed: string;
@@ -324,19 +339,19 @@ begin
 
       if LTrimmed.StartsWith('//') then
       begin
-        ACommentText := ExtractLineComment(ALines, AEndLine, LTrimmed, I, ACommentEndLine, LBuilder);
+        ACommentText := ExtractLineComment(LTrimmed, I, ACommentEndLine, LBuilder);
         Exit(not ACommentText.IsEmpty);
       end;
 
       if LTrimmed.StartsWith('{') then
       begin
-        ACommentText := ExtractBraceComment(ALines, AEndLine, LTrimmed, I, ACommentEndLine, LBuilder);
+        ACommentText := ExtractBraceComment(LTrimmed, I, ACommentEndLine, LBuilder);
         Exit(not ACommentText.IsEmpty);
       end;
 
       if LTrimmed.StartsWith('(*') then
       begin
-        ACommentText := ExtractParenComment(ALines, AEndLine, LTrimmed, I, ACommentEndLine, LBuilder);
+        ACommentText := ExtractParenComment(LTrimmed, I, ACommentEndLine, LBuilder);
         Exit(not ACommentText.IsEmpty);
       end;
 
@@ -395,7 +410,8 @@ begin
   end;
 end;
 
-class function TRadIAContextParser.ExtractWindowText(const ASourceCode: string; const ALine: Integer; out AStartLine: Integer): string;
+class function TRadIAContextParser.ExtractWindowText(const ASourceCode: string; const ALine: Integer;
+  out AStartLine: Integer): string;
 var
   LStartPos, LEndPos: Integer;
   LCharCount, LCurLine: Integer;
@@ -431,7 +447,8 @@ begin
   Result := ASourceCode.Substring(LStartPos - 1, LEndPos - LStartPos + 1);
 end;
 
-class function TRadIAContextParser.FindClassDeclarationBackwards(const ALines: TStrings; const ARelativeLine: Integer): Integer;
+class function TRadIAContextParser.FindClassDeclarationBackwards(const ALines: TStrings;
+  const ARelativeLine: Integer): Integer;
 var
   I: Integer;
   LCurLineText: string;
@@ -448,7 +465,8 @@ begin
   end;
 end;
 
-class function TRadIAContextParser.FindClassDeclarationEnd(const ALines: TStrings; const AClassStartLine: Integer): Integer;
+class function TRadIAContextParser.FindClassDeclarationEnd(const ALines: TStrings;
+  const AClassStartLine: Integer): Integer;
 var
   I: Integer;
   LCurLineText: string;
@@ -521,7 +539,8 @@ begin
   end;
 end;
 
-class function TRadIAContextParser.FindMethodBeginLine(const ALines: TStrings; const AMethodStartLine, ACursorIndex: Integer): Integer;
+class function TRadIAContextParser.FindMethodBeginLine(const ALines: TStrings; const AMethodStartLine,
+  ACursorIndex: Integer): Integer;
 var
   I: Integer;
   LLine: string;

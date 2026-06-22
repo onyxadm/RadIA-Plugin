@@ -2,7 +2,8 @@ unit RadIA.Core.PromptTemplates;
 
 interface
 
-uses  System.Generics.Collections;
+uses
+  System.SysUtils, System.Classes, System.IOUtils, System.JSON, System.Generics.Collections;
 
 type
   { Represents a single prompt template }
@@ -55,7 +56,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, RadIA.Core.Logger, System.SysUtils;
+  RadIA.Core.Logger;
 
 { TPromptTemplateManager }
 
@@ -354,9 +355,66 @@ begin
 end;
 
 procedure TPromptTemplateManager.CleanRedundantUserTemplates;
+
+  function ProcessLegacyReviewTemplate(const AUser: TPromptTemplate; const AIndex: Integer; var AChanged: Boolean): Boolean;
+  var
+    LTemp: TPromptTemplate;
+  begin
+    Result := False;
+    if SameText(AUser.Name, 'Review Clean Code Delphi') then
+    begin
+      if SameText(AUser.SlashCommand, '/explain') then
+      begin
+        LTemp := AUser;
+        LTemp.SlashCommand := '/review';
+        FUserTemplates[AIndex] := LTemp;
+        AChanged := True;
+      end;
+
+      if IsLegacyReviewTemplate(AUser.Template) then
+      begin
+        FUserTemplates.Delete(AIndex);
+        AChanged := True;
+        Result := True;
+      end;
+    end;
+  end;
+
+  function ProcessLegacyProjectTemplate(const AUser: TPromptTemplate; const AIndex: Integer; var AChanged: Boolean): Boolean;
+  begin
+    Result := False;
+    if SameText(AUser.Name, 'Create Project Delphi') or SameText(AUser.Name, 'Create Project Delphi Architecture') then
+    begin
+      if not AUser.Template.Contains('uses') or not AUser.Template.Contains('Generics') then
+      begin
+        FUserTemplates.Delete(AIndex);
+        AChanged := True;
+        Result := True;
+      end;
+    end;
+  end;
+
+  function ProcessRedundantDefaultTemplate(const AUser: TPromptTemplate; const AIndex: Integer; var AChanged: Boolean): Boolean;
+  var
+    LDefault: TPromptTemplate;
+  begin
+    Result := False;
+    if FindDefaultTemplate(AUser.Name, LDefault) then
+    begin
+      if (AUser.Description = LDefault.Description) and
+         (NormalizeLineEndings(AUser.Template) = NormalizeLineEndings(LDefault.Template)) and
+         (AUser.IsProjectGenerator = LDefault.IsProjectGenerator) and
+         (AUser.SlashCommand = LDefault.SlashCommand) then
+      begin
+        FUserTemplates.Delete(AIndex);
+        AChanged := True;
+        Result := True;
+      end;
+    end;
+  end;
+
 var
   I: Integer;
-  LDefault: TPromptTemplate;
   LUser: TPromptTemplate;
   LChanged: Boolean;
 begin
@@ -365,43 +423,9 @@ begin
   begin
     LUser := FUserTemplates[I];
 
-    if SameText(LUser.Name, 'Review Clean Code Delphi') and SameText(LUser.SlashCommand, '/explain') then
-    begin
-      LUser.SlashCommand := '/review';
-      FUserTemplates[I] := LUser;
-      LChanged := True;
-    end;
-
-    if SameText(LUser.Name, 'Review Clean Code Delphi') and IsLegacyReviewTemplate(LUser.Template) then
-    begin
-      FUserTemplates.Delete(I);
-      LChanged := True;
-      Continue;
-    end;
-
-    // Force upgrade of legacy templates missing 'uses' or 'Generics' rules
-    if SameText(LUser.Name, 'Create Project Delphi') or SameText(LUser.Name, 'Create Project Delphi Architecture') then
-    begin
-      if not LUser.Template.Contains('uses') or not LUser.Template.Contains('Generics') then
-      begin
-        FUserTemplates.Delete(I);
-        LChanged := True;
-        Continue;
-      end;
-    end;
-
-    if FindDefaultTemplate(LUser.Name, LDefault) then
-    begin
-      // If all properties are exactly identical to system default, it is redundant
-      if (LUser.Description = LDefault.Description) and
-         (NormalizeLineEndings(LUser.Template) = NormalizeLineEndings(LDefault.Template)) and
-         (LUser.IsProjectGenerator = LDefault.IsProjectGenerator) and
-         (LUser.SlashCommand = LDefault.SlashCommand) then
-      begin
-        FUserTemplates.Delete(I);
-        LChanged := True;
-      end;
-    end;
+    if ProcessLegacyReviewTemplate(LUser, I, LChanged) then Continue;
+    if ProcessLegacyProjectTemplate(LUser, I, LChanged) then Continue;
+    if ProcessRedundantDefaultTemplate(LUser, I, LChanged) then Continue;
   end;
 
   if LChanged then

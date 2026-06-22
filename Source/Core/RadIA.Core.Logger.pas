@@ -140,7 +140,8 @@ begin
   end;
 end;
 
-procedure TConcreteLogger.CheckRotation(const AActiveFile: string; var ANeedRotation: Boolean; var AFileDateStr: string);
+procedure TConcreteLogger.CheckRotation(const AActiveFile: string; var ANeedRotation: Boolean;
+  var AFileDateStr: string);
 var
   LFileDate: TDateTime;
   LTodayStr: string;

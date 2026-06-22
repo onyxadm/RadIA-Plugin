@@ -371,7 +371,7 @@ begin
     InjectWebViewScrollbarStyle(FEdgeBrowser, 'login WebView');
     InjectBridgeScript(FEdgeBrowser.DefaultInterface);
   end;
-  
+
   lblStatus.Caption := 'Provider sign in page loaded. Complete the login in the browser area.';
 end;
 

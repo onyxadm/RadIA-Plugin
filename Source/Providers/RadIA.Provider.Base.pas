@@ -852,56 +852,58 @@ begin
       LModelsArray: TArray<string>;
       LErrorMsg: string;
     begin
+      LProviderRef.GetProviderId;
+      LModelsList := TList<string>.Create;
       try
-        LProviderRef.GetProviderId;
-        LModelsList := TList<string>.Create;
         try
+          LResponseText := DoGetRequest(LUrl, LHeaders, 5000); // Fast 5-second timeout for model discovery
+          LModelsList := ParseOpenAIModelsFromJson(LResponseText,
+            function(AId: string): Boolean
+            begin
+              Result := FilterModelId(AId);
+            end);
           try
-            LResponseText := DoGetRequest(LUrl, LHeaders, 5000); // Fast 5-second timeout for model discovery
-            LModelsList := ParseOpenAIModelsFromJson(LResponseText, FilterModelId);
-            try
-              LModelsList.Sort;
+            LModelsList.Sort;
 
-              if LModelsList.Count = 0 then
-                LModelsArray := GetAvailableModels
-              else
-                LModelsArray := LModelsList.ToArray;
+            if LModelsList.Count = 0 then
+              LModelsArray := GetAvailableModels
+            else
+              LModelsArray := LModelsList.ToArray;
 
+            if not GIsShuttingDown then
+            begin
+              TThread.Queue(nil,
+                TThreadProcedure(
+                  procedure
+                  begin
+                    ACallback(LModelsArray, '');
+                  end
+                )
+              );
+            end;
+          except
+            on E: Exception do
+            begin
+              LErrorMsg := E.ClassName + ': ' + E.Message;
+              LModelsArray := GetAvailableModels;
               if not GIsShuttingDown then
               begin
                 TThread.Queue(nil,
                   TThreadProcedure(
                     procedure
                     begin
-                      ACallback(LModelsArray, '');
+                      ACallback(LModelsArray, LErrorMsg);
                     end
                   )
                 );
               end;
-            except
-              on E: Exception do
-              begin
-                LErrorMsg := E.ClassName + ': ' + E.Message;
-                LModelsArray := GetAvailableModels;
-                if not GIsShuttingDown then
-                begin
-                  TThread.Queue(nil,
-                    TThreadProcedure(
-                      procedure
-                      begin
-                        ACallback(LModelsArray, LErrorMsg);
-                      end
-                    )
-                  );
-                end;
-              end;
             end;
-          finally
-            LModelsList.Free;
           end;
         finally
-          TInterlocked.Decrement(GActiveThreadCount);
+          LModelsList.Free;
         end;
+      finally
+        TInterlocked.Decrement(GActiveThreadCount);
       end;
     end;
 
