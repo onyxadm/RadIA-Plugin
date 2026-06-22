@@ -282,7 +282,9 @@ var
   LProv: TRadIAGenericOpenAIProvider;
 begin
   // Caso de sucesso (API Key vazia, nao grava no config)
-  LProv := TRadIAGenericOpenAIProvider.Create(FConfig, 'DeepSeek', 'DeepSeek AI', 'https://api.deepseek.com', ['deepseek-chat']);
+  LProv := TRadIAGenericOpenAIProvider.Create(
+    FConfig, 'DeepSeek', 'DeepSeek AI', 'https://api.deepseek.com', ['deepseek-chat']
+  );
   try
     Assert.AreEqual('DeepSeek AI', LProv.GetName);
     Assert.AreEqual(1, Length(LProv.GetAvailableModels));
@@ -292,7 +294,10 @@ begin
   end;
 
   // Caso 2: API Key nao vazia, grava no config com sucesso
-  LProv := TRadIAGenericOpenAIProvider.Create(FConfig, 'DeepSeekTest', 'DeepSeek Test', 'https://api.deepseek.com', ['deepseek-chat'], 'sk-dummy-key');
+  LProv := TRadIAGenericOpenAIProvider.Create(
+    FConfig, 'DeepSeekTest', 'DeepSeek Test', 'https://api.deepseek.com',
+    ['deepseek-chat'], 'sk-dummy-key'
+  );
   try
     Assert.AreEqual('sk-dummy-key', FConfig.GetApiKey('DeepSeekTest'));
   finally
@@ -302,7 +307,10 @@ begin
   // Caso 3: API Key nao vazia, mas gravacao do config falha (cobre except de Generic.pas)
   TRadIAConfig.SetStorage(TMockSettingsStorageWithError.Create);
   try
-    LProv := TRadIAGenericOpenAIProvider.Create(FConfig, 'DeepSeekError', 'DeepSeek Error', 'https://api.deepseek.com', ['deepseek-chat'], 'sk-error-key');
+    LProv := TRadIAGenericOpenAIProvider.Create(
+      FConfig, 'DeepSeekError', 'DeepSeek Error', 'https://api.deepseek.com',
+      ['deepseek-chat'], 'sk-error-key'
+    );
     try
       Assert.AreEqual('DeepSeek Error', LProv.GetName);
     finally
