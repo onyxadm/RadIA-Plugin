@@ -3,11 +3,17 @@ unit RadIA.Core.ProjectGenerator;
 interface
 
 uses
-  RadIA.Core.Interfaces;
+  System.Classes, System.JSON, RadIA.Core.Interfaces;
 
 type
   { Specialist service for generating complete Delphi projects on disk }
   TRadIAProjectGenerator = class(TInterfacedObject, IRadIAProjectGenerator)
+  private
+    function ChooseDestinationFolder(const ADestDir: string): string;
+    function ValidateOrCreateFolder(const AFolder: string; out AErrorMsg: string): Boolean;
+    function WriteFilesToDisk(const AFolder: string; AJsonArr: TJSONArray; AWrittenFiles: TStringList; out AErrorMsg: string): Boolean;
+    function IdentifyProjectFile(AWrittenFiles: TStringList): string;
+    procedure OpenProjectInIDE(const AProjectFile: string);
   public
     { Generates a project structure from a JSON array of files.
       Opens a directory selection dialog, validates that it is empty,
@@ -18,10 +24,165 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.IOUtils, System.JSON, Vcl.Dialogs,
+  System.SysUtils, System.IOUtils, Vcl.Dialogs,
   RadIA.Core.Logger, RadIA.Core.Container;
 
 { TRadIAProjectGenerator }
+
+function TRadIAProjectGenerator.ChooseDestinationFolder(const ADestDir: string): string;
+var
+  LOpenDlg: TFileOpenDialog;
+begin
+  Result := ADestDir;
+  if Result.IsEmpty then
+  begin
+    LOpenDlg := TFileOpenDialog.Create(nil);
+    try
+      LOpenDlg.Title := 'Select a completely empty folder for the project';
+      LOpenDlg.Options := [fdoPickFolders, fdoPathMustExist, fdoForceFileSystem];
+      if LOpenDlg.Execute then
+      begin
+        Result := LOpenDlg.FileName;
+      end;
+    finally
+      LOpenDlg.Free;
+    end;
+  end;
+end;
+
+function TRadIAProjectGenerator.ValidateOrCreateFolder(const AFolder: string; out AErrorMsg: string): Boolean;
+var
+  LFileEntries: TArray<string>;
+begin
+  Result := False;
+  AErrorMsg := '';
+  if TDirectory.Exists(AFolder) then
+  begin
+    LFileEntries := TDirectory.GetFileSystemEntries(AFolder);
+    if Length(LFileEntries) > 0 then
+    begin
+      AErrorMsg := 'The chosen folder is not empty. Please select a completely empty folder for the project.';
+      Exit;
+    end;
+  end
+  else
+  begin
+    try
+      TDirectory.CreateDirectory(AFolder);
+    except
+      on E: Exception do
+      begin
+        AErrorMsg := 'Failed to create destination folder: ' + E.Message;
+        Exit;
+      end;
+    end;
+  end;
+  Result := True;
+end;
+
+function TRadIAProjectGenerator.WriteFilesToDisk(const AFolder: string; AJsonArr: TJSONArray; AWrittenFiles: TStringList; out AErrorMsg: string): Boolean;
+var
+  I: Integer;
+  LVal: TJSONValue;
+  LObj: TJSONObject;
+  LRelPath, LContent, LAbsPath, LSubFolder: string;
+begin
+  Result := False;
+  AErrorMsg := '';
+  try
+    for I := 0 to AJsonArr.Count - 1 do
+    begin
+      LVal := AJsonArr[I];
+      if LVal is TJSONObject then
+      begin
+        LObj := LVal as TJSONObject;
+        LRelPath := LObj.GetValue<string>('path', '');
+        LContent := LObj.GetValue<string>('content', '');
+
+        if LRelPath.IsEmpty then
+          Continue;
+
+        LRelPath := LRelPath.Replace('/', '\');
+        if LRelPath.StartsWith('\') then
+          LRelPath := LRelPath.Substring(1);
+
+        LAbsPath := TPath.Combine(AFolder, LRelPath);
+        LSubFolder := TPath.GetDirectoryName(LAbsPath);
+
+        if not LSubFolder.IsEmpty and not TDirectory.Exists(LSubFolder) then
+          TDirectory.CreateDirectory(LSubFolder);
+
+        TFile.WriteAllText(LAbsPath, LContent, TEncoding.UTF8);
+        AWrittenFiles.Add(LAbsPath);
+      end;
+    end;
+    Result := True;
+  except
+    on E: Exception do
+    begin
+      AErrorMsg := 'Error writing files: ' + E.Message;
+      TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: Exception writing files. Rollback initiated.', 'Core');
+      for LRelPath in AWrittenFiles do
+      begin
+        try
+          if TFile.Exists(LRelPath) then
+            TFile.Delete(LRelPath);
+        except
+          on EDel: Exception do
+            TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON rollback: Failed to delete ' +
+              LRelPath + ': ' + EDel.Message, 'Core');
+        end;
+      end;
+    end;
+  end;
+end;
+
+function TRadIAProjectGenerator.IdentifyProjectFile(AWrittenFiles: TStringList): string;
+var
+  LRelPath: string;
+begin
+  Result := '';
+  for LRelPath in AWrittenFiles do
+  begin
+    if SameText(TPath.GetExtension(LRelPath), '.dproj') then
+    begin
+      Result := LRelPath;
+      Break;
+    end;
+  end;
+
+  if Result.IsEmpty then
+  begin
+    for LRelPath in AWrittenFiles do
+    begin
+      if SameText(TPath.GetExtension(LRelPath), '.dpr') then
+      begin
+        Result := LRelPath;
+        Break;
+      end;
+    end;
+  end;
+end;
+
+procedure TRadIAProjectGenerator.OpenProjectInIDE(const AProjectFile: string);
+begin
+  if not AProjectFile.IsEmpty then
+  begin
+    TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: Opening project: ' + AProjectFile, 'Core');
+    TThread.Queue(nil,
+      procedure
+      var
+        LAdapter: IRadIAIDEAdapter;
+      begin
+        if TRadIAContainer.TryResolve<IRadIAIDEAdapter>(LAdapter) then
+          LAdapter.OpenProjectInIDE(AProjectFile);
+      end);
+  end
+  else
+  begin
+    TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: No project file (.dproj/.dpr) found to open.', 'Core');
+  end;
+end;
 
 function TRadIAProjectGenerator.GenerateFromJSON(const AFilesJSON: string; out AErrorMsg: string;
     const ADestDir: string): Boolean;
@@ -29,21 +190,11 @@ var
   LChosenDir: string;
   LJsonValue: TJSONValue;
   LJsonArr: TJSONArray;
-  LVal: TJSONValue;
-  LObj: TJSONObject;
-  LRelPath: string;
-  LContent: string;
-  LAbsPath: string;
-  LSubFolder: string;
-  I: Integer;
   LWrittenFiles: TStringList;
   LProjectFileToOpen: string;
-  LFileEntries: TArray<string>;
-  LOpenDlg: TFileOpenDialog;
 begin
   Result := False;
   AErrorMsg := '';
-  LProjectFileToOpen := '';
 
   if AFilesJSON.Trim.IsEmpty then
   begin
@@ -51,7 +202,6 @@ begin
     Exit;
   end;
 
-  { Parse JSON array of files }
   LJsonValue := TJSONObject.ParseJSONValue(AFilesJSON);
   if not Assigned(LJsonValue) then
   begin
@@ -73,145 +223,21 @@ begin
       Exit;
     end;
 
-    { 1. Ask user for destination folder using modern FileOpenDialog }
-    LChosenDir := ADestDir;
-    if LChosenDir.IsEmpty then
-    begin
-      LOpenDlg := TFileOpenDialog.Create(nil);
-      try
-        LOpenDlg.Title := 'Select a completely empty folder for the project';
-        LOpenDlg.Options := [fdoPickFolders, fdoPathMustExist, fdoForceFileSystem];
-        if LOpenDlg.Execute then
-        begin
-          LChosenDir := LOpenDlg.FileName;
-        end;
-      finally
-        LOpenDlg.Free;
-      end;
-    end;
-
+    LChosenDir := ChooseDestinationFolder(ADestDir);
     if LChosenDir.IsEmpty then
       Exit;
 
-    { 2. Validate folder }
-    if TDirectory.Exists(LChosenDir) then
-    begin
-      LFileEntries := TDirectory.GetFileSystemEntries(LChosenDir);
-      if Length(LFileEntries) > 0 then
-      begin
-        AErrorMsg := 'The chosen folder is not empty. Please select a completely empty folder for the project.';
-        Exit;
-      end;
-    end
-    else
-    begin
-      try
-        TDirectory.CreateDirectory(LChosenDir);
-      except
-        on E: Exception do
-        begin
-          AErrorMsg := 'Failed to create destination folder: ' + E.Message;
-          Exit;
-        end;
-      end;
-    end;
+    if not ValidateOrCreateFolder(LChosenDir, AErrorMsg) then
+      Exit;
 
-    { 3. Write files physically }
     LWrittenFiles := TStringList.Create;
     try
-      try
-        for I := 0 to LJsonArr.Count - 1 do
-        begin
-          LVal := LJsonArr[I];
-          if LVal is TJSONObject then
-          begin
-            LObj := LVal as TJSONObject;
-            LRelPath := LObj.GetValue<string>('path', '');
-            LContent := LObj.GetValue<string>('content', '');
+      if not WriteFilesToDisk(LChosenDir, LJsonArr, LWrittenFiles, AErrorMsg) then
+        Exit;
 
-            if LRelPath.IsEmpty then
-              Continue;
-
-            // Make it relative/safe
-            LRelPath := LRelPath.Replace('/', '\');
-            if LRelPath.StartsWith('\') then
-              LRelPath := LRelPath.Substring(1);
-
-            LAbsPath := TPath.Combine(LChosenDir, LRelPath);
-            LSubFolder := TPath.GetDirectoryName(LAbsPath);
-
-            if not LSubFolder.IsEmpty and not TDirectory.Exists(LSubFolder) then
-              TDirectory.CreateDirectory(LSubFolder);
-
-            TFile.WriteAllText(LAbsPath, LContent, TEncoding.UTF8);
-            LWrittenFiles.Add(LAbsPath);
-          end;
-        end;
-
-        Result := True;
-      except
-        on E: Exception do
-        begin
-          AErrorMsg := 'Error writing files: ' + E.Message;
-          TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: Exception writing files. Rollback initiated.', 'Core');
-
-          // Rollback: delete any files written in this execution
-          for LRelPath in LWrittenFiles do
-          begin
-            try
-              if TFile.Exists(LRelPath) then
-                TFile.Delete(LRelPath);
-            except
-              on E: Exception do
-                TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON rollback: Failed to delete ' +
-                  LRelPath + ': ' + E.Message, 'Core');
-            end;
-          end;
-
-          Exit;
-        end;
-      end;
-
-      { 4. Identify project file to open (.dproj first, then .dpr) }
-      for LRelPath in LWrittenFiles do
-      begin
-        if SameText(TPath.GetExtension(LRelPath), '.dproj') then
-        begin
-          LProjectFileToOpen := LRelPath;
-          Break;
-        end;
-      end;
-
-      if LProjectFileToOpen.IsEmpty then
-      begin
-        for LRelPath in LWrittenFiles do
-        begin
-          if SameText(TPath.GetExtension(LRelPath), '.dpr') then
-          begin
-            LProjectFileToOpen := LRelPath;
-            Break;
-          end;
-        end;
-      end;
-
-      { 5. Open project in IDE }
-      if not LProjectFileToOpen.IsEmpty then
-      begin
-        TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: Opening project: ' + LProjectFileToOpen, 'Core');
-        TThread.Queue(nil,
-          procedure
-          var
-            LAdapter: IRadIAIDEAdapter;
-          begin
-            if TRadIAContainer.TryResolve<IRadIAIDEAdapter>(LAdapter) then
-              LAdapter.OpenProjectInIDE(LProjectFileToOpen);
-          end);
-      end
-      else
-      begin
-        TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: No project file (.dproj/.dpr) found to open.', 'Core');
-      end;
-
+      Result := True;
+      LProjectFileToOpen := IdentifyProjectFile(LWrittenFiles);
+      OpenProjectInIDE(LProjectFileToOpen);
     finally
       LWrittenFiles.Free;
     end;

@@ -68,6 +68,12 @@ type
 
     procedure HandleBackgroundLoginComplete;
     procedure UpdateModelsCombo;
+
+    procedure HandleUpdateModelsComboResult(AModels: TArray<string>; AProvider: IRadIAProvider);
+    function BuildProvidersJsonArray: TJSONArray;
+    function BuildModelsJsonArray(const AActiveProvider: string; LIsWebLogin: Boolean; out AActiveModel: string): TJSONArray;
+    function BuildSlashCommandsJsonArray: TJSONArray;
+
     procedure LoadChatHistory;
     procedure SaveChatHistory;
     procedure LoadPromptHistory;
@@ -75,6 +81,10 @@ type
     function GetVisibleSessions: TArray<TSessionInfo>;
     procedure UpdateSessionsList;
     function PreProcessPrompt(const APromptText: string): string;
+
+    function ExtractCodeArgument(const AArgument: string): string;
+    function FindTemplateForCommand(const ACommand, AArgument: string; out ATemplate: TPromptTemplate): Boolean;
+
     function IsProviderConfigured(const AProviderId: string): Boolean;
     function GetWebLoginUrl(const AProvider: string): string;
     function CanChangeSession: Boolean;
@@ -124,6 +134,12 @@ type
     procedure SendPrompt;
     procedure SendPromptText(const APromptText: string);
     procedure SendPromptToAI(const APromptText: string);
+
+    procedure HandleStreamSessionChange(AIsDone: Boolean; const ASessionId, AFullResponse, AActiveProvider, AActiveModel: string);
+    procedure HandleStreamCancel(const AActiveProvider, AActiveModel: string; var AFullResponse: string);
+    procedure HandleStreamError(const AError, AActiveProvider, AActiveModel: string; var AFullResponse: string);
+    procedure HandleStreamDone(const APromptText, AActiveProvider, AActiveModel, AFullResponse: string);
+
     procedure CancelRequest;
     procedure ClearChat;
 
@@ -144,6 +160,11 @@ type
     procedure HandleGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
 
     procedure GenerateDTO(const AInput, AInputType, AOutputType: string);
+
+    procedure HandleGenerateDTOCancel;
+    procedure HandleGenerateDTOError(const AError: string);
+    procedure HandleGenerateDTODone(const APromptText, AActiveProvider: string);
+
 
     procedure OnWebViewBridgeSendPrompt(const APrompt: string);
     procedure OnWebViewBridgeCancel;
@@ -363,6 +384,105 @@ begin
   end;
 end;
 
+
+procedure TRadIAChatPresenter.HandleUpdateModelsComboResult(AModels: TArray<string>; AProvider: IRadIAProvider);
+var
+  LActiveModel: string;
+  LProvId: string;
+begin
+  if FModelsProvider = AProvider then
+    FModelsProvider := nil;
+
+  if Assigned(AProvider) then
+  begin
+    Self.FActiveModels := AModels;
+    LProvId := AProvider.GetProviderId;
+    LActiveModel := Self.FConfig.GetActiveModel(LProvId);
+
+    if (Length(AModels) > 0) and (LActiveModel.IsEmpty or (IndexOfString(AModels, LActiveModel) = -1)) then
+    begin
+      LActiveModel := AModels[0];
+      Self.FConfig.SetActiveModel(LProvId, LActiveModel);
+      Self.FConfig.Save;
+    end;
+
+    Self.FView.UpdateModels(AModels, LActiveModel, True);
+    Self.SendModelsUpdateToWeb(AModels, LActiveModel);
+  end;
+end;
+
+function TRadIAChatPresenter.BuildProvidersJsonArray: TJSONArray;
+var
+  LProviders: TArray<TProviderMetadata>;
+  LProvObj: TJSONObject;
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  LProviders := TProviderRegistry.GetProviders;
+  for I := 0 to Length(LProviders) - 1 do
+  begin
+    if IsProviderConfigured(LProviders[I].Id) then
+    begin
+      LProvObj := TJSONObject.Create;
+      LProvObj.AddPair('name', LProviders[I].DisplayName);
+      LProvObj.AddPair('value', LProviders[I].Id);
+      Result.AddElement(LProvObj);
+    end;
+  end;
+end;
+
+function TRadIAChatPresenter.BuildModelsJsonArray(const AActiveProvider: string; LIsWebLogin: Boolean; out AActiveModel: string): TJSONArray;
+var
+  LMeta: TProviderMetadata;
+  LDefaultModels: TArray<string>;
+  LModel: string;
+begin
+  Result := TJSONArray.Create;
+  AActiveModel := FConfig.GetActiveModel(AActiveProvider);
+  
+  if LIsWebLogin then
+  begin
+    if TProviderRegistry.GetProvider('WebViewBridge', LMeta) then
+      LDefaultModels := LMeta.DefaultModels
+    else
+      LDefaultModels := ['Web-Browser'];
+    AActiveModel := 'Web-Browser';
+  end
+  else
+  begin
+    if Length(FActiveModels) > 0 then
+      LDefaultModels := FActiveModels
+    else if TProviderRegistry.GetProvider(AActiveProvider, LMeta) then
+      LDefaultModels := LMeta.DefaultModels
+    else
+      LDefaultModels := [];
+  end;
+
+  for LModel in LDefaultModels do
+  begin
+    Result.Add(LModel);
+  end;
+end;
+
+function TRadIAChatPresenter.BuildSlashCommandsJsonArray: TJSONArray;
+var
+  LTemplate: TPromptTemplate;
+  LSlashObj: TJSONObject;
+begin
+  Result := TJSONArray.Create;
+  for LTemplate in FTemplateManager.GetTemplates do
+  begin
+    if not LTemplate.SlashCommand.IsEmpty then
+    begin
+      LSlashObj := TJSONObject.Create;
+      LSlashObj.AddPair('command', LTemplate.SlashCommand);
+      LSlashObj.AddPair('description', LTemplate.Description);
+      LSlashObj.AddPair('name', LTemplate.Name);
+      LSlashObj.AddPair('isProjectGenerator', TJSONBool.Create(LTemplate.IsProjectGenerator));
+      Result.AddElement(LSlashObj);
+    end;
+  end;
+end;
 procedure TRadIAChatPresenter.UpdateModelsCombo;
 var
   LProvider: IRadIAProvider;
@@ -390,32 +510,10 @@ begin
       begin
         TThread.Queue(nil,
           procedure
-          var
-            LActiveModel: string;
-            LProvId: string;
           begin
             if not LGuard.IsAlive then
               Exit;
-
-            if FModelsProvider = LProvider then
-              FModelsProvider := nil;
-
-            if Assigned(LProvider) then
-            begin
-              Self.FActiveModels := AModels;
-              LProvId := LProvider.GetProviderId;
-              LActiveModel := Self.FConfig.GetActiveModel(LProvId);
-
-              if (Length(AModels) > 0) and (LActiveModel.IsEmpty or (IndexOfString(AModels, LActiveModel) = -1)) then
-              begin
-                LActiveModel := AModels[0];
-                Self.FConfig.SetActiveModel(LProvId, LActiveModel);
-                Self.FConfig.Save;
-              end;
-
-              Self.FView.UpdateModels(AModels, LActiveModel, True);
-              Self.SendModelsUpdateToWeb(AModels, LActiveModel);
-            end;
+            Self.HandleUpdateModelsComboResult(AModels, LProvider);
           end
         );
       end);
@@ -719,6 +817,147 @@ begin
   SendPromptToAI(LProcessed);
 end;
 
+
+procedure TRadIAChatPresenter.HandleStreamSessionChange(AIsDone: Boolean; const ASessionId, AFullResponse, AActiveProvider, AActiveModel: string);
+begin
+  TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.',
+      [ASessionId, Self.FSessionManager.ActiveSessionId]), 'UI');
+  if AIsDone and (not AFullResponse.IsEmpty) and (not GIsShuttingDown) then
+  begin
+    TInterlocked.Increment(GActiveThreadCount);
+    TThread.CreateAnonymousThread(
+      procedure
+      var
+        LOrigHistory: TArray<IRadIAChatMessage>;
+        LAssistantMsg: IRadIAChatMessage;
+      begin
+        try
+          try
+            LOrigHistory := Self.FSessionManager.LoadSessionHistory(ASessionId);
+            LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, AFullResponse,
+                AActiveProvider, AActiveModel);
+            LOrigHistory := LOrigHistory + [LAssistantMsg];
+            Self.FSessionManager.SaveSessionHistory(ASessionId, LOrigHistory);
+          except
+            on E: Exception do
+              TLogger.Log('SendPromptToAI background thread: Error saving history: ' + E.Message, 'UI');
+          end;
+        finally
+          TInterlocked.Decrement(GActiveThreadCount);
+        end;
+      end).Start;
+  end;
+end;
+
+procedure TRadIAChatPresenter.HandleStreamCancel(const AActiveProvider, AActiveModel: string; var AFullResponse: string);
+var
+  LAssistantMsg: IRadIAChatMessage;
+begin
+  Self.FRequestInProgress := False;
+  Self.FView.SetRequestState(False);
+  TLogger.Log('SendPromptToAI: Handling user cancellation in UI callback.', 'UI');
+
+  if not AFullResponse.IsEmpty then
+  begin
+    LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, AFullResponse + ' [Cancelled ' +
+        'by user]', AActiveProvider, AActiveModel);
+    Self.FHistory := Self.FHistory + [LAssistantMsg];
+    Self.SaveChatHistory;
+  end;
+
+  Self.PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*',
+      False, AActiveProvider, AActiveModel);
+  Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
+end;
+
+procedure TRadIAChatPresenter.HandleStreamError(const AError, AActiveProvider, AActiveModel: string; var AFullResponse: string);
+var
+  LAssistantMsg: IRadIAChatMessage;
+  LIsWebError: Boolean;
+begin
+  Self.FRequestInProgress := False;
+  Self.FView.SetRequestState(False);
+  TLogger.Log(Format('SendPromptToAI error callback: %s', [AError]), 'UI');
+
+  if not AFullResponse.IsEmpty then
+  begin
+    AFullResponse := AFullResponse + #13#10#13#10 + '**Error:** ' + AError;
+    Self.PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + AError,
+        True, AActiveProvider, AActiveModel);
+
+    LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, AFullResponse, AActiveProvider,
+        AActiveModel);
+    Self.FHistory := Self.FHistory + [LAssistantMsg];
+    Self.SaveChatHistory;
+  end
+  else
+  begin
+    Self.PostToWebView('add_message', 'assistant', '**Error:** ' + AError, False, AActiveProvider,
+        AActiveModel);
+    Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
+  end;
+
+  LIsWebError := SameText(AError, 'WebView Login session is not ready or active.') or
+                     SameText(AError, 'Input textarea not found in page.') or
+                     SameText(AError, 'Send button not found in page.');
+  if LIsWebError then
+  begin
+    Self.HandleOnbtnWebLoginConnectClick;
+  end;
+end;
+
+procedure TRadIAChatPresenter.HandleStreamDone(const APromptText, AActiveProvider, AActiveModel, AFullResponse: string);
+var
+  LAssistantMsg: IRadIAChatMessage;
+  LUsage: TTokenUsage;
+  LStats: string;
+begin
+  Self.FRequestInProgress := False;
+  Self.FView.SetRequestState(False);
+  TLogger.Log(Format('SendPromptToAI completed. TotalResponseLength=%d', [Length(AFullResponse)]), 'UI');
+
+  if AFullResponse.IsEmpty then
+  begin
+    TLogger.Log('SendPromptToAI: Empty response from AI provider', 'UI');
+    Self.PostToWebView('add_message', 'assistant', '**Error:** The provider returned empty ' +
+        'response.', False, AActiveProvider, AActiveModel);
+    Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
+    Exit;
+  end;
+
+  LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, AFullResponse, AActiveProvider,
+      AActiveModel);
+  Self.FHistory := Self.FHistory + [LAssistantMsg];
+  Self.SaveChatHistory;
+
+  LUsage.PromptTokens := Length(APromptText) div 4;
+  LUsage.CompletionTokens := Length(AFullResponse) div 4;
+  LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
+
+  if LUsage.TotalTokens > 0 then
+  begin
+    Self.FAccumulatedUsage.PromptTokens := Self.FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
+    Self.FAccumulatedUsage.CompletionTokens :=
+      Self.FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
+
+    Self.FAccumulatedUsage.TotalTokens := Self.FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
+
+    if not Self.FConfig.IsWebLoginProvider(AActiveProvider) then
+      Self.FConfig.AddToQuotaUsage(LUsage);
+
+    LStats := Self.FAccumulatedUsage.FormatStats;
+    if Self.FConfig.QuotaEnabled and (not Self.FConfig.IsWebLoginProvider(AActiveProvider)) then
+    begin
+      LStats := LStats + Format(' Â· Quota %d%%',
+        [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
+    end;
+
+    Self.PostToWebView('update_tokens', '', LStats);
+  end;
+
+  Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
+end;
+
 procedure TRadIAChatPresenter.SendPromptToAI(const APromptText: string);
 var
   LUserMsg: IRadIAChatMessage;
@@ -785,10 +1024,6 @@ begin
         TThread.Queue(nil,
           TThreadProcedure(
           procedure
-          var
-            LAssistantMsg: IRadIAChatMessage;
-            LStats: string;
-            LUsage: TTokenUsage;
           begin
             if LDoneHandled then
               Exit;
@@ -798,90 +1033,21 @@ begin
 
             if not SameText(Self.FSessionManager.ActiveSessionId, LSessionId) then
             begin
-              TLogger.Log(Format('SendPromptToAI: Session changed from %s to %s. Discarding UI callback.',
-                  [LSessionId, Self.FSessionManager.ActiveSessionId]), 'UI');
-              if AIsDone and (not LFullResponse.IsEmpty) and (not GIsShuttingDown) then
-              begin
-                TInterlocked.Increment(GActiveThreadCount);
-                TThread.CreateAnonymousThread(
-                  procedure
-                  var
-                    LOrigHistory: TArray<IRadIAChatMessage>;
-                    LAssistantMsg: IRadIAChatMessage;
-                  begin
-                    try
-                      try
-                        LOrigHistory := Self.FSessionManager.LoadSessionHistory(LSessionId);
-                        LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse,
-                            LActiveProvider, LActiveModel);
-                        LOrigHistory := LOrigHistory + [LAssistantMsg];
-                        Self.FSessionManager.SaveSessionHistory(LSessionId, LOrigHistory);
-                      except
-                        on E: Exception do
-                          TLogger.Log('SendPromptToAI background thread: Error saving history: ' + E.Message, 'UI');
-                      end;
-                    finally
-                      TInterlocked.Decrement(GActiveThreadCount);
-                    end;
-                  end).Start;
-              end;
+              Self.HandleStreamSessionChange(AIsDone, LSessionId, LFullResponse, LActiveProvider, LActiveModel);
               Exit;
             end;
 
             if Self.FCancelledByUser then
             begin
               LDoneHandled := True;
-              Self.FRequestInProgress := False;
-              Self.FView.SetRequestState(False);
-              TLogger.Log('SendPromptToAI: Handling user cancellation in UI callback.', 'UI');
-
-              if not LFullResponse.IsEmpty then
-              begin
-                LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse + ' [Cancelled ' +
-                    'by user]', LActiveProvider, LActiveModel);
-                Self.FHistory := Self.FHistory + [LAssistantMsg];
-                Self.SaveChatHistory;
-              end;
-
-              Self.PostToWebView('add_message', 'assistant', '*Requisicao cancelada pelo usuario.*',
-                  False, LActiveProvider, LActiveModel);
-              Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+              Self.HandleStreamCancel(LActiveProvider, LActiveModel, LFullResponse);
               Exit;
             end;
 
             if not AError.IsEmpty then
             begin
               LDoneHandled := True;
-              Self.FRequestInProgress := False;
-              Self.FView.SetRequestState(False);
-              TLogger.Log(Format('SendPromptToAI error callback: %s', [AError]), 'UI');
-
-              if not LFullResponse.IsEmpty then
-              begin
-                LFullResponse := LFullResponse + #13#10#13#10 + '**Error:** ' + AError;
-                Self.PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + AError,
-                    True, LActiveProvider, LActiveModel);
-
-                LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider,
-                    LActiveModel);
-                Self.FHistory := Self.FHistory + [LAssistantMsg];
-                Self.SaveChatHistory;
-              end
-              else
-              begin
-                Self.PostToWebView('add_message', 'assistant', '**Error:** ' + AError, False, LActiveProvider,
-                    LActiveModel);
-                Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
-              end;
-
-              var LIsWebError := SameText(AError, 'WebView Login session is not ready or active.') or
-                                 SameText(AError, 'Input textarea not found in page.') or
-                                 SameText(AError, 'Send button not found in page.');
-              if LIsWebError then
-              begin
-                Self.HandleOnbtnWebLoginConnectClick;
-              end;
-
+              Self.HandleStreamError(AError, LActiveProvider, LActiveModel, LFullResponse);
               Exit;
             end;
 
@@ -895,50 +1061,7 @@ begin
             if AIsDone then
             begin
               LDoneHandled := True;
-              Self.FRequestInProgress := False;
-              Self.FView.SetRequestState(False);
-              TLogger.Log(Format('SendPromptToAI completed. TotalResponseLength=%d', [Length(LFullResponse)]), 'UI');
-
-              if LFullResponse.IsEmpty then
-              begin
-                TLogger.Log('SendPromptToAI: Empty response from AI provider', 'UI');
-                Self.PostToWebView('add_message', 'assistant', '**Error:** The provider returned empty ' +
-                    'response.', False, LActiveProvider, LActiveModel);
-                Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
-                Exit;
-              end;
-
-              LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, LFullResponse, LActiveProvider,
-                  LActiveModel);
-              Self.FHistory := Self.FHistory + [LAssistantMsg];
-              Self.SaveChatHistory;
-
-              LUsage.PromptTokens := Length(APromptText) div 4;
-              LUsage.CompletionTokens := Length(LFullResponse) div 4;
-              LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
-
-              if LUsage.TotalTokens > 0 then
-              begin
-                Self.FAccumulatedUsage.PromptTokens := Self.FAccumulatedUsage.PromptTokens + LUsage.PromptTokens;
-                Self.FAccumulatedUsage.CompletionTokens :=
-                  Self.FAccumulatedUsage.CompletionTokens + LUsage.CompletionTokens;
-
-                Self.FAccumulatedUsage.TotalTokens := Self.FAccumulatedUsage.TotalTokens + LUsage.TotalTokens;
-
-                if not Self.FConfig.IsWebLoginProvider(LActiveProvider) then
-                  Self.FConfig.AddToQuotaUsage(LUsage);
-
-                LStats := Self.FAccumulatedUsage.FormatStats;
-                if Self.FConfig.QuotaEnabled and (not Self.FConfig.IsWebLoginProvider(LActiveProvider)) then
-                begin
-                  LStats := LStats + Format(' Â· Quota %d%%',
-                    [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
-                end;
-
-                Self.PostToWebView('update_tokens', '', LStats);
-              end;
-
-              Self.PostToWebView('append_message', 'assistant', '', True, LActiveProvider, LActiveModel);
+              Self.HandleStreamDone(APromptText, LActiveProvider, LActiveModel, LFullResponse);
             end;
           end));
       end, LProfile);
@@ -962,6 +1085,47 @@ begin
     FView.SetRequestState(False);
     FAIService.CancelCurrentRequest;
   end;
+end;
+
+
+procedure TRadIAChatPresenter.HandleGenerateDTOCancel;
+begin
+  Self.FRequestInProgress := False;
+  Self.FView.SetRequestState(False);
+  Self.PostToWebView('append_generator_code', '', ' [Cancelled by user]', True);
+end;
+
+procedure TRadIAChatPresenter.HandleGenerateDTOError(const AError: string);
+begin
+  Self.FRequestInProgress := False;
+  Self.FView.SetRequestState(False);
+  Self.PostToWebView('append_generator_code', '', #13#10 + '// Error: ' + AError, True);
+end;
+
+procedure TRadIAChatPresenter.HandleGenerateDTODone(const APromptText, AActiveProvider: string);
+var
+  LUsage: TTokenUsage;
+  LStats: string;
+begin
+  Self.FRequestInProgress := False;
+  Self.FView.SetRequestState(False);
+
+  LUsage.PromptTokens := Length(APromptText) div 4;
+  LUsage.CompletionTokens := 1000;
+  LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
+
+  if LUsage.TotalTokens > 0 then
+  begin
+    if not Self.FConfig.IsWebLoginProvider(AActiveProvider) then
+      Self.FConfig.AddToQuotaUsage(LUsage);
+    LStats := Self.FAccumulatedUsage.FormatStats;
+    if Self.FConfig.QuotaEnabled and (not Self.FConfig.IsWebLoginProvider(AActiveProvider)) then
+      LStats := LStats + Format(' Â· Quota %d%%',
+        [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
+    Self.PostToWebView('update_tokens', '', LStats);
+  end;
+
+  Self.PostToWebView('append_generator_code', '', '', True);
 end;
 
 procedure TRadIAChatPresenter.GenerateDTO(const AInput, AInputType, AOutputType: string);
@@ -1005,9 +1169,6 @@ begin
         TThread.Queue(nil,
           TThreadProcedure(
           procedure
-          var
-            LStats: string;
-            LUsage: TTokenUsage;
           begin
             if LDoneHandled then
               Exit;
@@ -1018,18 +1179,14 @@ begin
             if Self.FCancelledByUser then
             begin
               LDoneHandled := True;
-              Self.FRequestInProgress := False;
-              Self.FView.SetRequestState(False);
-              Self.PostToWebView('append_generator_code', '', ' [Cancelled by user]', True);
+              Self.HandleGenerateDTOCancel;
               Exit;
             end;
 
             if not AError.IsEmpty then
             begin
               LDoneHandled := True;
-              Self.FRequestInProgress := False;
-              Self.FView.SetRequestState(False);
-              Self.PostToWebView('append_generator_code', '', #13#10 + '// Error: ' + AError, True);
+              Self.HandleGenerateDTOError(AError);
               Exit;
             end;
 
@@ -1041,25 +1198,7 @@ begin
             if AIsDone then
             begin
               LDoneHandled := True;
-              Self.FRequestInProgress := False;
-              Self.FView.SetRequestState(False);
-
-              LUsage.PromptTokens := Length(LPromptText) div 4;
-              LUsage.CompletionTokens := 1000;
-              LUsage.TotalTokens := LUsage.PromptTokens + LUsage.CompletionTokens;
-
-              if LUsage.TotalTokens > 0 then
-              begin
-                if not Self.FConfig.IsWebLoginProvider(LActiveProvider) then
-                  Self.FConfig.AddToQuotaUsage(LUsage);
-                LStats := Self.FAccumulatedUsage.FormatStats;
-                if Self.FConfig.QuotaEnabled and (not Self.FConfig.IsWebLoginProvider(LActiveProvider)) then
-                  LStats := LStats + Format(' Â· Quota %d%%',
-                    [Round((Self.FConfig.QuotaUsed / Self.FConfig.QuotaLimit) * 100)]);
-                Self.PostToWebView('update_tokens', '', LStats);
-              end;
-
-              Self.PostToWebView('append_generator_code', '', '', True);
+              Self.HandleGenerateDTODone(LPromptText, LActiveProvider);
             end;
           end));
       end, rpGeneralChat);
@@ -1072,6 +1211,7 @@ begin
     end;
   end;
 end;
+
 
 procedure TRadIAChatPresenter.OnWebViewReady;
 var
@@ -1598,6 +1738,100 @@ begin
   end;
 end;
 
+
+function TRadIAChatPresenter.ExtractCodeArgument(const AArgument: string): string;
+var
+  LText: string;
+  LFenceStart: Integer;
+  LCodeStart: Integer;
+  LFenceEnd: Integer;
+begin
+  Result := AArgument.Trim;
+  LText := AArgument.Replace(#13#10, #10).Replace(#13, #10);
+  LFenceStart := Pos('```', LText);
+  if LFenceStart <= 0 then
+    Exit;
+
+  LCodeStart := PosEx(#10, LText, LFenceStart + 3);
+  if LCodeStart <= 0 then
+    Exit;
+
+  Inc(LCodeStart);
+  LFenceEnd := PosEx('```', LText, LCodeStart);
+  if LFenceEnd > 0 then
+    Result := Copy(LText, LCodeStart, LFenceEnd - LCodeStart).TrimRight
+  else
+    Result := Copy(LText, LCodeStart, MaxInt).TrimRight;
+end;
+
+function TRadIAChatPresenter.FindTemplateForCommand(const ACommand, AArgument: string; out ATemplate: TPromptTemplate): Boolean;
+var
+  LTemp: TPromptTemplate;
+begin
+  Result := False;
+  
+  if SameText(ACommand, '/template') then
+  begin
+    if not AArgument.IsEmpty then
+      Result := FTemplateManager.FindTemplate(AArgument, ATemplate);
+    Exit;
+  end;
+
+  if SameText(ACommand, '/review') then
+  begin
+    for LTemp in FTemplateManager.GetTemplates do
+    begin
+      if SameText(LTemp.SlashCommand, '/review') then
+      begin
+        ATemplate := LTemp;
+        Exit(True);
+      end;
+    end;
+    Exit(FTemplateManager.FindTemplate('Review Leaks and SOLID', ATemplate));
+  end;
+
+  if SameText(ACommand, '/explain') then
+    Exit(FTemplateManager.FindTemplate('Explain Code', ATemplate));
+
+  if SameText(ACommand, '/refactor') then
+  begin
+    for LTemp in FTemplateManager.GetTemplates do
+    begin
+      if SameText(LTemp.SlashCommand, '/refactor') then
+      begin
+        ATemplate := LTemp;
+        Exit(True);
+      end;
+    end;
+    Exit(FTemplateManager.FindTemplate('Review Clean Code Delphi', ATemplate));
+  end;
+
+  if SameText(ACommand, '/optimize') then
+  begin
+    for LTemp in FTemplateManager.GetTemplates do
+    begin
+      if SameText(LTemp.SlashCommand, '/optimize') then
+      begin
+        ATemplate := LTemp;
+        Exit(True);
+      end;
+    end;
+    Exit(FTemplateManager.FindTemplate('Analyze Performance', ATemplate));
+  end;
+
+  if ACommand.StartsWith('/') then
+  begin
+    for LTemp in FTemplateManager.GetTemplates do
+    begin
+      if SameText(LTemp.SlashCommand, ACommand) then
+      begin
+        ATemplate := LTemp;
+        Exit(True);
+      end;
+    end;
+  end;
+end;
+
 function TRadIAChatPresenter.PreProcessPrompt(const APromptText: string): string;
 var
   LActiveCode: string;
@@ -1606,37 +1840,9 @@ var
   LCommand: string;
   LArgument: string;
   LFirstSeparator: Integer;
-  LTemplateName: string;
-  LTemp: TPromptTemplate;
   I: Integer;
-
-  function ExtractCodeArgument(const AArgument: string): string;
-  var
-    LText: string;
-    LFenceStart: Integer;
-    LCodeStart: Integer;
-    LFenceEnd: Integer;
-  begin
-    Result := AArgument.Trim;
-    LText := AArgument.Replace(#13#10, #10).Replace(#13, #10);
-    LFenceStart := Pos('```', LText);
-    if LFenceStart <= 0 then
-      Exit;
-
-    LCodeStart := PosEx(#10, LText, LFenceStart + 3);
-    if LCodeStart <= 0 then
-      Exit;
-
-    Inc(LCodeStart);
-    LFenceEnd := PosEx('```', LText, LCodeStart);
-    if LFenceEnd > 0 then
-      Result := Copy(LText, LCodeStart, LFenceEnd - LCodeStart).TrimRight
-    else
-      Result := Copy(LText, LCodeStart, MaxInt).TrimRight;
-  end;
 begin
   Result := APromptText;
-  LFound := False;
   LActiveCode := '';
 
   LCommand := Trim(APromptText);
@@ -1657,75 +1863,7 @@ begin
     LArgument := APromptText.Substring(LFirstSeparator + 1).Trim;
   end;
 
-  if SameText(LCommand, '/template') then
-  begin
-    LTemplateName := LArgument;
-    if not LTemplateName.IsEmpty then
-    begin
-      LFound := FTemplateManager.FindTemplate(LTemplateName, LTemplate);
-    end;
-  end
-  else if SameText(LCommand, '/review') then
-  begin
-    LFound := False;
-    for LTemp in FTemplateManager.GetTemplates do
-    begin
-      if SameText(LTemp.SlashCommand, '/review') then
-      begin
-        LTemplate := LTemp;
-        LFound := True;
-        Break;
-      end;
-    end;
-    if not LFound then
-      LFound := FTemplateManager.FindTemplate('Review Leaks and SOLID', LTemplate);
-  end
-  else if SameText(LCommand, '/explain') then
-  begin
-    LFound := FTemplateManager.FindTemplate('Explain Code', LTemplate);
-  end
-  else if SameText(LCommand, '/refactor') then
-  begin
-    LFound := False;
-    for LTemp in FTemplateManager.GetTemplates do
-    begin
-      if SameText(LTemp.SlashCommand, '/refactor') then
-      begin
-        LTemplate := LTemp;
-        LFound := True;
-        Break;
-      end;
-    end;
-    if not LFound then
-      LFound := FTemplateManager.FindTemplate('Review Clean Code Delphi', LTemplate);
-  end
-  else if SameText(LCommand, '/optimize') then
-  begin
-    LFound := False;
-    for LTemp in FTemplateManager.GetTemplates do
-    begin
-      if SameText(LTemp.SlashCommand, '/optimize') then
-      begin
-        LTemplate := LTemp;
-        LFound := True;
-        Break;
-      end;
-    end;
-    if not LFound then
-      LFound := FTemplateManager.FindTemplate('Analyze Performance', LTemplate);
-  end
-  else if LCommand.StartsWith('/') then
-  begin
-    for LTemp in FTemplateManager.GetTemplates do
-    begin
-      if SameText(LTemp.SlashCommand, LCommand) then
-      begin
-        LTemplate := LTemp;
-        LFound := True;
-        Break;
-      end;
-    end;
-  end;
+  LFound := FindTemplateForCommand(LCommand, LArgument, LTemplate);
 
   if LFound then
   begin
@@ -1894,84 +2032,21 @@ end;
 procedure TRadIAChatPresenter.SendInitialConfigToWeb;
 var
   LJson: TJSONObject;
-  LProvidersJson: TJSONArray;
-  LModelsJson: TJSONArray;
-  LSlashCommandsJson: TJSONArray;
-  LProviders: TArray<TProviderMetadata>;
   LActiveProvider: string;
   LActiveModel: string;
   LIsWebLogin: Boolean;
-  LTemplate: TPromptTemplate;
-  LSlashObj: TJSONObject;
-  LProvObj: TJSONObject;
-  I: Integer;
-  LMeta: TProviderMetadata;
-  LDefaultModels: TArray<string>;
-  LModel: string;
 begin
   if not FWebViewReady then Exit;
 
   LActiveProvider := FConfig.GetActiveProvider;
-  LActiveModel := FConfig.GetActiveModel(LActiveProvider);
   LIsWebLogin := FConfig.IsWebLoginProvider(LActiveProvider);
 
   LJson := TJSONObject.Create;
-  LProvidersJson := TJSONArray.Create;
-  LModelsJson := TJSONArray.Create;
-  LSlashCommandsJson := TJSONArray.Create;
   try
-    LProviders := TProviderRegistry.GetProviders;
-    for I := 0 to Length(LProviders) - 1 do
-    begin
-      if IsProviderConfigured(LProviders[I].Id) then
-      begin
-        LProvObj := TJSONObject.Create;
-        LProvObj.AddPair('name', LProviders[I].DisplayName);
-        LProvObj.AddPair('value', LProviders[I].Id);
-        LProvidersJson.AddElement(LProvObj);
-      end;
-    end;
-
-    if LIsWebLogin then
-    begin
-      if TProviderRegistry.GetProvider('WebViewBridge', LMeta) then
-        LDefaultModels := LMeta.DefaultModels
-      else
-        LDefaultModels := ['Web-Browser'];
-      LActiveModel := 'Web-Browser';
-    end
-    else
-    begin
-      if Length(FActiveModels) > 0 then
-        LDefaultModels := FActiveModels
-      else if TProviderRegistry.GetProvider(LActiveProvider, LMeta) then
-        LDefaultModels := LMeta.DefaultModels
-      else
-        LDefaultModels := [];
-    end;
-
-    for LModel in LDefaultModels do
-    begin
-      LModelsJson.Add(LModel);
-    end;
-
-    for LTemplate in FTemplateManager.GetTemplates do
-    begin
-      if not LTemplate.SlashCommand.IsEmpty then
-      begin
-        LSlashObj := TJSONObject.Create;
-        LSlashObj.AddPair('command', LTemplate.SlashCommand);
-        LSlashObj.AddPair('description', LTemplate.Description);
-        LSlashObj.AddPair('name', LTemplate.Name);
-        LSlashObj.AddPair('isProjectGenerator', TJSONBool.Create(LTemplate.IsProjectGenerator));
-        LSlashCommandsJson.AddElement(LSlashObj);
-      end;
-    end;
-
     LJson.AddPair('action', 'initialize_config');
-    LJson.AddPair('providers', LProvidersJson);
-    LJson.AddPair('models', LModelsJson);
-    LJson.AddPair('slashCommands', LSlashCommandsJson);
+    LJson.AddPair('providers', BuildProvidersJsonArray);
+    LJson.AddPair('models', BuildModelsJsonArray(LActiveProvider, LIsWebLogin, LActiveModel));
+    LJson.AddPair('slashCommands', BuildSlashCommandsJsonArray);
     LJson.AddPair('activeProvider', LActiveProvider);
     LJson.AddPair('activeModel', LActiveModel);
     LJson.AddPair('isWebLogin', TJSONBool.Create(LIsWebLogin));
