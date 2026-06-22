@@ -484,38 +484,52 @@ function handleSlashPopupKeydown(e) {
   return false;
 }
 
+function handleArrowUp() {
+  const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
+  if (textBeforeCursor.includes('\n') || _promptHistory.length === 0) return false;
+
+  if (_promptHistoryIndex === -1) {
+    _promptDraft = promptTextarea.value;
+    _promptHistoryIndex = _promptHistory.length - 1;
+  } else if (_promptHistoryIndex > 0) {
+    _promptHistoryIndex--;
+  }
+  
+  promptTextarea.value = _promptHistory[_promptHistoryIndex];
+  setTimeout(() => {
+    promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+    promptTextarea.dispatchEvent(new Event('input'));
+  }, 0);
+  return true;
+}
+
+function handleArrowDown() {
+  const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
+  if (textAfterCursor.includes('\n') || _promptHistoryIndex === -1) return false;
+
+  if (_promptHistoryIndex < _promptHistory.length - 1) {
+    _promptHistoryIndex++;
+    promptTextarea.value = _promptHistory[_promptHistoryIndex];
+  } else {
+    _promptHistoryIndex = -1;
+    promptTextarea.value = _promptDraft;
+  }
+  
+  setTimeout(() => {
+    promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
+    promptTextarea.dispatchEvent(new Event('input'));
+  }, 0);
+  return true;
+}
+
 function handleHistoryKeydown(e) {
   if (e.key === 'ArrowUp') {
-    const textBeforeCursor = promptTextarea.value.substring(0, promptTextarea.selectionStart);
-    if (!textBeforeCursor.includes('\n') && _promptHistory.length > 0) {
-      if (_promptHistoryIndex === -1) {
-        _promptDraft = promptTextarea.value;
-        _promptHistoryIndex = _promptHistory.length - 1;
-      } else if (_promptHistoryIndex > 0) {
-        _promptHistoryIndex--;
-      }
-      promptTextarea.value = _promptHistory[_promptHistoryIndex];
-      setTimeout(() => {
-        promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
-        promptTextarea.dispatchEvent(new Event('input'));
-      }, 0);
+    if (handleArrowUp()) {
       e.preventDefault();
       return true;
     }
   } else if (e.key === 'ArrowDown') {
-    const textAfterCursor = promptTextarea.value.substring(promptTextarea.selectionEnd);
-    if (!textAfterCursor.includes('\n') && _promptHistoryIndex !== -1) {
-      if (_promptHistoryIndex < _promptHistory.length - 1) {
-        _promptHistoryIndex++;
-        promptTextarea.value = _promptHistory[_promptHistoryIndex];
-      } else {
-        _promptHistoryIndex = -1;
-        promptTextarea.value = _promptDraft;
-      }
-      setTimeout(() => {
-        promptTextarea.selectionStart = promptTextarea.selectionEnd = promptTextarea.value.length;
-        promptTextarea.dispatchEvent(new Event('input'));
-      }, 0);
+    if (handleArrowDown()) {
       e.preventDefault();
       return true;
     }

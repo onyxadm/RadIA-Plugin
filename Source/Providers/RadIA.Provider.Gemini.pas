@@ -73,10 +73,10 @@ var
     LContentObj := TJSONObject.Create;
     LContentsArr.AddElement(LContentObj);
     LContentObj.AddPair('role', ARoleStr);
-    
+
     LPartsArr := TJSONArray.Create;
     LContentObj.AddPair('parts', LPartsArr);
-    
+
     LPartObj := TJSONObject.Create;
     LPartsArr.AddElement(LPartObj);
     LPartObj.AddPair('text', AMsgContent);
@@ -142,14 +142,36 @@ begin
   end;
 end;
 
+function TryGetCandidateText(AJson: TJSONObject; out AText: string): Boolean;
+var
+  LCandidates: TJSONArray;
+  LCandidate, LContent, LPart: TJSONObject;
+  LParts: TJSONArray;
+begin
+  Result := False;
+  AText := '';
+
+  LCandidates := AJson.GetValue('candidates') as TJSONArray;
+  if not Assigned(LCandidates) or (LCandidates.Count = 0) then Exit;
+
+  LCandidate := LCandidates[0] as TJSONObject;
+  LContent := LCandidate.GetValue('content') as TJSONObject;
+  if not Assigned(LContent) then Exit;
+
+  LParts := LContent.GetValue('parts') as TJSONArray;
+  if not Assigned(LParts) or (LParts.Count = 0) then Exit;
+
+  LPart := LParts[0] as TJSONObject;
+  if Assigned(LPart) then
+  begin
+    AText := LPart.GetValue<string>('text', '');
+    Result := not AText.IsEmpty;
+  end;
+end;
+
 function TRadIAGeminiProvider.ParseResponseBody(const AResponseJson: string; out AUsage: TTokenUsage): string;
 var
   LJsonObj: TJSONObject;
-  LCandidates: TJSONArray;
-  LCandidate: TJSONObject;
-  LContent: TJSONObject;
-  LParts: TJSONArray;
-  LPart: TJSONObject;
   LUsageNode: TJSONObject;
 begin
   Result := '';
@@ -160,22 +182,7 @@ begin
     Exit;
 
   try
-    LCandidates := LJsonObj.GetValue('candidates') as TJSONArray;
-    if Assigned(LCandidates) and (LCandidates.Count > 0) then
-    begin
-      LCandidate := LCandidates[0] as TJSONObject;
-      LContent := LCandidate.GetValue('content') as TJSONObject;
-      if Assigned(LContent) then
-      begin
-        LParts := LContent.GetValue('parts') as TJSONArray;
-        if Assigned(LParts) and (LParts.Count > 0) then
-        begin
-          LPart := LParts[0] as TJSONObject;
-          if Assigned(LPart) then
-            Result := LPart.GetValue<string>('text', '');
-        end;
-      end;
-    end;
+    TryGetCandidateText(LJsonObj, Result);
 
     if Result.IsEmpty and Assigned(LJsonObj.GetValue('error')) then
       raise Exception.Create(LJsonObj.GetValue('error').ToString);
@@ -226,14 +233,29 @@ begin
     end, ACallback);
 end;
 
+function IsModelValidForGeneration(AModelObj: TJSONObject): Boolean;
+var
+  LMethodsArr: TJSONArray;
+  LMethodVal: TJSONValue;
+begin
+  Result := False;
+  LMethodsArr := AModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
+  if not Assigned(LMethodsArr) then Exit;
+
+  for LMethodVal in LMethodsArr do
+  begin
+    if SameText(LMethodVal.Value, 'generateContent') then
+      Exit(True);
+  end;
+end;
+
 function ParseAvailableModelsFromJson(const AJsonStr: string): TList<string>;
 var
   LJson: TJSONObject;
-  LModelsArr, LMethodsArr: TJSONArray;
-  LVal, LMethodVal: TJSONValue;
+  LModelsArr: TJSONArray;
+  LVal: TJSONValue;
   LModelObj: TJSONObject;
   LName: string;
-  LCanGenerate: Boolean;
 begin
   Result := TList<string>.Create;
   LJson := TJSONObject.ParseJSONValue(AJsonStr) as TJSONObject;
@@ -244,32 +266,17 @@ begin
 
     for LVal in LModelsArr do
     begin
-      if LVal is TJSONObject then
+      if not (LVal is TJSONObject) then Continue;
+
+      LModelObj := LVal as TJSONObject;
+      LName := LModelObj.GetValue<string>('name', '');
+      if LName.IsEmpty then Continue;
+
+      if IsModelValidForGeneration(LModelObj) then
       begin
-        LModelObj := LVal as TJSONObject;
-        LName := LModelObj.GetValue<string>('name', '');
-        if LName.IsEmpty then Continue;
-
-        LCanGenerate := False;
-        LMethodsArr := LModelObj.GetValue('supportedGenerationMethods') as TJSONArray;
-        if Assigned(LMethodsArr) then
-        begin
-          for LMethodVal in LMethodsArr do
-          begin
-            if SameText(LMethodVal.Value, 'generateContent') then
-            begin
-              LCanGenerate := True;
-              Break;
-            end;
-          end;
-        end;
-
-        if LCanGenerate then
-        begin
-          if LName.StartsWith('models/') then
-            LName := LName.Substring(7);
-          Result.Add(LName);
-        end;
+        if LName.StartsWith('models/') then
+          LName := LName.Substring(7);
+        Result.Add(LName);
       end;
     end;
   finally
@@ -311,7 +318,7 @@ begin
                  try
                    System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
                    LProviderRef.GetProviderId;
-                   
+
                    try
                      LResponseText := DoGetRequest(LUrl, nil, 5000);
                      LModelsList := ParseAvailableModelsFromJson(LResponseText);
@@ -439,32 +446,7 @@ begin
   Result := True;
 end;
 
-function TryGetCandidateText(AJson: TJSONObject; out AText: string): Boolean;
-var
-  LCandidates: TJSONArray;
-  LCandidate, LContent, LPart: TJSONObject;
-  LParts: TJSONArray;
-begin
-  Result := False;
-  AText := '';
 
-  LCandidates := AJson.GetValue('candidates') as TJSONArray;
-  if not Assigned(LCandidates) or (LCandidates.Count = 0) then Exit;
-
-  LCandidate := LCandidates[0] as TJSONObject;
-  LContent := LCandidate.GetValue('content') as TJSONObject;
-  if not Assigned(LContent) then Exit;
-
-  LParts := LContent.GetValue('parts') as TJSONArray;
-  if not Assigned(LParts) or (LParts.Count = 0) then Exit;
-
-  LPart := LParts[0] as TJSONObject;
-  if Assigned(LPart) then
-  begin
-    AText := LPart.GetValue<string>('text', '');
-    Result := not AText.IsEmpty;
-  end;
-end;
 
 procedure TRadIAGeminiProvider.ParseAndEmitCandidate(const AJsonStr: string; const ACallback: TStreamChunkCallback);
 var

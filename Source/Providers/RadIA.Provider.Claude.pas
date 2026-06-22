@@ -186,6 +186,40 @@ begin
     end, ACallback);
 end;
 
+procedure ProcessClaudeJsonLine(const AJsonLine: string; const ACallback: TStreamChunkCallback; var AStopRequested: Boolean);
+var
+  LJson, LDeltaObj: TJSONObject;
+  LTypeStr, LText: string;
+begin
+  try
+    LJson := TJSONObject.ParseJSONValue(AJsonLine) as TJSONObject;
+    if not Assigned(LJson) then Exit;
+    try
+      LTypeStr := LJson.GetValue<string>('type', '');
+      if SameText(LTypeStr, 'content_block_delta') then
+      begin
+        LDeltaObj := LJson.GetValue('delta') as TJSONObject;
+        if Assigned(LDeltaObj) then
+        begin
+          LText := LDeltaObj.GetValue<string>('text', '');
+          if not LText.IsEmpty then
+            ACallback(LText, False, '');
+        end;
+      end
+      else if SameText(LTypeStr, 'message_stop') then
+      begin
+        AStopRequested := True;
+        ACallback('', True, '');
+      end;
+    finally
+      LJson.Free;
+    end;
+  except
+    on E: Exception do
+      TLogger.Log('ProcessStreamBuffer (Claude): Error parsing chunk JSON: ' + E.Message, 'Provider');
+  end;
+end;
+
 procedure TRadIAClaudeProvider.ProcessStreamBuffer(var ABuffer: string; const ACallback: TStreamChunkCallback);
 var
   LStopRequested: Boolean;
@@ -195,10 +229,6 @@ begin
     procedure(ALine: string)
     var
       LJsonLine: string;
-      LJson: TJSONObject;
-      LTypeStr: string;
-      LDeltaObj: TJSONObject;
-      LText: string;
     begin
       if LStopRequested then
         Exit;
@@ -206,38 +236,8 @@ begin
       if ALine.StartsWith('data:') then
       begin
         LJsonLine := Trim(ALine.Substring(5));
-        if LJsonLine.IsEmpty then
-          Exit;
-
-        try
-          LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
-          if Assigned(LJson) then
-          begin
-            try
-              LTypeStr := LJson.GetValue<string>('type', '');
-              if LTypeStr = 'content_block_delta' then
-              begin
-                LDeltaObj := LJson.GetValue('delta') as TJSONObject;
-                if Assigned(LDeltaObj) then
-                begin
-                  LText := LDeltaObj.GetValue<string>('text', '');
-                  if not LText.IsEmpty then
-                    ACallback(LText, False, '');
-                end;
-              end
-              else if LTypeStr = 'message_stop' then
-              begin
-                LStopRequested := True;
-                ACallback('', True, '');
-              end;
-            finally
-              LJson.Free;
-            end;
-          end;
-        except
-          on E: Exception do
-            TLogger.Log('ProcessStreamBuffer (Claude): Error parsing chunk JSON: ' + E.Message, 'Provider');
-        end;
+        if not LJsonLine.IsEmpty then
+          ProcessClaudeJsonLine(LJsonLine, ACallback, LStopRequested);
       end;
     end);
 end;

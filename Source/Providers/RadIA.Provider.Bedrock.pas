@@ -16,6 +16,7 @@ type
     FOnChunk: TEventStreamChunkEvent;
     function ReadBigEndian32(AOffset: Integer): Cardinal;
     procedure ParseFrame(const AFrameBytes: TBytes);
+    procedure ProcessDecodedJson(const AJsonStr: string);
   public
     constructor Create(const AOnChunk: TEventStreamChunkEvent);
     destructor Destroy; override;
@@ -123,6 +124,30 @@ begin
   end;
 end;
 
+procedure TRadIAAwsEventStreamParser.ProcessDecodedJson(const AJsonStr: string);
+var
+  LObj, LDelta: TJSONObject;
+  LType, LText: string;
+begin
+  LObj := TJSONObject.ParseJSONValue(AJsonStr) as TJSONObject;
+  if not Assigned(LObj) then Exit;
+  try
+    LType := LObj.GetValue<string>('type', '');
+    if SameText(LType, 'content_block_delta') then
+    begin
+      LDelta := LObj.GetValue('delta') as TJSONObject;
+      if Assigned(LDelta) then
+      begin
+        LText := LDelta.GetValue<string>('text', '');
+        if not LText.IsEmpty and Assigned(FOnChunk) then
+          FOnChunk(LText, False, '');
+      end;
+    end;
+  finally
+    LObj.Free;
+  end;
+end;
+
 procedure TRadIAAwsEventStreamParser.ParseFrame(const AFrameBytes: TBytes);
 var
   LTotalLength, LHeadersLength: Cardinal;
@@ -133,11 +158,6 @@ var
   LObj: TJSONObject;
   LBytesBase64: string;
   LDecodedBytes: TBytes;
-  LDecodedJsonStr: string;
-  LDecodedObj: TJSONObject;
-  LType: string;
-  LDelta: TJSONObject;
-  LText: string;
 begin
   LTotalLength := (Cardinal(AFrameBytes[0]) shl 24) or
                   (Cardinal(AFrameBytes[1]) shl 16) or
@@ -169,27 +189,7 @@ begin
       Exit;
 
     LDecodedBytes := TNetEncoding.Base64.DecodeStringToBytes(LBytesBase64);
-    LDecodedJsonStr := TEncoding.UTF8.GetString(LDecodedBytes);
-
-    LDecodedObj := TJSONObject.ParseJSONValue(LDecodedJsonStr) as TJSONObject;
-    if Assigned(LDecodedObj) then
-    begin
-      try
-        LType := LDecodedObj.GetValue<string>('type', '');
-        if SameText(LType, 'content_block_delta') then
-        begin
-          LDelta := LDecodedObj.GetValue('delta') as TJSONObject;
-          if Assigned(LDelta) then
-          begin
-            LText := LDelta.GetValue<string>('text', '');
-            if not LText.IsEmpty and Assigned(FOnChunk) then
-              FOnChunk(LText, False, '');
-          end;
-        end;
-      finally
-        LDecodedObj.Free;
-      end;
-    end;
+    ProcessDecodedJson(TEncoding.UTF8.GetString(LDecodedBytes));
   finally
     LObj.Free;
   end;
