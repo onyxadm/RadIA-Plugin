@@ -531,6 +531,10 @@ end;
 procedure TRadIAFrameAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LColors: TRadIAThemeColors;
+  LPanels: TArray<TPanel>;
+  LEdits: TArray<TEdit>;
+  LLabels: TArray<TLabel>;
+  LLinks: TArray<TLabel>;
   I: Integer;
 begin
   LColors := TRadIAThemeColors.GetColorsForTheme(AThemeName);
@@ -542,6 +546,7 @@ begin
 
   Self.SetParentBackground(False);
   pgcSettings.SetParentBackground(False);
+  
   for I := 0 to pgcSettings.PageCount - 1 do
   begin
     pgcSettings.Pages[I].StyleElements := pgcSettings.Pages[I].StyleElements - [seClient, seBorder];
@@ -549,48 +554,16 @@ begin
     pgcSettings.Pages[I].SetColor(LColors.BgBase);
   end;
 
-  pnlGemini.StyleElements := pnlGemini.StyleElements - [seClient, seBorder];
-  pnlGemini.Color := LColors.BgBase;
-  pnlGemini.ParentBackground := False;
-  pnlOpenAI.StyleElements := pnlOpenAI.StyleElements - [seClient, seBorder];
-  pnlOpenAI.Color := LColors.BgBase;
-  pnlOpenAI.ParentBackground := False;
-  pnlClaude.StyleElements := pnlClaude.StyleElements - [seClient, seBorder];
-  pnlClaude.Color := LColors.BgBase;
-  pnlClaude.ParentBackground := False;
-  pnlDeepSeek.StyleElements := pnlDeepSeek.StyleElements - [seClient, seBorder];
-  pnlDeepSeek.Color := LColors.BgBase;
-  pnlDeepSeek.ParentBackground := False;
-  pnlGroq.StyleElements := pnlGroq.StyleElements - [seClient, seBorder];
-  pnlGroq.Color := LColors.BgBase;
-  pnlGroq.ParentBackground := False;
-  pnlOllama.StyleElements := pnlOllama.StyleElements - [seClient, seBorder];
-  pnlOllama.Color := LColors.BgBase;
-  pnlOllama.ParentBackground := False;
-  pnlOpenRouter.StyleElements := pnlOpenRouter.StyleElements - [seClient, seBorder];
-  pnlOpenRouter.Color := LColors.BgBase;
-  pnlOpenRouter.ParentBackground := False;
-  pnlLMStudio.StyleElements := pnlLMStudio.StyleElements - [seClient, seBorder];
-  pnlLMStudio.Color := LColors.BgBase;
-  pnlLMStudio.ParentBackground := False;
-  pnlGithubCopilot.StyleElements := pnlGithubCopilot.StyleElements - [seClient, seBorder];
-  pnlGithubCopilot.Color := LColors.BgBase;
-  pnlGithubCopilot.ParentBackground := False;
-  pnlAzureOpenAI.StyleElements := pnlAzureOpenAI.StyleElements - [seClient, seBorder];
-  pnlAzureOpenAI.Color := LColors.BgBase;
-  pnlAzureOpenAI.ParentBackground := False;
-  pnlQwen.StyleElements := pnlQwen.StyleElements - [seClient, seBorder];
-  pnlQwen.Color := LColors.BgBase;
-  pnlQwen.ParentBackground := False;
-  pnlMistral.StyleElements := pnlMistral.StyleElements - [seClient, seBorder];
-  pnlMistral.Color := LColors.BgBase;
-  pnlMistral.ParentBackground := False;
-  pnlBedrock.StyleElements := pnlBedrock.StyleElements - [seClient, seBorder];
-  pnlBedrock.Color := LColors.BgBase;
-  pnlBedrock.ParentBackground := False;
-  pnlSystemPrompt.StyleElements := pnlSystemPrompt.StyleElements - [seClient, seBorder];
-  pnlSystemPrompt.Color := LColors.BgBase;
-  pnlSystemPrompt.ParentBackground := False;
+  LPanels := [pnlGemini, pnlOpenAI, pnlClaude, pnlDeepSeek, pnlGroq, pnlOllama,
+    pnlOpenRouter, pnlLMStudio, pnlGithubCopilot, pnlAzureOpenAI, pnlQwen,
+    pnlMistral, pnlBedrock, pnlSystemPrompt, pnlTemplatesLeft, pnlTemplatesLeftButtons, pnlTemplatesClient];
+  
+  for I := Low(LPanels) to High(LPanels) do
+  begin
+    LPanels[I].StyleElements := LPanels[I].StyleElements - [seClient, seBorder];
+    LPanels[I].Color := LColors.BgBase;
+    LPanels[I].ParentBackground := False;
+  end;
 
   if Assigned(FPnlGeneral) then
   begin
@@ -599,222 +572,93 @@ begin
     FPnlGeneral.ParentBackground := False;
   end;
 
-  for var LEdit in FEdtTemperatures.Values do
+  for var LEditD in FEdtTemperatures.Values do
   begin
-    LEdit.StyleElements := LEdit.StyleElements - [seClient, seBorder];
-    LEdit.Color := LColors.InputBgColor;
-    LEdit.Font.Color := LColors.TextColor;
+    LEditD.StyleElements := LEditD.StyleElements - [seClient, seBorder];
+    LEditD.Color := LColors.InputBgColor;
+    LEditD.Font.Color := LColors.TextColor;
   end;
 
-  for var LEdit in FEdtMaxTokens.Values do
+  for var LEditD in FEdtMaxTokens.Values do
   begin
-    LEdit.StyleElements := LEdit.StyleElements - [seClient, seBorder];
-    LEdit.Color := LColors.InputBgColor;
-    LEdit.Font.Color := LColors.TextColor;
+    LEditD.StyleElements := LEditD.StyleElements - [seClient, seBorder];
+    LEditD.Color := LColors.InputBgColor;
+    LEditD.Font.Color := LColors.TextColor;
   end;
 
-  for var LEdit in FEdtTimeouts.Values do
+  for var LEditD in FEdtTimeouts.Values do
   begin
-    LEdit.StyleElements := LEdit.StyleElements - [seClient, seBorder];
-    LEdit.Color := LColors.InputBgColor;
-    LEdit.Font.Color := LColors.TextColor;
+    LEditD.StyleElements := LEditD.StyleElements - [seClient, seBorder];
+    LEditD.Color := LColors.InputBgColor;
+    LEditD.Font.Color := LColors.TextColor;
+  end;
+
+  LEdits := [edtGeminiKey, edtOpenAIKey, edtOpenAICustomUrl, edtClaudeKey,
+    edtDeepSeekKey, edtGroqKey, edtOllamaUrl, edtOpenRouterKey, edtLMStudioUrl,
+    edtGithubCopilotKey, edtAzureKey, edtAzureUrl, edtAzureModel, edtAzureApiVersion,
+    edtQwenKey, edtMistralKey, edtAwsAccessKeyId, edtAwsSecretAccessKey,
+    edtAwsRegion, edtAwsSessionToken, edtTemplateName, edtTemplateDesc, edtTemplateSlash];
+
+  for I := Low(LEdits) to High(LEdits) do
+  begin
+    LEdits[I].StyleElements := LEdits[I].StyleElements - [seClient, seBorder];
+    LEdits[I].Color := LColors.InputBgColor;
+    LEdits[I].Font.Color := LColors.TextColor;
+  end;
+
+  LLabels := [lblGeminiKey, lblOpenAIKey, lblOpenAICustomUrl, lblClaudeKey,
+    lblDeepSeekKey, lblGroqKey, lblOllamaUrl, lblOpenRouterKey, lblLMStudioUrl,
+    lblAzureKey, lblAzureUrl, lblAzureModel, lblAzureApiVersion, lblQwenKey,
+    lblMistralKey, lblAwsAccessKeyId, lblAwsSecretAccessKey, lblAwsRegion,
+    lblAwsSessionToken, lblTemplateName, lblTemplateDesc, lblTemplateSlash,
+    lblTemplateBody, FLblTemplateOrigin];
+
+  for I := Low(LLabels) to High(LLabels) do
+  begin
+    LLabels[I].StyleElements := LLabels[I].StyleElements - [seClient, seBorder];
+    LLabels[I].Font.Color := LColors.TextColor;
+  end;
+
+  LLinks := [lnkGeminiGetKey, lnkOpenAIGetKey, lnkClaudeGetKey, lnkDeepSeekGetKey,
+    lnkGroqGetKey, lnkOpenRouterGetKey, lnkQwenGetKey, lnkMistralGetKey, lnkBedrockGetKey];
+
+  for I := Low(LLinks) to High(LLinks) do
+  begin
+    LLinks[I].StyleElements := LLinks[I].StyleElements - [seClient, seBorder];
+    LLinks[I].Font.Color := LColors.AccentColor;
   end;
 
   memSystemPrompt.StyleElements := memSystemPrompt.StyleElements - [seClient, seBorder];
   memSystemPrompt.Color := LColors.InputBgColor;
   memSystemPrompt.Font.Color := LColors.TextColor;
 
-  grpGeminiAuthType.StyleElements := grpGeminiAuthType.StyleElements - [seClient, seBorder];
-  grpGeminiAuthType.Font.Color := LColors.TextColor;
-  grpOpenAIAuthType.StyleElements := grpOpenAIAuthType.StyleElements - [seClient, seBorder];
-  grpOpenAIAuthType.Font.Color := LColors.TextColor;
-
-  edtGeminiKey.StyleElements := edtGeminiKey.StyleElements - [seClient, seBorder];
-  edtGeminiKey.Color := LColors.InputBgColor;
-  edtGeminiKey.Font.Color := LColors.TextColor;
-
-  edtOpenAIKey.StyleElements := edtOpenAIKey.StyleElements - [seClient, seBorder];
-  edtOpenAIKey.Color := LColors.InputBgColor;
-  edtOpenAIKey.Font.Color := LColors.TextColor;
-  edtOpenAICustomUrl.StyleElements := edtOpenAICustomUrl.StyleElements - [seClient, seBorder];
-  edtOpenAICustomUrl.Color := LColors.InputBgColor;
-  edtOpenAICustomUrl.Font.Color := LColors.TextColor;
-
-  edtClaudeKey.StyleElements := edtClaudeKey.StyleElements - [seClient, seBorder];
-  edtClaudeKey.Color := LColors.InputBgColor;
-  edtClaudeKey.Font.Color := LColors.TextColor;
-
-  edtDeepSeekKey.StyleElements := edtDeepSeekKey.StyleElements - [seClient, seBorder];
-  edtDeepSeekKey.Color := LColors.InputBgColor;
-  edtDeepSeekKey.Font.Color := LColors.TextColor;
-
-  edtGroqKey.StyleElements := edtGroqKey.StyleElements - [seClient, seBorder];
-  edtGroqKey.Color := LColors.InputBgColor;
-  edtGroqKey.Font.Color := LColors.TextColor;
-
-  edtOllamaUrl.StyleElements := edtOllamaUrl.StyleElements - [seClient, seBorder];
-  edtOllamaUrl.Color := LColors.InputBgColor;
-  edtOllamaUrl.Font.Color := LColors.TextColor;
-
-  edtOpenRouterKey.StyleElements := edtOpenRouterKey.StyleElements - [seClient, seBorder];
-  edtOpenRouterKey.Color := LColors.InputBgColor;
-  edtOpenRouterKey.Font.Color := LColors.TextColor;
-  edtLMStudioUrl.StyleElements := edtLMStudioUrl.StyleElements - [seClient, seBorder];
-  edtLMStudioUrl.Color := LColors.InputBgColor;
-  edtLMStudioUrl.Font.Color := LColors.TextColor;
-  edtGithubCopilotKey.StyleElements := edtGithubCopilotKey.StyleElements - [seClient, seBorder];
-  edtGithubCopilotKey.Color := LColors.InputBgColor;
-  edtGithubCopilotKey.Font.Color := LColors.TextColor;
-
-  edtAzureKey.StyleElements := edtAzureKey.StyleElements - [seClient, seBorder];
-  edtAzureKey.Color := LColors.InputBgColor;
-  edtAzureKey.Font.Color := LColors.TextColor;
-  edtAzureUrl.StyleElements := edtAzureUrl.StyleElements - [seClient, seBorder];
-  edtAzureUrl.Color := LColors.InputBgColor;
-  edtAzureUrl.Font.Color := LColors.TextColor;
-  edtAzureModel.StyleElements := edtAzureModel.StyleElements - [seClient, seBorder];
-  edtAzureModel.Color := LColors.InputBgColor;
-  edtAzureModel.Font.Color := LColors.TextColor;
-  edtAzureApiVersion.StyleElements := edtAzureApiVersion.StyleElements - [seClient, seBorder];
-  edtAzureApiVersion.Color := LColors.InputBgColor;
-  edtAzureApiVersion.Font.Color := LColors.TextColor;
-
-  edtQwenKey.StyleElements := edtQwenKey.StyleElements - [seClient, seBorder];
-  edtQwenKey.Color := LColors.InputBgColor;
-  edtQwenKey.Font.Color := LColors.TextColor;
-
-  edtMistralKey.StyleElements := edtMistralKey.StyleElements - [seClient, seBorder];
-  edtMistralKey.Color := LColors.InputBgColor;
-  edtMistralKey.Font.Color := LColors.TextColor;
-
-  edtAwsAccessKeyId.StyleElements := edtAwsAccessKeyId.StyleElements - [seClient, seBorder];
-  edtAwsAccessKeyId.Color := LColors.InputBgColor;
-  edtAwsAccessKeyId.Font.Color := LColors.TextColor;
-  edtAwsSecretAccessKey.StyleElements := edtAwsSecretAccessKey.StyleElements - [seClient, seBorder];
-  edtAwsSecretAccessKey.Color := LColors.InputBgColor;
-  edtAwsSecretAccessKey.Font.Color := LColors.TextColor;
-  edtAwsRegion.StyleElements := edtAwsRegion.StyleElements - [seClient, seBorder];
-  edtAwsRegion.Color := LColors.InputBgColor;
-  edtAwsRegion.Font.Color := LColors.TextColor;
-  edtAwsSessionToken.StyleElements := edtAwsSessionToken.StyleElements - [seClient, seBorder];
-  edtAwsSessionToken.Color := LColors.InputBgColor;
-  edtAwsSessionToken.Font.Color := LColors.TextColor;
-
-  lnkGeminiGetKey.StyleElements := lnkGeminiGetKey.StyleElements - [seClient, seBorder];
-  lnkGeminiGetKey.Font.Color := LColors.AccentColor;
-  lnkOpenAIGetKey.StyleElements := lnkOpenAIGetKey.StyleElements - [seClient, seBorder];
-  lnkOpenAIGetKey.Font.Color := LColors.AccentColor;
-  lnkClaudeGetKey.StyleElements := lnkClaudeGetKey.StyleElements - [seClient, seBorder];
-  lnkClaudeGetKey.Font.Color := LColors.AccentColor;
-  lnkDeepSeekGetKey.StyleElements := lnkDeepSeekGetKey.StyleElements - [seClient, seBorder];
-  lnkDeepSeekGetKey.Font.Color := LColors.AccentColor;
-  lnkGroqGetKey.StyleElements := lnkGroqGetKey.StyleElements - [seClient, seBorder];
-  lnkGroqGetKey.Font.Color := LColors.AccentColor;
-  lnkOpenRouterGetKey.StyleElements := lnkOpenRouterGetKey.StyleElements - [seClient, seBorder];
-  lnkOpenRouterGetKey.Font.Color := LColors.AccentColor;
-
-  lnkQwenGetKey.StyleElements := lnkQwenGetKey.StyleElements - [seClient, seBorder];
-  lnkQwenGetKey.Font.Color := LColors.AccentColor;
-  lnkMistralGetKey.StyleElements := lnkMistralGetKey.StyleElements - [seClient, seBorder];
-  lnkMistralGetKey.Font.Color := LColors.AccentColor;
-
-  lnkBedrockGetKey.StyleElements := lnkBedrockGetKey.StyleElements - [seClient, seBorder];
-  lnkBedrockGetKey.Font.Color := LColors.AccentColor;
-
-  lblGeminiKey.StyleElements := lblGeminiKey.StyleElements - [seClient, seBorder];
-  lblGeminiKey.Font.Color := LColors.TextColor;
-  lblOpenAIKey.StyleElements := lblOpenAIKey.StyleElements - [seClient, seBorder];
-  lblOpenAIKey.Font.Color := LColors.TextColor;
-  lblOpenAICustomUrl.StyleElements := lblOpenAICustomUrl.StyleElements - [seClient, seBorder];
-  lblOpenAICustomUrl.Font.Color := LColors.TextColor;
-  lblClaudeKey.StyleElements := lblClaudeKey.StyleElements - [seClient, seBorder];
-  lblClaudeKey.Font.Color := LColors.TextColor;
-  lblDeepSeekKey.StyleElements := lblDeepSeekKey.StyleElements - [seClient, seBorder];
-  lblDeepSeekKey.Font.Color := LColors.TextColor;
-  lblGroqKey.StyleElements := lblGroqKey.StyleElements - [seClient, seBorder];
-  lblGroqKey.Font.Color := LColors.TextColor;
-  lblOllamaUrl.StyleElements := lblOllamaUrl.StyleElements - [seClient, seBorder];
-  lblOllamaUrl.Font.Color := LColors.TextColor;
-  lblOpenRouterKey.StyleElements := lblOpenRouterKey.StyleElements - [seClient, seBorder];
-  lblOpenRouterKey.Font.Color := LColors.TextColor;
-  lblLMStudioUrl.StyleElements := lblLMStudioUrl.StyleElements - [seClient, seBorder];
-  lblLMStudioUrl.Font.Color := LColors.TextColor;
-
-  lblAzureKey.StyleElements := lblAzureKey.StyleElements - [seClient, seBorder];
-  lblAzureKey.Font.Color := LColors.TextColor;
-  lblAzureUrl.StyleElements := lblAzureUrl.StyleElements - [seClient, seBorder];
-  lblAzureUrl.Font.Color := LColors.TextColor;
-  lblAzureModel.StyleElements := lblAzureModel.StyleElements - [seClient, seBorder];
-  lblAzureModel.Font.Color := LColors.TextColor;
-  lblAzureApiVersion.StyleElements := lblAzureApiVersion.StyleElements - [seClient, seBorder];
-  lblAzureApiVersion.Font.Color := LColors.TextColor;
-
-  lblQwenKey.StyleElements := lblQwenKey.StyleElements - [seClient, seBorder];
-  lblQwenKey.Font.Color := LColors.TextColor;
-  lblMistralKey.StyleElements := lblMistralKey.StyleElements - [seClient, seBorder];
-  lblMistralKey.Font.Color := LColors.TextColor;
-
-  lblAwsAccessKeyId.StyleElements := lblAwsAccessKeyId.StyleElements - [seClient, seBorder];
-  lblAwsAccessKeyId.Font.Color := LColors.TextColor;
-  lblAwsSecretAccessKey.StyleElements := lblAwsSecretAccessKey.StyleElements - [seClient, seBorder];
-  lblAwsSecretAccessKey.Font.Color := LColors.TextColor;
-  lblAwsRegion.StyleElements := lblAwsRegion.StyleElements - [seClient, seBorder];
-  lblAwsRegion.Font.Color := LColors.TextColor;
-  lblAwsSessionToken.StyleElements := lblAwsSessionToken.StyleElements - [seClient, seBorder];
-  lblAwsSessionToken.Font.Color := LColors.TextColor;
-
-  pnlTemplatesLeft.StyleElements := pnlTemplatesLeft.StyleElements - [seClient, seBorder];
-  pnlTemplatesLeft.Color := LColors.BgBase;
-  pnlTemplatesLeft.ParentBackground := False;
-  pnlTemplatesLeftButtons.StyleElements := pnlTemplatesLeftButtons.StyleElements - [seClient, seBorder];
-  pnlTemplatesLeftButtons.Color := LColors.BgBase;
-  pnlTemplatesLeftButtons.ParentBackground := False;
-  pnlTemplatesClient.StyleElements := pnlTemplatesClient.StyleElements - [seClient, seBorder];
-  pnlTemplatesClient.Color := LColors.BgBase;
-  pnlTemplatesClient.ParentBackground := False;
-
-  lstTemplates.StyleElements := lstTemplates.StyleElements - [seClient, seBorder];
-  lstTemplates.Color := LColors.InputBgColor;
-  lstTemplates.Font.Color := LColors.TextColor;
-  edtTemplateName.StyleElements := edtTemplateName.StyleElements - [seClient, seBorder];
-  edtTemplateName.Color := LColors.InputBgColor;
-  edtTemplateName.Font.Color := LColors.TextColor;
-  edtTemplateDesc.StyleElements := edtTemplateDesc.StyleElements - [seClient, seBorder];
-  edtTemplateDesc.Color := LColors.InputBgColor;
-  edtTemplateDesc.Font.Color := LColors.TextColor;
-  edtTemplateSlash.StyleElements := edtTemplateSlash.StyleElements - [seClient, seBorder];
-  edtTemplateSlash.Color := LColors.InputBgColor;
-  edtTemplateSlash.Font.Color := LColors.TextColor;
-
-  chkIsProjectGenerator.StyleElements := chkIsProjectGenerator.StyleElements - [seClient, seBorder];
-  chkIsProjectGenerator.Font.Color := LColors.TextColor;
-
   memTemplateBody.StyleElements := memTemplateBody.StyleElements - [seClient, seBorder];
   memTemplateBody.Color := LColors.InputBgColor;
   memTemplateBody.Font.Color := LColors.TextColor;
 
-  lblTemplateName.StyleElements := lblTemplateName.StyleElements - [seClient, seBorder];
-  lblTemplateName.Font.Color := LColors.TextColor;
-  lblTemplateDesc.StyleElements := lblTemplateDesc.StyleElements - [seClient, seBorder];
-  lblTemplateDesc.Font.Color := LColors.TextColor;
-  lblTemplateSlash.StyleElements := lblTemplateSlash.StyleElements - [seClient, seBorder];
-  lblTemplateSlash.Font.Color := LColors.TextColor;
-  lblTemplateBody.StyleElements := lblTemplateBody.StyleElements - [seClient, seBorder];
-  lblTemplateBody.Font.Color := LColors.TextColor;
-  FLblTemplateOrigin.StyleElements := FLblTemplateOrigin.StyleElements - [seClient, seBorder];
-  FLblTemplateOrigin.Font.Color := LColors.TextColor;
+  lstTemplates.StyleElements := lstTemplates.StyleElements - [seClient, seBorder];
+  lstTemplates.Color := LColors.InputBgColor;
+  lstTemplates.Font.Color := LColors.TextColor;
 
-  if Assigned(FChkSmartConfig) then
-  begin
-    FChkSmartConfig.StyleElements := FChkSmartConfig.StyleElements - [seClient, seBorder];
-    FChkSmartConfig.Font.Color := LColors.TextColor;
-  end;
+  chkIsProjectGenerator.StyleElements := chkIsProjectGenerator.StyleElements - [seClient, seBorder];
+  chkIsProjectGenerator.Font.Color := LColors.TextColor;
+
+  grpGeminiAuthType.StyleElements := grpGeminiAuthType.StyleElements - [seClient, seBorder];
+  grpGeminiAuthType.Font.Color := LColors.TextColor;
+  grpOpenAIAuthType.StyleElements := grpOpenAIAuthType.StyleElements - [seClient, seBorder];
+  grpOpenAIAuthType.Font.Color := LColors.TextColor;
 
   if Assigned(FTsGeneral) then
   begin
     FTsGeneral.StyleElements := FTsGeneral.StyleElements - [seClient, seBorder];
     FTsGeneral.SetParentBackground(False);
     FTsGeneral.SetColor(LColors.BgBase);
+  end;
+
+  if Assigned(FChkSmartConfig) then
+  begin
+    FChkSmartConfig.StyleElements := FChkSmartConfig.StyleElements - [seClient, seBorder];
+    FChkSmartConfig.Font.Color := LColors.TextColor;
   end;
   if Assigned(FChkInjectDelphiVersion) then
   begin
@@ -848,7 +692,6 @@ begin
     FEdtLogMaxSize.Color := LColors.InputBgColor;
     FEdtLogMaxSize.Font.Color := LColors.TextColor;
   end;
-
   if Assigned(FGrpQuota) then
   begin
     FGrpQuota.StyleElements := FGrpQuota.StyleElements - [seClient, seBorder];
@@ -970,39 +813,27 @@ begin
 end;
 
 procedure TRadIAFrameAIConfig.SelectCategoryByName(const ACategoryName: string);
+var
+  LNames: TArray<string>;
+  LPages: TArray<TTabSheet>;
+  I: Integer;
 begin
-  if SameText(ACategoryName, 'General / Logs') then
-    pgcSettings.ActivePage := FTsGeneral
-  else if SameText(ACategoryName, 'System Prompt') then
-    pgcSettings.ActivePage := tsSystemPrompt
-  else if SameText(ACategoryName, 'Templates') then
-    pgcSettings.ActivePage := tsTemplates
-  else if SameText(ACategoryName, 'Gemini') then
-    pgcSettings.ActivePage := tsGemini
-  else if SameText(ACategoryName, 'OpenAI') then
-    pgcSettings.ActivePage := tsOpenAI
-  else if SameText(ACategoryName, 'Claude') then
-    pgcSettings.ActivePage := tsClaude
-  else if SameText(ACategoryName, 'DeepSeek') then
-    pgcSettings.ActivePage := tsDeepSeek
-  else if SameText(ACategoryName, 'Groq') then
-    pgcSettings.ActivePage := tsGroq
-  else if SameText(ACategoryName, 'Ollama') then
-    pgcSettings.ActivePage := tsOllama
-  else if SameText(ACategoryName, 'OpenRouter') then
-    pgcSettings.ActivePage := tsOpenRouter
-  else if SameText(ACategoryName, 'LM Studio') then
-    pgcSettings.ActivePage := tsLMStudio
-  else if SameText(ACategoryName, 'GitHub Copilot') then
-    pgcSettings.ActivePage := tsGithubCopilot
-  else if SameText(ACategoryName, 'Azure OpenAI') then
-    pgcSettings.ActivePage := tsAzureOpenAI
-  else if SameText(ACategoryName, 'Alibaba Qwen') then
-    pgcSettings.ActivePage := tsQwen
-  else if SameText(ACategoryName, 'Mistral AI') then
-    pgcSettings.ActivePage := tsMistral
-  else if SameText(ACategoryName, 'AWS Bedrock') then
-    pgcSettings.ActivePage := tsBedrock;
+  LNames := ['General / Logs', 'System Prompt', 'Templates', 'Gemini', 'OpenAI',
+             'Claude', 'DeepSeek', 'Groq', 'Ollama', 'OpenRouter', 'LM Studio',
+             'GitHub Copilot', 'Azure OpenAI', 'Alibaba Qwen', 'Mistral AI', 'AWS Bedrock'];
+             
+  LPages := [FTsGeneral, tsSystemPrompt, tsTemplates, tsGemini, tsOpenAI,
+             tsClaude, tsDeepSeek, tsGroq, tsOllama, tsOpenRouter, tsLMStudio,
+             tsGithubCopilot, tsAzureOpenAI, tsQwen, tsMistral, tsBedrock];
+
+  for I := Low(LNames) to High(LNames) do
+  begin
+    if SameText(LNames[I], ACategoryName) then
+    begin
+      pgcSettings.ActivePage := LPages[I];
+      Exit;
+    end;
+  end;
 end;
 
 procedure TRadIAFrameAIConfig.grpGeminiAuthTypeClick(Sender: TObject);
@@ -1096,21 +927,15 @@ end;
 
 procedure TRadIAFrameAIConfig.btnImportVSCodeClick(Sender: TObject);
 var
-  LPath: string;
-  LJsonStr: string;
+  LPath, LJsonStr, LToken, LUser: string;
   LJson, LGitHubNode: TJSONObject;
   LValue: TJSONValue;
-  LToken: string;
-  LUser: string;
 begin
   LPath := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) +
     'Code\User\globalStorage\github.copilot\hosts.json';
-
   if not TFile.Exists(LPath) then
-  begin
     LPath := IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) +
       'Code\User\globalStorage\github.copilot-insiders\hosts.json';
-  end;
 
   if not TFile.Exists(LPath) then
   begin
@@ -1121,39 +946,37 @@ begin
   try
     LJsonStr := TFile.ReadAllText(LPath, TEncoding.UTF8);
     LJson := TJSONObject.ParseJSONValue(LJsonStr) as TJSONObject;
-    if Assigned(LJson) then
-    begin
-      try
-        LGitHubNode := LJson.GetValue('github.com') as TJSONObject;
-        if Assigned(LGitHubNode) then
-        begin
-          LValue := LGitHubNode.GetValue('oauth_token');
-          if Assigned(LValue) then
-            LToken := LValue.Value
-          else
-            LToken := '';
-
-          LValue := LGitHubNode.GetValue('user');
-          if Assigned(LValue) then
-            LUser := LValue.Value
-          else
-            LUser := '';
-
-          if not LToken.IsEmpty then
-          begin
-            FPresenter.ImportVSCodeCopilotToken(LToken, LUser);
-            Exit;
-          end;
-        end;
-
-        ShowMessage('The VS Code credentials file was found, but it did not contain a valid token.');
-      finally
-        LJson.Free;
-      end;
-    end;
   except
     on E: Exception do
+    begin
       ShowMessage('Erro ao ler credenciais do VS Code: ' + E.Message);
+      Exit;
+    end;
+  end;
+
+  if not Assigned(LJson) then Exit;
+  try
+    LGitHubNode := LJson.GetValue('github.com') as TJSONObject;
+    if not Assigned(LGitHubNode) then
+    begin
+      ShowMessage('The VS Code credentials file was found, but it did not contain a valid token.');
+      Exit;
+    end;
+
+    LToken := '';
+    LValue := LGitHubNode.GetValue('oauth_token');
+    if Assigned(LValue) then LToken := LValue.Value;
+
+    LUser := '';
+    LValue := LGitHubNode.GetValue('user');
+    if Assigned(LValue) then LUser := LValue.Value;
+
+    if not LToken.IsEmpty then
+      FPresenter.ImportVSCodeCopilotToken(LToken, LUser)
+    else
+      ShowMessage('The VS Code credentials file was found, but it did not contain a valid token.');
+  finally
+    LJson.Free;
   end;
 end;
 
