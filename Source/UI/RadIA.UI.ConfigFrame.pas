@@ -528,14 +528,112 @@ begin
   FEdtTimeouts.Add(AProviderId, LEdtTime);
 end;
 
+procedure ApplyThemeToPanels(const APanels: array of TPanel; const AColors: TRadIAThemeColors);
+var
+  LPanel: TPanel;
+  I: Integer;
+begin
+  for I := Low(APanels) to High(APanels) do
+  begin
+    LPanel := APanels[I];
+    if Assigned(LPanel) then
+    begin
+      LPanel.StyleElements := LPanel.StyleElements - [seClient, seBorder];
+      LPanel.Color := AColors.BgBase;
+      LPanel.ParentBackground := False;
+    end;
+  end;
+end;
+
+procedure ApplyThemeToEdits(const AEdits: array of TEdit; const AColors: TRadIAThemeColors);
+var
+  LEdit: TEdit;
+  I: Integer;
+begin
+  for I := Low(AEdits) to High(AEdits) do
+  begin
+    LEdit := AEdits[I];
+    if Assigned(LEdit) then
+    begin
+      LEdit.StyleElements := LEdit.StyleElements - [seClient, seBorder];
+      LEdit.Color := AColors.InputBgColor;
+      LEdit.Font.Color := AColors.TextColor;
+    end;
+  end;
+end;
+
+procedure ApplyThemeToLabels(const ALabels: array of TLabel; const AColors: TRadIAThemeColors; AAccent: Boolean = False);
+var
+  LLabel: TLabel;
+  I: Integer;
+begin
+  for I := Low(ALabels) to High(ALabels) do
+  begin
+    LLabel := ALabels[I];
+    if Assigned(LLabel) then
+    begin
+      LLabel.StyleElements := LLabel.StyleElements - [seClient, seBorder];
+      if AAccent then
+        LLabel.Font.Color := AColors.AccentColor
+      else
+        LLabel.Font.Color := AColors.TextColor;
+    end;
+  end;
+end;
+
+procedure ApplyThemeToCheckboxes(const ACheckboxes: array of TCheckBox; const AColors: TRadIAThemeColors);
+var
+  LCheck: TCheckBox;
+  I: Integer;
+begin
+  for I := Low(ACheckboxes) to High(ACheckboxes) do
+  begin
+    LCheck := ACheckboxes[I];
+    if Assigned(LCheck) then
+    begin
+      LCheck.StyleElements := LCheck.StyleElements - [seClient, seBorder];
+      LCheck.Font.Color := AColors.TextColor;
+    end;
+  end;
+end;
+
+procedure ApplyThemeToGroupBoxes(const AGroupBoxes: array of TGroupBox; const AColors: TRadIAThemeColors);
+var
+  LGrp: TGroupBox;
+  I: Integer;
+begin
+  for I := Low(AGroupBoxes) to High(AGroupBoxes) do
+  begin
+    LGrp := AGroupBoxes[I];
+    if Assigned(LGrp) then
+    begin
+      LGrp.StyleElements := LGrp.StyleElements - [seClient, seBorder];
+      LGrp.Font.Color := AColors.TextColor;
+    end;
+  end;
+end;
+
+procedure ApplyThemeToRadioGroups(const ARadioGroups: array of TRadioGroup; const AColors: TRadIAThemeColors);
+var
+  LRad: TRadioGroup;
+  I: Integer;
+begin
+  for I := Low(ARadioGroups) to High(ARadioGroups) do
+  begin
+    LRad := ARadioGroups[I];
+    if Assigned(LRad) then
+    begin
+      LRad.StyleElements := LRad.StyleElements - [seClient, seBorder];
+      LRad.Font.Color := AColors.TextColor;
+    end;
+  end;
+end;
+
 procedure TRadIAFrameAIConfig.UpdateVCLColors(const AThemeName: string);
 var
   LColors: TRadIAThemeColors;
-  LPanels: TArray<TPanel>;
-  LEdits: TArray<TEdit>;
-  LLabels: TArray<TLabel>;
-  LLinks: TArray<TLabel>;
   I: Integer;
+  LEditD: TEdit;
 begin
   LColors := TRadIAThemeColors.GetColorsForTheme(AThemeName);
 
@@ -546,7 +644,7 @@ begin
 
   Self.SetParentBackground(False);
   pgcSettings.SetParentBackground(False);
-  
+
   for I := 0 to pgcSettings.PageCount - 1 do
   begin
     pgcSettings.Pages[I].StyleElements := pgcSettings.Pages[I].StyleElements - [seClient, seBorder];
@@ -554,79 +652,37 @@ begin
     pgcSettings.Pages[I].SetColor(LColors.BgBase);
   end;
 
-  LPanels := [pnlGemini, pnlOpenAI, pnlClaude, pnlDeepSeek, pnlGroq, pnlOllama,
+  if Assigned(FTsGeneral) then
+  begin
+    FTsGeneral.StyleElements := FTsGeneral.StyleElements - [seClient, seBorder];
+    FTsGeneral.SetParentBackground(False);
+    FTsGeneral.SetColor(LColors.BgBase);
+  end;
+
+  ApplyThemeToPanels([pnlGemini, pnlOpenAI, pnlClaude, pnlDeepSeek, pnlGroq, pnlOllama,
     pnlOpenRouter, pnlLMStudio, pnlGithubCopilot, pnlAzureOpenAI, pnlQwen,
-    pnlMistral, pnlBedrock, pnlSystemPrompt, pnlTemplatesLeft, pnlTemplatesLeftButtons, pnlTemplatesClient];
-  
-  for I := Low(LPanels) to High(LPanels) do
-  begin
-    LPanels[I].StyleElements := LPanels[I].StyleElements - [seClient, seBorder];
-    LPanels[I].Color := LColors.BgBase;
-    LPanels[I].ParentBackground := False;
-  end;
+    pnlMistral, pnlBedrock, pnlSystemPrompt, pnlTemplatesLeft, pnlTemplatesLeftButtons, pnlTemplatesClient, FPnlGeneral], LColors);
 
-  if Assigned(FPnlGeneral) then
-  begin
-    FPnlGeneral.StyleElements := FPnlGeneral.StyleElements - [seClient, seBorder];
-    FPnlGeneral.Color := LColors.BgBase;
-    FPnlGeneral.ParentBackground := False;
-  end;
+  for LEditD in FEdtTemperatures.Values do ApplyThemeToEdits([LEditD], LColors);
+  for LEditD in FEdtMaxTokens.Values do ApplyThemeToEdits([LEditD], LColors);
+  for LEditD in FEdtTimeouts.Values do ApplyThemeToEdits([LEditD], LColors);
 
-  for var LEditD in FEdtTemperatures.Values do
-  begin
-    LEditD.StyleElements := LEditD.StyleElements - [seClient, seBorder];
-    LEditD.Color := LColors.InputBgColor;
-    LEditD.Font.Color := LColors.TextColor;
-  end;
-
-  for var LEditD in FEdtMaxTokens.Values do
-  begin
-    LEditD.StyleElements := LEditD.StyleElements - [seClient, seBorder];
-    LEditD.Color := LColors.InputBgColor;
-    LEditD.Font.Color := LColors.TextColor;
-  end;
-
-  for var LEditD in FEdtTimeouts.Values do
-  begin
-    LEditD.StyleElements := LEditD.StyleElements - [seClient, seBorder];
-    LEditD.Color := LColors.InputBgColor;
-    LEditD.Font.Color := LColors.TextColor;
-  end;
-
-  LEdits := [edtGeminiKey, edtOpenAIKey, edtOpenAICustomUrl, edtClaudeKey,
+  ApplyThemeToEdits([edtGeminiKey, edtOpenAIKey, edtOpenAICustomUrl, edtClaudeKey,
     edtDeepSeekKey, edtGroqKey, edtOllamaUrl, edtOpenRouterKey, edtLMStudioUrl,
     edtGithubCopilotKey, edtAzureKey, edtAzureUrl, edtAzureModel, edtAzureApiVersion,
     edtQwenKey, edtMistralKey, edtAwsAccessKeyId, edtAwsSecretAccessKey,
-    edtAwsRegion, edtAwsSessionToken, edtTemplateName, edtTemplateDesc, edtTemplateSlash];
+    edtAwsRegion, edtAwsSessionToken, edtTemplateName, edtTemplateDesc, edtTemplateSlash,
+    FEdtLogPath, FEdtLogMaxSize, FEdtQuotaLimit], LColors);
 
-  for I := Low(LEdits) to High(LEdits) do
-  begin
-    LEdits[I].StyleElements := LEdits[I].StyleElements - [seClient, seBorder];
-    LEdits[I].Color := LColors.InputBgColor;
-    LEdits[I].Font.Color := LColors.TextColor;
-  end;
-
-  LLabels := [lblGeminiKey, lblOpenAIKey, lblOpenAICustomUrl, lblClaudeKey,
+  ApplyThemeToLabels([lblGeminiKey, lblOpenAIKey, lblOpenAICustomUrl, lblClaudeKey,
     lblDeepSeekKey, lblGroqKey, lblOllamaUrl, lblOpenRouterKey, lblLMStudioUrl,
     lblAzureKey, lblAzureUrl, lblAzureModel, lblAzureApiVersion, lblQwenKey,
     lblMistralKey, lblAwsAccessKeyId, lblAwsSecretAccessKey, lblAwsRegion,
     lblAwsSessionToken, lblTemplateName, lblTemplateDesc, lblTemplateSlash,
-    lblTemplateBody, FLblTemplateOrigin];
+    lblTemplateBody, FLblTemplateOrigin, FLblLogPath, FLblQuotaLimit, FLblQuotaUsed], LColors, False);
 
-  for I := Low(LLabels) to High(LLabels) do
-  begin
-    LLabels[I].StyleElements := LLabels[I].StyleElements - [seClient, seBorder];
-    LLabels[I].Font.Color := LColors.TextColor;
-  end;
-
-  LLinks := [lnkGeminiGetKey, lnkOpenAIGetKey, lnkClaudeGetKey, lnkDeepSeekGetKey,
-    lnkGroqGetKey, lnkOpenRouterGetKey, lnkQwenGetKey, lnkMistralGetKey, lnkBedrockGetKey];
-
-  for I := Low(LLinks) to High(LLinks) do
-  begin
-    LLinks[I].StyleElements := LLinks[I].StyleElements - [seClient, seBorder];
-    LLinks[I].Font.Color := LColors.AccentColor;
-  end;
+  ApplyThemeToLabels([lnkGeminiGetKey, lnkOpenAIGetKey, lnkClaudeGetKey, lnkDeepSeekGetKey,
+    lnkGroqGetKey, lnkOpenRouterGetKey, lnkQwenGetKey, lnkMistralGetKey, lnkBedrockGetKey], LColors, True);
 
   memSystemPrompt.StyleElements := memSystemPrompt.StyleElements - [seClient, seBorder];
   memSystemPrompt.Color := LColors.InputBgColor;
@@ -640,72 +696,11 @@ begin
   lstTemplates.Color := LColors.InputBgColor;
   lstTemplates.Font.Color := LColors.TextColor;
 
-  chkIsProjectGenerator.StyleElements := chkIsProjectGenerator.StyleElements - [seClient, seBorder];
-  chkIsProjectGenerator.Font.Color := LColors.TextColor;
+  ApplyThemeToCheckboxes([chkIsProjectGenerator, FChkSmartConfig, FChkInjectDelphiVersion,
+    FChkConciseResponses, FChkLogEnabled, FChkQuotaEnabled], LColors);
 
-  grpGeminiAuthType.StyleElements := grpGeminiAuthType.StyleElements - [seClient, seBorder];
-  grpGeminiAuthType.Font.Color := LColors.TextColor;
-  grpOpenAIAuthType.StyleElements := grpOpenAIAuthType.StyleElements - [seClient, seBorder];
-  grpOpenAIAuthType.Font.Color := LColors.TextColor;
-
-  if Assigned(FTsGeneral) then
-  begin
-    FTsGeneral.StyleElements := FTsGeneral.StyleElements - [seClient, seBorder];
-    FTsGeneral.SetParentBackground(False);
-    FTsGeneral.SetColor(LColors.BgBase);
-  end;
-
-  if Assigned(FChkSmartConfig) then
-  begin
-    FChkSmartConfig.StyleElements := FChkSmartConfig.StyleElements - [seClient, seBorder];
-    FChkSmartConfig.Font.Color := LColors.TextColor;
-  end;
-  if Assigned(FChkInjectDelphiVersion) then
-  begin
-    FChkInjectDelphiVersion.StyleElements := FChkInjectDelphiVersion.StyleElements - [seClient, seBorder];
-    FChkInjectDelphiVersion.Font.Color := LColors.TextColor;
-  end;
-  if Assigned(FChkConciseResponses) then
-  begin
-    FChkConciseResponses.StyleElements := FChkConciseResponses.StyleElements - [seClient, seBorder];
-    FChkConciseResponses.Font.Color := LColors.TextColor;
-  end;
-  if Assigned(FChkLogEnabled) then
-  begin
-    FChkLogEnabled.StyleElements := FChkLogEnabled.StyleElements - [seClient, seBorder];
-    FChkLogEnabled.Font.Color := LColors.TextColor;
-  end;
-  if Assigned(FLblLogPath) then
-  begin
-    FLblLogPath.StyleElements := FLblLogPath.StyleElements - [seClient, seBorder];
-    FLblLogPath.Font.Color := LColors.TextColor;
-  end;
-  if Assigned(FEdtLogPath) then
-  begin
-    FEdtLogPath.StyleElements := FEdtLogPath.StyleElements - [seClient, seBorder];
-    FEdtLogPath.Color := LColors.InputBgColor;
-    FEdtLogPath.Font.Color := LColors.TextColor;
-  end;
-  if Assigned(FEdtLogMaxSize) then
-  begin
-    FEdtLogMaxSize.StyleElements := FEdtLogMaxSize.StyleElements - [seClient, seBorder];
-    FEdtLogMaxSize.Color := LColors.InputBgColor;
-    FEdtLogMaxSize.Font.Color := LColors.TextColor;
-  end;
-  if Assigned(FGrpQuota) then
-  begin
-    FGrpQuota.StyleElements := FGrpQuota.StyleElements - [seClient, seBorder];
-    FGrpQuota.Font.Color := LColors.TextColor;
-    FChkQuotaEnabled.StyleElements := FChkQuotaEnabled.StyleElements - [seClient, seBorder];
-    FChkQuotaEnabled.Font.Color := LColors.TextColor;
-    FLblQuotaLimit.StyleElements := FLblQuotaLimit.StyleElements - [seClient, seBorder];
-    FLblQuotaLimit.Font.Color := LColors.TextColor;
-    FEdtQuotaLimit.StyleElements := FEdtQuotaLimit.StyleElements - [seClient, seBorder];
-    FEdtQuotaLimit.Color := LColors.InputBgColor;
-    FEdtQuotaLimit.Font.Color := LColors.TextColor;
-    FLblQuotaUsed.StyleElements := FLblQuotaUsed.StyleElements - [seClient, seBorder];
-    FLblQuotaUsed.Font.Color := LColors.TextColor;
-  end;
+  ApplyThemeToRadioGroups([grpGeminiAuthType, grpOpenAIAuthType], LColors);
+  ApplyThemeToGroupBoxes([FGrpQuota], LColors);
 end;
 
 procedure TRadIAFrameAIConfig.LoadConfig;
