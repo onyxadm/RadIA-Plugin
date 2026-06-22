@@ -660,7 +660,7 @@ begin
   end;
 
   ApplyThemeToPanels([pnlGemini, pnlOpenAI, pnlClaude, pnlDeepSeek, pnlGroq, pnlOllama,
-    pnlOpenRouter, pnlLMStudio, 
+    pnlOpenRouter, pnlLMStudio,
     pnlGithubCopilot, pnlAzureOpenAI, pnlQwen,
     pnlMistral, pnlBedrock, pnlSystemPrompt,
     pnlTemplatesLeft, pnlTemplatesLeftButtons, pnlTemplatesClient, FPnlGeneral], LColors);
