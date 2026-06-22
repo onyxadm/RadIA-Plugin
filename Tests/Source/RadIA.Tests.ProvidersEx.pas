@@ -8,6 +8,7 @@ uses
   RadIA.Provider.LMStudio, RadIA.Provider.AzureOpenAI, RadIA.Provider.Qwen, RadIA.Provider.Mistral,
   RadIA.Provider.Bedrock, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage,
   RadIA.Provider.GithubCopilot, RadIA.Provider.WebViewBridge,
+  RadIA.Provider.Gemini, RadIA.Provider.Claude, RadIA.Provider.Ollama,
   System.SysUtils, System.Net.URLClient, System.NetEncoding, RadIA.Core.ChatMessage;
 
 type
@@ -44,6 +45,9 @@ type
     FBedrockProv: TRadIABedrockProvider;
     FGithubCopilotProv: TRadIAGithubCopilotProvider;
     FWebViewBridgeProv: TRadIAWebViewBridgeProvider;
+    FGeminiProv: TRadIAGeminiProvider;
+    FClaudeProv: TRadIAClaudeProvider;
+    FOllamaProv: TRadIAOllamaProvider;
     FDeepSeekProvRef: IRadIAProvider;
     FGroqProvRef: IRadIAProvider;
     FOpenRouterProvRef: IRadIAProvider;
@@ -54,6 +58,9 @@ type
     FBedrockProvRef: IRadIAProvider;
     FGithubCopilotProvRef: IRadIAProvider;
     FWebViewBridgeProvRef: IRadIAProvider;
+    FGeminiProvRef: IRadIAProvider;
+    FClaudeProvRef: IRadIAProvider;
+    FOllamaProvRef: IRadIAProvider;
     FMockSendPromptCalled: Boolean;
     FMockCancelCalled: Boolean;
     FMockPromptReceived: string;
@@ -156,6 +163,22 @@ type
     procedure TestGithubCopilot_SendPromptStreamAsync;
     [Test]
     procedure TestWebViewBridge_Workflow;
+    [Test]
+    procedure TestGemini_SendPromptAsync;
+    [Test]
+    procedure TestGemini_SendPromptStreamAsync;
+    [Test]
+    procedure TestClaude_SendPromptAsync;
+    [Test]
+    procedure TestClaude_SendPromptStreamAsync;
+    [Test]
+    procedure TestOllama_SendPromptAsync;
+    [Test]
+    procedure TestOllama_SendPromptStreamAsync;
+    [Test]
+    procedure TestBedrock_SendPromptAsync;
+    [Test]
+    procedure TestBedrock_SendPromptStreamAsync;
   end;
 
 implementation
@@ -188,6 +211,10 @@ begin
   FConfig.SetActiveModel('LMStudio', 'lms-default');
   FConfig.SetActiveModel('Qwen', MODEL_QWEN_25_CODER_32B);
   FConfig.SetActiveModel('Mistral', MODEL_MISTRAL_CODESTRAL);
+  FConfig.SetActiveModel('Gemini', MODEL_GEMINI_15_FLASH);
+  FConfig.SetActiveModel('Claude', MODEL_CLAUDE_3_HAIKU);
+  FConfig.SetActiveModel('Ollama', 'llama3:latest');
+  FConfig.SetActiveModel('Bedrock', 'anthropic.claude-3-5-sonnet-20241022-v2:0');
 
   FMockHttpClient := TMockHttpClient.Create;
   TRadIAContainer.Register<IRadIAHttpClient>(FMockHttpClient as IRadIAHttpClient);
@@ -212,6 +239,12 @@ begin
   FGithubCopilotProvRef := FGithubCopilotProv;
   FWebViewBridgeProv := TRadIAWebViewBridgeProvider.Create(FConfig);
   FWebViewBridgeProvRef := FWebViewBridgeProv;
+  FGeminiProv := TRadIAGeminiProvider.Create(FConfig);
+  FGeminiProvRef := FGeminiProv;
+  FClaudeProv := TRadIAClaudeProvider.Create(FConfig);
+  FClaudeProvRef := FClaudeProv;
+  FOllamaProv := TRadIAOllamaProvider.Create(FConfig);
+  FOllamaProvRef := FOllamaProv;
 end;
 
 procedure TTestRadIAProvidersEx.TearDown;
@@ -236,6 +269,9 @@ begin
   FBedrockProvRef := nil;
   FGithubCopilotProvRef := nil;
   FWebViewBridgeProvRef := nil;
+  FGeminiProvRef := nil;
+  FClaudeProvRef := nil;
+  FOllamaProvRef := nil;
 
   FDeepSeekProv := nil;
   FGroqProv := nil;
@@ -247,6 +283,9 @@ begin
   FBedrockProv := nil;
   FGithubCopilotProv := nil;
   FWebViewBridgeProv := nil;
+  FGeminiProv := nil;
+  FClaudeProv := nil;
+  FOllamaProv := nil;
 
   FConfig := nil;
   TRadIAContainer.Register<IRadIAHttpClient>(nil);
@@ -803,7 +842,16 @@ begin
   Assert.IsTrue(LFinished, 'Async request timed out for ' + AProviderId);
   Assert.AreEqual(AExpectedResponse, LResponse);
   Assert.IsEmpty(LError);
-  Assert.IsTrue(FMockHttpClient.LastUrl.Contains('/chat/completions'));
+  if AProviderId = 'Gemini' then
+    Assert.IsTrue(FMockHttpClient.LastUrl.Contains(':generateContent'))
+  else if AProviderId = 'Claude' then
+    Assert.IsTrue(FMockHttpClient.LastUrl.Contains('/v1/messages'))
+  else if AProviderId = 'Ollama' then
+    Assert.IsTrue(FMockHttpClient.LastUrl.Contains('/api/chat'))
+  else if AProviderId = 'Bedrock' then
+    Assert.IsTrue(FMockHttpClient.LastUrl.Contains('/invoke'))
+  else
+    Assert.IsTrue(FMockHttpClient.LastUrl.Contains('/chat/completions'));
   Sleep(50);
   System.Classes.CheckSynchronize(50);
 end;
@@ -929,7 +977,10 @@ begin
   FLastUrl := AUrl;
   for LChunk in FStreamChunks do
   begin
-    LBytes := TEncoding.UTF8.GetBytes(LChunk);
+    if AUrl.Contains('bedrock') then
+      LBytes := TNetEncoding.Base64.DecodeStringToBytes(LChunk)
+    else
+      LBytes := TEncoding.UTF8.GetBytes(LChunk);
     AOnWrite(LBytes);
   end;
 end;
@@ -1077,6 +1128,144 @@ begin
     'data: {"choices":[{"delta":{"content":"tral"}}]}' + #10,
     'data: [DONE]' + #10
   ], 'Mistral');
+end;
+
+procedure TTestRadIAProvidersEx.TestGemini_SendPromptAsync;
+begin
+  RunProviderSendPromptAsyncTest(FGeminiProvRef, 'Gemini',
+    '{"candidates": [{"content": {"parts": [{"text": "Gemini response"}]}}], ' +
+    '"usageMetadata": {"promptTokenCount": 10, "candidatesTokenCount": 10, "totalTokenCount": 20}}',
+    'Gemini response');
+end;
+
+procedure TTestRadIAProvidersEx.TestGemini_SendPromptStreamAsync;
+begin
+  RunProviderSendPromptStreamAsyncTest(FGeminiProvRef, 'Gemini', [
+    '[{"candidates":[{"content":{"parts":[{"text":"Gem"}]}}], ' +
+    '"usageMetadata": {"promptTokenCount": 5, "candidatesTokenCount": 5, "totalTokenCount": 10}}' + #10,
+    ',{"candidates":[{"content":{"parts":[{"text":"ini"}]}}], ' +
+    '"usageMetadata": {"promptTokenCount": 5, "candidatesTokenCount": 5, "totalTokenCount": 10}}' + #10,
+    ']' + #10
+  ], 'Gemini');
+end;
+
+procedure TTestRadIAProvidersEx.TestClaude_SendPromptAsync;
+begin
+  RunProviderSendPromptAsyncTest(FClaudeProvRef, 'Claude',
+    '{"content": [{"type": "text", "text": "Claude response"}], ' +
+    '"usage": {"input_tokens": 10, "output_tokens": 10}}',
+    'Claude response');
+end;
+
+procedure TTestRadIAProvidersEx.TestClaude_SendPromptStreamAsync;
+begin
+  RunProviderSendPromptStreamAsyncTest(FClaudeProvRef, 'Claude', [
+    'data: {"type":"content_block_delta","delta":{"text":"Cla"}}' + #10,
+    'data: {"type":"content_block_delta","delta":{"text":"ude"}}' + #10,
+    'data: {"type":"message_stop"}' + #10
+  ], 'Claude');
+end;
+
+procedure TTestRadIAProvidersEx.TestOllama_SendPromptAsync;
+begin
+  RunProviderSendPromptAsyncTest(FOllamaProvRef, 'Ollama',
+    '{"message": {"content": "Ollama response"}, ' +
+    '"prompt_eval_count": 10, "eval_count": 10}',
+    'Ollama response');
+end;
+
+procedure TTestRadIAProvidersEx.TestOllama_SendPromptStreamAsync;
+begin
+  RunProviderSendPromptStreamAsyncTest(FOllamaProvRef, 'Ollama', [
+    '{"message":{"content":"Olla"},"done":false}' + #10,
+    '{"message":{"content":"ma"},"done":false}' + #10,
+    '{"done":true}' + #10
+  ], 'Ollama');
+end;
+
+procedure TTestRadIAProvidersEx.TestBedrock_SendPromptAsync;
+begin
+  FConfig.SetAwsAccessKeyId('dummy');
+  FConfig.SetAwsSecretAccessKey('dummy');
+  FConfig.SetAwsRegion('us-east-1');
+  RunProviderSendPromptAsyncTest(FBedrockProvRef, 'Bedrock',
+    '{"content": [{"type": "text", "text": "Bedrock response"}], ' +
+    '"usage": {"input_tokens": 10, "output_tokens": 10}}',
+    'Bedrock response');
+end;
+
+procedure TTestRadIAProvidersEx.TestBedrock_SendPromptStreamAsync;
+  function CreateMockFrameB64(const AText: string): string;
+  var
+    LInnerJson: TJSONObject;
+    LOuterJson: TJSONObject;
+    LInnerStr: string;
+    LOuterStr: string;
+    LPayloadBytes: TBytes;
+    LBase64: string;
+    LTotalLength: Cardinal;
+    LHeadersLength: Cardinal;
+    LPayloadLen: Cardinal;
+    LFrameBytes: TBytes;
+  begin
+    LInnerJson := TJSONObject.Create;
+    try
+      LInnerJson.AddPair('type', 'content_block_delta');
+      var LDelta := TJSONObject.Create;
+      LDelta.AddPair('text', AText);
+      LInnerJson.AddPair('delta', LDelta);
+      LInnerStr := LInnerJson.ToJSON;
+    finally
+      LInnerJson.Free;
+    end;
+
+    LBase64 := TNetEncoding.Base64.EncodeBytesToString(TEncoding.UTF8.GetBytes(LInnerStr));
+    LBase64 := LBase64.Replace(#13, '').Replace(#10, '');
+
+    LOuterJson := TJSONObject.Create;
+    try
+      LOuterJson.AddPair('bytes', LBase64);
+      LOuterStr := LOuterJson.ToJSON;
+    finally
+      LOuterJson.Free;
+    end;
+
+    LPayloadBytes := TEncoding.UTF8.GetBytes(LOuterStr);
+    LPayloadLen := Length(LPayloadBytes);
+    LHeadersLength := 0;
+    LTotalLength := LPayloadLen + LHeadersLength + 16;
+
+    SetLength(LFrameBytes, LTotalLength);
+    LFrameBytes[0] := Byte((LTotalLength shl 0) shr 24);
+    LFrameBytes[1] := Byte((LTotalLength shl 8) shr 24);
+    LFrameBytes[2] := Byte((LTotalLength shl 16) shr 24);
+    LFrameBytes[3] := Byte((LTotalLength shl 24) shr 24);
+    LFrameBytes[4] := 0;
+    LFrameBytes[5] := 0;
+    LFrameBytes[6] := 0;
+    LFrameBytes[7] := 0;
+    LFrameBytes[8] := 0;
+    LFrameBytes[9] := 0;
+    LFrameBytes[10] := 0;
+    LFrameBytes[11] := 0;
+    Move(LPayloadBytes[0], LFrameBytes[12], LPayloadLen);
+    LFrameBytes[LTotalLength - 4] := 0;
+    LFrameBytes[LTotalLength - 3] := 0;
+    LFrameBytes[LTotalLength - 2] := 0;
+    LFrameBytes[LTotalLength - 1] := 0;
+
+    Result := TNetEncoding.Base64.EncodeBytesToString(LFrameBytes);
+    Result := Result.Replace(#13, '').Replace(#10, '');
+  end;
+begin
+  FConfig.SetAwsAccessKeyId('dummy');
+  FConfig.SetAwsSecretAccessKey('dummy');
+  FConfig.SetAwsRegion('us-east-1');
+
+  RunProviderSendPromptStreamAsyncTest(FBedrockProvRef, 'Bedrock', [
+    CreateMockFrameB64('Bedrock '),
+    CreateMockFrameB64('response')
+  ], 'Bedrock response');
 end;
 
 initialization

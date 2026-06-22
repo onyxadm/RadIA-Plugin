@@ -150,6 +150,16 @@ type
     procedure TestClearCache;
     [Test]
     procedure TestQuotaLimitReached;
+    [Test]
+    procedure TestSendPrompt_Success;
+    [Test]
+    procedure TestSendPrompt_CacheHit;
+    [Test]
+    procedure TestSendPromptStream_Success;
+    [Test]
+    procedure TestSendPromptStream_CacheHit;
+    [Test]
+    procedure TestCancelCurrentRequest;
   end;
 
   [TestFixture]
@@ -188,7 +198,61 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils, System.Classes, System.Net.URLClient;
+
+type
+  TMockHttpClient = class(TInterfacedObject, IRadIAHttpClient)
+  private
+    FResponseStr: string;
+    FStreamChunks: TArray<string>;
+  public
+    constructor Create(const AResponse: string; const AStreamChunks: TArray<string> = nil);
+    function Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer = 0): string;
+    function Post(const AUrl: string; const AHeaders: TNetHeaders;
+      const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
+    procedure PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
+      const AOnWrite: TProc<TBytes>; const ATimeoutMs: Integer = 0);
+    procedure Cancel;
+  end;
+
+{ TMockHttpClient }
+
+constructor TMockHttpClient.Create(const AResponse: string; const AStreamChunks: TArray<string>);
+begin
+  inherited Create;
+  FResponseStr := AResponse;
+  FStreamChunks := AStreamChunks;
+end;
+
+function TMockHttpClient.Get(const AUrl: string; const AHeaders: TNetHeaders; const ATimeoutMs: Integer): string;
+begin
+  Result := FResponseStr;
+end;
+
+function TMockHttpClient.Post(const AUrl: string; const AHeaders: TNetHeaders;
+  const ARequestBody: string; const ATimeoutMs: Integer): string;
+begin
+  Result := FResponseStr;
+end;
+
+procedure TMockHttpClient.PostStream(const AUrl: string; const AHeaders: TNetHeaders; const ARequestBody: string;
+  const AOnWrite: TProc<TBytes>; const ATimeoutMs: Integer);
+var
+  LChunk: string;
+  LBytes: TBytes;
+begin
+  for LChunk in FStreamChunks do
+  begin
+    LBytes := TEncoding.UTF8.GetBytes(LChunk);
+    AOnWrite(LBytes);
+  end;
+end;
+
+procedure TMockHttpClient.Cancel;
+begin
+  // Mock client cancellation is a no-op
+  Sleep(0);
+end;
 
 { TMockConfig }
 
@@ -970,6 +1034,291 @@ begin
     Assert.IsTrue(LResponseError.ToLower.Contains('quota') or LResponseError.ToLower.Contains('cota'));
   finally
     LService.Free;
+  end;
+end;
+
+procedure TTestRadIAService.TestSendPrompt_Success;
+var
+  LConfig: IRadIAConfig;
+  LService: TRadIAService;
+  LMockClient: TMockHttpClient;
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LResponse: string;
+  LError: string;
+const
+  MOCK_RESPONSE =
+    '{"choices": [{"message": {"role": "assistant", "content": "Hello Service response"}}], ' +
+    '"usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20}}';
+begin
+  LConfig := TMockConfig.Create(5);
+  LConfig.SetActiveProvider('DeepSeek');
+  LConfig.SetApiKey('DeepSeek', 'dummy-key');
+  LConfig.SetActiveModel('DeepSeek', 'deepseek-chat');
+
+  LMockClient := TMockHttpClient.Create(MOCK_RESPONSE);
+  TRadIAContainer.Register<IRadIAHttpClient>(LMockClient as IRadIAHttpClient);
+
+  LService := TRadIAService.Create(LConfig);
+  LFinished := False;
+  LResponse := '';
+  LError := '';
+  try
+    LService.SendPrompt('Hello DeepSeek', [],
+      procedure(const AResponse: string; const AError: string; AIsCached: Boolean; const AUsage: TTokenUsage)
+      begin
+        LResponse := AResponse;
+        LError := AError;
+        LFinished := True;
+      end);
+
+    LTimeout := 0;
+    while (not LFinished) and (LTimeout < 2000) do
+    begin
+      Sleep(10);
+      Inc(LTimeout, 10);
+      System.Classes.CheckSynchronize(10);
+    end;
+
+    Assert.IsTrue(LFinished, 'Request timed out');
+    Assert.AreEqual('Hello Service response', LResponse);
+    Assert.IsEmpty(LError);
+  finally
+    LService.Free;
+    TRadIAContainer.Register<IRadIAHttpClient>(nil);
+  end;
+end;
+
+procedure TTestRadIAService.TestSendPrompt_CacheHit;
+var
+  LConfig: IRadIAConfig;
+  LService: TRadIAService;
+  LMockClient: TMockHttpClient;
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LResponse: string;
+  LError: string;
+  LCached: Boolean;
+const
+  MOCK_RESPONSE =
+    '{"choices": [{"message": {"role": "assistant", "content": "Cached Service response"}}], ' +
+    '"usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20}}';
+begin
+  LConfig := TMockConfig.Create(5);
+  LConfig.SetActiveProvider('DeepSeek');
+  LConfig.SetApiKey('DeepSeek', 'dummy-key');
+  LConfig.SetActiveModel('DeepSeek', 'deepseek-chat');
+
+  LMockClient := TMockHttpClient.Create(MOCK_RESPONSE);
+  TRadIAContainer.Register<IRadIAHttpClient>(LMockClient as IRadIAHttpClient);
+
+  LService := TRadIAService.Create(LConfig);
+  try
+    LService.ClearCache;
+
+    { 1. Primeira chamada - Miss (preenche cache) }
+    LFinished := False;
+    LService.SendPrompt('Hello Cache', [],
+      procedure(const AResponse: string; const AError: string; AIsCached: Boolean; const AUsage: TTokenUsage)
+      begin
+        LFinished := True;
+      end);
+
+    LTimeout := 0;
+    while (not LFinished) and (LTimeout < 2000) do
+    begin
+      Sleep(10);
+      Inc(LTimeout, 10);
+      System.Classes.CheckSynchronize(10);
+    end;
+    Assert.IsTrue(LFinished);
+
+    { 2. Segunda chamada - Hit (sincrono/cache) }
+    LFinished := False;
+    LResponse := '';
+    LError := '';
+    LCached := False;
+    LService.SendPrompt('Hello Cache', [],
+      procedure(const AResponse: string; const AError: string; AIsCached: Boolean; const AUsage: TTokenUsage)
+      begin
+        LResponse := AResponse;
+        LError := AError;
+        LCached := AIsCached;
+        LFinished := True;
+      end);
+
+    LTimeout := 0;
+    while (not LFinished) and (LTimeout < 1000) do
+    begin
+      Sleep(5);
+      Inc(LTimeout, 5);
+      System.Classes.CheckSynchronize(5);
+    end;
+
+    Assert.IsTrue(LFinished);
+    Assert.AreEqual('Cached Service response', LResponse);
+    Assert.IsTrue(LCached, 'Should be retrieved from cache');
+    Assert.IsEmpty(LError);
+  finally
+    LService.Free;
+    TRadIAContainer.Register<IRadIAHttpClient>(nil);
+  end;
+end;
+
+procedure TTestRadIAService.TestSendPromptStream_Success;
+var
+  LConfig: IRadIAConfig;
+  LService: TRadIAService;
+  LMockClient: TMockHttpClient;
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LText: string;
+  LError: string;
+begin
+  LConfig := TMockConfig.Create(5);
+  LConfig.SetActiveProvider('DeepSeek');
+  LConfig.SetApiKey('DeepSeek', 'dummy-key');
+  LConfig.SetActiveModel('DeepSeek', 'deepseek-chat');
+
+  LMockClient := TMockHttpClient.Create('', [
+    'data: {"choices":[{"delta":{"content":"Hello"}}]}' + #10,
+    'data: {"choices":[{"delta":{"content":" Stream"}}]}' + #10,
+    'data: [DONE]' + #10
+  ]);
+  TRadIAContainer.Register<IRadIAHttpClient>(LMockClient as IRadIAHttpClient);
+
+  LService := TRadIAService.Create(LConfig);
+  LFinished := False;
+  LText := '';
+  LError := '';
+  try
+    LService.SendPromptStream('Hello Stream', [],
+      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+      begin
+        LText := LText + AChunk;
+        LError := AError;
+        if AIsDone then
+          LFinished := True;
+      end);
+
+    LTimeout := 0;
+    while (not LFinished) and (LTimeout < 2000) do
+    begin
+      Sleep(10);
+      Inc(LTimeout, 10);
+      System.Classes.CheckSynchronize(10);
+    end;
+
+    Assert.IsTrue(LFinished, 'Stream request timed out');
+    Assert.AreEqual('Hello Stream', LText);
+    Assert.IsEmpty(LError);
+  finally
+    LService.Free;
+    TRadIAContainer.Register<IRadIAHttpClient>(nil);
+  end;
+end;
+
+procedure TTestRadIAService.TestSendPromptStream_CacheHit;
+var
+  LConfig: IRadIAConfig;
+  LService: TRadIAService;
+  LMockClient: TMockHttpClient;
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LText: string;
+  LError: string;
+begin
+  LConfig := TMockConfig.Create(5);
+  LConfig.SetActiveProvider('DeepSeek');
+  LConfig.SetApiKey('DeepSeek', 'dummy-key');
+  LConfig.SetActiveModel('DeepSeek', 'deepseek-chat');
+
+  LMockClient := TMockHttpClient.Create('', [
+    'data: {"choices":[{"delta":{"content":"Cached"}}]}' + #10,
+    'data: {"choices":[{"delta":{"content":" Stream"}}]}' + #10,
+    'data: [DONE]' + #10
+  ]);
+  TRadIAContainer.Register<IRadIAHttpClient>(LMockClient as IRadIAHttpClient);
+
+  LService := TRadIAService.Create(LConfig);
+  try
+    LService.ClearCache;
+
+    { 1. Primeira chamada - Preenche o cache }
+    LFinished := False;
+    LService.SendPromptStream('Hello Stream Cache', [],
+      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+      begin
+        if AIsDone then
+          LFinished := True;
+      end);
+
+    LTimeout := 0;
+    while (not LFinished) and (LTimeout < 2000) do
+    begin
+      Sleep(10);
+      Inc(LTimeout, 10);
+      System.Classes.CheckSynchronize(10);
+    end;
+    Assert.IsTrue(LFinished);
+
+    { 2. Segunda chamada - Le do cache (retorna resposta completa no primeiro chunk) }
+    LFinished := False;
+    LText := '';
+    LError := '';
+    LService.SendPromptStream('Hello Stream Cache', [],
+      procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+      begin
+        LText := LText + AChunk;
+        LError := AError;
+        if AIsDone then
+          LFinished := True;
+      end);
+
+    LTimeout := 0;
+    while (not LFinished) and (LTimeout < 1000) do
+    begin
+      Sleep(5);
+      Inc(LTimeout, 5);
+      System.Classes.CheckSynchronize(5);
+    end;
+
+    Assert.IsTrue(LFinished);
+    Assert.AreEqual('Cached Stream', LText);
+    Assert.IsEmpty(LError);
+  finally
+    LService.Free;
+    TRadIAContainer.Register<IRadIAHttpClient>(nil);
+  end;
+end;
+
+procedure TTestRadIAService.TestCancelCurrentRequest;
+var
+  LConfig: IRadIAConfig;
+  LService: TRadIAService;
+  LMockClient: TMockHttpClient;
+begin
+  LConfig := TMockConfig.Create(5);
+  LConfig.SetActiveProvider('DeepSeek');
+  LConfig.SetApiKey('DeepSeek', 'dummy-key');
+  LConfig.SetActiveModel('DeepSeek', 'deepseek-chat');
+
+  LMockClient := TMockHttpClient.Create('{"choices":[{"message":{"role":"assistant","content":"Response"}}]}');
+  TRadIAContainer.Register<IRadIAHttpClient>(LMockClient as IRadIAHttpClient);
+
+  LService := TRadIAService.Create(LConfig);
+  try
+    LService.SendPrompt('Hello Cancel', [],
+      procedure(const AResponse: string; const AError: string; AIsCached: Boolean; const AUsage: TTokenUsage)
+      begin
+        Sleep(0);
+      end);
+
+    LService.CancelCurrentRequest;
+    Assert.Pass;
+  finally
+    LService.Free;
+    TRadIAContainer.Register<IRadIAHttpClient>(nil);
   end;
 end;
 
