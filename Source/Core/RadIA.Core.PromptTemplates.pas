@@ -56,7 +56,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.IOUtils, RadIA.Core.Logger;
+  System.SysUtils, System.IOUtils, RadIA.Core.Logger;
 
 { TPromptTemplateManager }
 
