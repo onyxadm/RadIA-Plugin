@@ -2,10 +2,9 @@ unit RadIA.UI.ConfigFrame;
 
 interface
 
-uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+uses  System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.ComCtrls, System.Generics.Collections, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, ToolsAPI,
+  Vcl.ComCtrls, System.Generics.Collections,
   RadIA.UI.ConfigPresenter;
 
 type
@@ -267,8 +266,8 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl, RadIA.Core.Logger, Vcl.Themes,
-  Winapi.ShellAPI, RadIA.UI.GithubAuthForm, RadIA.UI.WebLoginForm;
+  System.IOUtils, System.JSON, RadIA.UI.Resources, System.UITypes, Vcl.FileCtrl,
+  Winapi.ShellAPI, RadIA.UI.GithubAuthForm, RadIA.UI.WebLoginForm, Winapi.Windows, System.SysUtils, ToolsAPI;
 
 {$R *.dfm}
 

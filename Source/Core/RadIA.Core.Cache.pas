@@ -2,8 +2,7 @@ unit RadIA.Core.Cache;
 
 interface
 
-uses
-  System.SysUtils, System.Classes, System.Generics.Collections, System.SyncObjs;
+uses  System.Generics.Collections, System.SyncObjs;
 
 type
   TRadIACacheEntry = class
@@ -46,7 +45,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, System.Hash, System.DateUtils, RadIA.Core.Logger;
+  System.IOUtils, System.JSON, System.Hash, System.DateUtils, RadIA.Core.Logger, System.SysUtils;
 
 { TRadIACacheManager }
 

@@ -6,14 +6,7 @@ uses
   DUnitX.TestFramework,
   System.Generics.Collections,
   RadIA.Core.Interfaces,
-  RadIA.Core.Types,
-  RadIA.Core.Service,
-  RadIA.Core.ChatMessage,
-  RadIA.Core.Config,
-  RadIA.Core.TokenUsage,
-  RadIA.Core.ProviderRegistry,
-  RadIA.Core.SettingsStorage,
-  RadIA.Core.Container;
+  RadIA.Core.TokenUsage;
 
 type
   { Mock minimal config for trimming tests — avoids registry I/O }
@@ -198,7 +191,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.Net.URLClient;
+  System.SysUtils, System.Classes, System.Net.URLClient, RadIA.Core.Types, RadIA.Core.Service, RadIA.Core.ChatMessage, RadIA.Core.Config, RadIA.Core.ProviderRegistry, RadIA.Core.SettingsStorage, RadIA.Core.Container;
 
 type
   TMockHttpClient = class(TInterfacedObject, IRadIAHttpClient)

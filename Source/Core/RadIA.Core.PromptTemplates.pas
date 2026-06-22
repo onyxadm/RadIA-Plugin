@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, System.Generics.Collections;
+uses  System.Generics.Collections;
 
 type
   { Represents a single prompt template }
@@ -51,7 +50,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, RadIA.Core.Logger;
+  System.IOUtils, System.JSON, RadIA.Core.Logger, System.SysUtils;
 
 { TPromptTemplateManager }
 

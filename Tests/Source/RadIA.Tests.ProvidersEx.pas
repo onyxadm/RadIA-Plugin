@@ -3,10 +3,10 @@ unit RadIA.Tests.ProvidersEx;
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
+  DUnitX.TestFramework, RadIA.Core.Interfaces,
   RadIA.Core.TokenUsage, RadIA.Provider.DeepSeek, RadIA.Provider.Groq, RadIA.Provider.OpenRouter,
   RadIA.Provider.LMStudio, RadIA.Provider.AzureOpenAI, RadIA.Provider.Qwen, RadIA.Provider.Mistral,
-  RadIA.Provider.Bedrock, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage,
+  RadIA.Provider.Bedrock,
   RadIA.Provider.GithubCopilot, RadIA.Provider.WebViewBridge,
   RadIA.Provider.Gemini, RadIA.Provider.Claude, RadIA.Provider.Ollama,
   System.SysUtils, System.Net.URLClient, System.NetEncoding, RadIA.Core.ChatMessage;
@@ -196,7 +196,7 @@ implementation
 
 uses
   System.Classes, System.Rtti, System.JSON, System.Net.HttpClient,
-  RadIA.Core.Container;
+  RadIA.Core.Container, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage;
 
 { TTestRadIAProvidersEx }
 

@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, RadIA.Core.Interfaces;
+uses  RadIA.Core.Interfaces;
 
 type
   TRadIATextNormalizer = class(TInterfacedObject, IRadIATextNormalizer)
@@ -12,6 +11,10 @@ type
   end;
 
 implementation
+
+
+uses
+  System.SysUtils;
 
 { TRadIATextNormalizer }
 

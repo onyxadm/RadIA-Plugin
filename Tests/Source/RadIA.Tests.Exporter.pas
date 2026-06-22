@@ -3,8 +3,7 @@ unit RadIA.Tests.Exporter;
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Service,
-  RadIA.Core.ConversationExporter;
+  DUnitX.TestFramework, RadIA.Core.Interfaces;
 
 type
   [TestFixture]
@@ -30,7 +29,7 @@ type
 implementation
 
 uses
-  System.SysUtils, RadIA.Core.ChatMessage;
+  System.SysUtils, RadIA.Core.ChatMessage, RadIA.Core.Types, RadIA.Core.ConversationExporter;
 
 { TTestRadIAExporter }
 

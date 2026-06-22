@@ -3,7 +3,7 @@ unit RadIA.Tests.Infrastructure;
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.ErrorDecoder, RadIA.Core.Localizer;
+  DUnitX.TestFramework, RadIA.Core.Interfaces;
 
 type
   [TestFixture]
@@ -34,7 +34,7 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils, RadIA.Core.ErrorDecoder, RadIA.Core.Localizer;
 
 { TTestRadIAInfrastructure }
 

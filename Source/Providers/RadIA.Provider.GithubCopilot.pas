@@ -2,9 +2,8 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, System.SyncObjs,
-  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
+uses  System.SyncObjs,
+  RadIA.Core.Interfaces, RadIA.Provider.Base;
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
@@ -42,7 +41,7 @@ type
 implementation
 
 uses
-  System.JSON, System.DateUtils, System.Threading, System.Math, RadIA.Core.ProviderRegistry, RadIA.Core.Logger;
+  System.JSON, System.DateUtils, System.Threading, RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 const
   COPILOT_CLIENT_ID = '01ab8ac9400c4e429b23'; // Official Client ID for VS Code Copilot

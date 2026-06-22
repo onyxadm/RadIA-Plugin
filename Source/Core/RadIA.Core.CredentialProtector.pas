@@ -2,9 +2,6 @@ unit RadIA.Core.CredentialProtector;
 
 interface
 
-uses
-  System.SysUtils;
-
 type
   TCredentialProtector = record
   public
@@ -16,7 +13,7 @@ type
 implementation
 
 uses
-  Winapi.Windows, System.NetEncoding, RadIA.Core.Logger;
+  Winapi.Windows, System.NetEncoding, RadIA.Core.Logger, System.SysUtils;
 
 type
   TDataBlob = record

@@ -3,7 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.ProjectContext;
+  DUnitX.TestFramework;
 
 type
   [TestFixture]
@@ -35,7 +35,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.IOUtils;
+  System.SysUtils, System.Classes, System.IOUtils, RadIA.Core.ProjectContext;
 
 { TTestRadIAProjectContext }
 

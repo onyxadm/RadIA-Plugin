@@ -1,10 +1,9 @@
-﻿unit RadIA.Tests.Ollama;
+unit RadIA.Tests.Ollama;
 
 interface
 
 uses
-  DUnitX.TestFramework, System.Rtti, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Types,
-  RadIA.Core.TokenUsage, RadIA.Core.Service, RadIA.Provider.Ollama, RadIA.Core.SettingsStorage;
+  DUnitX.TestFramework, System.Rtti, RadIA.Core.Interfaces, RadIA.Provider.Ollama;
 
 type
   [TestFixture]
@@ -29,7 +28,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.JSON, RadIA.Core.ChatMessage;
+  System.SysUtils, System.JSON, RadIA.Core.ChatMessage, RadIA.Core.Config, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Core.SettingsStorage;
 
 function TTestRadIAOllama.CallPrivateMethod(const AMethodName: string; const AArgs: array of TValue): TValue;
 var
@@ -93,15 +92,15 @@ begin
     Assert.IsNotNull(LMessages, 'Messages array should be present');
     Assert.AreEqual(3, LMessages.Count, 'Should contain 2 history messages + 1 current prompt');
 
-    LMsgObj := LMessages.Items[0] as TJSONObject;
+    LMsgObj := LMessages[0] as TJSONObject;
     Assert.AreEqual('user', LMsgObj.GetValue('role').Value);
     Assert.AreEqual('Hello', LMsgObj.GetValue('content').Value);
 
-    LMsgObj := LMessages.Items[1] as TJSONObject;
+    LMsgObj := LMessages[1] as TJSONObject;
     Assert.AreEqual('assistant', LMsgObj.GetValue('role').Value);
     Assert.AreEqual('Hi there', LMsgObj.GetValue('content').Value);
 
-    LMsgObj := LMessages.Items[2] as TJSONObject;
+    LMsgObj := LMessages[2] as TJSONObject;
     Assert.AreEqual('user', LMsgObj.GetValue('role').Value);
     Assert.AreEqual('This is a test prompt', LMsgObj.GetValue('content').Value);
   finally

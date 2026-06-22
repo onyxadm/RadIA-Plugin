@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, System.Generics.Collections;
+uses  System.Generics.Collections;
 
 const
   DEFAULT_MAX_PROMPT_HISTORY = 50;
@@ -47,7 +46,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON;
+  System.IOUtils, System.JSON, System.SysUtils;
 
 { TPromptHistoryManager }
 

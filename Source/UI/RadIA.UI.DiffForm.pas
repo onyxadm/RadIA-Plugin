@@ -2,10 +2,8 @@
 
 interface
 
-uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.Edge, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage, Winapi.WebView2, Winapi.ActiveX;
+uses  System.Classes, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls, Vcl.ExtCtrls,
+  Vcl.Edge, RadIA.Core.Interfaces, Winapi.WebView2, Winapi.ActiveX;
 
 type
   { Form to compare code changes side-by-side before applying them to the editor }
@@ -60,11 +58,14 @@ type
 
 implementation
 
-{$R *.dfm}
 
 uses
-  System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources,
+  Winapi.Windows, System.SysUtils, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Service, RadIA.Core.TokenUsage, System.IOUtils, System.JSON, System.Math, System.Win.Registry, ToolsAPI, RadIA.UI.Resources,
   RadIA.Core.Container;
+
+{$R *.dfm}
+
+
 
 const
   CDiffDefaultTimeoutMs = 60000;

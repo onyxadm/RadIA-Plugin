@@ -2,9 +2,7 @@ unit RadIA.OTA.Options;
 
 interface
 
-uses
-  Winapi.Windows, System.SysUtils, System.Classes, Vcl.Controls, Vcl.Forms, ToolsAPI,
-  RadIA.Core.Types, RadIA.UI.ConfigFrame;
+uses  Vcl.Forms, ToolsAPI, RadIA.UI.ConfigFrame;
 
 type
   { Provider page configuration tag }
@@ -31,9 +29,6 @@ type
   end;
 
 implementation
-
-uses
-  Vcl.ComCtrls;
 
 { TRadIAAddInOptions }
 

@@ -2,9 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types,
-  RadIA.Core.TokenUsage, RadIA.Provider.Base;
+uses  RadIA.Core.Interfaces, RadIA.Provider.Base;
 
 type
   TWebViewBridgeSendPromptEvent = procedure(const APrompt: string) of object;
@@ -38,8 +36,7 @@ type
 
 implementation
 
-uses
-  System.Threading, RadIA.Core.ProviderRegistry, RadIA.Core.Logger;
+uses  RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SysUtils, System.Classes, RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 { TRadIAWebViewBridgeProvider }
 

@@ -2,10 +2,9 @@ unit RadIA.UI.ChatFrame;
 
 interface
 
-uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes,
+uses  Winapi.Messages, System.SysUtils, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.Edge, RadIA.Core.Interfaces,
+  Vcl.Edge,
   Vcl.Menus, Vcl.Buttons, RadIA.Core.Sessions, RadIA.UI.Resources,
   RadIA.UI.ChatPresenter;
 
@@ -126,7 +125,7 @@ implementation
 uses
   System.IOUtils, System.JSON, ToolsAPI, RadIA.OTA.Helper, RadIA.UI.ConfigForm,
   RadIA.Core.Mediator, RadIA.Core.Logger, RadIA.UI.WebLoginForm, RadIA.Core.Container,
-  Winapi.WebView2, Winapi.ActiveX, RadIA.Core.ProviderRegistry, RadIA.Core.Types;
+  Winapi.WebView2, Winapi.ActiveX, RadIA.Core.ProviderRegistry, RadIA.Core.Types, Winapi.Windows, RadIA.Core.Interfaces;
 
 {$R *.dfm}
 
@@ -177,8 +176,6 @@ type
     Id: string;
     constructor Create(const AId: string);
   end;
-
-type
   TProviderObject = class
   public
     Id: string;

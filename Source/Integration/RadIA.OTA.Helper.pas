@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, ToolsAPI;
+uses  ToolsAPI;
 
 type
   { Helper class for interacting with Delphi Open Tools API (OTA) }
@@ -35,7 +34,7 @@ type
 implementation
 
 uses
-  Winapi.Windows, RadIA.Core.Container, RadIA.Core.Interfaces, RadIA.Core.Logger;
+  Winapi.Windows, RadIA.Core.Container, RadIA.Core.Interfaces, RadIA.Core.Logger, System.SysUtils, System.Classes;
 
 { TRadIAOTAHelper }
 

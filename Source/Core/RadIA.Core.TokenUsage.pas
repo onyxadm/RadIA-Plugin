@@ -2,9 +2,6 @@
 
 interface
 
-uses
-  System.SysUtils;
-
 type
   { Holds token counters returned from any AI provider response }
   TTokenUsage = record
@@ -18,6 +15,10 @@ type
   end;
 
 implementation
+
+
+uses
+  System.SysUtils;
 
 { TTokenUsage }
 

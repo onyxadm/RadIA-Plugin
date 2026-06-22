@@ -3,8 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Core.SettingsStorage;
+  DUnitX.TestFramework, RadIA.Core.Interfaces;
 
 type
   [TestFixture]
@@ -29,7 +28,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.IOUtils, System.JSON, RadIA.Core.ProviderRegistry, RadIA.Provider.Generic;
+  System.SysUtils, System.IOUtils, System.JSON, RadIA.Core.ProviderRegistry, RadIA.Core.Config, RadIA.Core.SettingsStorage;
 
 { TTestRadIAJSONProviders }
 

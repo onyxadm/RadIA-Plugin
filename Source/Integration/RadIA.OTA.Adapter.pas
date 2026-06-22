@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces;
+uses  RadIA.Core.Interfaces;
 
 type
   TRadIAConcreteIDEAdapter = class(TInterfacedObject, IRadIAIDEAdapter)

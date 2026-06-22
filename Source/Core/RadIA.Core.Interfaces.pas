@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient,
+  System.SysUtils, System.Net.URLClient,
   RadIA.Core.Types, RadIA.Core.TokenUsage;
 
 type

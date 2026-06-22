@@ -3,7 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.DTO.Generator;
+  DUnitX.TestFramework, RadIA.Core.Interfaces;
 
 type
   [TestFixture]
@@ -31,7 +31,7 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils, RadIA.Core.DTO.Generator;
 
 procedure TRadIADTOBuilderTests.Setup;
 begin

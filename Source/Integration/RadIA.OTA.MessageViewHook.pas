@@ -2,9 +2,6 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, ToolsAPI;
-
 type
   { Class to interface and hook compiler errors from Delphi Messages View }
   TRadIAMessageViewHook = class
@@ -13,6 +10,10 @@ type
   end;
 
 implementation
+
+
+uses
+  System.SysUtils, ToolsAPI;
 
 { TRadIAMessageViewHook }
 

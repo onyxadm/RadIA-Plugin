@@ -3,7 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Sessions, RadIA.Core.Interfaces;
+  DUnitX.TestFramework, RadIA.Core.Sessions;
 
 type
   [TestFixture]
@@ -32,7 +32,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.IOUtils, RadIA.Core.Service, RadIA.Core.Types, RadIA.Core.ChatMessage;
+  System.SysUtils, System.IOUtils, RadIA.Core.Types, RadIA.Core.ChatMessage, RadIA.Core.Interfaces;
 
 { TTestRadIASessions }
 

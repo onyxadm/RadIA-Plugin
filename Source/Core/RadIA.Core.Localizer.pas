@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, System.Generics.Collections, RadIA.Core.Interfaces;
+uses  System.Generics.Collections, RadIA.Core.Interfaces;
 
 type
   TRadIALocalizer = class(TInterfacedObject, IRadIALocalizer)
@@ -22,6 +21,10 @@ type
   end;
 
 implementation
+
+
+uses
+  System.SysUtils;
 
 { TRadIALocalizer }
 

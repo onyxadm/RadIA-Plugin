@@ -2,10 +2,8 @@ unit RadIA.UI.ConfigForm;
 
 interface
 
-uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  Vcl.ComCtrls, RadIA.UI.ConfigFrame, ToolsAPI;
+uses  System.Classes, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls, Vcl.ExtCtrls,
+  Vcl.ComCtrls, RadIA.UI.ConfigFrame;
 
 type
   TRadIAFormAIConfig = class(TForm)
@@ -31,10 +29,13 @@ type
 
 implementation
 
-{$R *.dfm}
 
 uses
-  RadIA.UI.Resources, Vcl.Themes;
+  System.SysUtils, Vcl.Dialogs, ToolsAPI, RadIA.UI.Resources;
+
+{$R *.dfm}
+
+
 
 constructor TRadIAFormAIConfig.Create(AOwner: TComponent);
 var

@@ -3,7 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Service;
+  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Service;
 
 type
   [TestFixture]
@@ -28,8 +28,8 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Classes, System.DateUtils, System.SyncObjs,
-  RadIA.Core.TokenUsage, RadIA.Core.Types, RadIA.Core.SettingsStorage;
+  System.SysUtils, System.SyncObjs,
+  RadIA.Core.TokenUsage, RadIA.Core.SettingsStorage, RadIA.Core.Config;
 
 { TTestRadIAQuota }
 

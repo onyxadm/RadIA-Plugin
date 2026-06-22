@@ -3,11 +3,9 @@
 interface
 
 uses
-  DUnitX.TestFramework, System.SysUtils, System.Classes, System.JSON, System.RTTI,
-  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage,
-  RadIA.Provider.Streaming, RadIA.Provider.Base, RadIA.Provider.OpenAI, RadIA.Provider.Gemini,
-  RadIA.Provider.Claude, RadIA.Provider.Ollama, RadIA.Core.Config,
-  RadIA.Core.SettingsStorage;
+  DUnitX.TestFramework,
+  RadIA.Core.Interfaces, RadIA.Provider.OpenAI, RadIA.Provider.Gemini,
+  RadIA.Provider.Claude, RadIA.Provider.Ollama;
 
 type
   [TestFixture]
@@ -49,6 +47,10 @@ type
   end;
 
 implementation
+
+
+uses
+  System.SysUtils, System.RTTI, RadIA.Provider.Streaming, RadIA.Core.Config, RadIA.Core.SettingsStorage;
 
 { TTestRadIAStreaming }
 

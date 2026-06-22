@@ -3,7 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Config, RadIA.Core.Types,
+  DUnitX.TestFramework, RadIA.Core.Interfaces,
   RadIA.Core.SettingsStorage;
 
 type
@@ -43,7 +43,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.JSON;
+  System.SysUtils, System.JSON, RadIA.Core.Config;
 
 { TTestRadIAConfig }
 

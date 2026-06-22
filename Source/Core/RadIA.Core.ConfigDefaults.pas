@@ -2,9 +2,6 @@ unit RadIA.Core.ConfigDefaults;
 
 interface
 
-uses
-  System.SysUtils, System.IOUtils;
-
 const
   CDefaultSystemPrompt =
     'You are a Delphi Senior Software Architect. Always reply in the user''s language.' + sLineBreak +
@@ -37,6 +34,10 @@ type
   end;
 
 implementation
+
+
+uses
+  System.SysUtils, System.IOUtils;
 
 class function TConfigDefaults.ActiveProvider: string;
 begin

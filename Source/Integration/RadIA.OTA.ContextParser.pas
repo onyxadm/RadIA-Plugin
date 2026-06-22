@@ -2,8 +2,7 @@ unit RadIA.OTA.ContextParser;
 
 interface
 
-uses
-  System.SysUtils, System.Classes;
+uses  System.Classes;
 
 type
   TMethodExampleContext = record
@@ -36,7 +35,7 @@ type
 implementation
 
 uses
-  System.StrUtils;
+  System.StrUtils, System.SysUtils;
 
 { TRadIAContextParser }
 

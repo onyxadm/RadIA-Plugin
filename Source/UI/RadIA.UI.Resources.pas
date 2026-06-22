@@ -3,7 +3,7 @@
 interface
 
 uses
-  Vcl.Forms, Vcl.Graphics, System.SysUtils;
+  Vcl.Forms, Vcl.Graphics;
 
 type
   TRadIAThemeColors = record
@@ -31,7 +31,7 @@ function IsThemeDark(const AThemeName: string): Boolean;
 implementation
 
 uses
-  Winapi.Windows, Winapi.Dwmapi;
+  Winapi.Windows, Winapi.Dwmapi, System.SysUtils;
 
 const
   RADIA_DWMWA_USE_IMMERSIVE_DARK_MODE = 20;

@@ -2,9 +2,7 @@ unit RadIA.OTA.DockableForm;
 
 interface
 
-uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
-  System.Win.Registry, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, DockForm, ToolsAPI,
+uses  System.Classes, DockForm,
   RadIA.UI.ChatFrame;
 
 type
@@ -34,7 +32,7 @@ var
 implementation
 
 uses
-  DeskUtil, RadIA.Core.Config, RadIA.UI.Resources;
+  DeskUtil, RadIA.Core.Config, RadIA.UI.Resources, Winapi.Windows, System.SysUtils, System.Win.Registry, Vcl.Controls, Vcl.Forms, ToolsAPI;
 
 procedure ShowRadIAChat;
 begin

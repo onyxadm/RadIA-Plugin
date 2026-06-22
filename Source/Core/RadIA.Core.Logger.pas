@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces;
+uses  RadIA.Core.Interfaces;
 
 type
   TConcreteLogger = class(TInterfacedObject, IRadIALogger)
@@ -38,7 +37,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.Win.Registry, Winapi.Windows;
+  System.IOUtils, System.Win.Registry, Winapi.Windows, System.SysUtils, System.Classes;
 
 { TConcreteLogger }
 

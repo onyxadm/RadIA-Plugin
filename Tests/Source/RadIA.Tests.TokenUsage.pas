@@ -3,7 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Types, RadIA.Core.TokenUsage;
+  DUnitX.TestFramework;
 
 type
   [TestFixture]
@@ -18,7 +18,7 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils, RadIA.Core.TokenUsage;
 
 { TTestRadIATokenUsage }
 

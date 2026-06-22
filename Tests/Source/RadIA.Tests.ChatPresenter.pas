@@ -3,8 +3,7 @@ unit RadIA.Tests.ChatPresenter;
 interface
 
 uses
-  DUnitX.TestFramework, System.SysUtils, System.Classes, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Core.Sessions, RadIA.Core.TokenUsage,
+  DUnitX.TestFramework, System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Sessions,
   RadIA.Core.ProviderRegistry, RadIA.UI.ChatPresenter;
 
 type

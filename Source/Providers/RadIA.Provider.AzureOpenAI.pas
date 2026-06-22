@@ -2,9 +2,8 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient,
-  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
+uses 
+  RadIA.Core.Interfaces, RadIA.Provider.Base;
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
@@ -28,7 +27,7 @@ type
 implementation
 
 uses
-  RadIA.Core.ProviderRegistry;
+  RadIA.Core.ProviderRegistry, System.SysUtils, System.Net.URLClient, RadIA.Core.TokenUsage;
 
 { TRadIAAzureOpenAIProvider }
 

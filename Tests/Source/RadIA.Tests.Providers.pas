@@ -3,7 +3,7 @@ unit RadIA.Tests.Providers;
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
+  DUnitX.TestFramework, RadIA.Core.Interfaces,
   RadIA.Core.TokenUsage, RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude;
 
 type
@@ -56,7 +56,7 @@ implementation
 uses
   System.SysUtils, System.Rtti, System.JSON,
   RadIA.Tests.Service, RadIA.Core.ChatMessage, RadIA.Provider.Generic,
-  RadIA.Core.SettingsStorage;
+  RadIA.Core.SettingsStorage, RadIA.Core.Types, RadIA.Core.Config;
 
 { TTestRadIAProviders }
 

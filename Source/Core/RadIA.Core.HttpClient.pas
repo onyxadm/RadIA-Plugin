@@ -3,7 +3,7 @@
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient,
+  System.SysUtils, System.Net.HttpClient, System.Net.URLClient,
   RadIA.Core.Interfaces;
 
 type
@@ -27,7 +27,7 @@ type
 implementation
 
 uses
-  RadIA.Core.Types, RadIA.Core.Logger, RadIA.Provider.Streaming;
+  RadIA.Core.Types, RadIA.Provider.Streaming, System.Classes;
 
 { TRadIAConcreteHttpClient }
 

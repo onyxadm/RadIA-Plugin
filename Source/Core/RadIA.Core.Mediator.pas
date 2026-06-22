@@ -14,8 +14,7 @@
 
 interface
 
-uses
-  System.SysUtils, RadIA.Core.Interfaces;
+uses  RadIA.Core.Interfaces;
 
 type
   TRadIAMediator = class(TInterfacedObject, IRadIAMediator)
@@ -46,6 +45,10 @@ type
   end;
 
 implementation
+
+
+uses
+  System.SysUtils;
 
 { TRadIAMediator }
 

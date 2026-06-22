@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes, System.Generics.Collections;
+uses  System.Classes, System.Generics.Collections;
 
 type
   IRadIASettingsStorage = interface
@@ -70,7 +69,7 @@ type
 implementation
 
 uses
-  System.Win.Registry, Winapi.Windows, System.Math;
+  System.Win.Registry, Winapi.Windows, System.SysUtils;
 
 { TRadIARegistrySettingsStorage }
 

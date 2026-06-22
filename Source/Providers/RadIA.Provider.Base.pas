@@ -3,8 +3,8 @@ unit RadIA.Provider.Base;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Net.HttpClient, System.Net.URLClient, System.Threading,
-  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Streaming;
+  System.SysUtils, System.Net.URLClient,
+  RadIA.Core.Interfaces, RadIA.Core.TokenUsage;
 
 type
   TParserFunc = reference to function(const AResponseJson: string; out AUsage: TTokenUsage): string;
@@ -85,7 +85,7 @@ implementation
 
 uses
   System.JSON, System.Generics.Collections, System.Math, RadIA.Core.Logger, System.SyncObjs,
-  RadIA.Core.Container, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder;
+  RadIA.Core.Container, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder, System.Classes, System.Net.HttpClient, System.Threading, RadIA.Core.Types, RadIA.Provider.Streaming;
 
 const
   CLogPreviewMaxLength = 320;

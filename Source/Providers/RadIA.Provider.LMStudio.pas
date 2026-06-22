@@ -2,9 +2,7 @@ unit RadIA.Provider.LMStudio;
 
 interface
 
-uses
-  System.Classes, System.Net.HttpClient, RadIA.Core.Interfaces,
-  RadIA.Core.Types, RadIA.Core.TokenUsage, RadIA.Provider.Base;
+uses  RadIA.Core.Interfaces, RadIA.Provider.Base;
 
 type
   {$RTTI EXPLICIT METHODS([vcPrivate, vcProtected, vcPublic, vcPublished])}
@@ -26,7 +24,7 @@ type
 implementation
 
 uses
-  System.SysUtils, System.JSON, System.Threading, System.Math, System.Net.URLClient, RadIA.Core.ProviderRegistry;
+  System.SysUtils, System.Net.URLClient, RadIA.Core.ProviderRegistry, RadIA.Core.TokenUsage;
 
 { TRadIALMStudioProvider }
 

@@ -2,8 +2,7 @@ unit RadIA.Core.Container;
 
 interface
 
-uses
-  System.SysUtils, System.Generics.Collections;
+uses  System.Generics.Collections;
 
 type
   { Generic, lightweight IoC Container for Delphi }
@@ -22,7 +21,7 @@ type
 implementation
 
 uses
-  System.TypInfo;
+  System.TypInfo, System.SysUtils;
 
 { TRadIAContainer }
 

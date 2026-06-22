@@ -2,9 +2,7 @@ unit RadIA.Core.Service;
 
 interface
 
-uses
-  System.SysUtils, System.Classes, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Cache, RadIA.Core.TokenUsage,
-  RadIA.Core.ChatMessage;
+uses  RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Cache;
 
 type
   { Orchestrator service to manage active provider instantiation }
@@ -41,9 +39,8 @@ type
 
 implementation
 
-uses
-  System.IOUtils, System.JSON, System.Threading, System.Math, RadIA.Core.Container, RadIA.Core.ProjectContext,
-  RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs;
+uses  System.JSON, System.Threading, System.Math, RadIA.Core.Container, RadIA.Core.ProjectContext,
+  RadIA.Core.ProviderRegistry, RadIA.Core.Logger, System.SyncObjs, System.SysUtils, System.Classes, RadIA.Core.TokenUsage, RadIA.Core.ChatMessage;
 
 procedure LogService(const AMsg: string);
 begin

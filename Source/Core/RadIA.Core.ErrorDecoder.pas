@@ -2,8 +2,7 @@ unit RadIA.Core.ErrorDecoder;
 
 interface
 
-uses
-  System.SysUtils, RadIA.Core.Interfaces;
+uses  RadIA.Core.Interfaces;
 
 type
   TRadIAErrorDecoder = class(TInterfacedObject, IRadIAErrorDecoder)
@@ -16,7 +15,7 @@ type
 implementation
 
 uses
-  System.JSON, RadIA.Core.Logger;
+  System.JSON, RadIA.Core.Logger, System.SysUtils;
 
 { TRadIAErrorDecoder }
 

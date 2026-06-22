@@ -3,7 +3,7 @@
 interface
 
 uses
-  DUnitX.TestFramework, RadIA.Core.Container;
+  DUnitX.TestFramework;
 
 type
   IMockServiceA = interface
@@ -47,7 +47,7 @@ type
 implementation
 
 uses
-  System.Classes, System.SysUtils, System.SyncObjs, System.Threading;
+  System.Classes, System.SysUtils, System.Threading, RadIA.Core.Container;
 
 { TMockServiceA }
 

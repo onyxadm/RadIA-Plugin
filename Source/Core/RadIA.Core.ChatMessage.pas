@@ -2,8 +2,7 @@
 
 interface
 
-uses
-  System.SysUtils, RadIA.Core.Interfaces, RadIA.Core.Types;
+uses  RadIA.Core.Interfaces, RadIA.Core.Types;
 
 type
   { Simple concrete class implementing IRadIAChatMessage }

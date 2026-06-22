@@ -3,7 +3,7 @@ unit RadIA.Core.AwsSigner;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Hash, System.DateUtils;
+  System.SysUtils, System.Classes;
 
 type
   { Utility class to compute AWS Signature Version 4 (SigV4) }
@@ -24,6 +24,10 @@ type
   end;
 
 implementation
+
+
+uses
+  System.Hash, System.DateUtils;
 
 { TAwsSigV4Signer }
 

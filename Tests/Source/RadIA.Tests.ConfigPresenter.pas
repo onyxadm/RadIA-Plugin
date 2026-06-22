@@ -3,8 +3,8 @@
 interface
 
 uses
-  DUnitX.TestFramework, System.SysUtils, System.Classes, System.Generics.Collections,
-  Vcl.Graphics, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.PromptTemplates,
+  DUnitX.TestFramework, System.Generics.Collections,
+  Vcl.Graphics, RadIA.Core.Interfaces,
   RadIA.UI.ConfigPresenter;
 
 type
@@ -164,7 +164,7 @@ type
 implementation
 
 uses
-  RadIA.Core.Config, RadIA.Core.SettingsStorage;
+  RadIA.Core.Config, RadIA.Core.SettingsStorage, System.SysUtils;
 
 { TMockConfigView }
 

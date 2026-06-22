@@ -41,7 +41,7 @@ procedure Register;
 implementation
 
 uses
-  System.SysUtils, Vcl.Menus, Vcl.Controls, Vcl.Forms, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows,
+  System.SysUtils, Vcl.Menus, Vcl.Controls, Vcl.Graphics, Vcl.Dialogs, System.Win.Registry, Winapi.Windows,
   RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator,
   RadIA.Core.Config, RadIA.OTA.DockableForm, RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options,
   RadIA.Core.Container, RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer, RadIA.Core.DTO.Generator,

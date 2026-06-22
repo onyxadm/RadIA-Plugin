@@ -2,10 +2,7 @@
 
 interface
 
-uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
-  System.Threading, RadIA.Provider.GithubCopilot;
+uses  System.Classes, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls, Vcl.ExtCtrls;
 
 type
   TRadIAFormGithubAuth = class(TForm)
@@ -39,10 +36,13 @@ type
 
 implementation
 
-{$R *.dfm}
 
 uses
-  Winapi.ShellAPI, ToolsAPI, RadIA.UI.Resources, Vcl.Themes;
+  Winapi.Windows, System.SysUtils, Vcl.Graphics, Vcl.Dialogs, System.Threading, RadIA.Provider.GithubCopilot, Winapi.ShellAPI, ToolsAPI, RadIA.UI.Resources;
+
+{$R *.dfm}
+
+
 
 class function TRadIAFormGithubAuth.Execute(AOwner: TComponent; out AAccessToken: string): Boolean;
 var

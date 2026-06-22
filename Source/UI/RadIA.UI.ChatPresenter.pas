@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.JSON, RadIA.Core.Interfaces,
   RadIA.Core.Sessions, RadIA.Core.PromptTemplates,
-  RadIA.Core.TokenUsage, RadIA.Core.PromptHistory, RadIA.Core.Service;
+  RadIA.Core.TokenUsage, RadIA.Core.PromptHistory;
 
 type
   IRadIAChatView = interface
@@ -164,7 +164,7 @@ uses
   System.IOUtils, System.StrUtils, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.Logger,
   RadIA.Core.ProviderRegistry, RadIA.Core.ConversationExporter,
   RadIA.Core.DTO.Generator, RadIA.Core.ProjectGenerator, RadIA.Provider.WebViewBridge,
-  System.SyncObjs, RadIA.Core.Container, RadIA.Core.ChatMessage;
+  System.SyncObjs, RadIA.Core.Container, RadIA.Core.ChatMessage, RadIA.Core.Service;
 
 { Helper Functions }
 

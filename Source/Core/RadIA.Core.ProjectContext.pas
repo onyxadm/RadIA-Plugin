@@ -2,9 +2,6 @@
 
 interface
 
-uses
-  System.SysUtils, System.Classes;
-
 type
   { Loader for project-specific context configured via a .radia JSON file }
   TProjectContextLoader = class
@@ -17,7 +14,7 @@ type
 implementation
 
 uses
-  System.IOUtils, System.JSON, RadIA.Core.Logger;
+  System.IOUtils, System.JSON, RadIA.Core.Logger, System.SysUtils, System.Classes;
 
 { TProjectContextLoader }
 

@@ -2,11 +2,8 @@ unit RadIA.UI.WebLoginForm;
 
 interface
 
-uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Buttons,
-  Vcl.StdCtrls, Vcl.Edge, System.IOUtils, Winapi.WebView2, Winapi.ActiveX,
-  RadIA.Core.Logger;
+uses  System.SysUtils, System.Classes, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls, Vcl.Buttons,
+  Vcl.StdCtrls, Vcl.Edge, Winapi.WebView2, Winapi.ActiveX;
 
 type
   TRadIAFormWebLogin = class(TForm)
@@ -54,7 +51,7 @@ type
 implementation
 
 uses
-  System.JSON, ToolsAPI, Vcl.Themes, RadIA.UI.Resources, RadIA.Core.Types;
+  System.JSON, ToolsAPI, RadIA.UI.Resources, RadIA.Core.Types, System.IOUtils, RadIA.Core.Logger;
 
 {$R *.dfm}
 
