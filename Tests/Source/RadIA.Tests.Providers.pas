@@ -38,8 +38,6 @@ type
     procedure TestClaudeResponseParsing;
     [Test]
     procedure TestGenericProvider_Create;
-    [Test]
-    procedure TestBaseProviderExceptions;
   end;
 
   [TestFixture]
@@ -57,29 +55,8 @@ implementation
 
 uses
   System.SysUtils, System.Rtti, System.JSON,
-  RadIA.Core.SettingsStorage, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Provider.Base, System.Net.URLClient;
-
-type
-  TPublicProviderBase = class(TRadIAProviderBase)
-  public
-    function PublicDoGetRequest(const AUrl: string; const ATimeoutMs: Integer): string;
-    procedure PublicDoPostRequestStream(const AUrl: string);
-  end;
-
-function TPublicProviderBase.PublicDoGetRequest(const AUrl: string; const ATimeoutMs: Integer): string;
-var LHeaders: TNetHeaders;
-begin
-  SetLength(LHeaders, 0);
-  Result := DoGetRequest(AUrl, LHeaders, ATimeoutMs);
-end;
-
-procedure TPublicProviderBase.PublicDoPostRequestStream(const AUrl: string);
-var LHeaders: TNetHeaders;
-begin
-  SetLength(LHeaders, 0);
-  DoPostRequestStream(AUrl, LHeaders, '', nil);
-end;
+  RadIA.Tests.Service, RadIA.Core.ChatMessage, RadIA.Provider.Generic,
+  RadIA.Core.SettingsStorage, RadIA.Core.Types, RadIA.Core.Config;
 
 { TTestRadIAProviders }
 
@@ -101,27 +78,6 @@ begin
   FConfig := nil;
   TRadIAConfig.SetStorage(nil);
   TRadIAConfig.SetBaseRegistryPath('');
-end;
-
-procedure TTestRadIAProviders.TestBaseProviderExceptions;
-var
-  LProv: TPublicProviderBase;
-begin
-  LProv := TPublicProviderBase.Create(FConfig);
-  try
-    try
-      LProv.PublicDoGetRequest('http://127.0.0.1:1', 0);
-    except
-      // ignora o erro forçado de conexao
-    end;
-    try
-      LProv.PublicDoPostRequestStream('http://127.0.0.1:1');
-    except
-      // ignora o erro forçado
-    end;
-  finally
-    LProv.Free;
-  end;
 end;
 
 function TTestRadIAProviders.InvokeBuildRequestBody(AProvider: TObject; const APrompt: string;

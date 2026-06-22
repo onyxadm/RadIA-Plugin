@@ -146,7 +146,7 @@ object FrameAIConfig: TRadIAFrameAIConfig
           Top = 179
           Width = 575
           Height = 23
-          Hint = 
+          Hint =
             'e.g.: http://localhost:1234/v1 (LM Studio), https://api.groq.com' +
             '/openai/v1 (Groq)'
           ParentShowHint = False

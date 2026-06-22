@@ -47,7 +47,7 @@ object FormGithubAuth: TRadIAFormGithubAuth
       Height = 40
       Alignment = taCenter
       AutoSize = False
-      Caption = 
+      Caption =
         '1. Copy the authentication code shown below.'#13#10'2. Click the button below to open GitHub and enter the code.'
       WordWrap = True
     end
