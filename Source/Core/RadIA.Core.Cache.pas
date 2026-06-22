@@ -29,6 +29,7 @@ type
 
     procedure LoadCache;
     procedure SaveCache;
+    procedure EvictOldEntries;
   public
     constructor Create(const AFilePath: string = ''; ALimit: Integer = 500);
     destructor Destroy; override;
@@ -214,6 +215,40 @@ begin
   end;
 end;
 
+procedure TRadIACacheManager.EvictOldEntries;
+var
+  LEvictCount, K, I, LMinIndex: Integer;
+  LMinDate: TDateTime;
+begin
+  if FEntries.Count < FLimit then
+    Exit;
+
+  LEvictCount := FLimit div 10;
+  if LEvictCount < 1 then
+    LEvictCount := 1;
+
+  for K := 1 to LEvictCount do
+  begin
+    if FEntries.Count = 0 then
+      Break;
+
+    LMinIndex := 0;
+    LMinDate := FEntries[0].LastAccessed;
+
+    for I := 1 to FEntries.Count - 1 do
+    begin
+      if FEntries[I].LastAccessed < LMinDate then
+      begin
+        LMinDate := FEntries[I].LastAccessed;
+        LMinIndex := I;
+      end;
+    end;
+
+    FDictionary.Remove(FEntries[LMinIndex].Hash);
+    FEntries.Delete(LMinIndex);
+  end;
+end;
+
 procedure TRadIACacheManager.Put(const AHash: string; const AResponse: string);
 var
   LEntry: TRadIACacheEntry;
@@ -234,32 +269,7 @@ begin
       Exit;
     end;
 
-    { If limit reached, discard LRU (Least Recently Used) in batch (10% of limit, at least 1) }
-    if FEntries.Count >= FLimit then
-    begin
-      var LEvictCount := FLimit div 10;
-      if LEvictCount < 1 then
-        LEvictCount := 1;
-
-      // Repeat eviction LEvictCount times
-      for var K := 1 to LEvictCount do
-      begin
-        if FEntries.Count = 0 then
-          Break;
-        LMinIndex := 0;
-        LMinDate := FEntries[0].LastAccessed;
-        for I := 1 to FEntries.Count - 1 do
-        begin
-          if FEntries[I].LastAccessed < LMinDate then
-          begin
-            LMinDate := FEntries[I].LastAccessed;
-            LMinIndex := I;
-          end;
-        end;
-        FDictionary.Remove(FEntries[LMinIndex].Hash);
-        FEntries.Delete(LMinIndex);
-      end;
-    end;
+    EvictOldEntries;
 
     { Add new entry }
     LEntry := TRadIACacheEntry.Create;

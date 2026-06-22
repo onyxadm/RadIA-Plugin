@@ -1,4 +1,4 @@
-﻿unit RadIA.Provider.GithubCopilot;
+unit RadIA.Provider.GithubCopilot;
 
 interface
 
@@ -397,6 +397,53 @@ begin
   end;
 end;
 
+class function ProcessPollResponse(const AJsonStr: string; var AIntervalMs: Integer; out AAccessToken, AErrorMsg: string; out AAbort: Boolean): Boolean;
+var
+  LJson: TJSONObject;
+  LVal, LErrVal: TJSONValue;
+begin
+  Result := False;
+  AAbort := False;
+  AAccessToken := '';
+  AErrorMsg := '';
+  LJson := TJSONObject.ParseJSONValue(AJsonStr) as TJSONObject;
+  if not Assigned(LJson) then Exit;
+  try
+    LVal := LJson.GetValue('access_token');
+    if Assigned(LVal) then
+    begin
+      AAccessToken := LVal.Value;
+      Result := not AAccessToken.IsEmpty;
+      AAbort := True;
+      Exit;
+    end;
+
+    LErrVal := LJson.GetValue('error');
+    if Assigned(LErrVal) then
+    begin
+      if SameText(LErrVal.Value, 'authorization_pending') then
+      begin
+        { Still waiting, continue loop }
+      end
+      else if SameText(LErrVal.Value, 'slow_down') then
+      begin
+        LIntervalMs := LIntervalMs + 5000;
+      end
+      else
+      begin
+        LVal := LJson.GetValue('error_description');
+        if Assigned(LVal) then
+          AErrorMsg := LVal.Value
+        else
+          AErrorMsg := LErrVal.Value;
+        AAbort := True;
+      end;
+    end;
+  finally
+    LJson.Free;
+  end;
+end;
+
 class function TRadIAGithubCopilotProvider.PollForAccessToken(const ADeviceCode: string;
   AInterval, AExpiresIn: Integer; const ACancelledRef: PBoolean; out AAccessToken,
   AErrorMsg: string): Boolean;
@@ -405,11 +452,10 @@ var
   LResponse: IHTTPResponse;
   LHeaders: TNetHeaders;
   LSourceStream: TStringStream;
-  LJson: TJSONObject;
-  LVal, LErrVal: TJSONValue;
   LElapsed: Integer;
   LIntervalMs: Integer;
   LRequestBody: string;
+  LAbort: Boolean;
 begin
   Result := False;
   AAccessToken := '';
@@ -448,46 +494,9 @@ begin
           LResponse := LClient.Post('https://github.com/login/oauth/access_token', LSourceStream, nil, LHeaders);
           if LResponse.StatusCode = 200 then
           begin
-            LJson := TJSONObject.ParseJSONValue(LResponse.ContentAsString(TEncoding.UTF8)) as TJSONObject;
-            if Assigned(LJson) then
-            begin
-              try
-                LVal := LJson.GetValue('access_token');
-                if Assigned(LVal) then
-                begin
-                  AAccessToken := LVal.Value;
-                  Result := not AAccessToken.IsEmpty;
-                  Exit;
-                end;
-
-                { Check for errors }
-                LErrVal := LJson.GetValue('error');
-                if Assigned(LErrVal) then
-                begin
-                  if SameText(LErrVal.Value, 'authorization_pending') then
-                  begin
-                    { Still waiting, continue loop }
-                  end
-                  else if SameText(LErrVal.Value, 'slow_down') then
-                  begin
-                    { Increase interval slightly }
-                    LIntervalMs := LIntervalMs + 5000;
-                  end
-                  else
-                  begin
-                    { Other errors (e.g. expired_token, access_denied) mean we must abort }
-                    LVal := LJson.GetValue('error_description');
-                    if Assigned(LVal) then
-                      AErrorMsg := LVal.Value
-                    else
-                      AErrorMsg := LErrVal.Value;
-                    Exit;
-                  end;
-                end;
-              finally
-                LJson.Free;
-              end;
-            end;
+            LAbort := False;
+            Result := ProcessPollResponse(LResponse.ContentAsString(TEncoding.UTF8), LIntervalMs, AAccessToken, AErrorMsg, LAbort);
+            if LAbort then Exit;
           end
           else
           begin

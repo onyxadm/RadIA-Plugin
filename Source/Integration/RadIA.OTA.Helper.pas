@@ -15,9 +15,12 @@ type
     class procedure RefreshEditView(const AView: IOTAEditView);
     class function GetIndentPrefix(const APosition: IOTAEditPosition): string;
     class function ApplyPrefixToText(const AText, APrefix: string): string;
-    class function ReplaceWholeBufferText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText: string): Boolean;
-    class function ReplaceOriginalTextMatch(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText, AOriginalText: string): Boolean;
-    class function InsertFormattedText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText: string): Boolean;
+    class function ReplaceWholeBufferText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+      const ANewText: string): Boolean;
+    class function ReplaceOriginalTextMatch(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+      const ANewText, AOriginalText: string): Boolean;
+    class function InsertFormattedText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+      const ANewText: string): Boolean;
   public
     class function NormalizeLineBreaks(const AText: string): string;
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
@@ -263,7 +266,8 @@ begin
   Result := ApplyPrefixToText(AText, LPrefix);
 end;
 
-class function TRadIAOTAHelper.ReplaceWholeBufferText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText: string): Boolean;
+class function TRadIAOTAHelper.ReplaceWholeBufferText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+  const ANewText: string): Boolean;
 var
   LBufferText: string;
   LBufferSize: Integer;
@@ -291,7 +295,8 @@ begin
   RefreshEditView(AView);
 end;
 
-class function TRadIAOTAHelper.ReplaceOriginalTextMatch(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText, AOriginalText: string): Boolean;
+class function TRadIAOTAHelper.ReplaceOriginalTextMatch(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+  const ANewText, AOriginalText: string): Boolean;
 var
   LBufferText: string;
   LMatchPos, LStartOffset, LEndOffset: Integer;
@@ -323,7 +328,8 @@ begin
   RefreshEditView(AView);
 end;
 
-class function TRadIAOTAHelper.InsertFormattedText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView; const ANewText: string): Boolean;
+class function TRadIAOTAHelper.InsertFormattedText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+  const ANewText: string): Boolean;
 var
   LPosition: IOTAEditPosition;
   LFormattedText: string;

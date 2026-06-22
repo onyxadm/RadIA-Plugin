@@ -27,6 +27,8 @@ type
     procedure SaveIndex;
     function FindSessionIndex(const AId: string): Integer;
     function ParseChatMessage(const AObj: TJSONObject; out AMsg: IRadIAChatMessage): Boolean;
+    procedure ParseIndexJsonArray(AArr: TJSONArray);
+    procedure ParseHistoryJsonArray(AArr: TJSONArray; var AHistory: TArray<IRadIAChatMessage>);
   public
     constructor Create(const ASessionsDir: string = '');
     destructor Destroy; override;
@@ -137,13 +139,28 @@ begin
   end;
 end;
 
+procedure TRadIASessionManager.ParseIndexJsonArray(AArr: TJSONArray);
+var
+  LVal: TJSONValue;
+  LObj: TJSONObject;
+  LInfo: TSessionInfo;
+begin
+  for LVal in AArr do
+  begin
+    if LVal is TJSONObject then
+    begin
+      LObj := LVal as TJSONObject;
+      LInfo := TSessionInfo.ParseFromJSON(LObj);
+      if not LInfo.Id.IsEmpty then
+        FSessions.Add(LInfo);
+    end;
+  end;
+end;
+
 procedure TRadIASessionManager.LoadIndex;
 var
   LContent: string;
   LVal: TJSONValue;
-  LArr: TJSONArray;
-  LObj: TJSONObject;
-  LInfo: TSessionInfo;
 begin
   FSessions.Clear;
   if not TFile.Exists(FIndexFile) then
@@ -161,20 +178,7 @@ begin
     if Assigned(LVal) then
     begin
       if LVal is TJSONArray then
-      begin
-        LArr := LVal as TJSONArray;
-        for LVal in LArr do
-        begin
-          if LVal is TJSONObject then
-          begin
-            LObj := LVal as TJSONObject;
-            LInfo := TSessionInfo.ParseFromJSON(LObj);
-
-            if not LInfo.Id.IsEmpty then
-              FSessions.Add(LInfo);
-          end;
-        end;
-      end;
+        ParseIndexJsonArray(LVal as TJSONArray);
       LVal.Free;
     end;
 
@@ -358,15 +362,26 @@ begin
   end;
 end;
 
+procedure TRadIASessionManager.ParseHistoryJsonArray(AArr: TJSONArray; var AHistory: TArray<IRadIAChatMessage>);
+var
+  LVal: TJSONValue;
+  LMsg: IRadIAChatMessage;
+begin
+  for LVal in AArr do
+  begin
+    if LVal is TJSONObject then
+    begin
+      if ParseChatMessage(LVal as TJSONObject, LMsg) then
+        AHistory := AHistory + [LMsg];
+    end;
+  end;
+end;
+
 function TRadIASessionManager.LoadSessionHistory(const AId: string): TArray<IRadIAChatMessage>;
 var
   LFile: string;
   LContent: string;
   LParsedVal: TJSONValue;
-  LJsonArr: TJSONArray;
-  LVal: TJSONValue;
-  LMsgObj: TJSONObject;
-  LMsg: IRadIAChatMessage;
 begin
   Result := [];
   LFile := GetSessionFilePath(AId);
@@ -382,18 +397,7 @@ begin
     if Assigned(LParsedVal) then
     begin
       if LParsedVal is TJSONArray then
-      begin
-        LJsonArr := LParsedVal as TJSONArray;
-        for LVal in LJsonArr do
-        begin
-          if LVal is TJSONObject then
-          begin
-            LMsgObj := LVal as TJSONObject;
-            if ParseChatMessage(LMsgObj, LMsg) then
-              Result := Result + [LMsg];
-          end;
-        end;
-      end;
+        ParseHistoryJsonArray(LParsedVal as TJSONArray, Result);
       LParsedVal.Free;
     end;
   except

@@ -28,6 +28,8 @@ type
     class var FProviders: TDictionary<string, TProviderMetadata>;
     class constructor Create;
     class destructor Destroy;
+    class procedure ParseProviderFile(const AFilePath: string); static;
+    class function CreateFactory(const AId, ADisplayName, ABaseUrl: string; const AModels: TArray<string>; const AApiKey: string): TProviderFactoryFunc; static;
   public
     class procedure LoadJsonProviders; static;
     class procedure RegisterProvider(const AMetadata: TProviderMetadata);
@@ -67,22 +69,20 @@ begin
   LoadJsonProviders;
 end;
 
-class procedure TProviderRegistry.LoadJsonProviders;
-  function CreateFactory(const AId, ADisplayName, ABaseUrl: string;
-    const AModels: TArray<string>; const AApiKey: string): TProviderFactoryFunc;
-  begin
-    Result :=
-      function(const ACfg: IRadIAConfig): IRadIAProvider
-      begin
-        Result := TRadIAGenericOpenAIProvider.Create(
-          ACfg, AId, ADisplayName, ABaseUrl, AModels, AApiKey
-        );
-      end;
-  end;
+class function TProviderRegistry.CreateFactory(const AId, ADisplayName, ABaseUrl: string;
+  const AModels: TArray<string>; const AApiKey: string): TProviderFactoryFunc;
+begin
+  Result :=
+    function(const ACfg: IRadIAConfig): IRadIAProvider
+    begin
+      Result := TRadIAGenericOpenAIProvider.Create(
+        ACfg, AId, ADisplayName, ABaseUrl, AModels, AApiKey
+      );
+    end;
+end;
+
+class procedure TProviderRegistry.ParseProviderFile(const AFilePath: string);
 var
-  LProvidersFolder: string;
-  LFiles: TArray<string>;
-  LFile: string;
   LJsonStr: string;
   LJsonObj: TJSONObject;
   LId, LDisplayName, LDefaultBaseUrl: string;
@@ -94,6 +94,71 @@ var
   I: Integer;
   LMeta: TProviderMetadata;
   LRegApiKey: string;
+begin
+  try
+    LJsonStr := TFile.ReadAllText(AFilePath, TEncoding.UTF8);
+    LJsonObj := TJSONObject.ParseJSONValue(LJsonStr) as TJSONObject;
+    if Assigned(LJsonObj) then
+    begin
+      try
+        LId := LJsonObj.GetValue<string>('id', '');
+        LDisplayName := LJsonObj.GetValue<string>('displayName', '');
+        LDefaultBaseUrl := LJsonObj.GetValue<string>('baseUrl', '');
+        LApiKey := LJsonObj.GetValue<string>('apiKey', '');
+        LHasApiKey := LJsonObj.GetValue<Boolean>('hasApiKey', True);
+        LHasCustomUrl := LJsonObj.GetValue<Boolean>('hasCustomUrl', False);
+
+        if LId.IsEmpty or LDisplayName.IsEmpty or LDefaultBaseUrl.IsEmpty then
+        begin
+          TLogger.Log('Skipping invalid provider JSON (missing fields): ' + AFilePath, 'Registry');
+          Exit;
+        end;
+
+        LModelsList := TList<string>.Create;
+        try
+          LModelsArray := LJsonObj.GetValue('defaultModels') as TJSONArray;
+          if Assigned(LModelsArray) then
+          begin
+            for I := 0 to LModelsArray.Count - 1 do
+              LModelsList.Add(LModelsArray[I].Value);
+          end;
+          LDefaultModels := LModelsList.ToArray;
+        finally
+          LModelsList.Free;
+        end;
+
+        LRegApiKey := LApiKey;
+        if (not LHasApiKey) and LRegApiKey.IsEmpty then
+          LRegApiKey := 'dummy';
+
+        LMeta := TProviderMetadata.Create(
+          LId,
+          LDisplayName,
+          LDefaultBaseUrl,
+          LHasApiKey,
+          LHasCustomUrl,
+          LDefaultModels,
+          CreateFactory(LId, LDisplayName, LDefaultBaseUrl, LDefaultModels, LRegApiKey)
+        );
+        LMeta.IsDynamic := True;
+
+        RegisterProvider(LMeta);
+        TLogger.Log('Loaded dynamic provider: ' + LDisplayName, 'Registry');
+      finally
+        LJsonObj.Free;
+      end;
+    end;
+  except
+    on E: Exception do
+      TLogger.Log('Failed to load JSON provider ' + AFilePath + ': ' + E.Message, 'Registry');
+  end;
+end;
+
+class procedure TProviderRegistry.LoadJsonProviders;
+var
+  LProvidersFolder: string;
+  LFiles: TArray<string>;
+  LFile: string;
 begin
   LProvidersFolder := TPath.Combine(IncludeTrailingPathDelimiter(GetEnvironmentVariable('APPDATA')) + 'RadIA',
       'providers');
@@ -122,66 +187,7 @@ begin
 
   for LFile in LFiles do
   begin
-    try
-      LJsonStr := TFile.ReadAllText(LFile, TEncoding.UTF8);
-      LJsonObj := TJSONObject.ParseJSONValue(LJsonStr) as TJSONObject;
-      if Assigned(LJsonObj) then
-      begin
-        try
-          LId := LJsonObj.GetValue<string>('id', '');
-          LDisplayName := LJsonObj.GetValue<string>('displayName', '');
-          LDefaultBaseUrl := LJsonObj.GetValue<string>('baseUrl', '');
-          LApiKey := LJsonObj.GetValue<string>('apiKey', '');
-          LHasApiKey := LJsonObj.GetValue<Boolean>('hasApiKey', True);
-          LHasCustomUrl := LJsonObj.GetValue<Boolean>('hasCustomUrl', False);
-
-          if LId.IsEmpty or LDisplayName.IsEmpty or LDefaultBaseUrl.IsEmpty then
-          begin
-            TLogger.Log('Skipping invalid provider JSON (missing fields): ' + LFile, 'Registry');
-            Continue;
-          end;
-
-          LModelsList := TList<string>.Create;
-          try
-            LModelsArray := LJsonObj.GetValue('defaultModels') as TJSONArray;
-            if Assigned(LModelsArray) then
-            begin
-              for I := 0 to LModelsArray.Count - 1 do
-                LModelsList.Add(LModelsArray[I].Value);
-            end;
-            LDefaultModels := LModelsList.ToArray;
-          finally
-            LModelsList.Free;
-          end;
-
-          LRegApiKey := LApiKey;
-          if (not LHasApiKey) and LRegApiKey.IsEmpty then
-            LRegApiKey := 'dummy';
-
-          // Create and mark as dynamic before registration
-          LMeta := TProviderMetadata.Create(
-            LId,
-            LDisplayName,
-            LDefaultBaseUrl,
-            LHasApiKey,
-            LHasCustomUrl,
-            LDefaultModels,
-            CreateFactory(LId, LDisplayName, LDefaultBaseUrl, LDefaultModels, LRegApiKey)
-          );
-          LMeta.IsDynamic := True;
-
-          RegisterProvider(LMeta);
-          TLogger.Log(Format('Successfully registered JSON provider "%s" (%s)', [LDisplayName, LId]), 'Registry');
-        finally
-          LJsonObj.Free;
-        end;
-      end;
-    except
-      on E: Exception do
-      begin
-        TLogger.Log(Format('Error loading JSON provider file %s: %s', [LFile, E.Message]), 'Registry');
-      end;
-    end;
+    ParseProviderFile(LFile);
   end;
 end;
 

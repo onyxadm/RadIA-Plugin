@@ -25,6 +25,11 @@ type
     FFilePath: string;
 
     procedure CreateDefaultTemplates;
+    function FindUserTemplate(const AName: string; out ATemplate: TPromptTemplate): Boolean;
+    function FindDefaultTemplate(const AName: string; out ATemplate: TPromptTemplate): Boolean;
+    procedure ParseTemplateJsonArray(AArr: TJSONArray);
+    function IsLegacyReviewTemplate(const ATemplate: string): Boolean;
+    function NormalizeLineEndings(const AText: string): string;
     procedure BuildActiveTemplates;
     procedure CleanRedundantUserTemplates;
   public
@@ -264,33 +269,55 @@ begin
   );
 end;
 
+function TPromptTemplateManager.FindUserTemplate(const AName: string; out ATemplate: TPromptTemplate): Boolean;
+var
+  LTemp: TPromptTemplate;
+begin
+  Result := False;
+  for LTemp in FUserTemplates do
+  begin
+    if SameText(LTemp.Name, AName) then
+    begin
+      ATemplate := LTemp;
+      Exit(True);
+    end;
+  end;
+end;
+
+function TPromptTemplateManager.FindDefaultTemplate(const AName: string; out ATemplate: TPromptTemplate): Boolean;
+var
+  LTemp: TPromptTemplate;
+begin
+  Result := False;
+  for LTemp in FDefaultTemplates do
+  begin
+    if SameText(LTemp.Name, AName) then
+    begin
+      ATemplate := LTemp;
+      Exit(True);
+    end;
+  end;
+end;
+
 procedure TPromptTemplateManager.BuildActiveTemplates;
 var
   LDefaultTemp: TPromptTemplate;
   LUserTemp: TPromptTemplate;
   LTemp: TPromptTemplate;
-  LFound: Boolean;
+  LDummy: TPromptTemplate;
 begin
   FTemplates.Clear;
 
   // 1. Process default system templates and apply user overrides (overlays)
   for LDefaultTemp in FDefaultTemplates do
   begin
-    LFound := False;
-    for LUserTemp in FUserTemplates do
+    if FindUserTemplate(LDefaultTemp.Name, LTemp) then
     begin
-      if SameText(LUserTemp.Name, LDefaultTemp.Name) then
-      begin
-        LTemp := LUserTemp;
-        LTemp.IsSystem := True;
-        LTemp.IsCustomized := True;
-        FTemplates.Add(LTemp);
-        LFound := True;
-        Break;
-      end;
-    end;
-
-    if not LFound then
+      LTemp.IsSystem := True;
+      LTemp.IsCustomized := True;
+      FTemplates.Add(LTemp);
+    end
+    else
     begin
       LTemp := LDefaultTemp;
       LTemp.IsSystem := True;
@@ -302,17 +329,7 @@ begin
   // 2. Process custom templates created purely by the user
   for LUserTemp in FUserTemplates do
   begin
-    LFound := False;
-    for LDefaultTemp in FDefaultTemplates do
-    begin
-      if SameText(LDefaultTemp.Name, LUserTemp.Name) then
-      begin
-        LFound := True;
-        Break;
-      end;
-    end;
-
-    if not LFound then
+    if not FindDefaultTemplate(LUserTemp.Name, LDummy) then
     begin
       LTemp := LUserTemp;
       LTemp.IsSystem := False;
@@ -322,22 +339,23 @@ begin
   end;
 end;
 
-procedure TPromptTemplateManager.CleanRedundantUserTemplates;
-  function NormalizeLineEndings(const AText: string): string;
-  begin
-    Result := AText.Replace(#13#10, #10).Replace(#13, #10);
-  end;
+function TPromptTemplateManager.NormalizeLineEndings(const AText: string): string;
+begin
+  Result := AText.Replace(#13#10, #10).Replace(#13, #10);
+end;
 
-  function IsLegacyReviewTemplate(const ATemplate: string): Boolean;
-  const
-    LEGACY_REVIEW_TEMPLATE =
-      'Review the following Delphi Pascal code block applying Clean Code, readability, and optimization ' +
-          'principles:'#10#10'{code}';
-  begin
-    Result := NormalizeLineEndings(ATemplate) = LEGACY_REVIEW_TEMPLATE;
-  end;
+function TPromptTemplateManager.IsLegacyReviewTemplate(const ATemplate: string): Boolean;
+const
+  LEGACY_REVIEW_TEMPLATE =
+    'Review the following Delphi Pascal code block applying Clean Code, readability, and optimization ' +
+        'principles:'#10#10'{code}';
+begin
+  Result := NormalizeLineEndings(ATemplate) = LEGACY_REVIEW_TEMPLATE;
+end;
+
+procedure TPromptTemplateManager.CleanRedundantUserTemplates;
 var
-  I, J: Integer;
+  I: Integer;
   LDefault: TPromptTemplate;
   LUser: TPromptTemplate;
   LChanged: Boolean;
@@ -372,21 +390,16 @@ begin
       end;
     end;
 
-    for J := 0 to FDefaultTemplates.Count - 1 do
+    if FindDefaultTemplate(LUser.Name, LDefault) then
     begin
-      LDefault := FDefaultTemplates[J];
-      if SameText(LUser.Name, LDefault.Name) then
+      // If all properties are exactly identical to system default, it is redundant
+      if (LUser.Description = LDefault.Description) and
+         (NormalizeLineEndings(LUser.Template) = NormalizeLineEndings(LDefault.Template)) and
+         (LUser.IsProjectGenerator = LDefault.IsProjectGenerator) and
+         (LUser.SlashCommand = LDefault.SlashCommand) then
       begin
-        // If all properties are exactly identical to system default, it is redundant
-        if (LUser.Description = LDefault.Description) and
-           (NormalizeLineEndings(LUser.Template) = NormalizeLineEndings(LDefault.Template)) and
-           (LUser.IsProjectGenerator = LDefault.IsProjectGenerator) and
-           (LUser.SlashCommand = LDefault.SlashCommand) then
-        begin
-          FUserTemplates.Delete(I);
-          LChanged := True;
-        end;
-        Break;
+        FUserTemplates.Delete(I);
+        LChanged := True;
       end;
     end;
   end;
@@ -397,13 +410,34 @@ begin
   end;
 end;
 
-procedure TPromptTemplateManager.Load;
+procedure TPromptTemplateManager.ParseTemplateJsonArray(AArr: TJSONArray);
 var
-  LJsonContent: string;
-  LJsonArr: TJSONArray;
   LVal: TJSONValue;
   LObj: TJSONObject;
   LTemplate: TPromptTemplate;
+begin
+  for LVal in AArr do
+  begin
+    if LVal is TJSONObject then
+    begin
+      LObj := LVal as TJSONObject;
+      LTemplate.Name := LObj.GetValue<string>('name', '');
+      LTemplate.Description := LObj.GetValue<string>('description', '');
+      LTemplate.Template := LObj.GetValue<string>('template', '');
+      LTemplate.IsProjectGenerator := LObj.GetValue<Boolean>('isProjectGenerator', False);
+      LTemplate.SlashCommand := LObj.GetValue<string>('slashCommand', '');
+      LTemplate.IsSystem := False;     // Set in BuildActiveTemplates
+      LTemplate.IsCustomized := False; // Set in BuildActiveTemplates
+
+      if not LTemplate.Name.IsEmpty then
+        FUserTemplates.Add(LTemplate);
+    end;
+  end;
+end;
+
+procedure TPromptTemplateManager.Load;
+var
+  LJsonContent: string;
   LParsedVal: TJSONValue;
 begin
   FUserTemplates.Clear;
@@ -430,26 +464,7 @@ begin
     begin
       try
         if LParsedVal is TJSONArray then
-        begin
-          LJsonArr := LParsedVal as TJSONArray;
-          for LVal in LJsonArr do
-          begin
-            if LVal is TJSONObject then
-            begin
-              LObj := LVal as TJSONObject;
-              LTemplate.Name := LObj.GetValue<string>('name', '');
-              LTemplate.Description := LObj.GetValue<string>('description', '');
-              LTemplate.Template := LObj.GetValue<string>('template', '');
-              LTemplate.IsProjectGenerator := LObj.GetValue<Boolean>('isProjectGenerator', False);
-              LTemplate.SlashCommand := LObj.GetValue<string>('slashCommand', '');
-              LTemplate.IsSystem := False;     // Set in BuildActiveTemplates
-              LTemplate.IsCustomized := False; // Set in BuildActiveTemplates
-
-              if not LTemplate.Name.IsEmpty then
-                FUserTemplates.Add(LTemplate);
-            end;
-          end;
-        end;
+          ParseTemplateJsonArray(LParsedVal as TJSONArray);
       finally
         LParsedVal.Free;
       end;

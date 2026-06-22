@@ -103,7 +103,12 @@ type
 
     procedure HandleOnbtnWebLoginConnectClick;
     procedure QueueOnUI(const AProcedure: TProc);
+    procedure DispatchSystemMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
+    procedure DispatchSessionMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
+    procedure DispatchInteractionMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
     procedure DispatchWebMessage(const AAction: string; const AJson: TJSONObject);
+    function CheckQuotaAvailability: Boolean;
+    function DetermineRequestProfile(const APromptText: string): TAIRequestProfile;
     procedure HandleInsertCodeMessage(const ACode: string);
     procedure HandleReadyMessage;
     procedure HandleNewChatMessage;
@@ -980,6 +985,38 @@ begin
   Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
 end;
 
+function TRadIAChatPresenter.CheckQuotaAvailability: Boolean;
+begin
+  Result := True;
+  if FConfig.QuotaEnabled and (not FConfig.IsWebLoginProvider(FConfig.GetActiveProvider)) then
+  begin
+    FConfig.Load;
+    if FConfig.QuotaUsed >= FConfig.QuotaLimit then
+    begin
+      FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local ' +
+          'limit of %s tokens reached).',
+        [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
+      Result := False;
+    end;
+  end;
+end;
+
+function TRadIAChatPresenter.DetermineRequestProfile(const APromptText: string): TAIRequestProfile;
+begin
+  Result := rpGeneralChat;
+  if APromptText.StartsWith('/refactor', True) or APromptText.StartsWith('/optimize', True) then
+    Result := rpRefactorCode
+  else if APromptText.StartsWith('/bugs', True) or APromptText.StartsWith('Perform a comprehensive static ' +
+      'analysis', True) then
+    Result := rpFindBugs
+  else if APromptText.StartsWith('/test', True) then
+    Result := rpGenerateTests
+  else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc',
+      True) or APromptText.StartsWith('/fix',
+      True) or APromptText.StartsWith('Analyze the following Delphi stack trace', True) then
+    Result := rpExplainCode;
+end;
+
 procedure TRadIAChatPresenter.SendPromptToAI(const APromptText: string);
 var
   LUserMsg: IRadIAChatMessage;
@@ -991,11 +1028,8 @@ var
   LActiveModel: string;
   LSessionId: string;
 begin
-  if FConfig.QuotaEnabled and (not FConfig.IsWebLoginProvider(FConfig.GetActiveProvider)) then
-  begin
-    FConfig.Load;
-    if FConfig.QuotaUsed >= FConfig.QuotaLimit then
-    begin
+  if not CheckQuotaAvailability then
+    Exit;
       FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local ' +
           'limit of %s tokens reached).',
         [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
@@ -1017,18 +1051,7 @@ begin
   TLogger.Log(Format('SendPromptToAI started. Provider=%s, Model=%s, PromptLength=%d, Session=%s',
     [LActiveProvider, LActiveModel, Length(APromptText), LSessionId]), 'UI');
 
-  LProfile := rpGeneralChat;
-  if APromptText.StartsWith('/refactor', True) or APromptText.StartsWith('/optimize', True) then
-    LProfile := rpRefactorCode
-  else if APromptText.StartsWith('/bugs', True) or APromptText.StartsWith('Perform a comprehensive static ' +
-      'analysis', True) then
-    LProfile := rpFindBugs
-  else if APromptText.StartsWith('/test', True) then
-    LProfile := rpGenerateTests
-  else if APromptText.StartsWith('/explain', True) or APromptText.StartsWith('/doc',
-      True) or APromptText.StartsWith('/fix',
-      True) or APromptText.StartsWith('Analyze the following Delphi stack trace', True) then
-    LProfile := rpExplainCode;
+  LProfile := DetermineRequestProfile(APromptText);
 
   LUserMsg := TRadIAChatMessage.CreateMessage(mrUser, APromptText, LActiveProvider, LActiveModel);
   FHistory := FHistory + [LUserMsg];
@@ -1158,17 +1181,8 @@ var
   LActiveProvider: string;
   LActiveModel: string;
 begin
-  if FConfig.QuotaEnabled and (not FConfig.IsWebLoginProvider(FConfig.GetActiveProvider)) then
-  begin
-    FConfig.Load;
-    if FConfig.QuotaUsed >= FConfig.QuotaLimit then
-    begin
-      FView.ShowMessageDialog(Format('Could not send the request: monthly token quota exceeded (local ' +
-          'limit of %s tokens reached).',
-        [FormatFloat('#,##0', FConfig.QuotaLimit, TFormatSettings.Invariant)]));
-      Exit;
-    end;
-  end;
+  if not CheckQuotaAvailability then
+    Exit;
 
   LDoneHandled := False;
   FRequestInProgress := True;
@@ -1487,41 +1501,66 @@ begin
     end);
 end;
 
-procedure TRadIAChatPresenter.DispatchWebMessage(const AAction: string; const AJson: TJSONObject);
+procedure TRadIAChatPresenter.DispatchSystemMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
 var
   LFiles: TJSONArray;
 begin
+  AHandled := True;
   if SameText(AAction, 'insert_code') or SameText(AAction, 'apply_code') then
     HandleInsertCodeMessage(AJson.GetValue<string>('code', ''))
   else if AAction = 'log' then
     TLogger.Log('JS Console: ' + AJson.GetValue<string>('text', ''), 'WebView')
   else if AAction = 'ready' then
     HandleReadyMessage
-  else if (AAction = 'new_chat') or (AAction = 'new_session') then
-    HandleNewChatMessage
-  else if AAction = 'load_history' then
-    HandleLoadHistoryMessage
-  else if AAction = 'toggle_history' then
-    HandleToggleHistoryMessage
   else if AAction = 'open_settings' then
     HandleOpenSettingsMessage
   else if AAction = 'change_provider' then
     HandleChangeProviderMessage(AJson.GetValue<string>('provider', ''))
   else if AAction = 'change_model' then
     HandleChangeModelMessage(AJson.GetValue<string>('model', ''))
-  else if AAction = 'select_session' then
-    HandleSelectSessionMessage(AJson.GetValue<string>('id', ''))
-  else if AAction = 'rename_session' then
-    HandleRenameSessionMessage(AJson.GetValue<string>('id', ''), AJson.GetValue<string>('name', ''))
-  else if AAction = 'delete_session' then
-    HandleDeleteSessionMessage(AJson.GetValue<string>('id', ''))
   else if AAction = 'web_login_connect' then
     HandleWebLoginConnectMessage
   else if SameText(AAction, 'login_complete') then
     HandleLoginCompleteMessage
   else if AAction = 'error' then
     HandleErrorMessage(AJson.GetValue<string>('text', ''))
-  else if AAction = 'update_stream' then
+  else if AAction = 'create_project' then
+  begin
+    LFiles := AJson.GetValue('files') as TJSONArray;
+    if Assigned(LFiles) then
+      HandleCreateProjectMessage(LFiles.ToJSON)
+    else
+      HandleCreateProjectMessage('');
+  end
+  else
+    AHandled := False;
+end;
+
+procedure TRadIAChatPresenter.DispatchSessionMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
+begin
+  AHandled := True;
+  if (AAction = 'new_chat') or (AAction = 'new_session') then
+    HandleNewChatMessage
+  else if AAction = 'load_history' then
+    HandleLoadHistoryMessage
+  else if AAction = 'toggle_history' then
+    HandleToggleHistoryMessage
+  else if AAction = 'select_session' then
+    HandleSelectSessionMessage(AJson.GetValue<string>('id', ''))
+  else if AAction = 'rename_session' then
+    HandleRenameSessionMessage(AJson.GetValue<string>('id', ''), AJson.GetValue<string>('name', ''))
+  else if AAction = 'delete_session' then
+    HandleDeleteSessionMessage(AJson.GetValue<string>('id', ''))
+  else if AAction = 'clear_chat' then
+    HandleClearChatMessage
+  else
+    AHandled := False;
+end;
+
+procedure TRadIAChatPresenter.DispatchInteractionMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
+begin
+  AHandled := True;
+  if AAction = 'update_stream' then
     HandleUpdateStreamMessage(
       AJson.GetValue<string>('text', ''),
       AJson.GetValue<Boolean>('isDone', False))
@@ -1532,23 +1571,28 @@ begin
       AJson.GetValue<string>('input', ''),
       AJson.GetValue<string>('inputType', ''),
       AJson.GetValue<string>('outputType', ''))
-  else if AAction = 'create_project' then
-  begin
-    LFiles := AJson.GetValue('files') as TJSONArray;
-    if Assigned(LFiles) then
-      HandleCreateProjectMessage(LFiles.ToJSON)
-    else
-      HandleCreateProjectMessage('');
-  end
   else if AAction = 'cancel_request' then
     HandleCancelRequestMessage
-  else if AAction = 'clear_chat' then
-    HandleClearChatMessage
   else if AAction = 'stream_chunk' then
     HandleStreamChunkMessage(
       AJson.GetValue<string>('text', ''),
       AJson.GetValue<Boolean>('isDone', False),
-      AJson.GetValue<string>('error', ''));
+      AJson.GetValue<string>('error', ''))
+  else
+    AHandled := False;
+end;
+
+procedure TRadIAChatPresenter.DispatchWebMessage(const AAction: string; const AJson: TJSONObject);
+var
+  LHandled: Boolean;
+begin
+  DispatchSystemMessage(AAction, AJson, LHandled);
+  if LHandled then Exit;
+  
+  DispatchSessionMessage(AAction, AJson, LHandled);
+  if LHandled then Exit;
+  
+  DispatchInteractionMessage(AAction, AJson, LHandled);
 end;
 
 procedure TRadIAChatPresenter.ProcessWebMessage(const AMessage: string);

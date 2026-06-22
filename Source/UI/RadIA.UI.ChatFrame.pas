@@ -80,6 +80,12 @@ type
     procedure OnTemplateMenuClick(Sender: TObject);
     procedure UpdateVCLColors(const AColors: TRadIAThemeColors);
     procedure OnGlobalPromptRequest(const APrompt: string; const AOpenChat: Boolean);
+    
+    procedure CleanupUIComponents;
+    procedure UnregisterHandlers;
+    procedure CleanupBrowsers;
+    procedure ConfigureWebViewSettings(const ADefaultInterface: ICoreWebView2);
+    procedure InjectBridgeScript(const ADefaultInterface: ICoreWebView2);
   protected
     procedure CreateWnd; override;
     procedure DestroyWnd; override;
@@ -243,18 +249,10 @@ begin
     TRadIAMediator.Instance.RegisterPromptHandler(Self.OnGlobalPromptRequest);
 end;
 
-destructor TRadIAFrameAIChat.Destroy;
+procedure TRadIAFrameAIChat.CleanupUIComponents;
 var
   I: Integer;
 begin
-  if Assigned(FLifecycleGuard) then
-    (FLifecycleGuard as IRadIALifecycleGuard).Invalidate;
-  var LMediator: IRadIAMediator;
-  if TRadIAContainer.TryResolve<IRadIAMediator>(LMediator) then
-    LMediator.UnregisterPromptHandler
-  else
-    TRadIAMediator.Instance.UnregisterPromptHandler;
-
   if Assigned(FPopupMenuTemplates) then
   begin
     for I := 0 to FPopupMenuTemplates.Items.Count - 1 do
@@ -272,9 +270,23 @@ begin
     for I := 0 to cbProvider.Items.Count - 1 do
       cbProvider.Items.Objects[I].Free;
   end;
+end;
 
-  FPresenter.Free;
+procedure TRadIAFrameAIChat.UnregisterHandlers;
+var
+  LMediator: IRadIAMediator;
+begin
+  if Assigned(FLifecycleGuard) then
+    (FLifecycleGuard as IRadIALifecycleGuard).Invalidate;
+    
+  if TRadIAContainer.TryResolve<IRadIAMediator>(LMediator) then
+    LMediator.UnregisterPromptHandler
+  else
+    TRadIAMediator.Instance.UnregisterPromptHandler;
+end;
 
+procedure TRadIAFrameAIChat.CleanupBrowsers;
+begin
   if not GIsShuttingDown then
   begin
     if Assigned(FEdgeBrowserWeb) then
@@ -293,6 +305,14 @@ begin
     if Assigned(FEdgeBrowser) then
       FEdgeBrowser.Parent := nil;
   end;
+end;
+
+destructor TRadIAFrameAIChat.Destroy;
+begin
+  UnregisterHandlers;
+  CleanupUIComponents;
+  FPresenter.Free;
+  CleanupBrowsers;
 
   inherited Destroy;
 end;
@@ -1030,48 +1050,57 @@ begin
   end;
 end;
 
-procedure TRadIAFrameAIChat.EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+procedure TRadIAFrameAIChat.ConfigureWebViewSettings(const ADefaultInterface: ICoreWebView2);
 var
   LSettings: ICoreWebView2Settings;
   LSettings2: ICoreWebView2Settings2_Local;
+begin
+  if Succeeded(ADefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
+  begin
+    LSettings.Set_AreDevToolsEnabled(1);
+    LSettings.Set_AreDefaultContextMenusEnabled(1);
+
+    if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
+    begin
+      LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, ' +
+          'like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    end;
+  end;
+end;
+
+procedure TRadIAFrameAIChat.InjectBridgeScript(const ADefaultInterface: ICoreWebView2);
+var
   LScriptFile: string;
   LScriptContent: string;
 begin
-  if Succeeded(AResult) then
+  LScriptFile := TPath.Combine(FWebFilesDir, 'bridge.js');
+  if TFile.Exists(LScriptFile) then
   begin
-    FBrowserWebInitialized := True;
-    if Assigned(FEdgeBrowserWeb.DefaultInterface) then
-    begin
-      if Succeeded(FEdgeBrowserWeb.DefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
-      begin
-        LSettings.Set_AreDevToolsEnabled(1);
-        LSettings.Set_AreDefaultContextMenusEnabled(1);
-
-        if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
-        begin
-          LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, ' +
-              'like Gecko) Chrome/120.0.0.0 Safari/537.36');
-        end;
-      end;
-
-      InjectWebViewScrollbarStyle(FEdgeBrowserWeb, 'background Web view');
-
-      LScriptFile := TPath.Combine(FWebFilesDir, 'bridge.js');
-      if TFile.Exists(LScriptFile) then
-      begin
-        try
-          LScriptContent := TFile.ReadAllText(LScriptFile, TEncoding.UTF8);
-          FEdgeBrowserWeb.DefaultInterface.AddScriptToExecuteOnDocumentCreated(PWideChar(LScriptContent), nil);
-        except
-          on E: Exception do
-            TLogger.Log('Error reading or injecting bridge script to Web view: ' + E.Message, 'UI');
-        end;
-      end;
+    try
+      LScriptContent := TFile.ReadAllText(LScriptFile, TEncoding.UTF8);
+      ADefaultInterface.AddScriptToExecuteOnDocumentCreated(PWideChar(LScriptContent), nil);
+    except
+      on E: Exception do
+        TLogger.Log('Error reading or injecting bridge script to Web view: ' + E.Message, 'UI');
     end;
-
-    if Assigned(FPresenter) then
-      FPresenter.OnBackgroundBrowserInitialized;
   end;
+end;
+
+procedure TRadIAFrameAIChat.EdgeBrowserWebCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+begin
+  if Failed(AResult) then
+    Exit;
+
+  FBrowserWebInitialized := True;
+  if Assigned(FEdgeBrowserWeb.DefaultInterface) then
+  begin
+    ConfigureWebViewSettings(FEdgeBrowserWeb.DefaultInterface);
+    InjectWebViewScrollbarStyle(FEdgeBrowserWeb, 'background Web view');
+    InjectBridgeScript(FEdgeBrowserWeb.DefaultInterface);
+  end;
+
+  if Assigned(FPresenter) then
+    FPresenter.OnBackgroundBrowserInitialized;
 end;
 
 procedure TRadIAFrameAIChat.EdgeBrowserWebSourceChanged(Sender: TCustomEdgeBrowser; IsNewDocument: Boolean);

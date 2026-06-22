@@ -45,6 +45,8 @@ type
         WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
     procedure EdgeBrowserWebMessageReceived(Sender: TCustomEdgeBrowser; Args: TWebMessageReceivedEventArgs);
     procedure ProcessWebMessage(const AMessage: string);
+    procedure ConfigureWebViewSettings(const ADefaultInterface: ICoreWebView2);
+    procedure InjectBridgeScript(const ADefaultInterface: ICoreWebView2);
   public
     class procedure ShowLogin(const AParent: TComponent; const AUrl: string; const AOnSuccess: TProc);
   end;
@@ -305,55 +307,50 @@ begin
   pnlBrowserFallback.BringToFront;
 end;
 
-procedure TRadIAFormWebLogin.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+procedure TRadIAFormWebLogin.ConfigureWebViewSettings(const ADefaultInterface: ICoreWebView2);
 var
   LSettings: ICoreWebView2Settings;
   LSettings2: ICoreWebView2Settings2_Local;
+begin
+  if Succeeded(ADefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
+  begin
+    LSettings.Set_AreDevToolsEnabled(1);
+    LSettings.Set_AreDefaultContextMenusEnabled(1);
+
+    if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
+    begin
+      LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, ' +
+          'like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    end;
+  end;
+end;
+
+procedure TRadIAFormWebLogin.InjectBridgeScript(const ADefaultInterface: ICoreWebView2);
+var
   LScriptFile: string;
   LScriptContent: string;
 begin
-  if Succeeded(AResult) then
+  LScriptFile := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
+  LScriptFile := TPath.Combine(LScriptFile, 'bridge.js');
+  if not TFile.Exists(LScriptFile) then
   begin
-    if Assigned(FNavigationTimer) then
-      FNavigationTimer.Enabled := False;
-    pnlBrowserFallback.Visible := False;
-
-    if Assigned(FEdgeBrowser.DefaultInterface) then
-    begin
-      if Succeeded(FEdgeBrowser.DefaultInterface.Get_Settings(LSettings)) and Assigned(LSettings) then
-      begin
-        LSettings.Set_AreDevToolsEnabled(1);
-        LSettings.Set_AreDefaultContextMenusEnabled(1);
-
-        if Succeeded(LSettings.QueryInterface(ICoreWebView2Settings2_Local, LSettings2)) and Assigned(LSettings2) then
-        begin
-          LSettings2.Put_UserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, ' +
-              'like Gecko) Chrome/120.0.0.0 Safari/537.36');
-        end;
-      end;
-
-      InjectWebViewScrollbarStyle(FEdgeBrowser, 'login WebView');
-
-      LScriptFile := TPath.Combine(TPath.GetHomePath, 'RadIA\Web');
-      LScriptFile := TPath.Combine(LScriptFile, 'bridge.js');
-      if not TFile.Exists(LScriptFile) then
-      begin
-        LScriptFile := TPath.Combine('C:\Users\Public\Documents\Embarcadero\Studio\37.0\Bpl\Web', 'bridge.js');
-      end;
-
-      if TFile.Exists(LScriptFile) then
-      begin
-        try
-          LScriptContent := TFile.ReadAllText(LScriptFile, TEncoding.UTF8);
-          FEdgeBrowser.DefaultInterface.AddScriptToExecuteOnDocumentCreated(PWideChar(LScriptContent), nil);
-        except
-          on E: Exception do
-            TLogger.Log('Error injecting bridge in login popup: ' + E.Message, 'UI');
-        end;
-      end;
-    end;
-    lblStatus.Caption := 'Provider sign in page loaded. Complete the login in the browser area.';
+    LScriptFile := TPath.Combine('C:\Users\Public\Documents\Embarcadero\Studio\37.0\Bpl\Web', 'bridge.js');
   end;
+
+  if TFile.Exists(LScriptFile) then
+  begin
+    try
+      LScriptContent := TFile.ReadAllText(LScriptFile, TEncoding.UTF8);
+      ADefaultInterface.AddScriptToExecuteOnDocumentCreated(PWideChar(LScriptContent), nil);
+    except
+      on E: Exception do
+        TLogger.Log('Error injecting bridge in login popup: ' + E.Message, 'UI');
+    end;
+  end;
+end;
+
+procedure TRadIAFormWebLogin.EdgeBrowserCreateWebViewCompleted(Sender: TCustomEdgeBrowser; AResult: HRESULT);
+begin
   if Failed(AResult) then
   begin
     if Assigned(FNavigationTimer) then
@@ -361,7 +358,21 @@ begin
 
     lblStatus.Caption := Format('Unable to initialize WebView2. HRESULT: %.8x', [Cardinal(AResult)]);
     TLogger.Log(Format('TRadIAFormWebLogin: WebView2 initialization failed. HRESULT: %.8x', [Cardinal(AResult)]), 'UI');
+    Exit;
   end;
+
+  if Assigned(FNavigationTimer) then
+    FNavigationTimer.Enabled := False;
+  pnlBrowserFallback.Visible := False;
+
+  if Assigned(FEdgeBrowser.DefaultInterface) then
+  begin
+    ConfigureWebViewSettings(FEdgeBrowser.DefaultInterface);
+    InjectWebViewScrollbarStyle(FEdgeBrowser, 'login WebView');
+    InjectBridgeScript(FEdgeBrowser.DefaultInterface);
+  end;
+  
+  lblStatus.Caption := 'Provider sign in page loaded. Complete the login in the browser area.';
 end;
 
 procedure TRadIAFormWebLogin.EdgeBrowserNavigationCompleted(Sender: TCustomEdgeBrowser; IsSuccess: Boolean;

@@ -393,6 +393,20 @@ begin
   TTask.Run(LTaskProc);
 end;
 
+procedure ProcessResidualBuffer(var ABufferText: string; AProcessBufferFunc: TProcessBufferFunc; const AContext: string);
+begin
+  if ABufferText.IsEmpty then Exit;
+
+  if not ABufferText.EndsWith(#10) then
+    ABufferText := ABufferText + #10;
+  try
+    AProcessBufferFunc(ABufferText);
+  except
+    on E: Exception do
+      TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer ' + AContext + ': ' + E.Message, 'Provider');
+  end;
+end;
+
 procedure TRadIAProviderBase.ExecuteRequestStreamAsync(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string; const AProcessBufferFunc: TProcessBufferFunc;
   const ACallback: TStreamChunkCallback);
@@ -421,18 +435,7 @@ begin
             end);
 
           // Process residual data in buffer after network stream completes
-          if not LBufferText.IsEmpty then
-          begin
-            if not LBufferText.EndsWith(#10) then
-              LBufferText := LBufferText + #10;
-            try
-              AProcessBufferFunc(LBufferText);
-            except
-              on E: Exception do
-                TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer: ' +
-                  E.Message, 'Provider');
-            end;
-          end;
+          ProcessResidualBuffer(LBufferText, AProcessBufferFunc, 'normal end');
 
           if not GIsShuttingDown then
           begin
@@ -449,18 +452,7 @@ begin
           on E: Exception do
           begin
             // Process residual buffer data before returning error
-            if not LBufferText.IsEmpty then
-            begin
-              if not LBufferText.EndsWith(#10) then
-                LBufferText := LBufferText + #10;
-              try
-                AProcessBufferFunc(LBufferText);
-              except
-                on EBuffer: Exception do
-                  TLogger.Log('ExecuteRequestStreamAsync: Exception on processing residual buffer in error handler: ' +
-                    EBuffer.Message, 'Provider');
-              end;
-            end;
+            ProcessResidualBuffer(LBufferText, AProcessBufferFunc, 'in error handler');
 
             LErrorMsg := E.Message;
             if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
@@ -653,21 +645,57 @@ begin
   end;
 end;
 
+procedure ProcessOpenAIJsonLine(const AJsonLine: string; const ACallback: TStreamChunkCallback; var ADone: Boolean);
+var
+  LJson, LChoice, LDelta: TJSONObject;
+  LChoices: TJSONArray;
+  LContent: string;
+begin
+  if AJsonLine = '[DONE]' then
+  begin
+    ACallback('', True, '');
+    ADone := True;
+    Exit;
+  end;
+
+  try
+    LJson := TJSONObject.ParseJSONValue(AJsonLine) as TJSONObject;
+    if Assigned(LJson) then
+    begin
+      try
+        LChoices := LJson.GetValue('choices') as TJSONArray;
+        if Assigned(LChoices) and (LChoices.Count > 0) then
+        begin
+          LChoice := LChoices[0] as TJSONObject;
+          LDelta := LChoice.GetValue('delta') as TJSONObject;
+          if Assigned(LDelta) then
+          begin
+            LContent := LDelta.GetValue<string>('content', '');
+            if not LContent.IsEmpty then
+              ACallback(LContent, False, '');
+          end;
+        end;
+      finally
+        LJson.Free;
+      end;
+    end;
+  except
+    on E: Exception do
+      TLogger.Log('ProcessOpenAICompatibleStreamBuffer: Error parsing chunk JSON: ' + E.Message, 'Provider');
+  end;
+end;
+
 procedure TRadIAProviderBase.ProcessOpenAICompatibleStreamBuffer(var ABuffer: string;
   const ACallback: TStreamChunkCallback);
 var
   LJsonLine: string;
-  LJson: TJSONObject;
-  LChoices: TJSONArray;
-  LChoice: TJSONObject;
-  LDelta: TJSONObject;
-  LContent: string;
   LIdx: Integer;
   LStartPos: Integer;
   LPtr: PChar;
   LLen: Integer;
   LLastProcessedPos: Integer;
   LLineLen: Integer;
+  LDone: Boolean;
 begin
   LLen := ABuffer.Length;
   if LLen = 0 then
@@ -676,6 +704,7 @@ begin
   LPtr := PChar(ABuffer);
   LStartPos := 0;
   LLastProcessedPos := 0;
+  LDone := False;
 
   while LStartPos < LLen do
   begin
@@ -692,44 +721,18 @@ begin
     begin
       // Look for "data:" prefix without substring allocation first
       if (LPtr[LStartPos] = 'd') and (LPtr[LStartPos+1] = 'a') and
-         (LPtr[LStartPos+2] = 't') and (LPtr[LStartPos+3] = 'a' +
-          '') and (LPtr[LStartPos+4] = ':') then
+         (LPtr[LStartPos+2] = 't') and (LPtr[LStartPos+3] = 'a') and (LPtr[LStartPos+4] = ':') then
       begin
         var LLine := ABuffer.Substring(LStartPos, LLineLen).Trim;
         LJsonLine := Trim(LLine.Substring(5));
-        if LJsonLine = '[DONE]' then
+        
+        ProcessOpenAIJsonLine(LJsonLine, ACallback, LDone);
+        if LDone then
         begin
-          ACallback('', True, '');
           LStartPos := LIdx + 1;
           LLastProcessedPos := LStartPos;
           ABuffer := ABuffer.Substring(LLastProcessedPos);
           Exit;
-        end;
-
-        try
-          LJson := TJSONObject.ParseJSONValue(LJsonLine) as TJSONObject;
-          if Assigned(LJson) then
-          begin
-            try
-              LChoices := LJson.GetValue('choices') as TJSONArray;
-              if Assigned(LChoices) and (LChoices.Count > 0) then
-              begin
-                LChoice := LChoices[0] as TJSONObject;
-                LDelta := LChoice.GetValue('delta') as TJSONObject;
-                if Assigned(LDelta) then
-                begin
-                  LContent := LDelta.GetValue<string>('content', '');
-                  if not LContent.IsEmpty then
-                    ACallback(LContent, False, '');
-                end;
-              end;
-            finally
-              LJson.Free;
-            end;
-          end;
-        except
-          on E: Exception do
-            TLogger.Log('ProcessOpenAICompatibleStreamBuffer: Error parsing chunk JSON: ' + E.Message, 'Provider');
         end;
       end;
     end;
@@ -752,6 +755,36 @@ end;
 function TRadIAProviderBase.FilterModelId(const AId: string): Boolean;
 begin
   Result := not AId.IsEmpty;
+end;
+
+function ParseOpenAIModelsFromJson(const AJsonStr: string; AFilterFunc: TFunc<string, Boolean>): TList<string>;
+var
+  LJson: TJSONObject;
+  LData: TJSONArray;
+  LVal: TJSONValue;
+  LId: string;
+  I: Integer;
+begin
+  Result := TList<string>.Create;
+  LJson := TJSONObject.ParseJSONValue(AJsonStr) as TJSONObject;
+  if not Assigned(LJson) then Exit;
+  try
+    LData := LJson.GetValue('data') as TJSONArray;
+    if Assigned(LData) then
+    begin
+      for I := 0 to LData.Count - 1 do
+      begin
+        LVal := LData[I];
+        if LVal.TryGetValue<string>('id', LId) then
+        begin
+          if (not Assigned(AFilterFunc)) or AFilterFunc(LId) then
+            Result.Add(LId);
+        end;
+      end;
+    end;
+  finally
+    LJson.Free;
+  end;
 end;
 
 procedure TRadIAProviderBase.FetchAvailableModelsAsync(
@@ -815,14 +848,9 @@ begin
     procedure
     var
       LResponseText: string;
-      LJson: TJSONObject;
-      LData: TJSONArray;
-      LVal: TJSONValue;
-      LId: string;
       LModelsList: TList<string>;
       LModelsArray: TArray<string>;
       LErrorMsg: string;
-      I: Integer;
     begin
       try
         LProviderRef.GetProviderId;
@@ -830,77 +858,50 @@ begin
         try
           try
             LResponseText := DoGetRequest(LUrl, LHeaders, 5000); // Fast 5-second timeout for model discovery
-            LJson := TJSONObject.ParseJSONValue(LResponseText) as TJSONObject;
-            if Assigned(LJson) then
-            begin
-              try
-                LData := LJson.GetValue('data') as TJSONArray;
-                if Assigned(LData) then
-                begin
-                  for I := 0 to LData.Count - 1 do
-                  begin
-                    LVal := LData[I];
-                    if LVal.TryGetValue<string>('id', LId) then
-                    begin
-                      if FilterModelId(LId) then
-                        LModelsList.Add(LId);
-                    end;
-                  end;
-                end;
-              finally
-                LJson.Free;
-              end;
-            end;
+            LModelsList := ParseOpenAIModelsFromJson(LResponseText, FilterModelId);
+            try
+              LModelsList.Sort;
 
-            LModelsList.Sort;
+              if LModelsList.Count = 0 then
+                LModelsArray := GetAvailableModels
+              else
+                LModelsArray := LModelsList.ToArray;
 
-            if LModelsList.Count = 0 then
-              LModelsArray := GetAvailableModels
-            else
-              LModelsArray := LModelsList.ToArray;
-
-            if not GIsShuttingDown then
-            begin
-              TThread.Queue(nil,
-                TThreadProcedure(
-                  procedure
-                  var
-                    LModelsCopy: TArray<string>;
-                  begin
-                    LModelsCopy := LModelsArray;
-                    ACallback(LModelsCopy, '');
-                  end
-                )
-              );
-            end;
-          except
-            on E: Exception do
-            begin
-              LErrorMsg := E.ClassName + ': ' + E.Message;
-              LModelsArray := GetAvailableModels;
               if not GIsShuttingDown then
               begin
                 TThread.Queue(nil,
                   TThreadProcedure(
                     procedure
-                    var
-                      LModelsCopy: TArray<string>;
-                      LErrCopy: string;
                     begin
-                      LModelsCopy := LModelsArray;
-                      LErrCopy := LErrorMsg;
-                      ACallback(LModelsCopy, LErrCopy);
+                      ACallback(LModelsArray, '');
                     end
                   )
                 );
               end;
+            except
+              on E: Exception do
+              begin
+                LErrorMsg := E.ClassName + ': ' + E.Message;
+                LModelsArray := GetAvailableModels;
+                if not GIsShuttingDown then
+                begin
+                  TThread.Queue(nil,
+                    TThreadProcedure(
+                      procedure
+                      begin
+                        ACallback(LModelsArray, LErrorMsg);
+                      end
+                    )
+                  );
+                end;
+              end;
             end;
+          finally
+            LModelsList.Free;
           end;
         finally
-          LModelsList.Free;
+          TInterlocked.Decrement(GActiveThreadCount);
         end;
-      finally
-        TInterlocked.Decrement(GActiveThreadCount);
       end;
     end;
 

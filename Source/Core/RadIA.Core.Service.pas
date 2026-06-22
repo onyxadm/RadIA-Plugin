@@ -20,6 +20,7 @@ type
     function IsLocalQuotaLimitReached: Boolean;
     procedure SetActiveProvider(const AProvider: IRadIAProvider);
     procedure ClearActiveProvider(const AProvider: IRadIAProvider);
+    procedure ExecutePromptStreamTask(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; const AProfile: TAIRequestProfile; const ACallback: TStreamChunkCallback);
   public
     constructor Create(const AConfig: IRadIAConfig);
     destructor Destroy; override;
@@ -342,6 +343,97 @@ begin
     end);
 end;
 
+procedure TRadIAService.ExecutePromptStreamTask(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>; const AProfile: TAIRequestProfile; const ACallback: TStreamChunkCallback);
+var
+  LProvider: IRadIAProvider;
+  LSystemPrompt: string;
+  LHistory: TArray<IRadIAChatMessage>;
+  LTrimmedHistory: TArray<IRadIAChatMessage>;
+  LHash: string;
+  LCachedResponse: string;
+  LAccumulator: string;
+  LTemperature: Double;
+  LMaxTokens: Integer;
+begin
+  try
+    System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
+    try
+      LProvider       := CreateActiveProvider;
+      SetActiveProvider(LProvider);
+
+      LogService('SendPromptStream: ActiveProvider=' + FConfig.GetActiveProvider +
+        ' Model=' + FConfig.GetActiveModel(FConfig.GetActiveProvider) +
+        ' SmartConfig=' + BoolToStr(FConfig.SmartConfigEnabled, True));
+      LSystemPrompt   := GetEffectiveSystemPrompt;
+      LTrimmedHistory := TrimHistory(AHistory);
+      LHash           := ComputePromptHash(APrompt, LTrimmedHistory, LSystemPrompt);
+
+      { R2 FIX: Check cache before streaming }
+      if FCacheManager.Get(LHash, LCachedResponse) then
+      begin
+        ClearActiveProvider(LProvider);
+
+        LogService('SendPromptStream: Cache hit for hash ' + LHash + '. Response ' +
+            'length: ' + IntToStr(Length(LCachedResponse)));
+        TThread.Queue(nil,
+          procedure
+          begin
+            ACallback(LCachedResponse, True, '');
+          end);
+        Exit;
+      end;
+
+      LogService('SendPromptStream: Cache miss for hash ' + LHash + '. Initiating request...');
+      LHistory     := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
+      LAccumulator := '';
+
+      { Resolve parameters based on config and profile }
+      ResolveParameters(LProvider.GetProviderId, AProfile, LTemperature, LMaxTokens);
+      LogService(Format('SendPromptStream: Params resolved: Temp=%0.2f MaxTokens=%d', [LTemperature, LMaxTokens]));
+
+      { R2 FIX: Wrap callback to accumulate chunks and persist to cache on completion }
+      LProvider.SendPromptStreamAsync(APrompt, LHistory,
+        procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+        begin
+          LogService(Format('SendPromptStream Callback: ChunkLen=%d IsDone=%s Error="%s"',
+            [Length(AChunk), BoolToStr(AIsDone, True), AError]));
+          if AError.IsEmpty then
+          begin
+            if not AChunk.IsEmpty then
+              LAccumulator := LAccumulator + AChunk;
+            if AIsDone and not LAccumulator.IsEmpty then
+              FCacheManager.Put(LHash, LAccumulator);
+          end;
+
+          if AIsDone or (not AError.IsEmpty) then
+          begin
+            ClearActiveProvider(LProvider);
+          end;
+
+          TThread.Queue(nil,
+            procedure
+            begin
+              ACallback(AChunk, AIsDone, AError);
+            end);
+        end, LTemperature, LMaxTokens);
+    except
+      on E: Exception do
+      begin
+        ClearActiveProvider(LProvider);
+        LogService('SendPromptStream: Exception in initialization: ' + E.Message);
+        var LErrMsg := 'Failed to initialize AI Provider: ' + E.Message;
+        TThread.Queue(nil,
+          procedure
+          begin
+            ACallback('', True, LErrMsg);
+          end);
+      end;
+    end;
+  finally
+    TInterlocked.Decrement(GActiveThreadCount);
+  end;
+end;
+
 procedure TRadIAService.SendPromptStream(const APrompt: string; const AHistory: TArray<IRadIAChatMessage>;
   const ACallback: TStreamChunkCallback; const AProfile: TAIRequestProfile);
 begin
@@ -354,94 +446,8 @@ begin
   TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(
     procedure
-    var
-      LProvider: IRadIAProvider;
-      LSystemPrompt: string;
-      LHistory: TArray<IRadIAChatMessage>;
-      LTrimmedHistory: TArray<IRadIAChatMessage>;
-      LHash: string;
-      LCachedResponse: string;
-      LAccumulator: string;
-      LTemperature: Double;
-      LMaxTokens: Integer;
     begin
-      try
-        System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
-        try
-          LProvider       := CreateActiveProvider;
-          SetActiveProvider(LProvider);
-
-          LogService('SendPromptStream: ActiveProvider=' + FConfig.GetActiveProvider +
-            ' Model=' + FConfig.GetActiveModel(FConfig.GetActiveProvider) +
-            ' SmartConfig=' + BoolToStr(FConfig.SmartConfigEnabled, True));
-          LSystemPrompt   := GetEffectiveSystemPrompt;
-          LTrimmedHistory := TrimHistory(AHistory);
-          LHash           := ComputePromptHash(APrompt, LTrimmedHistory, LSystemPrompt);
-
-          { R2 FIX: Check cache before streaming }
-          if FCacheManager.Get(LHash, LCachedResponse) then
-          begin
-            ClearActiveProvider(LProvider);
-
-            LogService('SendPromptStream: Cache hit for hash ' + LHash + '. Response ' +
-                'length: ' + IntToStr(Length(LCachedResponse)));
-            TThread.Queue(nil,
-              procedure
-              begin
-                ACallback(LCachedResponse, True, '');
-              end);
-            Exit;
-          end;
-
-          LogService('SendPromptStream: Cache miss for hash ' + LHash + '. Initiating request...');
-          LHistory     := BuildEffectiveHistory(LSystemPrompt, LTrimmedHistory);
-          LAccumulator := '';
-
-          { Resolve parameters based on config and profile }
-          ResolveParameters(LProvider.GetProviderId, AProfile, LTemperature, LMaxTokens);
-          LogService(Format('SendPromptStream: Params resolved: Temp=%0.2f MaxTokens=%d', [LTemperature, LMaxTokens]));
-
-          { R2 FIX: Wrap callback to accumulate chunks and persist to cache on completion }
-          LProvider.SendPromptStreamAsync(APrompt, LHistory,
-            procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
-            begin
-              LogService(Format('SendPromptStream Callback: ChunkLen=%d IsDone=%s Error="%s"',
-                [Length(AChunk), BoolToStr(AIsDone, True), AError]));
-              if AError.IsEmpty then
-              begin
-                if not AChunk.IsEmpty then
-                  LAccumulator := LAccumulator + AChunk;
-                if AIsDone and not LAccumulator.IsEmpty then
-                  FCacheManager.Put(LHash, LAccumulator);
-              end;
-
-              if AIsDone or (not AError.IsEmpty) then
-              begin
-                ClearActiveProvider(LProvider);
-              end;
-
-              TThread.Queue(nil,
-                procedure
-                begin
-                  ACallback(AChunk, AIsDone, AError);
-                end);
-            end, LTemperature, LMaxTokens);
-        except
-          on E: Exception do
-          begin
-            ClearActiveProvider(LProvider);
-            LogService('SendPromptStream: Exception in initialization: ' + E.Message);
-            var LErrMsg := 'Failed to initialize AI Provider: ' + E.Message;
-            TThread.Queue(nil,
-              procedure
-              begin
-                ACallback('', True, LErrMsg);
-              end);
-          end;
-        end;
-      finally
-        TInterlocked.Decrement(GActiveThreadCount);
-      end;
+      ExecutePromptStreamTask(APrompt, AHistory, AProfile, ACallback);
     end);
 end;
 

@@ -91,6 +91,10 @@ type
     FProvidersList: TArray<string>;
 
     function ValidateUrl(const AUrl: string; const AFieldName: string): Boolean;
+    function ValidateUrls(const AOllamaUrl, AOpenAIUrl, ALMStudioUrl, AAzureUrl: string): Boolean;
+    function ValidateProvidersParams: Boolean;
+    function ValidateQuota: Boolean;
+    procedure PersistConfig(const AOllamaUrl, AOpenAIUrl, ALMStudioUrl, AAzureUrl: string);
     procedure PopulateTemplatesList;
   public
     constructor Create(const AView: IRadIAConfigView; const AConfig: IRadIAConfig = nil;
@@ -239,64 +243,73 @@ begin
   PopulateTemplatesList;
 end;
 
-procedure TRadIAConfigPresenter.SaveConfig;
+function TRadIAConfigPresenter.ValidateUrls(const AOllamaUrl, AOpenAIUrl, ALMStudioUrl, AAzureUrl: string): Boolean;
+begin
+  if not ValidateUrl(AOllamaUrl, 'Ollama URL') then Exit(False);
+  if not ValidateUrl(AOpenAIUrl, 'OpenAI Custom Base URL') then Exit(False);
+  if not ValidateUrl(ALMStudioUrl, 'LM Studio URL') then Exit(False);
+  if not ValidateUrl(AAzureUrl, 'Azure OpenAI Endpoint URL') then Exit(False);
+  Result := True;
+end;
+
+function TRadIAConfigPresenter.ValidateProvidersParams: Boolean;
 var
-  LFormatSettings: TFormatSettings;
-  LOllamaUrl: string;
-  LOpenAIUrl: string;
-  LLMStudioUrl: string;
-  LAzureUrl: string;
   LProviderId: string;
+  LFormatSettings: TFormatSettings;
   LTemp: Double;
   LMax: Integer;
   LTime: Integer;
-  LLimit: Int64;
 begin
   LFormatSettings := TFormatSettings.Invariant;
-  LOllamaUrl := Trim(FView.GetCustomUrl('Ollama'));
-  LOpenAIUrl := Trim(FView.GetCustomUrl('OpenAI'));
-  LLMStudioUrl := Trim(FView.GetCustomUrl('LMStudio'));
-  LAzureUrl := Trim(FView.GetCustomUrl('AzureOpenAI'));
-
-  // ValidaÃ§Ãµes de URL
-  if not ValidateUrl(LOllamaUrl, 'Ollama URL') then Exit;
-  if not ValidateUrl(LOpenAIUrl, 'OpenAI Custom Base URL') then Exit;
-  if not ValidateUrl(LLMStudioUrl, 'LM Studio URL') then Exit;
-  if not ValidateUrl(LAzureUrl, 'Azure OpenAI Endpoint URL') then Exit;
-
-  // ValidaÃ§Ãµes de Temperaturas, Max Tokens e Timeouts preventivas
   for LProviderId in FProvidersList do
   begin
     if not TryStrToFloat(FView.GetTemperatureInput(LProviderId), LTemp, LFormatSettings) or
        (LTemp < 0.0) or (LTemp > 2.0) then
     begin
       FView.ShowMessageDialog(Format('Temperature for %s must be a valid number between 0.0 and 2.0', [LProviderId]));
-      Exit;
+      Exit(False);
     end;
 
     if not TryStrToInt(FView.GetMaxTokensInput(LProviderId), LMax) or (LMax <= 0) then
     begin
       FView.ShowMessageDialog(Format('Max Tokens for %s must be a valid positive integer', [LProviderId]));
-      Exit;
+      Exit(False);
     end;
 
     if not TryStrToInt(FView.GetTimeoutInput(LProviderId), LTime) or (LTime <= 0) then
     begin
       FView.ShowMessageDialog(Format('Timeout for %s must be a valid positive integer', [LProviderId]));
-      Exit;
+      Exit(False);
     end;
   end;
+  Result := True;
+end;
 
+function TRadIAConfigPresenter.ValidateQuota: Boolean;
+var
+  LLimit: Int64;
+begin
   if FView.GetQuotaEnabled then
   begin
     if not TryStrToInt64(FView.GetQuotaLimit, LLimit) or (LLimit <= 0) then
     begin
       FView.ShowMessageDialog('Monthly Token Limit must be a valid positive integer');
-      Exit;
+      Exit(False);
     end;
   end;
+  Result := True;
+end;
 
-  // Persistir as configuraÃ§Ãµes
+procedure TRadIAConfigPresenter.PersistConfig(const AOllamaUrl, AOpenAIUrl, ALMStudioUrl, AAzureUrl: string);
+var
+  LFormatSettings: TFormatSettings;
+  LProviderId: string;
+  LTemp: Double;
+  LMax: Integer;
+  LTime: Integer;
+begin
+  LFormatSettings := TFormatSettings.Invariant;
+  
   if FView.GetAuthTypeIndex('Gemini') = 1 then
     FConfig.SetProviderAuthType('Gemini', 'web_login')
   else
@@ -309,7 +322,7 @@ begin
 
   FConfig.SetApiKey('Gemini', Trim(FView.GetApiKey('Gemini')));
   FConfig.SetApiKey('OpenAI', Trim(FView.GetApiKey('OpenAI')));
-  FConfig.OpenAICustomBaseUrl := LOpenAIUrl;
+  FConfig.OpenAICustomBaseUrl := AOpenAIUrl;
   FConfig.SetApiKey('Claude', Trim(FView.GetApiKey('Claude')));
   FConfig.SetApiKey('DeepSeek', Trim(FView.GetApiKey('DeepSeek')));
   FConfig.SetApiKey('Groq', Trim(FView.GetApiKey('Groq')));
@@ -317,7 +330,7 @@ begin
   FConfig.SetApiKey('GithubCopilot', Trim(FView.GetApiKey('GithubCopilot')));
 
   FConfig.SetApiKey('AzureOpenAI', Trim(FView.GetApiKey('AzureOpenAI')));
-  FConfig.SetProviderBaseUrl('AzureOpenAI', LAzureUrl);
+  FConfig.SetProviderBaseUrl('AzureOpenAI', AAzureUrl);
   FConfig.SetActiveModel('AzureOpenAI', Trim(FView.GetAzureModel));
   FConfig.AzureApiVersion := Trim(FView.GetAzureApiVersion);
 
@@ -329,8 +342,8 @@ begin
   FConfig.AwsSessionToken := Trim(FView.GetAwsSessionToken);
 
   FConfig.SystemPrompt := FView.GetSystemPrompt;
-  FConfig.OllamaBaseUrl := LOllamaUrl;
-  FConfig.SetProviderBaseUrl('LMStudio', LLMStudioUrl);
+  FConfig.OllamaBaseUrl := AOllamaUrl;
+  FConfig.SetProviderBaseUrl('LMStudio', ALMStudioUrl);
   FConfig.SmartConfigEnabled := FView.GetSmartConfigEnabled;
   FConfig.InjectDelphiVersion := FView.GetInjectDelphiVersion;
   FConfig.ConciseResponses := FView.GetConciseResponses;
@@ -358,6 +371,25 @@ begin
   FTemplateManager.Save;
 
   FView.CloseView(1); // mrOk
+end;
+
+procedure TRadIAConfigPresenter.SaveConfig;
+var
+  LOllamaUrl: string;
+  LOpenAIUrl: string;
+  LLMStudioUrl: string;
+  LAzureUrl: string;
+begin
+  LOllamaUrl := Trim(FView.GetCustomUrl('Ollama'));
+  LOpenAIUrl := Trim(FView.GetCustomUrl('OpenAI'));
+  LLMStudioUrl := Trim(FView.GetCustomUrl('LMStudio'));
+  LAzureUrl := Trim(FView.GetCustomUrl('AzureOpenAI'));
+
+  if not ValidateUrls(LOllamaUrl, LOpenAIUrl, LLMStudioUrl, LAzureUrl) then Exit;
+  if not ValidateProvidersParams then Exit;
+  if not ValidateQuota then Exit;
+
+  PersistConfig(LOllamaUrl, LOpenAIUrl, LLMStudioUrl, LAzureUrl);
 end;
 
 procedure TRadIAConfigPresenter.CancelConfig;
