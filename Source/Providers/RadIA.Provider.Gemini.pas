@@ -369,15 +369,26 @@ begin
   TTask.Run(LTaskProc);
 end;
 
+procedure SkipJsonString(LPtr: PChar; var I: Integer; LLen: Integer);
+begin
+  Inc(I);
+  while I < LLen do
+  begin
+    if LPtr[I] = '\' then
+      Inc(I)
+    else if LPtr[I] = '"' then
+      Exit;
+    Inc(I);
+  end;
+end;
+
 function FindJsonObjectEnd(const ABuffer: string; out AEndIdx: Integer): Boolean;
 var
   LBrackets, I, LLen: Integer;
-  LStr: Boolean;
   LPtr: PChar;
 begin
   Result := False;
   LBrackets := 0;
-  LStr := False;
   LLen := ABuffer.Length;
   LPtr := PChar(ABuffer);
   AEndIdx := -1;
@@ -385,24 +396,16 @@ begin
 
   while I < LLen do
   begin
-    if LStr then
-    begin
-      if LPtr[I] = '\' then Inc(I)
-      else if LPtr[I] = '"' then LStr := False;
-    end
-    else
-    begin
-      case LPtr[I] of
-        '"': LStr := True;
-        '{': Inc(LBrackets);
-        '}':
+    case LPtr[I] of
+      '"': SkipJsonString(LPtr, I, LLen);
+      '{': Inc(LBrackets);
+      '}':
+      begin
+        Dec(LBrackets);
+        if LBrackets = 0 then
         begin
-          Dec(LBrackets);
-          if LBrackets = 0 then
-          begin
-            AEndIdx := I;
-            Exit(True);
-          end;
+          AEndIdx := I;
+          Exit(True);
         end;
       end;
     end;
