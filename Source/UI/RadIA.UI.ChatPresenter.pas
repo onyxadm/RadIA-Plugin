@@ -152,6 +152,7 @@ type
     procedure HandleStreamCancel(const AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamError(const AError, AActiveProvider, AActiveModel: string; var AFullResponse: string);
     procedure HandleStreamDone(const APromptText, AActiveProvider, AActiveModel, AFullResponse: string);
+    procedure ProcessStreamChunk(const AChunk: string; const AIsDone: Boolean; const AError: string; var ADoneHandled: Boolean; const ASessionId, AActiveProvider, AActiveModel: string; var AFullResponse: string);
 
     procedure CancelRequest;
     procedure ClearChat;
@@ -894,45 +895,6 @@ begin
   Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
 end;
 
-procedure TRadIAChatPresenter.HandleStreamError(
-  const AError, AActiveProvider, AActiveModel: string;
-   var AFullResponse: string);
-
-var
-  LAssistantMsg: IRadIAChatMessage;
-  LIsWebError: Boolean;
-begin
-  Self.FRequestInProgress := False;
-  Self.FView.SetRequestState(False);
-  TLogger.Log(Format('SendPromptToAI error callback: %s', [AError]), 'UI');
-
-  if not AFullResponse.IsEmpty then
-  begin
-    AFullResponse := AFullResponse + #13#10#13#10 + '**Error:** ' + AError;
-    Self.PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + AError,
-        True, AActiveProvider, AActiveModel);
-
-    LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, AFullResponse, AActiveProvider,
-        AActiveModel);
-    Self.FHistory := Self.FHistory + [LAssistantMsg];
-    Self.SaveChatHistory;
-  end
-  else
-  begin
-    Self.PostToWebView('add_message', 'assistant', '**Error:** ' + AError, False, AActiveProvider,
-        AActiveModel);
-    Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
-  end;
-
-  LIsWebError := SameText(AError, 'WebView Login session is not ready or active.') or
-                     SameText(AError, 'Input textarea not found in page.') or
-                     SameText(AError, 'Send button not found in page.');
-  if LIsWebError then
-  begin
-    Self.HandleOnbtnWebLoginConnectClick;
-  end;
-end;
-
 procedure TRadIAChatPresenter.HandleStreamDone(const APromptText, AActiveProvider, AActiveModel, AFullResponse: string);
 var
   LAssistantMsg: IRadIAChatMessage;
@@ -985,6 +947,86 @@ begin
   Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
 end;
 
+procedure TRadIAChatPresenter.HandleStreamError(
+  const AError, AActiveProvider, AActiveModel: string;
+   var AFullResponse: string);
+var
+  LAssistantMsg: IRadIAChatMessage;
+  LIsWebError: Boolean;
+begin
+  Self.FRequestInProgress := False;
+  Self.FView.SetRequestState(False);
+  TLogger.Log(Format('SendPromptToAI error callback: %s', [AError]), 'UI');
+
+  if not AFullResponse.IsEmpty then
+  begin
+    AFullResponse := AFullResponse + #13#10#13#10 + '**Error:** ' + AError;
+    Self.PostToWebView('append_message', 'assistant', #13#10#13#10 + '**Error:** ' + AError,
+        True, AActiveProvider, AActiveModel);
+
+    LAssistantMsg := TRadIAChatMessage.CreateMessage(mrAssistant, AFullResponse, AActiveProvider,
+        AActiveModel);
+    Self.FHistory := Self.FHistory + [LAssistantMsg];
+    Self.SaveChatHistory;
+  end
+  else
+  begin
+    Self.PostToWebView('add_message', 'assistant', '**Error:** ' + AError, False, AActiveProvider,
+        AActiveModel);
+    Self.PostToWebView('append_message', 'assistant', '', True, AActiveProvider, AActiveModel);
+  end;
+
+  LIsWebError := SameText(AError, 'WebView Login session is not ready or active.') or
+                     SameText(AError, 'Input textarea not found in page.') or
+                     SameText(AError, 'Send button not found in page.');
+  if LIsWebError then
+  begin
+    Self.HandleOnbtnWebLoginConnectClick;
+  end;
+end;
+
+procedure TRadIAChatPresenter.ProcessStreamChunk(const AChunk: string; const AIsDone: Boolean; const AError: string; var ADoneHandled: Boolean; const ASessionId, AActiveProvider, AActiveModel: string; var AFullResponse: string);
+begin
+  if ADoneHandled then
+    Exit;
+
+  if not (FLifecycleGuard as IRadIALifecycleGuard).IsAlive then
+    Exit;
+
+  if not SameText(Self.FSessionManager.ActiveSessionId, ASessionId) then
+  begin
+    Self.HandleStreamSessionChange(AIsDone, ASessionId, AFullResponse, AActiveProvider, AActiveModel);
+    Exit;
+  end;
+
+  if Self.FCancelledByUser then
+  begin
+    ADoneHandled := True;
+    Self.HandleStreamCancel(AActiveProvider, AActiveModel, AFullResponse);
+    Exit;
+  end;
+
+  if not AError.IsEmpty then
+  begin
+    ADoneHandled := True;
+    Self.HandleStreamError(AError, AActiveProvider, AActiveModel, AFullResponse);
+    Exit;
+  end;
+
+  if not AChunk.IsEmpty then
+  begin
+    AFullResponse := AFullResponse + AChunk;
+    if not Self.FConfig.IsWebLoginProvider(AActiveProvider) then
+      Self.PostToWebView('append_message', 'assistant', AChunk, False, AActiveProvider, AActiveModel);
+  end;
+
+  if AIsDone then
+  begin
+    ADoneHandled := True;
+    Self.HandleStreamDone(FPendingPrompt, AActiveProvider, AActiveModel, AFullResponse);
+  end;
+end;
+
 function TRadIAChatPresenter.CheckQuotaAvailability: Boolean;
 begin
   Result := True;
@@ -1021,7 +1063,6 @@ procedure TRadIAChatPresenter.SendPromptToAI(const APromptText: string);
 var
   LUserMsg: IRadIAChatMessage;
   LFullResponse: string;
-  LGuard: IRadIALifecycleGuard;
   LProfile: TAIRequestProfile;
   LDoneHandled: Boolean;
   LActiveProvider: string;
@@ -1032,6 +1073,7 @@ begin
   if not CheckQuotaAvailability then
     Exit;
 
+  FPendingPrompt := APromptText;
   LDoneHandled := False;
   FRequestInProgress := True;
   FCancelledByUser := False;
@@ -1053,7 +1095,6 @@ begin
   SaveChatHistory;
 
   LFullResponse := '';
-  LGuard := FLifecycleGuard as IRadIALifecycleGuard;
 
   PostToWebView('show_typing', '', '');
 
@@ -1063,45 +1104,8 @@ begin
       TThreadProcedure(
       procedure
       begin
-            if LDoneHandled then
-              Exit;
-
-            if not LGuard.IsAlive then
-              Exit;
-
-            if not SameText(Self.FSessionManager.ActiveSessionId, LSessionId) then
-            begin
-              Self.HandleStreamSessionChange(AIsDone, LSessionId, LFullResponse, LActiveProvider, LActiveModel);
-              Exit;
-            end;
-
-            if Self.FCancelledByUser then
-            begin
-              LDoneHandled := True;
-              Self.HandleStreamCancel(LActiveProvider, LActiveModel, LFullResponse);
-              Exit;
-            end;
-
-            if not AError.IsEmpty then
-            begin
-              LDoneHandled := True;
-              Self.HandleStreamError(AError, LActiveProvider, LActiveModel, LFullResponse);
-              Exit;
-            end;
-
-            if not AChunk.IsEmpty then
-            begin
-              LFullResponse := LFullResponse + AChunk;
-              if not Self.FConfig.IsWebLoginProvider(LActiveProvider) then
-                Self.PostToWebView('append_message', 'assistant', AChunk, False, LActiveProvider, LActiveModel);
-            end;
-
-            if AIsDone then
-            begin
-              LDoneHandled := True;
-              Self.HandleStreamDone(APromptText, LActiveProvider, LActiveModel, LFullResponse);
-            end;
-          end));
+        ProcessStreamChunk(AChunk, AIsDone, AError, LDoneHandled, LSessionId, LActiveProvider, LActiveModel, LFullResponse);
+      end));
   end;
 
   try
@@ -1499,7 +1503,8 @@ begin
     end);
 end;
 
-procedure TRadIAChatPresenter.DispatchSystemMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
+procedure TRadIAChatPresenter.DispatchSystemMessage(const AAction: string;
+  const AJson: TJSONObject; var AHandled: Boolean);
 var
   LFiles: TJSONArray;
 begin
@@ -1534,7 +1539,8 @@ begin
     AHandled := False;
 end;
 
-procedure TRadIAChatPresenter.DispatchSessionMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
+procedure TRadIAChatPresenter.DispatchSessionMessage(const AAction: string;
+  const AJson: TJSONObject; var AHandled: Boolean);
 begin
   AHandled := True;
   if (AAction = 'new_chat') or (AAction = 'new_session') then
@@ -1555,7 +1561,8 @@ begin
     AHandled := False;
 end;
 
-procedure TRadIAChatPresenter.DispatchInteractionMessage(const AAction: string; const AJson: TJSONObject; var AHandled: Boolean);
+procedure TRadIAChatPresenter.DispatchInteractionMessage(const AAction: string;
+  const AJson: TJSONObject; var AHandled: Boolean);
 begin
   AHandled := True;
   if AAction = 'update_stream' then

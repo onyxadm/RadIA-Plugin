@@ -356,7 +356,8 @@ end;
 
 procedure TPromptTemplateManager.CleanRedundantUserTemplates;
 
-  function ProcessLegacyReviewTemplate(const AUser: TPromptTemplate; const AIndex: Integer; var AChanged: Boolean): Boolean;
+  function ProcessLegacyReviewTemplate(const AUser: TPromptTemplate;
+    const AIndex: Integer; var AChanged: Boolean): Boolean;
   var
     LTemp: TPromptTemplate;
   begin
@@ -380,7 +381,8 @@ procedure TPromptTemplateManager.CleanRedundantUserTemplates;
     end;
   end;
 
-  function ProcessLegacyProjectTemplate(const AUser: TPromptTemplate; const AIndex: Integer; var AChanged: Boolean): Boolean;
+  function ProcessLegacyProjectTemplate(const AUser: TPromptTemplate;
+    const AIndex: Integer; var AChanged: Boolean): Boolean;
   begin
     Result := False;
     if SameText(AUser.Name, 'Create Project Delphi') or SameText(AUser.Name, 'Create Project Delphi Architecture') then
@@ -394,7 +396,8 @@ procedure TPromptTemplateManager.CleanRedundantUserTemplates;
     end;
   end;
 
-  function ProcessRedundantDefaultTemplate(const AUser: TPromptTemplate; const AIndex: Integer; var AChanged: Boolean): Boolean;
+  function ProcessRedundantDefaultTemplate(const AUser: TPromptTemplate;
+    const AIndex: Integer; var AChanged: Boolean): Boolean;
   var
     LDefault: TPromptTemplate;
   begin

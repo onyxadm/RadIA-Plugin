@@ -38,6 +38,7 @@ type
       const ARequestBody: string; const AProcessBufferFunc: TProcessBufferFunc;
       const ACallback: TStreamChunkCallback);
     procedure ProcessBufferLines(var ABuffer: string; const ALineCallback: TProc<string>);
+    procedure HandleStreamException(E: Exception; var ABufferText: string; const AProcessBufferFunc: TProcessBufferFunc; const ACallback: TStreamChunkCallback);
 
     { OpenAI-compatible helpers (shared by OpenAI, DeepSeek, Groq providers) }
     function BuildOpenAICompatibleRequestBody(const APrompt: string;
@@ -421,36 +422,6 @@ begin
     procedure
     var
       LBufferText: string;
-      LErrorMsg: string;
-      LJsonError: string;
-      procedure HandleException(E: Exception);
-      begin
-        ProcessResidualBuffer(LBufferText, AProcessBufferFunc, 'in error handler');
-
-        LErrorMsg := E.Message;
-        if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
-        begin
-          LJsonError := ExtractErrorMessageFromJson(LBufferText);
-          if not LJsonError.IsEmpty then
-            LErrorMsg := LErrorMsg + ' Response: ' + LJsonError
-          else if not LBufferText.Trim.IsEmpty then
-            LErrorMsg := LErrorMsg + ' Response: ' + LBufferText.Trim;
-        end;
-        LErrorMsg := E.ClassName + ': ' + LErrorMsg;
-
-        if not GIsShuttingDown then
-        begin
-          TThread.Queue(nil,
-            TThreadProcedure(
-              procedure
-              begin
-                ACallback('', True, LErrorMsg);
-              end
-            )
-          );
-        end;
-      end;
-
     begin
       try
         System.Math.SetExceptionMask(System.Math.exAllArithmeticExceptions);
@@ -481,7 +452,7 @@ begin
         except
           on E: Exception do
           begin
-            HandleException(E);
+            (LProviderRef as TRadIAProviderBase).HandleStreamException(E, LBufferText, AProcessBufferFunc, ACallback);
           end;
         end;
       finally
@@ -491,6 +462,37 @@ begin
 
   TInterlocked.Increment(GActiveThreadCount);
   TTask.Run(LTaskProc);
+end;
+
+procedure TRadIAProviderBase.HandleStreamException(E: Exception; var ABufferText: string; const AProcessBufferFunc: TProcessBufferFunc; const ACallback: TStreamChunkCallback);
+var
+  LErrorMsg: string;
+  LJsonError: string;
+begin
+  ProcessResidualBuffer(ABufferText, AProcessBufferFunc, 'in error handler');
+
+  LErrorMsg := E.Message;
+  if (E is ENetHTTPClientException) or SameText(E.ClassName, 'ENetHTTPClientException') then
+  begin
+    LJsonError := ExtractErrorMessageFromJson(ABufferText);
+    if not LJsonError.IsEmpty then
+      LErrorMsg := LErrorMsg + ' Response: ' + LJsonError
+    else if not ABufferText.Trim.IsEmpty then
+      LErrorMsg := LErrorMsg + ' Response: ' + ABufferText.Trim;
+  end;
+  LErrorMsg := E.ClassName + ': ' + LErrorMsg;
+
+  if not GIsShuttingDown then
+  begin
+    TThread.Queue(nil,
+      TThreadProcedure(
+        procedure
+        begin
+          ACallback('', True, LErrorMsg);
+        end
+      )
+    );
+  end;
 end;
 
 procedure TRadIAProviderBase.ProcessBufferLines(var ABuffer: string; const ALineCallback: TProc<string>);
