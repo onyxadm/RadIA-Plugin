@@ -1449,7 +1449,7 @@ var
 begin
   FConfig.SetOllamaBaseUrl('http://127.0.0.1:11434');
 
-  // Caso 1: Sucesso com JSON de modelos vÃ¡lido
+  // Case 1: Success with valid models JSON
   FMockHttpClient.SetResponse('{"models": [{"name": "llama3:latest"}, {"name": "phi3:latest"}]}');
   LFinished := False;
   LModels := [];
@@ -1477,7 +1477,7 @@ begin
   Assert.AreEqual('phi3:latest', LModels[1]);
   Assert.IsTrue(LError.IsEmpty);
 
-  // Caso 2: Falha de rede para cobrir o except do DoGetRequest
+  // Case 2: Network failure to cover DoGetRequest except
   FMockHttpClient.SetErrorResponse(-1, 'Connection refused');
   LFinished := False;
   LModels := [];
@@ -1511,7 +1511,7 @@ var
 begin
   FConfig.SetApiKey('GithubCopilot', 'ghu_dummy_token');
 
-  // Caso 1: ERadIAHttpException no EnsureSessionToken
+  // Case 1: ERadIAHttpException on EnsureSessionToken
   TRadIAGithubCopilotProvider.ClearSessionToken;
 
   FMockHttpClient.SetErrorResponse(401, '{"error": "Unauthorized Copilot Key"}');
@@ -1530,7 +1530,7 @@ begin
     System.Classes.CheckSynchronize(10);
   end;
 
-  // Caso 2: Exception genÃ©rica no EnsureSessionToken
+  // Case 2: Generic Exception on EnsureSessionToken
   TRadIAGithubCopilotProvider.ClearSessionToken;
 
   FMockHttpClient.SetErrorResponse(-1, 'Generic network failure');

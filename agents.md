@@ -195,3 +195,6 @@ O Rad IA roda acoplado ao processo da IDE (`bds.exe`). A integração com a WebV
 *   **A Regra:** NUNCA use subagentes de navegador, ferramentas de visualização de páginas web ou leitores de HTML para interagir com o SonarQube local ou para verificar o status de qualidade do código.
 *   **A Abordagem:** Qualquer consulta a relatórios, métricas ou issues do SonarQube deve ser executada exclusivamente por meio de chamadas à **API REST local do SonarQube** (usando PowerShell ou requisições HTTP). Utilize as chaves/tokens de autenticação definidos com segurança no arquivo `.env` ou na pasta de rascunhos (scratch).
 
+### 7.1 Proibição de Bypasses e Supressões (NOSONAR)
+*   **A Regra:** É terminantemente **PROIBIDO** o uso de comentários de supressão como `// NOSONAR` ou `{NOSONAR}` em qualquer arquivo do projeto para ocultar alertas do SonarQube.
+*   **Por que:** Ocultar problemas arquiteturais ou de nomenclatura quebra as diretrizes do *Clean Code* e introduz a regra penalizadora `community-delphi:NoSonar`, multiplicando as advertências. O Agente deve sempre **resolver a causa raiz** (renomeando a variável adequadamente, excluindo o código morto ou fatiando o método), mesmo que isso exija refatoração de componentes visuais `.dfm` ou a criação de *wrappers* nativos.
