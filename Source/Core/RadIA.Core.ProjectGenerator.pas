@@ -12,6 +12,8 @@ type
     function ChooseDestinationFolder(const ADestDir: string): string;
     function ValidateOrCreateFolder(const AFolder: string; out AErrorMsg: string): Boolean;
     function WriteFilesToDisk(const AFolder: string; AJsonArr: TJSONArray; AWrittenFiles: TStringList; out AErrorMsg: string): Boolean;
+    procedure ProcessFileJson(const AFolder: string; AObj: TJSONObject; AWrittenFiles: TStringList);
+    procedure HandleWriteError(const AExceptionMsg: string; AWrittenFiles: TStringList; out AErrorMsg: string);
     function IdentifyProjectFile(AWrittenFiles: TStringList): string;
     procedure OpenProjectInIDE(const AProjectFile: string);
   public
@@ -84,8 +86,6 @@ function TRadIAProjectGenerator.WriteFilesToDisk(const AFolder: string; AJsonArr
 var
   I: Integer;
   LVal: TJSONValue;
-  LObj: TJSONObject;
-  LRelPath, LContent, LAbsPath, LSubFolder: string;
 begin
   Result := False;
   AErrorMsg := '';
@@ -94,45 +94,54 @@ begin
     begin
       LVal := AJsonArr[I];
       if LVal is TJSONObject then
-      begin
-        LObj := LVal as TJSONObject;
-        LRelPath := LObj.GetValue<string>('path', '');
-        LContent := LObj.GetValue<string>('content', '');
-
-        if LRelPath.IsEmpty then
-          Continue;
-
-        LRelPath := LRelPath.Replace('/', '\');
-        if LRelPath.StartsWith('\') then
-          LRelPath := LRelPath.Substring(1);
-
-        LAbsPath := TPath.Combine(AFolder, LRelPath);
-        LSubFolder := TPath.GetDirectoryName(LAbsPath);
-
-        if not LSubFolder.IsEmpty and not TDirectory.Exists(LSubFolder) then
-          TDirectory.CreateDirectory(LSubFolder);
-
-        TFile.WriteAllText(LAbsPath, LContent, TEncoding.UTF8);
-        AWrittenFiles.Add(LAbsPath);
-      end;
+        ProcessFileJson(AFolder, LVal as TJSONObject, AWrittenFiles);
     end;
     Result := True;
   except
     on E: Exception do
-    begin
-      AErrorMsg := 'Error writing files: ' + E.Message;
-      TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: Exception writing files. Rollback initiated.', 'Core');
-      for LRelPath in AWrittenFiles do
-      begin
-        try
-          if TFile.Exists(LRelPath) then
-            TFile.Delete(LRelPath);
-        except
-          on EDel: Exception do
-            TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON rollback: Failed to delete ' +
-              LRelPath + ': ' + EDel.Message, 'Core');
-        end;
-      end;
+      HandleWriteError(E.Message, AWrittenFiles, AErrorMsg);
+  end;
+end;
+
+procedure TRadIAProjectGenerator.ProcessFileJson(const AFolder: string; AObj: TJSONObject; AWrittenFiles: TStringList);
+var
+  LRelPath, LContent, LAbsPath, LSubFolder: string;
+begin
+  LRelPath := AObj.GetValue<string>('path', '');
+  LContent := AObj.GetValue<string>('content', '');
+
+  if LRelPath.IsEmpty then
+    Exit;
+
+  LRelPath := LRelPath.Replace('/', '\');
+  if LRelPath.StartsWith('\') then
+    LRelPath := LRelPath.Substring(1);
+
+  LAbsPath := TPath.Combine(AFolder, LRelPath);
+  LSubFolder := TPath.GetDirectoryName(LAbsPath);
+
+  if not LSubFolder.IsEmpty and not TDirectory.Exists(LSubFolder) then
+    TDirectory.CreateDirectory(LSubFolder);
+
+  TFile.WriteAllText(LAbsPath, LContent, TEncoding.UTF8);
+  AWrittenFiles.Add(LAbsPath);
+end;
+
+procedure TRadIAProjectGenerator.HandleWriteError(const AExceptionMsg: string; AWrittenFiles: TStringList; out AErrorMsg: string);
+var
+  LRelPath: string;
+begin
+  AErrorMsg := 'Error writing files: ' + AExceptionMsg;
+  TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON: Exception writing files. Rollback initiated.', 'Core');
+  for LRelPath in AWrittenFiles do
+  begin
+    try
+      if TFile.Exists(LRelPath) then
+        TFile.Delete(LRelPath);
+    except
+      on EDel: Exception do
+        TLogger.Log('TRadIAProjectGenerator.GenerateFromJSON rollback: Failed to delete ' +
+          LRelPath + ': ' + EDel.Message, 'Core');
     end;
   end;
 end;

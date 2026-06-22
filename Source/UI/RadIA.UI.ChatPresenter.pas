@@ -1769,54 +1769,12 @@ var
   LTemp: TPromptTemplate;
 begin
   Result := False;
-  
+
   if SameText(ACommand, '/template') then
   begin
     if not AArgument.IsEmpty then
       Result := FTemplateManager.FindTemplate(AArgument, ATemplate);
     Exit;
-  end;
-
-  if SameText(ACommand, '/review') then
-  begin
-    for LTemp in FTemplateManager.GetTemplates do
-    begin
-      if SameText(LTemp.SlashCommand, '/review') then
-      begin
-        ATemplate := LTemp;
-        Exit(True);
-      end;
-    end;
-    Exit(FTemplateManager.FindTemplate('Review Leaks and SOLID', ATemplate));
-  end;
-
-  if SameText(ACommand, '/explain') then
-    Exit(FTemplateManager.FindTemplate('Explain Code', ATemplate));
-
-  if SameText(ACommand, '/refactor') then
-  begin
-    for LTemp in FTemplateManager.GetTemplates do
-    begin
-      if SameText(LTemp.SlashCommand, '/refactor') then
-      begin
-        ATemplate := LTemp;
-        Exit(True);
-      end;
-    end;
-    Exit(FTemplateManager.FindTemplate('Review Clean Code Delphi', ATemplate));
-  end;
-
-  if SameText(ACommand, '/optimize') then
-  begin
-    for LTemp in FTemplateManager.GetTemplates do
-    begin
-      if SameText(LTemp.SlashCommand, '/optimize') then
-      begin
-        ATemplate := LTemp;
-        Exit(True);
-      end;
-    end;
-    Exit(FTemplateManager.FindTemplate('Analyze Performance', ATemplate));
   end;
 
   if ACommand.StartsWith('/') then
@@ -1829,6 +1787,15 @@ begin
         Exit(True);
       end;
     end;
+
+    if SameText(ACommand, '/review') then
+      Exit(FTemplateManager.FindTemplate('Review Leaks and SOLID', ATemplate))
+    else if SameText(ACommand, '/explain') then
+      Exit(FTemplateManager.FindTemplate('Explain Code', ATemplate))
+    else if SameText(ACommand, '/refactor') then
+      Exit(FTemplateManager.FindTemplate('Review Clean Code Delphi', ATemplate))
+    else if SameText(ACommand, '/optimize') then
+      Exit(FTemplateManager.FindTemplate('Analyze Performance', ATemplate));
   end;
 end;
 

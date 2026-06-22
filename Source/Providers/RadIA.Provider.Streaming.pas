@@ -22,6 +22,7 @@ type
     function CombineWithPending(const ABytes: TBytes): TBytes;
     function DeterminePendingCount(const ACombined: TBytes): Integer;
     procedure UpdatePending(const ACombined: TBytes; AKeepCount: Integer);
+    function GetNeededContinuations(ABobyte: Byte): Integer;
   public
     function Decode(const ABytes: TBytes): string;
   end;
@@ -78,9 +79,20 @@ begin
   Move(ABytes[0], Result[LPendLen], LByteLen);
 end;
 
+function TRadIAUtf8ChunkDecoder.GetNeededContinuations(ABobyte: Byte): Integer;
+begin
+  if (ABobyte >= $C0) and (ABobyte <= $DF) then
+    Exit(1);
+  if (ABobyte >= $E0) and (ABobyte <= $EF) then
+    Exit(2);
+  if (ABobyte >= $F0) and (ABobyte <= $F7) then
+    Exit(3);
+  Result := 0;
+end;
+
 function TRadIAUtf8ChunkDecoder.DeterminePendingCount(const ACombined: TBytes): Integer;
 var
-  LLenCombined, I, LContinuations, LNeeded: Integer;
+  LLenCombined, I, LContinuations: Integer;
   LStartByte: Byte;
 begin
   Result := 0;
@@ -105,17 +117,8 @@ begin
 
     if LStartByte >= $C0 then
     begin
-      LNeeded := 0;
-      if (LStartByte >= $C0) and (LStartByte <= $DF) then
-        LNeeded := 1
-      else if (LStartByte >= $E0) and (LStartByte <= $EF) then
-        LNeeded := 2
-      else if (LStartByte >= $F0) and (LStartByte <= $F7) then
-        LNeeded := 3;
-
-      if LContinuations < LNeeded then
+      if LContinuations < GetNeededContinuations(LStartByte) then
         Result := LLenCombined - I;
-        
       Break;
     end;
 
