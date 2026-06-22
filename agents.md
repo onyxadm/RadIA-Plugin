@@ -102,6 +102,22 @@ Siga o padrão clássico de estilo Pascal do Delphi:
 *   **A Regra:** Nenhum arquivo editado ou criado por Agente de IA deve conter espaços em branco adicionais ao final de qualquer linha (trailing whitespaces).
 *   **Procedimento de Prevenção:** Antes de finalizar e commitar qualquer alteração, o Agente de IA deve inspecionar e limpar proativamente espaços em branco no final de linhas nos arquivos modificados. Se houver um script utilitário de limpeza (como `scratch/trim-whitespaces.ps1`), ele deve ser executado para garantir conformidade completa antes da build final.
 
+### 3.4 Limite de Comprimento de Linhas (120 caracteres)
+
+*   **A Regra:** Nenhuma linha de código fonte em qualquer arquivo (especialmente arquivos `.pas` e `.js`/`.ts`) deve ultrapassar o limite de **120 caracteres** para evitar alertas e falhas de qualidade no SonarQube.
+*   **Solução:** Se uma linha for exceder 120 caracteres, divida a instrução em múltiplas linhas, utilizando quebras apropriadas, endentação correspondente ou operadores de concatenação quando aplicável.
+*   **Exemplo Incorreto:**
+    ```pascal
+    LResult := TSomeVeryLongClassName.Create(LSomeVeryLongParameterName, LAnotherExtremelyLongParameterNameWithDetailedMeaning);
+    ```
+*   **Exemplo Correto:**
+    ```pascal
+    LResult := TSomeVeryLongClassName.Create(
+      LSomeVeryLongParameterName,
+      LAnotherExtremelyLongParameterNameWithDetailedMeaning
+    );
+    ```
+
 ---
 
 ## 4. Segurança em Threads (Thread Safety na IDE)

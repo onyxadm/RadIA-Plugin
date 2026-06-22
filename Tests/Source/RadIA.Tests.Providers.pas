@@ -4,8 +4,7 @@ interface
 
 uses
   DUnitX.TestFramework, RadIA.Core.Interfaces, RadIA.Core.Types, RadIA.Core.Config,
-  RadIA.Core.TokenUsage, RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude,
-  RadIA.Provider.Generic, RadIA.Core.SettingsStorage;
+  RadIA.Core.TokenUsage, RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude;
 
 type
   [TestFixture]
@@ -55,7 +54,9 @@ type
 implementation
 
 uses
-  System.SysUtils, System.Rtti, System.JSON, RadIA.Core.Service, RadIA.Tests.Service, RadIA.Core.ChatMessage;
+  System.SysUtils, System.Rtti, System.JSON,
+  RadIA.Tests.Service, RadIA.Core.ChatMessage, RadIA.Provider.Generic,
+  RadIA.Core.SettingsStorage;
 
 { TTestRadIAProviders }
 
@@ -95,13 +96,25 @@ begin
   if Assigned(LMethod) then
   begin
     case Length(LMethod.GetParameters) of
-      4: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), 0.7, 2048]);
-      5: LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), False, 0.7, 2048]);
+      4: LResult := LMethod.Invoke(
+           AProvider,
+           [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), 0.7, 2048]
+         );
+      5: LResult := LMethod.Invoke(
+           AProvider,
+           [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), False, 0.7, 2048]
+         );
     else
       if Length(LMethod.GetParameters) = 3 then
-        LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), False])
+        LResult := LMethod.Invoke(
+          AProvider,
+          [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory), False]
+        )
       else
-        LResult := LMethod.Invoke(AProvider, [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory)]);
+        LResult := LMethod.Invoke(
+          AProvider,
+          [APrompt, TValue.From<TArray<IRadIAChatMessage>>(AHistory)]
+        );
     end;
     Result := LResult.AsString;
   end
