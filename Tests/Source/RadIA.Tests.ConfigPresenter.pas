@@ -9,7 +9,7 @@ uses
 
 type
   TMockConfigView = class(TInterfacedObject, IRadIAConfigView)
-  private
+  strict private
     FApiKeyMap: TDictionary<string, string>;
     FCustomUrlMap: TDictionary<string, string>;
     FAuthTypeMap: TDictionary<string, Integer>;
@@ -176,7 +176,7 @@ type
 
   [TestFixture]
   TTestConfigPresenter = class
-  private
+  strict private
     FMockView: TMockConfigView;
     FPresenter: TRadIAConfigPresenter;
     FConfig: IRadIAConfig;

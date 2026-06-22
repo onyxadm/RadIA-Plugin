@@ -8,7 +8,7 @@ uses
 
 type
   TMockChatView = class(TInterfacedObject, IRadIAChatView)
-  private
+  strict private
     FRequestStateInProgress: Boolean;
     FRequestStateSetCalled: Boolean;
     FTokensStatsText: string;
@@ -105,7 +105,7 @@ type
   end;
 
   TMockIAProvider = class(TInterfacedObject, IRadIAProvider)
-  private
+  strict private
     FId: string;
     FName: string;
     FModels: TArray<string>;
@@ -124,7 +124,7 @@ type
 
   [TestFixture]
   TTestChatPresenter = class
-  private
+  strict private
     FMockView: TMockChatView;
     FPresenter: TRadIAChatPresenter;
     FConfig: IRadIAConfig;
