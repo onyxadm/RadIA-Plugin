@@ -41,6 +41,7 @@ Contains the central business rules of Rad IA. It is agnostic to the IDE and phy
 | [RadIA.Core.ProjectContext.pas](file:///d:/Projetos/PluginDelphiIA/Source/Core/RadIA.Core.ProjectContext.pas) | Extracts information from the active unit in the editor or files within the current Delphi project structure. |
 | [RadIA.Core.ProjectGenerator.pas](file:///d:/Projetos/PluginDelphiIA/Source/Core/RadIA.Core.ProjectGenerator.pas) | Logic for generating scaffolds and structural templates for new Delphi projects from prompts. |
 | [RadIA.Core.DTO.Generator.pas](file:///d:/Projetos/PluginDelphiIA/Source/Core/RadIA.Core.DTO.Generator.pas) | Reverse engineering mechanism for converting SQL DDLs and JSON into Delphi class structures. |
+| [RadIA.Core.EditorAdapter.pas](file:///d:/Projetos/PluginDelphiIA/Source/Core/RadIA.Core.EditorAdapter.pas) | `IRadIAEditorAdapter` interface and `TRadIAOTAEditorAdapter` implementation of the Adapter pattern to decouple the code editor from the Delphi IDE. |
 
 ### 2.2 Providers Layer (`Source/Providers/`)
 Encapsulates provider-specific HTTP communication with Artificial Intelligence APIs.
@@ -65,7 +66,7 @@ Uses Delphi's extension APIs (**Open Tools API - OTA**) to dock visual panels an
 | [RadIA.OTA.EditorHook.pas](file:///d:/Projetos/PluginDelphiIA/Source/Integration/RadIA.OTA.EditorHook.pas) | Action interceptor hook. Manages right-click context menus in the Delphi IDE code editor. |
 | [RadIA.OTA.ContextParser.pas](file:///d:/Projetos/PluginDelphiIA/Source/Integration/RadIA.OTA.ContextParser.pas) | Extracts and normalizes source code from the text editor to send as context in AI prompts. |
 | [RadIA.OTA.DockableForm.pas](file:///d:/Projetos/PluginDelphiIA/Source/Integration/RadIA.OTA.DockableForm.pas) | IDE-compatible base form that allows Rad IA views to dock inside lateral tabs. |
-| [RadIA.OTA.Helper.pas](file:///d:/Projetos/PluginDelphiIA/Source/Integration/RadIA.OTA.Helper.pas) | Encapsulates complex Open Tools API utility functions, such as inserting text and cursor positioning. |
+| [RadIA.OTA.Helper.pas](file:///d:/Projetos/PluginDelphiIA/Source/Integration/RadIA.OTA.Helper.pas) | Encapsulates complex text manipulation utility functions, consuming the active editor via `IRadIAEditorAdapter`. |
 | [RadIA.OTA.MessageViewHook.pas](file:///d:/Projetos/PluginDelphiIA/Source/Integration/RadIA.OTA.MessageViewHook.pas) | Intercepts and manages error and warning items in the IDE's "Messages" tab to enable the Smart Build Debugger. |
 
 ### 2.4 User Interface Layer (`Source/UI/`)
