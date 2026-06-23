@@ -14,6 +14,18 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.28 — Open Tools API Adapter and Network Testing (Completed)</b></summary>
+
+  *   **Value Delivered**: Decoupled the dependency on the Delphi Open Tools API by introducing the `IRadIAEditorAdapter` pattern, enabling offline automated testing of the IDE code editor buffer and introducing network tests against IDE hangs.
+  *   **Highlights**:
+      *   Created `IRadIAEditorAdapter` and `TRadIAOTAEditorAdapter` to isolate the plugin from direct Delphi `ToolsAPI` dependencies.
+      *   Added unit tests via `TMockEditorAdapter` simulating virtual text buffers, cursor movements, selection, and safe code replacements.
+      *   Tested resilience under network latency and streaming cancellation using `TestProviderBase_CancellationAndTimeout`.
+      *   Resolved resource sharing and file locking issues when handling template files on Windows.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.28)](backlog.en.md#v0028--open-tools-api-adapter-and-network-testing-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.27 — Resolution of Code Smells and Test Coverage Expansion (Completed)</b></summary>
 
   *   **Value Delivered**: Complete elimination of technical debt (code smells) on SonarQube and regression protection through expanded automated unit testing for AI providers (reaching 83.9% overall coverage and 81.0% on new code), satisfying Quality Gate thresholds.

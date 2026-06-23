@@ -10,11 +10,12 @@ The board below summarizes the current status of mapped short and medium-term fe
 
 | Feature / Task | Status | Difficulty | Priority | Target Version |
 | :--- | :---: | :---: | :---: | :---: |
-| **Smart SQL Optimizer in Editor** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.23 |
-| **Delphi Compiler & OS Warning Scanner** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.24 |
-| **Simplified Web Login and Safe Apply Changes** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.25 |
+| **Open Tools API Adapter and Network Testing** | ✅ Completed | 🟡 Medium | ⭐⭐⭐⭐ High | v0.0.28 |
 | **Resolution of Code Smells and Test Coverage Expansion** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.27 |
 | **Real Provider Icons with Official SVGs** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.26 |
+| **Simplified Web Login and Safe Apply Changes** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.25 |
+| **Delphi Compiler & OS Warning Scanner** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.24 |
+| **Smart SQL Optimizer in Editor** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.23 |
 | **Automatic Code Review on Save** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Applied Refactoring History** | 🔲 Planned | 🟢 Low | ⭐⭐⭐ Medium | v0.1.0 |
 | **Uses Clause Optimizer (Clean Uses)** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.2.0 |
@@ -51,6 +52,32 @@ For complete details on objectives, impacts, and technical specifications for ea
 ## ✅ 3. Completed History
 
 Check the implementation details of each completed feature grouped by target release version:
+
+<details>
+  <summary><b>📦 v0.0.28 — Open Tools API Adapter and Network Testing (Click to expand)</b></summary>
+
+  #### 1. Decoupling Open Tools API (OTA)
+  *   **Description**: Implemented an abstraction layer (Adapter) for the Delphi IDE code editor to isolate it in unit tests.
+  *   **Details**:
+      *   Created the `IRadIAEditorAdapter` interface containing methods for reading text, selection, cursor, and buffer replacement.
+      *   Created the concrete `TRadIAOTAEditorAdapter` class that consumes the native Delphi `ToolsAPI` services.
+      *   Registered the adapter in the IoC container (`TRadIAContainer`) and refactored the `RadIA.OTA.Helper` utility to consume the abstraction instead of direct static calls.
+
+  #### 2. Editor Mocking and Offline Automated Tests
+  *   **Description**: Created mock classes to simulate Delphi IDE behavior and validate text manipulation operations offline.
+  *   **Details**:
+      *   Implemented `TMockEditorAdapter` keeping virtual buffer and cursor in memory.
+      *   Added unit tests covering XML documentation generation, boilerplate method generation, selection extraction, and safe code replacements.
+      *   Refactored the `GetText` method within the adapter to keep cognitive complexity low.
+
+  #### 3. Network Stress and Resilience Testing
+  *   **Description**: Added tests to ensure stability under network latency and asynchronous streaming cancellation.
+  *   **Details**:
+      *   Added physical stream interruption and cancellation simulation in the `TMockHttpClient` mock.
+      *   Created unit test case `TestProviderBase_CancellationAndTimeout` checking that background threads and loops terminate gracefully, avoiding IDE locks.
+      *   Adjusted temporary file handling in template tests to avoid sharing and locking violations on Windows.
+
+</details>
 
 <details>
   <summary><b>📦 v0.0.27 — Resolution of Code Smells and Test Coverage Expansion (Click to expand)</b></summary>

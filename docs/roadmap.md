@@ -14,6 +14,18 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.28 — Adapter da Open Tools API e Testes de Rede (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Desacoplamento da Open Tools API através de um novo design com Adapter (`IRadIAEditorAdapter`), permitindo a automação de testes do buffer do editor offline e a introdução de testes de rede contra travamentos na IDE do Delphi.
+  *   **Destaques**:
+      *   Criação de `IRadIAEditorAdapter` e `TRadIAOTAEditorAdapter` para isolar o acoplamento do plugin com a IDE do Delphi.
+      *   Implementação de testes com `TMockEditorAdapter` que simula buffers de texto e ações de inserção, seleção, e substituição offline.
+      *   Testes de resiliência a lentidão de rede e streaming assíncrono abortado via `TestProviderBase_CancellationAndTimeout`.
+      *   Resolução de problemas de concorrência e file-locking no Windows ao manusear templates.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.28)](backlog.md#v0028--adapter-da-open-tools-api-e-testes-de-rede-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.27 — Resolução de Code Smells e Ampliação de Testes (Concluído)</b></summary>
 
   *   **Valor Entregue**: Eliminação completa de pendências técnicas (code smells) no SonarQube e estabilização de regressões através do aumento da cobertura de testes unitários automatizados nos provedores de inteligência artificial (atingindo 83.9% de cobertura geral e 81.0% em código novo), resultando na aprovação definitiva do Quality Gate.
