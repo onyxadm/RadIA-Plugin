@@ -14,6 +14,19 @@ Este documento descreve o planejamento estratégico e a visão de futuro do assi
 Abaixo estão listadas as conquistas e os valores entregues em cada versão já lançada do plugin:
 
 <details>
+  <summary><b>📦 v0.0.27 — Resolução de Code Smells e Ampliação de Testes (Concluído)</b></summary>
+
+  *   **Valor Entregue**: Eliminação completa de pendências técnicas (code smells) no SonarQube e estabilização de regressões através do aumento da cobertura de testes unitários automatizados nos provedores de inteligência artificial (atingindo 83.9% de cobertura geral e 81.0% em código novo), resultando na aprovação definitiva do Quality Gate.
+  *   **Destaques**:
+      *   Correção de violações de convenções de nomenclatura Pascal e remoção de imports inativos na suíte de testes.
+      *   Criação de testes síncronos e isolados via RTTI para as propriedades de URLs e filtros de modelos dos provedores (OpenAI, DeepSeek, Groq, Mistral, Qwen, OpenRouter, AzureOpenAI e LMStudio).
+      *   Cobertura robusta de descoberta de modelos no Gemini (`FetchAvailableModelsAsync`) sob sucesso, falha e chaves vazias.
+      *   Testes de decodificação de múltiplos formatos de payloads de erro JSON da API base dos provedores.
+      *   Cobertura total (100%) nas classes de dados fundamentais `RadIA.Core.Types` e `RadIA.Core.ChatMessage`.
+  *   👉 *Veja os detalhes de implementação e testes no [Backlog Técnico (v0.0.27)](backlog.md#v0027--resolução-de-code-smells-e-ampliação-de-testes-clique-para-expandir).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.26 — Ícones de Provedores Visuais e Reformulação Arquitetural (Concluído)</b></summary>
 
   *   **Valor Entregue**: Interface do plugin com estética premium integrada com logotipos oficiais das IAs, somada a uma profunda reforma na arquitetura interna com inversão de controle (IoC), injeção de dependências (DIP) e isolamento de I/O nos testes para máxima estabilidade, segurança e testabilidade offline.

@@ -13,6 +13,7 @@ The board below summarizes the current status of mapped short and medium-term fe
 | **Smart SQL Optimizer in Editor** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.23 |
 | **Delphi Compiler & OS Warning Scanner** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.24 |
 | **Simplified Web Login and Safe Apply Changes** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.25 |
+| **Resolution of Code Smells and Test Coverage Expansion** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.27 |
 | **Real Provider Icons with Official SVGs** | ✅ Completed | 🟢 Low | ⭐⭐⭐⭐ High | v0.0.26 |
 | **Automatic Code Review on Save** | 🔲 Planned | 🟡 Medium | ⭐⭐⭐⭐ High | v0.1.0 |
 | **Applied Refactoring History** | 🔲 Planned | 🟢 Low | ⭐⭐⭐ Medium | v0.1.0 |
@@ -50,6 +51,34 @@ For complete details on objectives, impacts, and technical specifications for ea
 ## ✅ 3. Completed History
 
 Check the implementation details of each completed feature grouped by target release version:
+
+<details>
+  <summary><b>📦 v0.0.27 — Resolution of Code Smells and Test Coverage Expansion (Click to expand)</b></summary>
+
+  #### 1. Fixing SonarQube Code Smells
+  *   **Description**: Complete elimination of static analysis violations inside the test runner unit (`ProviderBooster.pas`).
+  *   **Details**:
+      *   Removed inactive imports (`System.Classes` and `RadIA.Core.TokenUsage`) from the uses clause in the implementation section.
+      *   Replaced all occurrences of `Writeln` with `WriteLn` (capitalized 'L') to conform with Pascal code style conventions and prevent mixed-case warnings.
+
+  #### 2. Provider Integration Testing via RTTI
+  *   **Description**: Implemented synchronous and isolated DUnitX tests to validate protected and virtual base URLs and model discovery endpoints.
+  *   **Details**:
+      *   Created private RTTI-based helpers (`InvokeGetBaseUrl`, `InvokeGetModelsDiscoveryUrl`, and `InvokeFilterModelId`) to access the protected scope of providers sychronously within offline tests.
+      *   Validated `GetBaseUrl`, `GetModelsDiscoveryUrl`, and `FilterModelId` across multiple backends: `OpenAI` (with and without custom base URL), `DeepSeek`, `Groq`, `OpenRouter`, `Qwen`, `Mistral`, `LMStudio`, and `AzureOpenAI`.
+
+  #### 3. Gemini Model Discovery Testing
+  *   **Description**: Unit test coverage for dynamic model discovery in the Google Gemini provider.
+  *   **Details**:
+      *   Tested `FetchAvailableModelsAsync` and `ParseAvailableModelsFromJson` under successful conditions, network failures (throwing custom exceptions), and null/empty API keys.
+      *   Validated model filtering (`IsModelValidForGeneration`) based on supported generation methods (`generateContent`).
+
+  #### 4. JSON Error Parsing and Critical Code Coverage
+  *   **Description**: Expanded unit test coverage for data mapping and network error parsing.
+  *   **Details**:
+      *   Added tests for `ProviderBase` (`ExtractErrorMessageFromJson`) to cover all JSON error formats (nested error objects, raw strings, and generic messages).
+      *   Added conversion tests for invalid roles (`StringToMessageRole` throwing `EConvertError`) and `ChatMessage` properties, ensuring 100% code coverage for both `RadIA.Core.Types.pas` and `RadIA.Core.ChatMessage.pas`.
+</details>
 
 <details>
   <summary><b>📦 v0.0.26 — Visual Provider Icons and Architectural Refactoring (Click to expand)</b></summary>

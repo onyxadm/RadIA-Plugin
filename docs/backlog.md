@@ -13,6 +13,7 @@ O quadro abaixo resume o status atual das features mapeadas a curto e médio pra
 | **Smart SQL Optimizer no Editor** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.23 |
 | **Delphi Compiler & OS Warning Scanner** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.24 |
 | **Web Login Simplificado e Apply Changes Seguro** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.25 |
+| **Resolução de Code Smells e Ampliação de Testes** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.27 |
 | **Ícones de Provedores Reais com SVGs Oficiais** | ✅ Concluído | 🟢 Baixa | ⭐⭐⭐⭐ Alta | v0.0.26 |
 | **Revisão Automática de Código no Save** | 🔲 Planejado | 🟡 Média | ⭐⭐⭐⭐ Alta | v0.1.0 |
 | **Histórico de Refatorações Aplicadas** | 🔲 Planejado | 🟢 Baixa | ⭐⭐⭐ Média | v0.1.0 |
@@ -50,6 +51,34 @@ Para detalhes completos de objetivos, impactos e referências técnicas de cada 
 ## ✅ 3. Histórico de Conclusões (Completed)
 
 Consulte os detalhes de implementação de cada recurso agrupado por versão:
+
+<details>
+  <summary><b>📦 v0.0.27 — Resolução de Code Smells e Ampliação de Testes (Clique para expandir)</b></summary>
+
+  #### 1. Correção de Code Smells do SonarQube
+  *   **Descrição**: Eliminação completa das violações estáticas no runner de testes (`ProviderBooster.pas`).
+  *   **Detalhes**:
+      *   Remoção de imports inativos (`System.Classes` e `RadIA.Core.TokenUsage`) no uses da seção implementation.
+      *   Substituição das instruções `Writeln` por `WriteLn` (com 'L' maiúsculo) para total aderência às diretrizes Pascal e prevenção de mixed name warnings.
+
+  #### 2. Testes de Integração de Provedores via RTTI
+  *   **Descrição**: Implementação de testes síncronos e isolados em DUnitX para validar os métodos protegidos e virtuais de URLs base e descoberta de modelos.
+  *   **Detalhes**:
+      *   Criação de helpers privados baseados em RTTI (`InvokeGetBaseUrl`, `InvokeGetModelsDiscoveryUrl` e `InvokeFilterModelId`) para acessar o escopo protegido dos provedores de forma 100% síncrona nos testes offline.
+      *   Validação de `GetBaseUrl`, `GetModelsDiscoveryUrl` e `FilterModelId` para os provedores `OpenAI` (com e sem URL customizada), `DeepSeek`, `Groq`, `OpenRouter`, `Qwen`, `Mistral`, `LMStudio` e `AzureOpenAI`.
+
+  #### 3. Teste de Descoberta de Modelos do Gemini
+  *   **Descrição**: Cobertura de testes unitários para o fluxo de descoberta dinâmica de modelos no Google Gemini.
+  *   **Detalhes**:
+      *   Exercitação do método `FetchAvailableModelsAsync` e do utilitário `ParseAvailableModelsFromJson` sob cenários de sucesso, erro de rede (lançando exceções customizadas) e chave de API nula/vazia.
+      *   Validação da filtragem do modelo (`IsModelValidForGeneration`) baseada em métodos suportados de geração (`generateContent`).
+
+  #### 4. Testes de Parsing de Erros JSON e Cobertura Crítica
+  *   **Descrição**: Expansão de cobertura de testes unitários em lógica de tratamento de dados e persistência.
+  *   **Detalhes**:
+      *   Implementação de casos de testes no `ProviderBase` (`ExtractErrorMessageFromJson`) para cobrir todas as ramificações de parsing de erros JSON retornados por APIs de provedores (incluindo objetos de erros aninhados, strings diretas e nós de mensagens).
+      *   Adicionados testes de conversão de roles inválidas (`StringToMessageRole` lançando `EConvertError`) e de propriedades de `ChatMessage`, garantindo 100% de cobertura de código para `RadIA.Core.Types.pas` e `RadIA.Core.ChatMessage.pas`.
+</details>
 
 <details>
   <summary><b>📦 v0.0.26 — Ícones de Provedores Visuais e Reformulação Arquitetural (Clique para expandir)</b></summary>

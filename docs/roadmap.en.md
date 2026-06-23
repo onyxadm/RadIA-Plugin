@@ -14,6 +14,19 @@ This document outlines the strategic planning and long-term vision of the **Rad 
 Below are the achievements and values delivered in each release version of the plugin:
 
 <details>
+  <summary><b>📦 v0.0.27 — Resolution of Code Smells and Test Coverage Expansion (Completed)</b></summary>
+
+  *   **Value Delivered**: Complete elimination of technical debt (code smells) on SonarQube and regression protection through expanded automated unit testing for AI providers (reaching 83.9% overall coverage and 81.0% on new code), satisfying Quality Gate thresholds.
+  *   **Highlights**:
+      *   Fixed Pascal casing nomenclature and unused implementation imports inside the unit testing suite.
+      *   Created isolated RTTI-based synchronous tests to validate base URLs and model filtering logic for multiple backends (OpenAI, DeepSeek, Groq, Mistral, Qwen, OpenRouter, AzureOpenAI, and LMStudio).
+      *   Robust test coverage for Gemini model discovery (`FetchAvailableModelsAsync`) under success, network failure, and missing key scenarios.
+      *   Unit testing for nested and direct JSON error parsing formats in the shared provider base class.
+      *   Reached 100% code coverage on core data types `RadIA.Core.Types` and `RadIA.Core.ChatMessage`.
+  *   👉 *See implementation details and tests in the [Technical Backlog (v0.0.27)](backlog.en.md#v0027--resolution-of-code-smells-and-test-coverage-expansion-click-to-expand).*
+</details>
+
+<details>
   <summary><b>📦 v0.0.26 — Visual Provider Icons and Architectural Refactoring (Completed)</b></summary>
 
   *   **Value Delivered**: Premium and high-fidelity visual identification of each AI provider using official SVG vector logos, combined with a deep architectural overhaul introducing Dependency Inversion (DIP), Dependency Injection, and I/O test isolation for maximum stability and offline testability.
