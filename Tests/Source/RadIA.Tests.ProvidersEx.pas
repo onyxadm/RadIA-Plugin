@@ -19,6 +19,7 @@ type
     FLastUrl: string;
     FStatusCodeToThrow: Integer;
     FErrorContentToThrow: string;
+    FCancelled: Boolean;
   public
     procedure SetResponse(const AResponse: string);
     procedure SetStreamChunks(const AChunks: TArray<string>);
@@ -199,6 +200,8 @@ type
     procedure TestGemini_FetchAvailableModels;
     [Test]
     procedure TestProviderBase_ErrorParsing;
+    [Test]
+    procedure TestProviderBase_CancellationAndTimeout;
   end;
 
 implementation
@@ -1055,15 +1058,23 @@ var
   LBytes: TBytes;
 begin
   FLastUrl := AUrl;
+  FCancelled := False;
 
   for LChunk in FStreamChunks do
   begin
+    if FCancelled then
+      Break;
+
     if AUrl.Contains('bedrock') then
       LBytes := TNetEncoding.Base64.DecodeStringToBytes(LChunk)
     else
       LBytes := TEncoding.UTF8.GetBytes(LChunk);
     AOnWrite(LBytes);
+    Sleep(5);
   end;
+
+  if FCancelled then
+    raise ENetHTTPClientException.Create('Request cancelled');
 
   if FStatusCodeToThrow <> 0 then
   begin
@@ -1078,7 +1089,7 @@ end;
 
 procedure TMockHttpClient.Cancel;
 begin
-  // Mock client cancel does nothing
+  FCancelled := True;
 end;
 
 procedure TTestRadIAProvidersEx.TestLMStudio_SendPromptAsync;
@@ -1877,6 +1888,52 @@ begin
   end;
 
   Assert.IsTrue(LError.Contains('API Error MSG 3'));
+end;
+
+procedure TTestRadIAProvidersEx.TestProviderBase_CancellationAndTimeout;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LChunks: TArray<string>;
+  LText: string;
+begin
+  FConfig.SetApiKey('DeepSeek', 'dummy-key');
+  LChunks := [
+    'data: {"choices":[{"delta":{"content":"Chunk 1"}}]}' + #10,
+    'data: {"choices":[{"delta":{"content":"Chunk 2"}}]}' + #10,
+    'data: [DONE]' + #10
+  ];
+  FMockHttpClient.SetStreamChunks(LChunks);
+
+  LFinished := False;
+  LText := '';
+
+  FDeepSeekProvRef.SendPromptStreamAsync('Test', [],
+    procedure(const AChunk: string; const AIsDone: Boolean; const AError: string)
+    begin
+      LText := LText + AChunk;
+
+      // Dispara o cancelamento após receber o primeiro chunk
+      if not LText.IsEmpty then
+      begin
+        FDeepSeekProvRef.CancelCurrentRequest;
+      end;
+
+      if AIsDone or (not AError.IsEmpty) then
+        LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished);
+  Assert.IsTrue(LText.Contains('Chunk 1'));
+  Assert.IsFalse(LText.Contains('Chunk 2'));
 end;
 
 initialization

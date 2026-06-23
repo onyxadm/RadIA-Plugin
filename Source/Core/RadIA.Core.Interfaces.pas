@@ -1,4 +1,4 @@
-﻿unit RadIA.Core.Interfaces;
+unit RadIA.Core.Interfaces;
 
 interface
 
@@ -207,6 +207,27 @@ type
     function GetDelphiVersionName: string;
     function GetPreferredLanguageInstruction: string;
     function GetLastCompilerError(out AErrorMsg: string; out AFileName: string; out ALine: Integer): Boolean;
+  end;
+
+  IRadIAEditorAdapter = interface
+    ['{8A4F1D72-E4BC-4A20-9D7A-7D15A20CE942}']
+    function GetText: string;
+    function GetSelectedText: string;
+    procedure ReplaceSelection(const AText: string);
+    procedure ReplaceText(const AOffset, ALength: Integer; const AText: string);
+    procedure InsertText(const AText: string);
+    procedure InsertTextAt(const ALine, AColumn: Integer; const AText: string);
+    function GetCursorLine: Integer;
+    function GetCursorColumn: Integer;
+    procedure SetCursorPosition(const ALine, AColumn: Integer);
+    function GetLineText(const ALine: Integer): string;
+    function GetAutoIndent: Boolean;
+    procedure SetAutoIndent(const AValue: Boolean);
+    procedure RefreshView;
+    function GetActiveUnitName: string;
+    function GetActiveProjectName: string;
+    function GetActiveProjectFolder: string;
+    function OpenProject(const AProjectPath: string): Boolean;
   end;
 
   IRadIATextNormalizer = interface

@@ -298,23 +298,28 @@ begin
 end;
 
 procedure TTestRadIATemplates.TestExportToFile;
+var
+  LFilePath: string;
 begin
-  FManager.ExportToFile('test_export.json');
-  Assert.IsTrue(TFile.Exists('test_export.json'));
-  if TFile.Exists('test_export.json') then
-    TFile.Delete('test_export.json');
+  LFilePath := TPath.Combine(FTempDir, 'test_export.json');
+  FManager.ExportToFile(LFilePath);
+  Assert.IsTrue(TFile.Exists(LFilePath));
+  if TFile.Exists(LFilePath) then
+    TFile.Delete(LFilePath);
 end;
 
 procedure TTestRadIATemplates.TestImportFromFile;
 var
   LErrorMsg: string;
+  LFilePath: string;
 begin
+  LFilePath := TPath.Combine(FTempDir, 'test_export2.json');
   try
-    FManager.ExportToFile('test_export2.json');
-    FManager.ImportFromFile('test_export2.json', False, LErrorMsg);
+    FManager.ExportToFile(LFilePath);
+    FManager.ImportFromFile(LFilePath, False, LErrorMsg);
   finally
-    if TFile.Exists('test_export2.json') then
-      TFile.Delete('test_export2.json');
+    if TFile.Exists(LFilePath) then
+      TFile.Delete(LFilePath);
   end;
   Assert.IsTrue(True);
 end;

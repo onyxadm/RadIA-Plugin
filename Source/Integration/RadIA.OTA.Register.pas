@@ -45,7 +45,8 @@ uses
   RadIA.OTA.EditorHook, RadIA.UI.DiffForm, RadIA.UI.ConfigForm, RadIA.OTA.Helper, RadIA.Core.Types, RadIA.Core.Mediator,
   RadIA.Core.Config, RadIA.OTA.DockableForm, RadIA.Core.Interfaces, RadIA.Core.Logger, RadIA.OTA.Options,
   RadIA.Core.Container, RadIA.Core.Service, RadIA.OTA.Adapter, RadIA.Core.TextNormalizer, RadIA.Core.DTO.Generator,
-  RadIA.Core.ProjectGenerator, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder, RadIA.Core.Localizer;
+  RadIA.Core.ProjectGenerator, RadIA.Core.HttpClient, RadIA.Core.ErrorDecoder, RadIA.Core.Localizer,
+  RadIA.Core.EditorAdapter;
 
 const
   GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = $00000004;
@@ -595,6 +596,7 @@ initialization
   TRadIAContainer.Register<IRadIALogger>(TConcreteLogger.Create);
   TLogger.SetActiveLogger(TRadIAContainer.Resolve<IRadIALogger>);
   TRadIAContainer.Register<IRadIAIDEAdapter>(TRadIAConcreteIDEAdapter.Create);
+  TRadIAContainer.Register<IRadIAEditorAdapter>(TRadIAOTAEditorAdapter.Create);
   TRadIAContainer.Register<IRadIAService>(TRadIAService.Create(TRadIAContainer.Resolve<IRadIAConfig>));
   TRadIAContainer.Register<IRadIATextNormalizer>(TRadIATextNormalizer.Create);
   TRadIAContainer.Register<IRadIAMediator>(TRadIAMediator.Instance);

@@ -2,25 +2,20 @@ unit RadIA.OTA.Helper;
 
 interface
 
-uses  ToolsAPI;
+uses
+  RadIA.Core.Interfaces;
 
 type
-  { Helper class for interacting with Delphi Open Tools API (OTA) }
+  { Helper class for interacting with Delphi Open Tools API (OTA) via Adapter }
   TRadIAOTAHelper = class
   private
-    class function FormatTextWithIndent(const AText: string; const APosition: IOTAEditPosition): string;
-    class function ReadEditorText(const AEditReader: IOTAEditReader; out AText: string): Boolean;
-    class function ReadBufferText(const AEditBuffer: IOTAEditBuffer; out AText: string): Boolean;
-    class function ReadCurrentSourceEditorText(out AText: string): Boolean;
-    class procedure RefreshEditView(const AView: IOTAEditView);
-    class function GetIndentPrefix(const APosition: IOTAEditPosition): string;
+    class function FormatTextWithIndent(const AText: string; const AEditor: IRadIAEditorAdapter): string;
+    class function GetIndentPrefix(const AEditor: IRadIAEditorAdapter): string;
     class function ApplyPrefixToText(const AText, APrefix: string): string;
-    class function ReplaceWholeBufferText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
-      const ANewText: string): Boolean;
-    class function ReplaceOriginalTextMatch(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+    class function ReplaceWholeBufferText(const AEditor: IRadIAEditorAdapter; const ANewText: string): Boolean;
+    class function ReplaceOriginalTextMatch(const AEditor: IRadIAEditorAdapter;
       const ANewText, AOriginalText: string): Boolean;
-    class function InsertFormattedText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
-      const ANewText: string): Boolean;
+    class function InsertFormattedText(const AEditor: IRadIAEditorAdapter; const ANewText: string): Boolean;
   public
     class function NormalizeLineBreaks(const AText: string): string;
     class function GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean = True): Boolean;
@@ -32,8 +27,6 @@ type
     class function GetActiveUnitName: string;
     class function GetActiveProjectName: string;
     class function GetActiveProjectFolder: string;
-    class function GetCurrentEditBuffer: IOTAEditBuffer;
-    class function GetCurrentEditView: IOTAEditView;
     class function OpenProjectInIDE(const AProjectPath: string): Boolean;
     class function GetDelphiVersionName: string;
     class function GetPreferredLanguageInstruction: string;
@@ -42,7 +35,7 @@ type
 implementation
 
 uses
-  Winapi.Windows, RadIA.Core.Container, RadIA.Core.Interfaces, RadIA.Core.Logger, System.SysUtils, System.Classes;
+  Winapi.Windows, RadIA.Core.Container, System.SysUtils, System.Classes;
 
 { TRadIAOTAHelper }
 
@@ -56,170 +49,53 @@ begin
     Result := AText.Replace(#13#10, #10).Replace(#13, #10).Replace(#10, #13#10);
 end;
 
-class function TRadIAOTAHelper.GetCurrentEditBuffer: IOTAEditBuffer;
-var
-  LEditorServices: IOTAEditorServices;
-begin
-  Result := nil;
-  if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
-  begin
-    Result := LEditorServices.TopBuffer;
-  end;
-end;
-
-class function TRadIAOTAHelper.GetCurrentEditView: IOTAEditView;
-var
-  LEditorServices: IOTAEditorServices;
-begin
-  Result := nil;
-  if Supports(BorlandIDEServices, IOTAEditorServices, LEditorServices) then
-  begin
-    Result := LEditorServices.TopView;
-  end;
-end;
-
-class function TRadIAOTAHelper.ReadEditorText(const AEditReader: IOTAEditReader; out AText: string): Boolean;
-var
-  LBuffer: TBytes;
-  LTextBytes: TBytes;
-  LBytesRead: Integer;
-  LOffset: Integer;
-const
-  CChunkSize = 8192;
-begin
-  Result := False;
-  AText := '';
-
-  if not Assigned(AEditReader) then
-    Exit;
-
-  SetLength(LBuffer, CChunkSize);
-  LOffset := 0;
-  repeat
-    LBytesRead := AEditReader.GetText(LOffset, PAnsiChar(@LBuffer[0]), CChunkSize);
-    if LBytesRead > 0 then
-    begin
-      SetLength(LTextBytes, Length(LTextBytes) + LBytesRead);
-      Move(LBuffer[0], LTextBytes[Length(LTextBytes) - LBytesRead], LBytesRead);
-      Inc(LOffset, LBytesRead);
-    end;
-  until LBytesRead < CChunkSize;
-
-  if Length(LTextBytes) > 0 then
-  begin
-    AText := TEncoding.UTF8.GetString(LTextBytes);
-    if (Length(AText) > 0) and (AText[Length(AText)] = #0) then
-      SetLength(AText, Length(AText) - 1);
-  end;
-
-  Result := True;
-end;
-
-class function TRadIAOTAHelper.ReadBufferText(const AEditBuffer: IOTAEditBuffer; out AText: string): Boolean;
-begin
-  Result := False;
-  AText := '';
-
-  if not Assigned(AEditBuffer) then
-    Exit;
-
-  Result := ReadEditorText(AEditBuffer.CreateReader, AText);
-end;
-
-class function TRadIAOTAHelper.ReadCurrentSourceEditorText(out AText: string): Boolean;
-var
-  LModuleServices: IOTAModuleServices;
-  LModule: IOTAModule;
-  LSourceEditor: IOTASourceEditor;
-  I: Integer;
-begin
-  Result := False;
-  AText := '';
-
-  if not Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
-    Exit;
-
-  LModule := LModuleServices.CurrentModule;
-  if not Assigned(LModule) then
-    Exit;
-
-  for I := 0 to LModule.GetModuleFileCount - 1 do
-  begin
-    if Supports(LModule.GetModuleFileEditor(I), IOTASourceEditor, LSourceEditor) then
-    begin
-      Result := ReadEditorText(LSourceEditor.CreateReader, AText);
-      Exit;
-    end;
-  end;
-end;
-
-class procedure TRadIAOTAHelper.RefreshEditView(const AView: IOTAEditView);
-begin
-  if not Assigned(AView) then
-    Exit;
-
-  try
-    AView.MoveCursorToView;
-    AView.MoveViewToCursor;
-    AView.Paint;
-  except
-    on E: Exception do
-      TLogger.Log('RefreshEditView: Error refreshing edit view: ' + E.Message, 'Integration');
-  end;
-end;
-
 class function TRadIAOTAHelper.GetActiveEditorText(out AText: string; const ASelectedOnly: Boolean): Boolean;
 var
-  LEditBuffer: IOTAEditBuffer;
-  LEditBlock: IOTAEditBlock;
+  LEditor: IRadIAEditorAdapter;
 begin
   Result := False;
   AText := '';
-
-  LEditBuffer := GetCurrentEditBuffer;
-  if ASelectedOnly and (not Assigned(LEditBuffer)) then
-    Exit;
-
-  if ASelectedOnly then
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
   begin
-    LEditBlock := LEditBuffer.EditBlock;
-    if Assigned(LEditBlock) and (LEditBlock.Size > 0) then
+    if ASelectedOnly then
     begin
-      AText := LEditBlock.Text;
-      Result := True;
+      AText := LEditor.GetSelectedText;
+      Result := not AText.IsEmpty;
+    end
+    else
+    begin
+      AText := LEditor.GetText;
+      Result := not AText.IsEmpty;
     end;
-  end
-  else
-  begin
-    { Read the entire buffer }
-    Result := ReadBufferText(LEditBuffer, AText);
-    if (not Result) or AText.Trim.IsEmpty then
-      Result := ReadCurrentSourceEditorText(AText);
   end;
 end;
 
-class function TRadIAOTAHelper.GetIndentPrefix(const APosition: IOTAEditPosition): string;
+class function TRadIAOTAHelper.GetIndentPrefix(const AEditor: IRadIAEditorAdapter): string;
 var
-  LOriginalCol, LOriginalRow: Integer;
+  LLineText: string;
   LCol: Integer;
+  I: Integer;
 begin
   Result := '';
-  LOriginalCol := APosition.GetColumn;
-  LOriginalRow := APosition.GetRow;
+  if not Assigned(AEditor) then
+    Exit;
 
-  APosition.Save;
-  try
-    APosition.Move(LOriginalRow, 1);
-    for LCol := 1 to LOriginalCol - 1 do
+  LLineText := AEditor.GetLineText(AEditor.GetCursorLine);
+  LCol := AEditor.GetCursorColumn;
+
+  for I := 1 to LCol - 1 do
+  begin
+    if I <= Length(LLineText) then
     begin
-      if APosition.Character = #9 then
+      if LLineText[I] = #9 then
         Result := Result + #9
+      else if LLineText[I] = ' ' then
+        Result := Result + ' '
       else
-        Result := Result + ' ';
-      APosition.Move(LOriginalRow, LCol + 1);
-    end;
-  finally
-    APosition.Restore;
+        Break;
+    end
+    else
+      Break;
   end;
 end;
 
@@ -244,7 +120,8 @@ begin
       end;
       Result := LLines.Text;
       if (Length(AText) > 0) and (AText[Length(AText)] <> #10) and
-         (Length(Result) >= 2) and (Result[Length(Result) - 1] = #13) and (Result[Length(Result)] = #10) then
+         (Length(Result) >= 2) and (Result[Length(Result) - 1] = #13) and
+         (Result[Length(Result)] = #10) then
       begin
         SetLength(Result, Length(Result) - 2);
       end;
@@ -254,294 +131,185 @@ begin
   end;
 end;
 
-class function TRadIAOTAHelper.FormatTextWithIndent(const AText: string; const APosition: IOTAEditPosition): string;
+class function TRadIAOTAHelper.FormatTextWithIndent(const AText: string;
+  const AEditor: IRadIAEditorAdapter): string;
 var
   LPrefix: string;
 begin
   Result := AText;
-  if not Assigned(APosition) then
+  if not Assigned(AEditor) then
     Exit;
 
-  LPrefix := GetIndentPrefix(APosition);
+  LPrefix := GetIndentPrefix(AEditor);
   Result := ApplyPrefixToText(AText, LPrefix);
 end;
 
-class function TRadIAOTAHelper.ReplaceWholeBufferText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+class function TRadIAOTAHelper.ReplaceWholeBufferText(const AEditor: IRadIAEditorAdapter;
   const ANewText: string): Boolean;
 var
   LBufferText: string;
   LBufferSize: Integer;
-  LEditWriter: IOTAEditWriter;
-  LUtf8Text: UTF8String;
 begin
   Result := False;
-  LBufferText := '';
-  if ReadBufferText(AEditBuffer, LBufferText) then
-    LBufferSize := System.SysUtils.TEncoding.UTF8.GetByteCount(LBufferText)
-  else
-    LBufferSize := 0;
-
-  LEditWriter := AEditBuffer.CreateUndoableWriter;
-  if not Assigned(LEditWriter) then
+  if not Assigned(AEditor) then
     Exit;
 
-  LEditWriter.CopyTo(0);
-  if LBufferSize > 0 then
-    LEditWriter.DeleteTo(LBufferSize);
+  LBufferText := AEditor.GetText;
+  LBufferSize := System.SysUtils.TEncoding.UTF8.GetByteCount(LBufferText);
 
-  LUtf8Text := UTF8Encode(NormalizeLineBreaks(ANewText));
-  LEditWriter.Insert(PAnsiChar(LUtf8Text));
+  AEditor.ReplaceText(0, LBufferSize, NormalizeLineBreaks(ANewText));
   Result := True;
-  RefreshEditView(AView);
 end;
 
-class function TRadIAOTAHelper.ReplaceOriginalTextMatch(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+class function TRadIAOTAHelper.ReplaceOriginalTextMatch(const AEditor: IRadIAEditorAdapter;
   const ANewText, AOriginalText: string): Boolean;
 var
   LBufferText: string;
-  LMatchPos, LStartOffset, LEndOffset: Integer;
-  LEditWriter: IOTAEditWriter;
-  LUtf8Text: UTF8String;
+  LMatchPos, LStartOffset, LLengthBytes: Integer;
 begin
   Result := False;
-  LBufferText := '';
-  if not ReadBufferText(AEditBuffer, LBufferText) then
+  if not Assigned(AEditor) then
     Exit;
 
+  LBufferText := AEditor.GetText;
   LMatchPos := Pos(AOriginalText, LBufferText);
   if LMatchPos <= 0 then
     Exit;
 
-  LEditWriter := AEditBuffer.CreateUndoableWriter;
-  if not Assigned(LEditWriter) then
-    Exit;
-
   LStartOffset := System.SysUtils.TEncoding.UTF8.GetByteCount(Copy(LBufferText, 1, LMatchPos - 1));
-  LEndOffset := LStartOffset + System.SysUtils.TEncoding.UTF8.GetByteCount(AOriginalText);
+  LLengthBytes := System.SysUtils.TEncoding.UTF8.GetByteCount(AOriginalText);
 
-  LEditWriter.CopyTo(LStartOffset);
-  LEditWriter.DeleteTo(LEndOffset);
-
-  LUtf8Text := UTF8Encode(NormalizeLineBreaks(ANewText));
-  LEditWriter.Insert(PAnsiChar(LUtf8Text));
+  AEditor.ReplaceText(LStartOffset, LLengthBytes, NormalizeLineBreaks(ANewText));
   Result := True;
-  RefreshEditView(AView);
 end;
 
-class function TRadIAOTAHelper.InsertFormattedText(const AEditBuffer: IOTAEditBuffer; const AView: IOTAEditView;
+class function TRadIAOTAHelper.InsertFormattedText(const AEditor: IRadIAEditorAdapter;
   const ANewText: string): Boolean;
 var
-  LPosition: IOTAEditPosition;
   LFormattedText: string;
-  LOptions: IOTABufferOptions;
   LSaveAutoIndent: Boolean;
 begin
   Result := False;
-  LPosition := AView.Position;
-  LFormattedText := FormatTextWithIndent(ANewText, LPosition);
-
-  LOptions := AEditBuffer.BufferOptions;
-  if Assigned(LOptions) then
-  begin
-    LSaveAutoIndent := LOptions.AutoIndent;
-    LOptions.AutoIndent := False;
-    try
-      LPosition.InsertText(NormalizeLineBreaks(LFormattedText));
-      Result := True;
-    finally
-      LOptions.AutoIndent := LSaveAutoIndent;
-    end;
-  end
-  else
-  begin
-    LPosition.InsertText(NormalizeLineBreaks(LFormattedText));
-    Result := True;
-  end;
-
-  if Result then
-    RefreshEditView(AView);
-end;
-
-class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string; const AReplaceWholeBuffer: Boolean;
-  const AOriginalText: string): Boolean;
-var
-  LEditBuffer: IOTAEditBuffer;
-  LEditBlock: IOTAEditBlock;
-  LView: IOTAEditView;
-  LPosition: IOTAEditPosition;
-begin
-  Result := False;
-  LEditBuffer := GetCurrentEditBuffer;
-  LView := GetCurrentEditView;
-  if not Assigned(LEditBuffer) or not Assigned(LView) then
+  if not Assigned(AEditor) then
     Exit;
 
-  if AReplaceWholeBuffer then
-    Exit(ReplaceWholeBufferText(LEditBuffer, LView, ANewText));
-
-  LEditBlock := LEditBuffer.EditBlock;
-  if Assigned(LEditBlock) and (LEditBlock.Size > 0) then
-  begin
-    LPosition := LView.Position;
-    LPosition.Move(LEditBlock.StartingRow, LEditBlock.StartingColumn);
-    LEditBlock.Delete;
+  LFormattedText := FormatTextWithIndent(ANewText, AEditor);
+  LSaveAutoIndent := AEditor.GetAutoIndent;
+  AEditor.SetAutoIndent(False);
+  try
+    AEditor.InsertText(NormalizeLineBreaks(LFormattedText));
+    Result := True;
+  finally
+    AEditor.SetAutoIndent(LSaveAutoIndent);
   end;
+end;
 
-  if ((not Assigned(LEditBlock)) or (LEditBlock.Size <= 0)) and (not AOriginalText.Trim.IsEmpty) then
+class function TRadIAOTAHelper.ReplaceActiveEditorText(const ANewText: string;
+  const AReplaceWholeBuffer: Boolean; const AOriginalText: string): Boolean;
+var
+  LEditor: IRadIAEditorAdapter;
+  LSelectedText: string;
+begin
+  Result := False;
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
   begin
-    if ReplaceOriginalTextMatch(LEditBuffer, LView, ANewText, AOriginalText) then
-      Exit(True);
-  end;
+    if AReplaceWholeBuffer then
+      Exit(ReplaceWholeBufferText(LEditor, ANewText));
 
-  Result := InsertFormattedText(LEditBuffer, LView, ANewText);
+    LSelectedText := LEditor.GetSelectedText;
+    if not LSelectedText.IsEmpty then
+    begin
+      LEditor.ReplaceSelection('');
+    end;
+
+    if LSelectedText.IsEmpty and not AOriginalText.Trim.IsEmpty then
+    begin
+      if ReplaceOriginalTextMatch(LEditor, ANewText, AOriginalText) then
+        Exit(True);
+    end;
+
+    Result := InsertFormattedText(LEditor, ANewText);
+  end;
 end;
 
 class function TRadIAOTAHelper.InsertTextAtCursor(const AText: string): Boolean;
 var
-  LEditBuffer: IOTAEditBuffer;
-  LView: IOTAEditView;
-  LPosition: IOTAEditPosition;
-  LOptions: IOTABufferOptions;
-  LSaveAutoIndent: Boolean;
-  LFormattedText: string;
+  LEditor: IRadIAEditorAdapter;
 begin
   Result := False;
-  LEditBuffer := GetCurrentEditBuffer;
-  LView := GetCurrentEditView;
-  if Assigned(LEditBuffer) and Assigned(LView) and Assigned(LView.Position) then
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
   begin
-    LPosition := LView.Position;
-    LFormattedText := FormatTextWithIndent(AText, LPosition);
-
-    LOptions := LEditBuffer.BufferOptions;
-    if Assigned(LOptions) then
-    begin
-      LSaveAutoIndent := LOptions.AutoIndent;
-      LOptions.AutoIndent := False;
-      try
-        LPosition.InsertText(NormalizeLineBreaks(LFormattedText));
-        Result := True;
-      finally
-        LOptions.AutoIndent := LSaveAutoIndent;
-      end;
-    end
-    else
-    begin
-      LPosition.InsertText(NormalizeLineBreaks(LFormattedText));
-      Result := True;
-    end;
-
-    if Result then
-      RefreshEditView(LView);
+    Result := InsertFormattedText(LEditor, AText);
   end;
 end;
 
-class function TRadIAOTAHelper.InsertTextAtLineColumn(const AText: string; const ALine, AColumn: Integer): Boolean;
+class function TRadIAOTAHelper.InsertTextAtLineColumn(const AText: string;
+  const ALine, AColumn: Integer): Boolean;
 var
-  LEditBuffer: IOTAEditBuffer;
-  LView: IOTAEditView;
-  LPosition: IOTAEditPosition;
-  LOptions: IOTABufferOptions;
+  LEditor: IRadIAEditorAdapter;
   LSaveAutoIndent: Boolean;
 begin
   Result := False;
   if (ALine <= 0) or (AColumn <= 0) then
     Exit;
 
-  LEditBuffer := GetCurrentEditBuffer;
-  LView := GetCurrentEditView;
-  if Assigned(LEditBuffer) and Assigned(LView) and Assigned(LView.Position) then
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
   begin
-    LPosition := LView.Position;
-    LPosition.Move(ALine, AColumn);
-
-    LOptions := LEditBuffer.BufferOptions;
-    if Assigned(LOptions) then
-    begin
-      LSaveAutoIndent := LOptions.AutoIndent;
-      LOptions.AutoIndent := False;
-      try
-        LPosition.InsertText(NormalizeLineBreaks(AText));
-        Result := True;
-      finally
-        LOptions.AutoIndent := LSaveAutoIndent;
-      end;
-    end
-    else
-    begin
-      LPosition.InsertText(NormalizeLineBreaks(AText));
+    LEditor.SetCursorPosition(ALine, AColumn);
+    LSaveAutoIndent := LEditor.GetAutoIndent;
+    LEditor.SetAutoIndent(False);
+    try
+      LEditor.InsertText(NormalizeLineBreaks(AText));
       Result := True;
+    finally
+      LEditor.SetAutoIndent(LSaveAutoIndent);
     end;
-
-    if Result then
-      RefreshEditView(LView);
   end;
 end;
 
 class function TRadIAOTAHelper.GetCurrentCursorLine: Integer;
 var
-  LView: IOTAEditView;
+  LEditor: IRadIAEditorAdapter;
 begin
   Result := 0;
-  LView := GetCurrentEditView;
-  if Assigned(LView) and Assigned(LView.Position) then
-    Result := LView.Position.GetRow;
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
+    Result := LEditor.GetCursorLine;
 end;
 
 class function TRadIAOTAHelper.GetActiveUnitName: string;
 var
-  LEditBuffer: IOTAEditBuffer;
+  LEditor: IRadIAEditorAdapter;
 begin
   Result := '';
-  LEditBuffer := GetCurrentEditBuffer;
-  if Assigned(LEditBuffer) then
-  begin
-    Result := ChangeFileExt(ExtractFileName(LEditBuffer.FileName), '');
-  end;
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
+    Result := LEditor.GetActiveUnitName;
 end;
 
 class function TRadIAOTAHelper.GetActiveProjectName: string;
 var
-  LModuleServices: IOTAModuleServices;
-  LProject: IOTAProject;
+  LEditor: IRadIAEditorAdapter;
 begin
   Result := '';
-  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
-  begin
-    LProject := LModuleServices.GetActiveProject;
-    if Assigned(LProject) then
-    begin
-      Result := ChangeFileExt(ExtractFileName(LProject.FileName), '');
-    end;
-  end;
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
+    Result := LEditor.GetActiveProjectName;
 end;
 
 class function TRadIAOTAHelper.GetActiveProjectFolder: string;
 var
-  LModuleServices: IOTAModuleServices;
-  LProject: IOTAProject;
+  LEditor: IRadIAEditorAdapter;
 begin
   Result := '';
-  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
-  begin
-    LProject := LModuleServices.GetActiveProject;
-    if Assigned(LProject) then
-    begin
-      Result := ExtractFilePath(LProject.FileName);
-    end;
-  end;
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
+    Result := LEditor.GetActiveProjectFolder;
 end;
 
 class function TRadIAOTAHelper.OpenProjectInIDE(const AProjectPath: string): Boolean;
 var
-  LModuleServices: IOTAModuleServices;
+  LEditor: IRadIAEditorAdapter;
 begin
   Result := False;
-  if Supports(BorlandIDEServices, IOTAModuleServices, LModuleServices) then
-  begin
-    LModuleServices.OpenModule(AProjectPath);
-    Result := True;
-  end;
+  if TRadIAContainer.TryResolve<IRadIAEditorAdapter>(LEditor) then
+    Result := LEditor.OpenProject(AProjectPath);
 end;
 
 class function TRadIAOTAHelper.GetDelphiVersionName: string;
@@ -578,13 +346,13 @@ begin
   LPrimaryLang := LLangID and $3FF;
 
   case LPrimaryLang of
-    $16: Result := 'Please reply in Brazilian Portuguese.'; // LANG_PORTUGUESE
-    $0A: Result := 'Please reply in Spanish.';              // LANG_SPANISH
-    $0C: Result := 'Please reply in French.';               // LANG_FRENCH
-    $07: Result := 'Please reply in German.';               // LANG_GERMAN
-    $10: Result := 'Please reply in Italian.';              // LANG_ITALIAN
+    $16: Result := 'Please reply in Brazilian Portuguese.';
+    $0A: Result := 'Please reply in Spanish.';
+    $0C: Result := 'Please reply in French.';
+    $07: Result := 'Please reply in German.';
+    $10: Result := 'Please reply in Italian.';
     else
-      Result := 'Please reply in English.';                 // Default
+      Result := 'Please reply in English.';
   end;
 end;
 

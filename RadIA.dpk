@@ -60,6 +60,7 @@ contains
   RadIA.Core.HttpClient in 'Source\Core\RadIA.Core.HttpClient.pas',
   RadIA.Core.ErrorDecoder in 'Source\Core\RadIA.Core.ErrorDecoder.pas',
   RadIA.Core.Localizer in 'Source\Core\RadIA.Core.Localizer.pas',
+  RadIA.Core.EditorAdapter in 'Source\Core\RadIA.Core.EditorAdapter.pas',
   RadIA.Provider.Streaming in 'Source\Providers\RadIA.Provider.Streaming.pas',
   RadIA.Provider.Base in 'Source\Providers\RadIA.Provider.Base.pas',
   RadIA.Provider.Gemini in 'Source\Providers\RadIA.Provider.Gemini.pas',
