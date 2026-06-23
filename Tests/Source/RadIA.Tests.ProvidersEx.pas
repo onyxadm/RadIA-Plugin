@@ -9,7 +9,7 @@ uses
   RadIA.Provider.Bedrock,
   RadIA.Provider.GithubCopilot, RadIA.Provider.WebViewBridge,
   RadIA.Provider.Gemini, RadIA.Provider.Claude, RadIA.Provider.Ollama,
-  System.SysUtils, System.Net.URLClient, System.NetEncoding, RadIA.Core.ChatMessage;
+  System.SysUtils, System.Net.URLClient;
 
 type
   TMockHttpClient = class(TInterfacedObject, IRadIAHttpClient)
@@ -194,7 +194,7 @@ type
 implementation
 
 uses
-  System.Classes, System.Rtti, System.JSON, System.Net.HttpClient,
+  System.Classes, System.Rtti, System.JSON, System.Net.HttpClient, System.NetEncoding, RadIA.Core.ChatMessage,
   RadIA.Core.Container, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage;
 
 { TTestRadIAProvidersEx }
@@ -750,19 +750,15 @@ var
   LChunk1, LChunk2: TBytes;
   LReceivedText: string;
   LCallbackCount: Integer;
-  LIsDone: Boolean;
 begin
   LReceivedText := '';
   LCallbackCount := 0;
-  LIsDone := False;
 
   LParser := TRadIAAwsEventStreamParser.Create(
     procedure(const AChunk: string; AIsDone: Boolean; const AError: string)
     begin
       Inc(LCallbackCount);
       LReceivedText := LReceivedText + AChunk;
-      if AIsDone then
-        LIsDone := True;
       Assert.IsEmpty(AError);
     end
   );

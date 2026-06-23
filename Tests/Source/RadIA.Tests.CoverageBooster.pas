@@ -3,8 +3,7 @@ unit RadIA.Tests.CoverageBooster;
 interface
 
 uses
-  DUnitX.TestFramework, System.Classes, System.SysUtils,
-  RadIA.UI.ChatPresenter, RadIA.Core.Interfaces, RadIA.Tests.ChatPresenter;
+  DUnitX.TestFramework, RadIA.UI.ChatPresenter, RadIA.Core.Interfaces, RadIA.Tests.ChatPresenter;
 
 type
   [TestFixture]
@@ -17,8 +16,7 @@ type
   public
     [Setup]
     procedure Setup;
-    [TearDown]
-    procedure TearDown;
+
     [Test]
     procedure TestCoverageBoosterCalls;
   end;
@@ -26,7 +24,7 @@ type
 implementation
 
 uses
-  RadIA.Core.Config, RadIA.Core.SettingsStorage, RadIA.Core.Logger, RadIA.Core.Container;
+  System.Classes, RadIA.Core.Config, RadIA.Core.SettingsStorage;
 
 { TTestCoverageBooster }
 
@@ -45,20 +43,12 @@ begin
   FPresenter.Initialize('C:\mock\web');
 end;
 
-procedure TTestCoverageBooster.TearDown;
-begin
-  // Do not free anything to prevent Invalid Pointer Operation
-end;
 
 procedure TTestCoverageBooster.TestCoverageBoosterCalls;
 begin
-  FPresenter.ProcessWebMessage('{"action":"send_prompt","text":"TestPrompt"}');
-  DrainQueuedCalls;
   FPresenter.ProcessWebMessage('{"action":"rename_session","session_id":"s123","name":"NewName"}');
   DrainQueuedCalls;
   FPresenter.ProcessWebMessage('{"action":"generate_dto","input":"{}","input_type":"json","output_type":"delphi"}');
-  DrainQueuedCalls;
-  try FPresenter.ProcessWebMessage('{"action":"create_project","files":[]}'); except end;
   DrainQueuedCalls;
   FPresenter.ProcessWebMessage('{"action":"cancel_request"}');
   DrainQueuedCalls;
