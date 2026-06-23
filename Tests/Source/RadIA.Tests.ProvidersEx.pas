@@ -87,12 +87,16 @@ type
       APromptTokens, ACompletionTokens, ATotalTokens: Integer);
     procedure RunOpenAIStreamingTest(AProvider: TObject; const AInputBuffer: string;
       const AExpectedText: string; AExpectedCallbackCount: Integer);
+    function InvokeGetBaseUrl(AProvider: TObject): string;
+    function InvokeGetModelsDiscoveryUrl(AProvider: TObject): string;
+    function InvokeFilterModelId(AProvider: TObject; const AModelId: string): Boolean;
   public
     [Setup]
     procedure Setup;
     [TearDown]
     procedure TearDown;
-
+    [Test]
+    procedure TestChatMessageProperties;
     [Test]
     procedure TestDeepSeek_PayloadAndParsing;
     [Test]
@@ -189,15 +193,41 @@ type
     procedure TestOllama_FetchAvailableModels;
     [Test]
     procedure TestGithubCopilot_HttpExceptions;
+    [Test]
+    procedure TestProvidersDiscoveryAndFiltering;
+    [Test]
+    procedure TestGemini_FetchAvailableModels;
+    [Test]
+    procedure TestProviderBase_ErrorParsing;
   end;
 
 implementation
 
 uses
   System.Classes, System.Rtti, System.JSON, System.Net.HttpClient, System.NetEncoding, RadIA.Core.ChatMessage,
-  RadIA.Core.Container, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage;
+  RadIA.Core.Container, RadIA.Core.Types, RadIA.Core.Config, RadIA.Core.AwsSigner, RadIA.Core.SettingsStorage,
+  RadIA.Provider.OpenAI;
 
 { TTestRadIAProvidersEx }
+
+procedure TTestRadIAProvidersEx.TestChatMessageProperties;
+var
+  LMsg: IRadIAChatMessage;
+begin
+  LMsg := TRadIAChatMessage.CreateMessage(mrUser, 'content', 'provider', 'model');
+  Assert.AreEqual(mrUser, LMsg.Role);
+  Assert.AreEqual('content', LMsg.Content);
+  Assert.AreEqual('provider', LMsg.Provider);
+  Assert.AreEqual('model', LMsg.Model);
+
+  LMsg.Content := 'new content';
+  LMsg.Provider := 'new provider';
+  LMsg.Model := 'new model';
+
+  Assert.AreEqual('new content', LMsg.Content);
+  Assert.AreEqual('new provider', LMsg.Provider);
+  Assert.AreEqual('new model', LMsg.Model);
+end;
 
 procedure TTestRadIAProvidersEx.Setup;
 begin
@@ -1539,6 +1569,314 @@ begin
     Inc(LTimeout, 10);
     System.Classes.CheckSynchronize(10);
   end;
+end;
+
+function TTestRadIAProvidersEx.InvokeGetBaseUrl(AProvider: TObject): string;
+var
+  LContext: TRttiContext;
+  LType: TRttiInstanceType;
+  LMethod: TRttiMethod;
+  LResult: TValue;
+begin
+  LContext := TRttiContext.Create;
+  LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
+  LMethod := LType.GetMethod('GetBaseUrl');
+  if Assigned(LMethod) then
+  begin
+    LResult := LMethod.Invoke(AProvider, []);
+    Result := LResult.AsString;
+  end
+  else
+    Result := '';
+end;
+
+function TTestRadIAProvidersEx.InvokeGetModelsDiscoveryUrl(AProvider: TObject): string;
+var
+  LContext: TRttiContext;
+  LType: TRttiInstanceType;
+  LMethod: TRttiMethod;
+  LResult: TValue;
+begin
+  LContext := TRttiContext.Create;
+  LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
+  LMethod := LType.GetMethod('GetModelsDiscoveryUrl');
+  if Assigned(LMethod) then
+  begin
+    LResult := LMethod.Invoke(AProvider, []);
+    Result := LResult.AsString;
+  end
+  else
+    Result := '';
+end;
+
+function TTestRadIAProvidersEx.InvokeFilterModelId(AProvider: TObject; const AModelId: string): Boolean;
+var
+  LContext: TRttiContext;
+  LType: TRttiInstanceType;
+  LMethod: TRttiMethod;
+  LResult: TValue;
+begin
+  LContext := TRttiContext.Create;
+  LType := LContext.GetType(AProvider.ClassType) as TRttiInstanceType;
+  LMethod := LType.GetMethod('FilterModelId');
+  if Assigned(LMethod) then
+  begin
+    LResult := LMethod.Invoke(AProvider, [AModelId]);
+    Result := LResult.AsBoolean;
+  end
+  else
+    Result := True;
+end;
+
+procedure TTestRadIAProvidersEx.TestProvidersDiscoveryAndFiltering;
+var
+  LOpenAI: TRadIAOpenAIProvider;
+begin
+  // 1. OpenAI
+  LOpenAI := TRadIAOpenAIProvider.Create(FConfig);
+  try
+    FConfig.OpenAICustomBaseUrl := '';
+    Assert.AreEqual('https://api.openai.com/v1', InvokeGetBaseUrl(LOpenAI));
+    Assert.AreEqual(
+      'https://api.openai.com/v1/models',
+      InvokeGetModelsDiscoveryUrl(LOpenAI)
+    );
+    Assert.IsTrue(InvokeFilterModelId(LOpenAI, 'gpt-4o'));
+    Assert.IsTrue(InvokeFilterModelId(LOpenAI, 'o1-mini'));
+    Assert.IsFalse(InvokeFilterModelId(LOpenAI, 'claude-3'));
+
+    FConfig.OpenAICustomBaseUrl := 'https://custom-openai.com/';
+    Assert.AreEqual('https://custom-openai.com', InvokeGetBaseUrl(LOpenAI));
+    Assert.AreEqual(
+      'https://custom-openai.com/models',
+      InvokeGetModelsDiscoveryUrl(LOpenAI)
+    );
+  finally
+    LOpenAI.Free;
+  end;
+
+  // 2. DeepSeek
+  Assert.AreEqual('https://api.deepseek.com', InvokeGetBaseUrl(FDeepSeekProv));
+  Assert.AreEqual(
+    'https://api.deepseek.com/models',
+    InvokeGetModelsDiscoveryUrl(FDeepSeekProv)
+  );
+  Assert.IsTrue(InvokeFilterModelId(FDeepSeekProv, 'deepseek-chat'));
+
+  // 3. Groq
+  Assert.AreEqual('https://api.groq.com/openai/v1', InvokeGetBaseUrl(FGroqProv));
+  Assert.AreEqual(
+    'https://api.groq.com/openai/v1/models',
+    InvokeGetModelsDiscoveryUrl(FGroqProv)
+  );
+  Assert.IsTrue(InvokeFilterModelId(FGroqProv, 'llama3-8b'));
+  Assert.IsTrue(InvokeFilterModelId(FGroqProv, 'mixtral-8x7b'));
+  Assert.IsFalse(InvokeFilterModelId(FGroqProv, 'gpt-4'));
+
+  // 4. OpenRouter
+  Assert.AreEqual('https://openrouter.ai/api/v1', InvokeGetBaseUrl(FOpenRouterProv));
+  Assert.AreEqual(
+    'https://openrouter.ai/api/v1/models',
+    InvokeGetModelsDiscoveryUrl(FOpenRouterProv)
+  );
+
+  // 5. Qwen
+  Assert.AreEqual(
+    'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    InvokeGetBaseUrl(FQwenProv)
+  );
+  Assert.AreEqual(
+    'https://dashscope.aliyuncs.com/compatible-mode/v1/models',
+    InvokeGetModelsDiscoveryUrl(FQwenProv)
+  );
+
+  // 6. Mistral
+  Assert.AreEqual('https://api.mistral.ai/v1', InvokeGetBaseUrl(FMistralProv));
+  Assert.AreEqual(
+    'https://api.mistral.ai/v1/models',
+    InvokeGetModelsDiscoveryUrl(FMistralProv)
+  );
+
+  // 7. LMStudio (com e sem custom base URL)
+  FConfig.SetProviderBaseUrl('LMStudio', '');
+  Assert.AreEqual('http://localhost:1234/v1', InvokeGetBaseUrl(FLMStudioProv));
+  FConfig.SetProviderBaseUrl('LMStudio', 'http://custom-lms:1234/v1/');
+  Assert.AreEqual('http://custom-lms:1234/v1/', InvokeGetBaseUrl(FLMStudioProv));
+
+  // 8. AzureOpenAI (com e sem custom base URL)
+  FConfig.SetProviderBaseUrl('AzureOpenAI', 'https://my-azure.openai.azure.com');
+  Assert.AreEqual('https://my-azure.openai.azure.com', InvokeGetBaseUrl(FAzureProv));
+end;
+
+procedure TTestRadIAProvidersEx.TestGemini_FetchAvailableModels;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LModels: TArray<string>;
+  LError: string;
+begin
+  FConfig.SetApiKey('Gemini', 'dummy-gemini-key');
+
+  // Case 1: Success with valid models JSON and support for generateContent
+  FMockHttpClient.SetResponse(
+    '{"models": [' +
+    '  {"name": "models/gemini-1.5-flash", "supportedGenerationMethods": ["generateContent"]},' +
+    '  {"name": "models/gemini-1.5-pro", "supportedGenerationMethods": ["generateContent"]},' +
+    '  {"name": "models/other-model", "supportedGenerationMethods": ["otherMethod"]}' +
+    ']}'
+  );
+  LFinished := False;
+  LModels := [];
+  LError := '';
+
+  FGeminiProvRef.FetchAvailableModelsAsync(
+    procedure(AModels: TArray<string>; AError: string)
+    begin
+      LModels := AModels;
+      LError := AError;
+      LFinished := True;
+    end);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Gemini Fetch should have finished');
+  Assert.AreEqual(2, Length(LModels));
+  Assert.AreEqual('gemini-1.5-flash', LModels[0]);
+  Assert.AreEqual('gemini-1.5-pro', LModels[1]);
+  Assert.IsTrue(LError.IsEmpty);
+
+  // Case 2: Error when API Key is empty
+  FConfig.SetApiKey('Gemini', '');
+  LFinished := False;
+  LModels := [];
+  LError := '';
+
+  FGeminiProvRef.FetchAvailableModelsAsync(
+    procedure(AModels: TArray<string>; AError: string)
+    begin
+      LModels := AModels;
+      LError := AError;
+      LFinished := True;
+    end);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Gemini Fetch should have finished with empty key');
+  Assert.IsTrue(Length(LModels) > 0);
+  Assert.IsFalse(LError.IsEmpty);
+
+  // Case 3: Network failure to cover DoGetRequest except
+  FConfig.SetApiKey('Gemini', 'dummy-gemini-key');
+  FMockHttpClient.SetErrorResponse(-1, 'Connection refused');
+  LFinished := False;
+  LModels := [];
+  LError := '';
+
+  FGeminiProvRef.FetchAvailableModelsAsync(
+    procedure(AModels: TArray<string>; AError: string)
+    begin
+      LModels := AModels;
+      LError := AError;
+      LFinished := True;
+    end);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LFinished, 'Gemini Fetch should have finished with network error');
+  Assert.IsTrue(Length(LModels) > 0);
+  Assert.IsFalse(LError.IsEmpty);
+end;
+
+procedure TTestRadIAProvidersEx.TestProviderBase_ErrorParsing;
+var
+  LFinished: Boolean;
+  LTimeout: Integer;
+  LError: string;
+begin
+  // Caso 1: {"error": {"message": "API Error MSG 1"}}
+  FConfig.SetApiKey('Gemini', 'dummy-key');
+  FMockHttpClient.SetErrorResponse(500, '{"error": {"message": "API Error MSG 1"}}');
+  LFinished := False;
+  LError := '';
+
+  FGeminiProvRef.SendPromptAsync('Test', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LError := AError;
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LError.Contains('API Error MSG 1'));
+
+  // Caso 2: {"error": "API Error MSG 2"}
+  FMockHttpClient.SetErrorResponse(500, '{"error": "API Error MSG 2"}');
+  LFinished := False;
+  LError := '';
+
+  FGeminiProvRef.SendPromptAsync('Test', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LError := AError;
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LError.Contains('API Error MSG 2'));
+
+  // Caso 3: {"message": "API Error MSG 3"}
+  FMockHttpClient.SetErrorResponse(500, '{"message": "API Error MSG 3"}');
+  LFinished := False;
+  LError := '';
+
+  FGeminiProvRef.SendPromptAsync('Test', [],
+    procedure(const AResponse: string; const AError: string; AFromCache: Boolean; const AUsage: TTokenUsage)
+    begin
+      LError := AError;
+      LFinished := True;
+    end, 0.7, 100);
+
+  LTimeout := 0;
+  while (not LFinished) and (LTimeout < 2000) do
+  begin
+    Sleep(10);
+    Inc(LTimeout, 10);
+    System.Classes.CheckSynchronize(10);
+  end;
+
+  Assert.IsTrue(LError.Contains('API Error MSG 3'));
 end;
 
 initialization

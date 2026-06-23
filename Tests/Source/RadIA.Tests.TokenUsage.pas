@@ -1,4 +1,4 @@
-﻿unit RadIA.Tests.TokenUsage;
+unit RadIA.Tests.TokenUsage;
 
 interface
 
@@ -13,12 +13,16 @@ type
     procedure TestEmptyTokenUsage;
     [Test]
     procedure TestFormatTokenStats;
+    [Test]
+    procedure TestMessageRoleToString;
+    [Test]
+    procedure TestStringToMessageRoleException;
   end;
 
 implementation
 
 uses
-  System.SysUtils, RadIA.Core.TokenUsage;
+  System.SysUtils, RadIA.Core.TokenUsage, RadIA.Core.Types;
 
 { TTestRadIATokenUsage }
 
@@ -46,6 +50,27 @@ begin
   Assert.IsTrue(LStats.Contains('1.250') or LStats.Contains('1,250'), 'Format should have formatted input tokens');
   Assert.IsTrue(LStats.Contains('450'), 'Format should have completion tokens');
   Assert.IsFalse(LStats.Contains('$'), 'Format should not contain cost in USD');
+end;
+
+procedure TTestRadIATokenUsage.TestMessageRoleToString;
+begin
+  Assert.AreEqual('user', MessageRoleToString(mrUser));
+  Assert.AreEqual('assistant', MessageRoleToString(mrAssistant));
+  Assert.AreEqual('system', MessageRoleToString(mrSystem));
+  Assert.AreEqual(mrUser, StringToMessageRole('user'));
+  Assert.AreEqual(mrAssistant, StringToMessageRole('assistant'));
+  Assert.AreEqual(mrSystem, StringToMessageRole('system'));
+end;
+
+procedure TTestRadIATokenUsage.TestStringToMessageRoleException;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      StringToMessageRole('invalid_role');
+    end,
+    EConvertError
+  );
 end;
 
 initialization

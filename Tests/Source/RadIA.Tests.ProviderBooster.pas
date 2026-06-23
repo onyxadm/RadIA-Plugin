@@ -41,8 +41,7 @@ type
 implementation
 
 uses
-  System.Classes, RadIA.Core.Config, RadIA.Core.SettingsStorage, RadIA.Core.Container,
-  RadIA.Core.TokenUsage,
+  RadIA.Core.Config, RadIA.Core.SettingsStorage, RadIA.Core.Container,
   RadIA.Provider.GithubCopilot, RadIA.Provider.Gemini, RadIA.Provider.OpenAI, RadIA.Provider.Claude;
 
 { TTestProviderBooster }
@@ -152,14 +151,14 @@ end;
 function TMockHttpClient.Get(const AUrl: string; const AHeaders: TNetHeaders;
   const ATimeoutMs: Integer = 0): string;
 begin
-  Writeln('    [MockGet] URL: ' + AUrl);
+  WriteLn('    [MockGet] URL: ' + AUrl);
   Result := '{"choices": [{"message": {"content": "mock"}}]}';
 end;
 
 function TMockHttpClient.Post(const AUrl: string; const AHeaders: TNetHeaders;
   const ARequestBody: string; const ATimeoutMs: Integer = 0): string;
 begin
-  Writeln('    [MockPost] URL: ' + AUrl);
+  WriteLn('    [MockPost] URL: ' + AUrl);
   Result := '{"choices": [{"message": {"content": "mock"}}]}';
 end;
 
@@ -169,7 +168,7 @@ procedure TMockHttpClient.PostStream(const AUrl: string;
 var
   LBytes: TBytes;
 begin
-  Writeln('    [MockPostStream] URL: ' + AUrl);
+  WriteLn('    [MockPostStream] URL: ' + AUrl);
   LBytes := TEncoding.UTF8.GetBytes(
     '{"choices": [{"delta": {"content": "mock"}}]}' + #10
   );
