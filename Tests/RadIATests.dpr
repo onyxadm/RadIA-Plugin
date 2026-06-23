@@ -89,6 +89,9 @@ uses
   RadIA.Tests.TextNormalizer in 'Source\RadIA.Tests.TextNormalizer.pas',
   RadIA.Tests.AwsSigner in 'Source\RadIA.Tests.AwsSigner.pas',
   RadIA.Tests.Mediator in 'Source\RadIA.Tests.Mediator.pas',
+  RadIA.Tests.ProviderBooster in 'Source\RadIA.Tests.ProviderBooster.pas',
+  RadIA.Tests.CoverageBooster in 'Source\RadIA.Tests.CoverageBooster.pas',
+  RadIA.Tests.OTAHelper in 'Source\RadIA.Tests.OTAHelper.pas',
   RadIA.Tests.HttpClient in 'Source\RadIA.Tests.HttpClient.pas';
 
 var

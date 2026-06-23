@@ -38,12 +38,22 @@ end;
 procedure TTestAwsSigner.TestComputeSignatureHeaders;
 var
   LHeaders: TStringList;
+  LReq: TAwsSignRequest;
 const
   AMZ_DATE = '20260608T170000Z';
 begin
-  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(
-    ACCESS_KEY, SECRET_KEY, REGION, SERVICE, METHOD, URI, PAYLOAD, AMZ_DATE, DATE_STAMP
-  );
+  LReq.AccessKeyId := 'TEST_ACCESS_KEY';
+  LReq.SecretAccessKey := 'TEST_SECRET';
+  LReq.Region := 'us-east-1';
+  LReq.Service := 'bedrock';
+  LReq.Method := 'POST';
+  LReq.Uri := '/invoke';
+  LReq.Payload := '{}';
+  LReq.AmzDate := AMZ_DATE;
+  LReq.DateStamp := '20260608';
+  LReq.SessionToken := '';
+
+  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(LReq);
   try
     Assert.IsNotNull(LHeaders);
     Assert.AreEqual('application/json', LHeaders.Values['content-type']);
@@ -62,12 +72,23 @@ end;
 procedure TTestAwsSigner.TestComputeSignatureHeadersWithSessionToken;
 var
   LHeaders: TStringList;
+  LReq: TAwsSignRequest;
 const
   SESSION_TOKEN = 'session_token_xyz_123';
+  AMZ_DATE = '20260608T170000Z';
 begin
-  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(
-    ACCESS_KEY, SECRET_KEY, REGION, SERVICE, METHOD, URI, PAYLOAD, AMZ_DATE, DATE_STAMP, SESSION_TOKEN
-  );
+  LReq.AccessKeyId := 'TEST_ACCESS_KEY';
+  LReq.SecretAccessKey := 'TEST_SECRET';
+  LReq.Region := 'us-east-1';
+  LReq.Service := 'bedrock';
+  LReq.Method := 'POST';
+  LReq.Uri := '/invoke';
+  LReq.Payload := '{}';
+  LReq.AmzDate := AMZ_DATE;
+  LReq.DateStamp := '20260608';
+  LReq.SessionToken := SESSION_TOKEN;
+
+  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(LReq);
   try
     Assert.IsNotNull(LHeaders);
     Assert.AreEqual(SESSION_TOKEN, LHeaders.Values['x-amz-security-token']);

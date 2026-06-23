@@ -88,7 +88,6 @@ type
     procedure RunOpenAIStreamingTest(AProvider: TObject; const AInputBuffer: string;
       const AExpectedText: string; AExpectedCallbackCount: Integer);
   public
-    procedure DummyPinning(const AMsg: TRadIAChatMessage; const AEnc: TNetEncoding);
     [Setup]
     procedure Setup;
     [TearDown]
@@ -200,19 +199,8 @@ uses
 
 { TTestRadIAProvidersEx }
 
-procedure TTestRadIAProvidersEx.DummyPinning(const AMsg: TRadIAChatMessage; const AEnc: TNetEncoding);
-begin
-  if Assigned(AMsg) and Assigned(AEnc) then
-  begin
-    var LTemp := AMsg.Content + AEnc.Encode('dummy');
-    if LTemp.Length = 0 then
-      System.Classes.CheckSynchronize(0);
-  end;
-end;
-
 procedure TTestRadIAProvidersEx.Setup;
 begin
-  DummyPinning(nil, nil);
   TRadIAConfig.SetBaseRegistryPath('Software\TestRadIAProvidersEx');
   TRadIAConfig.SetStorage(TRadIAMemorySettingsStorage.Create);
   FConfig := TRadIAConfig.Create;
@@ -640,13 +628,30 @@ end;
 procedure TTestRadIAProvidersEx.TestBedrock_AwsSignerSigV4;
 var
   LHeaders: TStringList;
+  LReq: TAwsSignRequest;
 const
   MOCK_DATE = '20260608T170000Z';
+  MOCK_STAMP = '20260608';
+  MOCK_ACCESS_KEY = 'AKIAIOSFODNN7EXAMPLE';
+  MOCK_SECRET_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY';
+  MOCK_REGION = 'us-east-1';
+  MOCK_SERVICE = 'bedrock';
+  MOCK_METHOD = 'POST';
+  MOCK_URI = '/model/anthropic.claude-v2/invoke';
+  MOCK_PAYLOAD = '{"prompt":"hello"}';
 begin
-  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(
-    MOCK_ACCESS_KEY, MOCK_SECRET_KEY, MOCK_REGION, MOCK_SERVICE,
-    MOCK_METHOD, MOCK_URI, MOCK_PAYLOAD, MOCK_DATE, MOCK_STAMP
-  );
+  LReq.AccessKeyId := MOCK_ACCESS_KEY;
+  LReq.SecretAccessKey := MOCK_SECRET_KEY;
+  LReq.Region := MOCK_REGION;
+  LReq.Service := MOCK_SERVICE;
+  LReq.Method := MOCK_METHOD;
+  LReq.Uri := MOCK_URI;
+  LReq.Payload := MOCK_PAYLOAD;
+  LReq.AmzDate := MOCK_DATE;
+  LReq.DateStamp := MOCK_STAMP;
+  LReq.SessionToken := '';
+
+  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(LReq);
   try
     Assert.IsNotNull(LHeaders);
     Assert.AreEqual('application/json', LHeaders.Values['content-type']);
@@ -660,10 +665,8 @@ begin
   end;
 
   // Test with session token
-  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(
-    MOCK_ACCESS_KEY, MOCK_SECRET_KEY, MOCK_REGION, MOCK_SERVICE,
-    MOCK_METHOD, MOCK_URI, MOCK_PAYLOAD, MOCK_DATE, MOCK_STAMP, 'session-token-123'
-  );
+  LReq.SessionToken := 'session-token-123';
+  LHeaders := TAwsSigV4Signer.ComputeSignatureHeaders(LReq);
   try
     Assert.AreEqual('session-token-123', LHeaders.Values['x-amz-security-token']);
     Assert.IsTrue(LHeaders.Values['Authorization'].Contains('x-amz-security-token'));
@@ -747,9 +750,11 @@ var
   LChunk1, LChunk2: TBytes;
   LReceivedText: string;
   LCallbackCount: Integer;
+  LIsDone: Boolean;
 begin
   LReceivedText := '';
   LCallbackCount := 0;
+  LIsDone := False;
 
   LParser := TRadIAAwsEventStreamParser.Create(
     procedure(const AChunk: string; AIsDone: Boolean; const AError: string)
